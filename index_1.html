@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>علوم الأغذية - الدفعة 27</title>
+    <!-- خط Cairo المميز -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* الوضع الليلي الافتراضي */
+            --bg-primary: #0b1110;
+            --bg-secondary: rgba(18, 30, 27, 0.85);
+            --border-card: rgba(212, 175, 55, 0.2);
+            --accent-gold: #d4af37;
+            --accent-emerald: #10b981;
+            --text-main: #f3f4f6;
+            --text-sub: #9ca3af;
+            --card-gradient: linear-gradient(145deg, rgba(24, 40, 36, 0.9), rgba(12, 22, 20, 0.9));
+            --footer-bg: rgba(11, 17, 16, 0.95);
+            --header-bg: rgba(11, 17, 16, 0.92);
+            --radial-glow: rgba(16, 185, 129, 0.08);
+            --accent-highlight: #7c9aff;
+        }
+
+        /* الوضع النهاري */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(255, 255, 255, 0.9);
+            --border-card: rgba(212, 175, 55, 0.35);
+            --accent-gold: #b38600;
+            --accent-emerald: #059669;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --card-gradient: linear-gradient(145deg, #ffffff, #f1f5f9);
+            --footer-bg: rgba(255, 255, 255, 0.95);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --radial-glow: rgba(16, 185, 129, 0.12);
+            --accent-highlight: #4361ee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: radial-gradient(circle at top, var(--radial-glow) 0%, transparent 70%);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 95px; /* مساحة للفوتر الثابت تحت */
+        }
+
+        /* رأس الصفحة */
+        header {
+            position: sticky;
+            top: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-card);
+            z-index: 100;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title-box h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .header-title-box span {
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            display: block;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-theme {
+            background: var(--bg-secondary);
+            color: var(--accent-gold);
+            border: 1px solid var(--border-card);
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-theme:active {
+            transform: scale(0.9);
+        }
+
+        .btn-back {
+            background: rgba(212, 175, 55, 0.12);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-back:active {
+            transform: scale(0.92);
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* الحاوية الرئيسية */
+        .container {
+            max-width: 550px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 18px 16px;
+            flex-grow: 1;
+        }
+
+        /* تأثيرات الانتقال والتداخل البصري بين الشاشات */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+            transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .section-label {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-gold);
+            border-radius: 2px;
+        }
+
+        /* تصميم البطاقات بتأثيرات بصرية متدرجة */
+        .grid-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .app-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .app-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at right, rgba(212, 175, 55, 0.08), transparent 60%);
+            pointer-events: none;
+        }
+
+        .app-card:active {
+            transform: scale(0.96);
+            border-color: var(--accent-gold);
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .card-icon {
+            width: 46px;
+            height: 46px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: var(--accent-gold);
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .app-card:hover .card-icon {
+            transform: rotate(-5deg) scale(1.05);
+        }
+
+        .card-text h3 {
+            font-size: 1.02rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .card-text p {
+            font-size: 0.76rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .card-arrow {
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            opacity: 0.8;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+
+        .app-card:hover .card-arrow {
+            transform: translateX(-4px);
+        }
+
+        .card-primary-glow {
+            border: 1px solid rgba(212, 175, 55, 0.45);
+        }
+
+        .card-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-emerald);
+            margin-right: 6px;
+        }
+
+        .badge-mystery {
+            background: rgba(212, 175, 55, 0.18);
+            color: var(--accent-gold);
+            border: 1px dashed rgba(212, 175, 55, 0.5);
+        }
+
+        /* شاشة المحتوى (نظري / عملي) */
+        .content-sub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .content-box-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 22px 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .content-box-card:active {
+            transform: scale(0.94);
+            border-color: var(--accent-gold);
+        }
+
+        .content-box-card .box-icon {
+            font-size: 1.9rem;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .content-box-card h4 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .content-box-card span {
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            display: block;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* الفوتر المثبت تماماً بأسفل الشاشة (Fixed Footer) */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 150;
+            padding: 10px 16px;
+            text-align: center;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--border-card);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .footer-highlight {
+            color: var(--accent-highlight);
+            font-weight: 800;
+            font-size: 0.82rem;
+            margin-bottom: 2px;
+            line-height: 1.35;
+        }
+
+        .footer-author {
+            font-size: 0.74rem;
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .footer-author .author-name {
+            color: var(--accent-highlight);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رأس الصفحة -->
+    <header>
+        <div class="header-title-box">
+            <div class="card-icon" style="width: 36px; height: 36px; font-size: 1rem;">🌾</div>
+            <div>
+                <h1 id="top-title">علوم الأغذية</h1>
+                <span id="top-subtitle">الفرقة الرابعة - دفعة 27</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <button id="btn-theme-toggle" class="btn-theme" onclick="toggleTheme()" title="تبديل الوضع">
+                <span id="theme-icon">☀️</span>
+            </button>
+            <button id="btn-back" class="btn-back" onclick="navigateBack()">
+                <span>رجوع</span> ↩
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- المستوى الأول: الواجهة الرئيسية -->
+        <div id="view-home" class="view-section active">
+            <div class="section-label">الأقسام الرئيسية</div>
+            <div class="grid-cards">
+                
+                <div class="app-card card-primary-glow" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
+                    <div class="card-info">
+                        <div class="card-icon">📚</div>
+                        <div class="card-text">
+                            <h3>مواد الترم الأول <span class="card-badge">متاح الآن</span></h3>
+                            <p>المحاضرات والسكاشن للفرقة الرابعة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="playClickSound(); alert('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن!');">
+                    <div class="card-info">
+                        <div class="card-icon">📝</div>
+                        <div class="card-text">
+                            <h3>إختبارات</h3>
+                            <p>تدريبات شاملة ونماذج امتحانات</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <!-- بطاقة قريباً بدون أي تفاصيل (مفاجأة) -->
+                <div class="app-card" onclick="playClickSound(); alert('مفاجأة قادمة للدفعة قريبًا... ترقبوا! ✨');">
+                    <div class="card-info">
+                        <div class="card-icon">✨</div>
+                        <div class="card-text">
+                            <h3>قريبًا <span class="card-badge badge-mystery">مفاجأة</span></h3>
+                            <p>محتوى مميز قادم للدفعة قريبًا</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- المستوى الثاني: قائمة المواد -->
+        <div id="view-term-subjects" class="view-section">
+            <div class="section-label">مواد الفصل الدراسي الأول</div>
+            <div class="grid-cards">
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا اللحوم والأسماك')">
+                    <div class="card-info">
+                        <div class="card-icon">🥩</div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا اللحوم والأسماك</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا الحبوب')">
+                    <div class="card-info">
+                        <div class="card-icon">🌾</div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا الحبوب</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا السكر')">
+                    <div class="card-info">
+                        <div class="card-icon">🧊</div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا السكر</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('كيمياء ألبان')">
+                    <div class="card-info">
+                        <div class="card-icon">🧪</div>
+                        <div class="card-text">
+                            <h3>كيمياء ألبان</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا الجبن')">
+                    <div class="card-info">
+                        <div class="card-icon">🧀</div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا الجبن</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('الإدارة الفنية لمصانع الالبان')">
+                    <div class="card-info">
+                        <div class="card-icon">🏭</div>
+                        <div class="card-text">
+                            <h3>الإدارة الفنية لمصانع الالبان</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- المستوى الثالث: محتوى المادة (نظري / عملي) -->
+        <div id="view-subject-content" class="view-section">
+            <div id="selected-subject-label" class="section-label">محتوى المادة</div>
+            
+            <div class="content-sub-grid">
+                <div class="content-box-card" onclick="playClickSound(); alert('سيتم فتح قسم النظري والمحاضرات لهذه المادة');">
+                    <span class="box-icon">📖</span>
+                    <h4>النظري</h4>
+                    <span>المحاضرات والشرح</span>
+                </div>
+
+                <div class="content-box-card" onclick="playClickSound(); alert('سيتم فتح قسم العملي والسكاشن لهذه المادة');">
+                    <span class="box-icon">🔬</span>
+                    <h4>العملي</h4>
+                    <span>السكاشن والتجارب</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- الفوتر المثبت تحت خالص بشكل دائم -->
+    <footer>
+        <div class="footer-highlight">
+            تم التطوير والبرمجة بالكامل لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان 👨‍🔬
+        </div>
+        <div class="footer-author">
+            إشراف وإعداد: <span class="author-name">المهندس عبدالرحمن محمود</span> | كلية الزراعة - جامعة سوهاج
+        </div>
+    </footer>
+
+    <!-- التحكم الصوتي والتنقل ومفتاح الثيم -->
+    <script>
+        // إعداد الصوت التفاعلي
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playClickSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(540, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(820, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {}
+        }
+
+        function playBackSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(280, audioCtx.currentTime + 0.06);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.06);
+            } catch (e) {}
+        }
+
+        // التبديل بين الوضع الليلي والنهاري
+        function toggleTheme() {
+            playClickSound();
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-icon').innerText = newTheme === 'light' ? '🌙' : '☀️';
+            localStorage.setItem('app-theme', newTheme);
+        }
+
+        // استعادة الثيم المحفوظ
+        (function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('app-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+        })();
+
+        // شجرة التنقل مع المؤثرات البصرية وتداخل الشاشات
+        let navHistory = [{
+            viewId: 'view-home',
+            title: 'علوم الأغذية',
+            subtitle: 'الفرقة الرابعة - دفعة 27'
+        }];
+
+        function navigateTo(viewId, title, subtitle) {
+            playClickSound();
+            const activeSection = document.querySelector('.view-section.active');
+            if (activeSection) {
+                activeSection.classList.remove('active');
+            }
+            
+            setTimeout(() => {
+                document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
+                const nextSection = document.getElementById(viewId);
+                nextSection.style.display = 'block';
+                setTimeout(() => nextSection.classList.add('active'), 20);
+            }, 100);
+            
+            navHistory.push({ viewId, title, subtitle });
+            updateHeader();
+        }
+
+        function openSubject(subjectName) {
+            document.getElementById('selected-subject-label').innerText = 'محتوى مادة: ' + subjectName;
+            navigateTo('view-subject-content', subjectName, 'اختر نوع المحتوى');
+        }
+
+        function navigateBack() {
+            if (navHistory.length > 1) {
+                playBackSound();
+                navHistory.pop();
+                const previous = navHistory[navHistory.length - 1];
+                
+                const activeSection = document.querySelector('.view-section.active');
+                if (activeSection) {
+                    activeSection.classList.remove('active');
+                }
+
+                setTimeout(() => {
+                    document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
+                    const prevSection = document.getElementById(previous.viewId);
+                    prevSection.style.display = 'block';
+                    setTimeout(() => prevSection.classList.add('active'), 20);
+                }, 100);
+
+                updateHeader();
+            }
+        }
+
+        function updateHeader() {
+            const current = navHistory[navHistory.length - 1];
+            document.getElementById('top-title').innerText = current.title;
+            document.getElementById('top-subtitle').innerText = current.subtitle;
+            const btnBack = document.getElementById('btn-back');
+            btnBack.style.display = (navHistory.length > 1) ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
