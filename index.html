@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>المنصة الذكية للحاسب الآلي | إشراف: عبدالرحمن محمود</title>
-    <!-- خطوط احترافية جديدة تماماً -->
+    <!-- خطوط احترافية جديدة -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root {
+        /* نظام المتغيرات اللونية: Dark & Light Modes */
+        :root[data-theme="dark"] {
             --bg-base: #090d16;
             --bg-surface: #111827;
             --bg-surface-elevated: #1e293b;
@@ -27,9 +28,30 @@
             --text-sub: #94a3b8;
             --border-soft: rgba(255, 255, 255, 0.08);
             --border-hover: rgba(129, 140, 248, 0.4);
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 10px;
+            --header-bg: rgba(9, 13, 22, 0.88);
+            --nav-bg: rgba(17, 24, 39, 0.7);
+            --card-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        :root[data-theme="light"] {
+            --bg-base: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-surface-elevated: #f8fafc;
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-glow: rgba(79, 70, 229, 0.25);
+            --accent: #059669;
+            --accent-glow: rgba(5, 150, 105, 0.25);
+            --coral: #e11d48;
+            --amber: #d97706;
+            --cyan: #0891b2;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --border-soft: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(79, 70, 229, 0.35);
+            --header-bg: rgba(255, 255, 255, 0.9);
+            --nav-bg: rgba(241, 245, 249, 0.85);
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
         }
 
         * {
@@ -37,6 +59,7 @@
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         body {
@@ -47,11 +70,6 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
-                radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 50%);
-            background-attachment: fixed;
         }
 
         /* رأس الصفحة - Top Bar */
@@ -59,84 +77,90 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(9, 13, 22, 0.85);
+            background: var(--header-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border-soft);
-            padding: 14px 24px;
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
 
         .brand-container {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
         .brand-badge {
-            width: 44px;
-            height: 44px;
-            border-radius: var(--radius-sm);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             background: linear-gradient(135deg, var(--primary), var(--cyan));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             color: #fff;
-            box-shadow: 0 0 20px var(--primary-glow);
+            box-shadow: 0 0 15px var(--primary-glow);
+            flex-shrink: 0;
         }
 
         .brand-meta h1 {
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #fff;
+            color: var(--text-main);
             letter-spacing: -0.3px;
         }
 
         .brand-meta span {
-            font-size: 0.8rem;
+            font-size: 0.76rem;
             color: var(--accent);
             font-weight: 600;
             display: block;
         }
 
-        .sound-pill-btn {
-            background: rgba(255, 255, 255, 0.05);
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-pill-btn {
+            background: var(--bg-surface-elevated);
             border: 1px solid var(--border-soft);
             color: var(--text-main);
-            padding: 8px 16px;
+            padding: 7px 14px;
             border-radius: 30px;
             font-family: 'Readex Pro', sans-serif;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 6px;
+            transition: all 0.25s ease;
         }
 
-        .sound-pill-btn:hover {
-            background: var(--primary);
+        .action-pill-btn:hover {
             border-color: var(--primary);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px var(--primary-glow);
+            transform: scale(1.04);
         }
 
-        /* شريط التبويبات الفخم */
+        /* شريط التبويبات */
         .navigation-dock {
             display: flex;
             gap: 8px;
-            padding: 12px 24px;
+            padding: 10px 18px;
             overflow-x: auto;
             scrollbar-width: none;
-            background: rgba(17, 24, 39, 0.6);
+            background: var(--nav-bg);
             border-bottom: 1px solid var(--border-soft);
             position: sticky;
-            top: 73px;
+            top: 67px;
             z-index: 990;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -147,42 +171,41 @@
         }
 
         .dock-tab {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--bg-surface);
             border: 1px solid var(--border-soft);
             color: var(--text-sub);
-            padding: 10px 18px;
+            padding: 8px 16px;
             border-radius: 30px;
             font-family: 'Readex Pro', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             white-space: nowrap;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
             transition: all 0.25s ease;
         }
 
         .dock-tab:hover {
-            color: #fff;
-            background: rgba(99, 102, 241, 0.12);
+            color: var(--text-main);
             border-color: var(--border-hover);
         }
 
         .dock-tab.active {
             background: linear-gradient(135deg, var(--primary), #4f46e5);
-            color: #fff;
+            color: #ffffff !important;
             border-color: var(--primary-light);
-            box-shadow: 0 4px 18px var(--primary-glow);
+            box-shadow: 0 4px 14px var(--primary-glow);
             transform: translateY(-1px);
         }
 
-        /* المحتوى الرئيسي والبطاقات */
+        /* المحتوى الرئيسي */
         .main-layout {
             max-width: 1100px;
             width: 100%;
-            margin: 24px auto;
-            padding: 0 18px 80px;
+            margin: 20px auto;
+            padding: 0 16px 80px;
             flex: 1;
         }
 
@@ -200,161 +223,148 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* بطاقة المحتوى الزجاجية الفخمة */
+        /* البطاقات الفخمة */
         .custom-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-soft);
-            border-radius: var(--radius-lg);
-            padding: 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
             position: relative;
             overflow: hidden;
-            transition: border-color 0.3s, transform 0.3s;
-        }
-
-        .custom-card:hover {
-            border-color: var(--border-hover);
         }
 
         .card-heading {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 22px;
+            margin-bottom: 18px;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
 
         .heading-title {
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: #fff;
+            color: var(--text-main);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .heading-title .icon-wrap {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-sm);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             background: rgba(99, 102, 241, 0.15);
             color: var(--primary-light);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
         }
 
         .tag-pill {
             background: rgba(99, 102, 241, 0.12);
             color: var(--primary-light);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            padding: 5px 14px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             font-family: 'Readex Pro', sans-serif;
         }
 
         .tag-pill.exam {
             background: rgba(244, 63, 94, 0.12);
-            color: #fb7185;
-            border-color: rgba(244, 63, 94, 0.3);
+            color: var(--coral);
+            border-color: rgba(244, 63, 94, 0.25);
         }
 
-        /* شبكة الكروت الداخلية (Feature Cards) */
+        /* شبكة الكروت */
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
         }
 
         .feature-card {
             background: var(--bg-surface-elevated);
             border: 1px solid var(--border-soft);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            border-radius: 14px;
+            padding: 18px;
+            transition: all 0.25s ease;
         }
 
         .feature-card:hover {
             border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px);
         }
 
         .feature-icon {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             color: var(--accent);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: inline-block;
         }
 
         .feature-card h4 {
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
+            color: var(--text-main);
+            margin-bottom: 6px;
         }
 
         .feature-card p {
             color: var(--text-sub);
-            font-size: 0.92rem;
-            line-height: 1.7;
+            font-size: 0.9rem;
+            line-height: 1.65;
         }
 
-        /* الأكورديون التفاعلي المطور */
+        /* الأكورديون التفاعلي */
         .custom-accordion {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .accordion-card {
             background: var(--bg-surface-elevated);
             border: 1px solid var(--border-soft);
-            border-radius: var(--radius-md);
+            border-radius: 14px;
             overflow: hidden;
-            transition: 0.3s;
-        }
-
-        .accordion-card:hover {
-            border-color: var(--border-hover);
         }
 
         .accordion-trigger {
-            padding: 18px 20px;
+            padding: 16px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
             user-select: none;
             font-weight: 600;
-            font-size: 1.05rem;
-            color: #f1f5f9;
+            font-size: 0.98rem;
+            color: var(--text-main);
         }
 
         .accordion-title-wrap {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .accordion-title-wrap i {
             color: var(--primary-light);
-            font-size: 1.1rem;
         }
 
         .accordion-indicator {
             color: var(--text-sub);
             transition: transform 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .accordion-card.active .accordion-indicator {
@@ -365,160 +375,150 @@
         .accordion-panel {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
-            padding: 0 20px;
-            color: #cbd5e1;
-            line-height: 1.8;
-            font-size: 0.96rem;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
+            padding: 0 18px;
+            color: var(--text-sub);
+            line-height: 1.75;
+            font-size: 0.94rem;
         }
 
         .accordion-card.active .accordion-panel {
-            padding: 10px 20px 22px;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 18px 18px;
+            border-top: 1px solid var(--border-soft);
             max-height: 2500px;
         }
 
-        /* بطاقات العلماء المحدثة */
+        /* رواد العلم */
         .scholar-row {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
             background: var(--bg-surface-elevated);
             border: 1px solid var(--border-soft);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            margin-bottom: 14px;
-            transition: 0.3s;
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            transition: 0.25s;
         }
 
         .scholar-row:hover {
             border-color: var(--primary-light);
-            transform: scale(1.015);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            transform: scale(1.01);
         }
 
         .scholar-icon-box {
-            width: 60px;
-            height: 60px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), var(--cyan));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: white;
             flex-shrink: 0;
         }
 
         .scholar-details h3 {
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1.15rem;
-            color: #fff;
+            font-size: 1.05rem;
+            color: var(--text-main);
             margin-bottom: 2px;
         }
 
         .scholar-details .role-text {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             color: var(--accent);
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             display: block;
         }
 
         .scholar-details p {
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             color: var(--text-sub);
-            line-height: 1.65;
+            line-height: 1.6;
         }
 
-        /* الاختبار التفاعلي */
+        /* الاختبار */
         .quiz-wrapper {
             background: var(--bg-surface-elevated);
             border: 1px solid var(--border-soft);
-            border-radius: var(--radius-md);
-            padding: 24px;
-            margin-top: 15px;
-        }
-
-        .quiz-status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 15px;
-            margin-bottom: 18px;
-            border-bottom: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 12px;
         }
 
         .points-badge {
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--accent);
-            background: rgba(16, 185, 129, 0.1);
-            padding: 6px 16px;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 5px 14px;
             border-radius: 20px;
             border: 1px solid var(--accent-glow);
         }
 
         .question-lead {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: #fff;
-            margin-bottom: 16px;
+            color: var(--text-main);
+            margin-bottom: 14px;
             line-height: 1.6;
         }
 
         .options-column {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 9px;
         }
 
         .option-button {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--bg-surface);
             border: 1px solid var(--border-soft);
-            color: #f8fafc;
-            padding: 14px 18px;
-            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 10px;
             font-family: 'IBM Plex Sans Arabic', sans-serif;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             text-align: right;
             cursor: pointer;
-            transition: 0.25s;
+            transition: 0.2s;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
         .option-button:hover:not(.locked) {
-            background: rgba(99, 102, 241, 0.15);
+            background: rgba(99, 102, 241, 0.12);
             border-color: var(--primary-light);
             transform: translateX(-4px);
         }
 
         .option-button.correct-choice {
-            background: rgba(16, 185, 129, 0.25) !important;
+            background: rgba(16, 185, 129, 0.2) !important;
             border-color: var(--accent) !important;
-            color: #6ee7b7 !important;
+            color: var(--accent) !important;
             font-weight: 700;
         }
 
         .option-button.wrong-choice {
-            background: rgba(244, 63, 94, 0.25) !important;
+            background: rgba(244, 63, 94, 0.2) !important;
             border-color: var(--coral) !important;
-            color: #fda4af !important;
+            color: var(--coral) !important;
             font-weight: 700;
         }
 
         .hint-container {
-            margin-top: 15px;
-            padding: 14px 18px;
-            border-radius: var(--radius-sm);
-            background: rgba(0, 0, 0, 0.35);
+            margin-top: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.1);
             border-right: 4px solid var(--cyan);
-            font-size: 0.92rem;
-            color: #e2e8f0;
+            font-size: 0.9rem;
+            color: var(--text-main);
             display: none;
             line-height: 1.6;
         }
@@ -527,33 +527,33 @@
             background: linear-gradient(135deg, var(--primary), #4f46e5);
             border: none;
             color: white;
-            padding: 12px 24px;
-            border-radius: var(--radius-sm);
+            padding: 11px 22px;
+            border-radius: 10px;
             font-family: 'Readex Pro', sans-serif;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            margin-top: 16px;
-            box-shadow: 0 4px 15px var(--primary-glow);
-            transition: 0.3s;
+            gap: 8px;
+            margin-top: 14px;
+            box-shadow: 0 4px 14px var(--primary-glow);
+            transition: 0.25s;
         }
 
         .cta-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--primary-glow);
         }
 
         /* الفوتر */
         .footer-bar {
             text-align: center;
-            padding: 24px 16px;
-            background: rgba(9, 13, 22, 0.95);
+            padding: 20px 16px;
+            background: var(--header-bg);
             border-top: 1px solid var(--border-soft);
             color: var(--text-sub);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            line-height: 1.7;
         }
 
         .footer-bar strong {
@@ -561,16 +561,16 @@
         }
 
         @media (max-width: 768px) {
-            .app-header { padding: 12px 16px; }
-            .navigation-dock { top: 69px; padding: 10px 16px; }
-            .custom-card { padding: 20px 16px; border-radius: var(--radius-md); }
+            .app-header { padding: 10px 14px; }
+            .navigation-dock { top: 63px; padding: 8px 14px; }
+            .custom-card { padding: 18px 14px; }
             .scholar-row { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <!-- الشريط العلوي -->
+    <!-- الشريط العلوي مع زر الوضع الليلي/النهاري والصوت -->
     <header class="app-header">
         <div class="brand-container">
             <div class="brand-badge">
@@ -581,10 +581,18 @@
                 <span>تكنولوجيا الأغذية والألبان | المستوى الثالث</span>
             </div>
         </div>
-        <button class="sound-pill-btn" id="soundToggle" onclick="toggleAudioEngine()">
-            <i class="fa-solid fa-volume-high"></i>
-            <span>الصوت: مفعّل</span>
-        </button>
+        <div class="header-controls">
+            <!-- زر تبديل الوضع (Dark / Light) -->
+            <button class="action-pill-btn" id="themeToggleBtn" onclick="toggleThemeMode()">
+                <i class="fa-solid fa-sun" id="themeIcon"></i>
+                <span id="themeText">النهاري</span>
+            </button>
+            <!-- زر التحكم بالصوت -->
+            <button class="action-pill-btn" id="soundToggle" onclick="toggleAudioEngine()">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>الصوت</span>
+            </button>
+        </div>
     </header>
 
     <!-- شريط الأقسام المطور -->
@@ -614,7 +622,7 @@
                     </div>
                     <span class="tag-pill">الوحدة 1</span>
                 </div>
-                <p style="line-height: 1.8; color: #e2e8f0; margin-bottom: 20px;">
+                <p style="line-height: 1.8; color: var(--text-main); margin-bottom: 18px;">
                     <strong>الحاسوب (Computer):</strong> جهاز إلكتروني يقوم باستقبال البيانات وتخزينها، وإجراء المعالجة الحسابية والمنطقية عليها طبقاً لتعليمات البرامج المخزنة، ثم استخراج النتائج على وحدات الإخراج.
                 </p>
                 <div class="feature-grid">
@@ -862,7 +870,7 @@
                     </div>
                     <span class="tag-pill">الأنظمة الذكية</span>
                 </div>
-                <p style="line-height: 1.8; color: #e2e8f0; margin-bottom: 20px;">
+                <p style="line-height: 1.8; color: var(--text-main); margin-bottom: 18px;">
                     <strong>التعريف:</strong> فرع من علوم الحاسب وهو علم هندسة صناعة الآلات الذكية التي تحاكي التفكير والتصرفات البشرية.
                 </p>
                 <div class="feature-grid">
@@ -895,7 +903,7 @@
                     </div>
                     <span class="tag-pill exam">سؤال مقالي أساسي</span>
                 </div>
-                <p style="line-height: 1.8; color: #e2e8f0; margin-bottom: 18px;">
+                <p style="line-height: 1.8; color: var(--text-main); margin-bottom: 18px;">
                     <strong>المفهوم:</strong> مجموعة عمليات منظمة وموجهة نحو تحقيق هدف محدد والمحافظة عليه (مثل سحب اليد فوراً عند لمس جسم ساخن للمحافظة على سلامة الإنسان).<br>
                     • <strong>أول تطوير:</strong> ميكانيكية تنظيم العوامة في اليونان (300 ق.م).<br>
                     • <strong>أول جهاز:</strong> جهاز التحكم الطارد الذي طوره <strong>جيمس واط (1769)</strong> للتحكم في سرعة ماكينة البخار.
@@ -1178,10 +1186,38 @@
         إشراف وإعداد: <strong>المهندس عبدالرحمن محمود</strong> | كلية الزراعة - جامعة سوهاج
     </footer>
 
-    <!-- محرك المؤثرات الصوتية المعدل والمضخم (Polyphonic High-Volume Synth) -->
+    <!-- محرك الصوتيات وتوليد الميمات الصوتية المصرية -->
     <script>
         let audioContext = null;
         let isAudioOn = true;
+
+        // إدارة الدارك واللايت مود
+        function initTheme() {
+            const savedTheme = localStorage.getItem('cs_app_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+        }
+
+        function toggleThemeMode() {
+            sfxTabSwitch();
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('cs_app_theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (theme === 'dark') {
+                icon.className = 'fa-solid fa-sun';
+                text.innerText = 'النهاري';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+                text.innerText = 'الليلي';
+            }
+        }
 
         function getAudioContext() {
             if (!audioContext) {
@@ -1193,8 +1229,7 @@
             return audioContext;
         }
 
-        // دالة توليد صوت مركب عالي النقاوة مع مضخم صوت
-        function playSynthesizedSound(notes, volume = 0.3) {
+        function playSynthesizedSound(notes, volume = 0.35) {
             if (!isAudioOn) return;
             try {
                 const ctx = getAudioContext();
@@ -1204,8 +1239,6 @@
                     
                     osc.type = note.type || 'sine';
                     osc.frequency.setValueAtTime(note.freq, ctx.currentTime + (note.delay || 0));
-                    
-                    // مضخم صوت قوي وواضح
                     gain.gain.setValueAtTime(volume, ctx.currentTime + (note.delay || 0));
                     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (note.delay || 0) + note.duration);
                     
@@ -1218,9 +1251,7 @@
             } catch(e) {}
         }
 
-        // المؤثرات الصوتية المحدثة
         function sfxTabSwitch() {
-            // نغمة انتقال سريعة وناعمة (Cyber Pop)
             playSynthesizedSound([
                 { freq: 440, type: 'sine', duration: 0.08, delay: 0 },
                 { freq: 880, type: 'triangle', duration: 0.12, delay: 0.04 }
@@ -1228,7 +1259,6 @@
         }
 
         function sfxAccordion() {
-            // نقرة ميكانيكية عميقة (Mechanical Snap)
             playSynthesizedSound([
                 { freq: 320, type: 'triangle', duration: 0.06, delay: 0 },
                 { freq: 640, type: 'sine', duration: 0.08, delay: 0.03 }
@@ -1236,31 +1266,59 @@
         }
 
         function sfxCorrect() {
-            // نغمة نجاح ثلاثية احتفالية واضحة (Victory Chime)
             playSynthesizedSound([
-                { freq: 523.25, type: 'triangle', duration: 0.15, delay: 0 },       // C5
-                { freq: 659.25, type: 'triangle', duration: 0.18, delay: 0.1 },     // E5
-                { freq: 783.99, type: 'triangle', duration: 0.22, delay: 0.2 },     // G5
-                { freq: 1046.50, type: 'sine', duration: 0.35, delay: 0.3 }        // C6
+                { freq: 523.25, type: 'triangle', duration: 0.15, delay: 0 },
+                { freq: 659.25, type: 'triangle', duration: 0.18, delay: 0.1 },
+                { freq: 783.99, type: 'triangle', duration: 0.22, delay: 0.2 },
+                { freq: 1046.50, type: 'sine', duration: 0.35, delay: 0.3 }
             ], 0.35);
         }
 
         function sfxWrong() {
-            // نغمة خطأ حديثة وهادئة بدون إزعاج (Sub Bass Warning)
             playSynthesizedSound([
                 { freq: 240, type: 'sawtooth', duration: 0.14, delay: 0 },
                 { freq: 160, type: 'sawtooth', duration: 0.25, delay: 0.1 }
             ], 0.28);
         }
 
-        function sfxComplete() {
-            // لحن إنهاء الاختبار المميز
+        // محرك نطق الصوت الكوميدي المصري المباشر دون الحاجة لتحميل خارجي
+        function speakEgyptianMeme(textPhrase) {
+            if (!isAudioOn) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(textPhrase);
+                utter.lang = 'ar-EG'; // اللهجة المصرية
+                utter.rate = 1.05;
+                utter.pitch = 1.1;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        // تشغيل ميم النجاح (الله ينور عليك إيه الحلاوة دي)
+        function playEgyptianSuccessMeme() {
             playSynthesizedSound([
-                { freq: 440, type: 'triangle', duration: 0.12, delay: 0 },
-                { freq: 554.37, type: 'triangle', duration: 0.12, delay: 0.1 },
-                { freq: 659.25, type: 'triangle', duration: 0.15, delay: 0.2 },
-                { freq: 880, type: 'sine', duration: 0.4, delay: 0.3 }
-            ], 0.35);
+                { freq: 440, type: 'triangle', duration: 0.15, delay: 0 },
+                { freq: 554, type: 'triangle', duration: 0.15, delay: 0.12 },
+                { freq: 659, type: 'triangle', duration: 0.2, delay: 0.24 },
+                { freq: 880, type: 'sine', duration: 0.4, delay: 0.36 }
+            ], 0.4);
+
+            setTimeout(() => {
+                speakEgyptianMeme("الله ينور عليك يا باشا! إيه الحلاوة دي إيه العظمة دي! تسلم ايدك!");
+            }, 300);
+        }
+
+        // تشغيل ميم السقوط (فضحتنا وعريتنا)
+        function playEgyptianFailMeme() {
+            playSynthesizedSound([
+                { freq: 300, type: 'sawtooth', duration: 0.2, delay: 0 },
+                { freq: 220, type: 'sawtooth', duration: 0.25, delay: 0.18 },
+                { freq: 140, type: 'sawtooth', duration: 0.5, delay: 0.38 }
+            ], 0.38);
+
+            setTimeout(() => {
+                speakEgyptianMeme("فضحتنا وعريتنا! إيه الدرجات دي يا دكتور! روح ذاكر وتعالى تاني!");
+            }, 350);
         }
 
         function toggleAudioEngine() {
@@ -1268,7 +1326,7 @@
             const btn = document.getElementById('soundToggle');
             if (isAudioOn) {
                 btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> <span>الصوت: مفعّل</span>';
-                btn.style.color = '#fff';
+                btn.style.color = 'var(--text-main)';
                 sfxTabSwitch();
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> <span>الصوت: مكتوم</span>';
@@ -1276,7 +1334,6 @@
             }
         }
 
-        // التنقل بين الأقسام
         function activateSection(secId) {
             sfxTabSwitch();
             document.querySelectorAll('.dock-tab').forEach(t => t.classList.remove('active'));
@@ -1290,14 +1347,13 @@
             }
         }
 
-        // فتح وغلق الأكورديون
         function handleAccordion(element) {
             sfxAccordion();
             const card = element.parentElement;
             card.classList.toggle('active');
         }
 
-        // إدارة الاختبار التفاعلي
+        // بنك الأسئلة
         const quizBank = [
             {
                 q: "جهاز تحكم آلي طوّره جيمس واط عام 1769 للتحكم في سرعة ماكينة البخار هو:",
@@ -1383,15 +1439,30 @@
             if (activeQ < quizBank.length) {
                 renderQuestion();
             } else {
-                sfxComplete();
-                document.getElementById('quizContainer').innerHTML = `
-                    <div style="text-align:center; padding: 25px 10px;">
-                        <i class="fa-solid fa-medal" style="font-size: 3.5rem; color: #f59e0b; margin-bottom: 15px;"></i>
-                        <h2 style="font-family:'Readex Pro'; font-size: 1.5rem; margin-bottom: 8px;">ممتاز يا بطل! أنهيت الاختبار بنجاح</h2>
-                        <p style="font-size: 1.15rem; color: var(--accent); margin-bottom: 20px;">حصلت على ${earnedScore} من ${quizBank.length}</p>
-                        <button class="cta-button" onclick="resetQuiz()"><i class="fa-solid fa-arrow-rotate-right"></i> إعادة الاختبار</button>
-                    </div>
-                `;
+                // شاشة انتهاء الاختبار والميمات الصوتية التفاعلية
+                if (earnedScore >= 3) {
+                    playEgyptianSuccessMeme();
+                    document.getElementById('quizContainer').innerHTML = `
+                        <div style="text-align:center; padding: 25px 10px;">
+                            <i class="fa-solid fa-crown" style="font-size: 3.8rem; color: #f59e0b; margin-bottom: 12px; animation: bounce 1s infinite alternate;"></i>
+                            <h2 style="font-family:'Readex Pro'; font-size: 1.5rem; margin-bottom: 8px; color: var(--accent);">الله ينور عليك يا وحش! 🔥</h2>
+                            <p style="font-size: 1.25rem; font-weight:700; color: var(--text-main); margin-bottom: 6px;">"إيه الحلاوة دي.. إيه العظمة دي!"</p>
+                            <p style="font-size: 1.05rem; color: var(--text-sub); margin-bottom: 20px;">درجتك: <strong>${earnedScore} من ${quizBank.length}</strong> (امتياز يا دكتور)</p>
+                            <button class="cta-button" onclick="resetQuiz()"><i class="fa-solid fa-arrow-rotate-right"></i> إعادة الاختبار</button>
+                        </div>
+                    `;
+                } else {
+                    playEgyptianFailMeme();
+                    document.getElementById('quizContainer').innerHTML = `
+                        <div style="text-align:center; padding: 25px 10px;">
+                            <i class="fa-solid fa-face-dizzy" style="font-size: 3.8rem; color: var(--coral); margin-bottom: 12px;"></i>
+                            <h2 style="font-family:'Readex Pro'; font-size: 1.5rem; margin-bottom: 8px; color: var(--coral);">فضحتنا وعريتنا! 🤦‍♂️</h2>
+                            <p style="font-size: 1.25rem; font-weight:700; color: var(--text-main); margin-bottom: 6px;">"إيه الدرجات دي يا باشا.. روح ذاكر وتعالى تاني!"</p>
+                            <p style="font-size: 1.05rem; color: var(--text-sub); margin-bottom: 20px;">درجتك: <strong>${earnedScore} من ${quizBank.length}</strong> (محتاج تركيز)</p>
+                            <button class="cta-button" onclick="resetQuiz()"><i class="fa-solid fa-arrow-rotate-right"></i> حاول مرة تانية</button>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -1409,6 +1480,7 @@
         }
 
         window.onload = () => {
+            initTheme();
             renderQuestion();
         };
     </script>
