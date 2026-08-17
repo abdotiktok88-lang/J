@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>علوم الأغذية - الدفعة 27</title>
     <!-- خط Cairo المميز -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -203,6 +206,7 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
             position: relative;
             overflow: hidden;
+            text-decoration: none;
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -935,7 +939,7 @@
             <div id="selected-subject-label" class="section-label">محتوى المادة</div>
             
             <div class="content-sub-grid">
-                <div class="content-box-card" onclick="playClickSound(); alert('سيتم فتح قسم النظري والمحاضرات لهذه المادة');">
+                <div class="content-box-card" onclick="handleTheoryClick();">
                     <span class="box-icon">📖</span>
                     <h4>النظري</h4>
                     <span>المحاضرات والشرح</span>
@@ -946,6 +950,23 @@
                     <h4>العملي</h4>
                     <span>السكاشن والتجارب</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- المستوى الرابع: محتوى النظري الخاص بمادة تكنولوجيا الحبوب (كتاب المقرر) -->
+        <div id="view-grains-theory" class="view-section">
+            <div class="section-label">قسم النظري - تكنولوجيا الحبوب</div>
+            <div class="grid-cards">
+                <a href="grains_book.pdf" download class="app-card card-primary-glow" onclick="playClickSound();">
+                    <div class="card-info">
+                        <div class="card-icon">📥</div>
+                        <div class="card-text">
+                            <h3>كتاب المقرر</h3>
+                            <p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اضغط لتنزيل الملف</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">⬇</div>
+                </a>
             </div>
         </div>
 
@@ -1032,6 +1053,8 @@
             subtitle: 'الفرقة الرابعة - دفعة 27'
         }];
 
+        let currentActiveSubject = '';
+
         function navigateTo(viewId, title, subtitle) {
             playClickSound();
             const activeSection = document.querySelector('.view-section.active');
@@ -1051,8 +1074,18 @@
         }
 
         function openSubject(subjectName) {
+            currentActiveSubject = subjectName;
             document.getElementById('selected-subject-label').innerText = 'محتوى مادة: ' + subjectName;
             navigateTo('view-subject-content', subjectName, 'اختر نوع المحتوى');
+        }
+
+        function handleTheoryClick() {
+            playClickSound();
+            if (currentActiveSubject === 'تكنولوجيا الحبوب') {
+                navigateTo('view-grains-theory', 'تكنولوجيا الحبوب', 'قسم النظري');
+            } else {
+                alert('سيتم فتح قسم النظري والمحاضرات لهذه المادة');
+            }
         }
 
         function navigateBack() {
