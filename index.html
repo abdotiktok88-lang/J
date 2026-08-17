@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق الحاسب الآلي الشامل - نظري | إشراف: عبدالرحمن محمود</title>
+    <link href="https://fonts.googleapis.com/css2?family=Changa:wght@600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #0a0e17;
+            --bg-card: rgba(22, 28, 45, 0.75);
+            --primary: #4361ee;
+            --primary-glow: rgba(67, 97, 238, 0.35);
+            --accent: #4cc9f0;
+            --accent-glow: rgba(76, 201, 240, 0.4);
+            --secondary: #7209b7;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(67, 97, 238, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(114, 9, 183, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(76, 201, 240, 0.08) 0%, transparent 60%);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* شريط التنقل العلوي */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .nav-title h1 {
+            font-family: 'Changa', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-title span {
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sound-toggle-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .sound-toggle-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* شريط التبويبات الرئيسي */
+        .tabs-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 67px;
+            z-index: 999;
+            backdrop-filter: blur(15px);
+        }
+
+        .tabs-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn i {
+            font-size: 1rem;
+        }
+
+        .tab-btn:hover {
+            background: rgba(76, 201, 240, 0.15);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        /* الحاوية والمحتوى */
+        .main-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 0 15px 80px;
+            flex: 1;
+        }
+
+        .section-view {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* كروت العرض التفاعلية */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--accent), var(--primary));
+            border-radius: 0 20px 20px 0;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(76, 201, 240, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-title {
+            font-family: 'Changa', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title i {
+            color: var(--accent);
+            font-size: 1.3rem;
+            background: rgba(76, 201, 240, 0.12);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .badge {
+            background: rgba(67, 97, 238, 0.2);
+            color: var(--accent);
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .badge-exam {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        /* الأكورديون التفاعلي */
+        .accordion-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .interactive-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .interactive-item:hover {
+            border-color: rgba(76, 201, 240, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .item-head {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #f1f5f9;
+            user-select: none;
+        }
+
+        .item-head-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .item-head-title i {
+            color: var(--accent);
+            width: 24px;
+            text-align: center;
+        }
+
+        .item-chevron {
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+
+        .interactive-item.open .item-chevron {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .item-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+            padding: 0 20px;
+            color: #cbd5e1;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .interactive-item.open .item-body {
+            padding: 10px 20px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 2000px;
+        }
+
+        /* شبكة البطاقات (Grid Layout) */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 15px;
+        }
+
+        .grid-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .grid-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(76, 201, 240, 0.15);
+        }
+
+        .grid-card-icon {
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .grid-card h4 {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .grid-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* بطاقات العلماء */
+        .scientist-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(114, 9, 183, 0.15));
+            border: 1px solid rgba(76, 201, 240, 0.25);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+
+        .scientist-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px var(--primary-glow);
+        }
+
+        .scientist-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .scientist-info h3 {
+            font-family: 'Changa', sans-serif;
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .scientist-info .era {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .scientist-info p {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        /* قسم الاختبارات التفاعلية (Quiz System) */
+        .quiz-container {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-score-badge {
+            font-family: 'Changa', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent);
+            background: rgba(76, 201, 240, 0.1);
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+        }
+
+        .question-box {
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .answer-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-align: right;
+            cursor: pointer;
+            transition: 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .answer-btn:hover:not(.disabled) {
+            background: rgba(76, 201, 240, 0.15);
+            border-color: var(--accent);
+            transform: translateX(-5px);
+        }
+
+        .answer-btn.correct {
+            background: rgba(16, 185, 129, 0.25) !important;
+            border-color: var(--success) !important;
+            color: #34d399 !important;
+        }
+
+        .answer-btn.wrong {
+            background: rgba(239, 68, 68, 0.25) !important;
+            border-color: var(--danger) !important;
+            color: #f87171 !important;
+        }
+
+        .explanation-box {
+            margin-top: 15px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed var(--accent);
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            display: none;
+        }
+
+        /* أزرار الإجراءات */
+        .btn-action {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-family: 'Changa', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--primary-glow);
+        }
+
+        /* الفوتر التفاعلي */
+        .app-footer {
+            text-align: center;
+            padding: 25px 15px;
+            background: rgba(10, 14, 23, 0.9);
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .app-footer strong {
+            color: var(--accent);
+        }
+
+        /* التجاوب مع الشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .navbar { padding: 10px 15px; }
+            .nav-title h1 { font-size: 1.1rem; }
+            .tabs-bar { top: 61px; padding: 10px 15px; }
+            .glass-card { padding: 20px 15px; }
+            .scientist-card { flex-direction: column; text-align: center; }
+            .scientist-avatar { margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر العلوي -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <div class="nav-logo-icon">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div class="nav-title">
+                <h1>تطبيق الحاسب الآلي الشامل</h1>
+                <span>المنهج النظري المتكامل | المستوى الثالث</span>
+            </div>
+        </div>
+        <div class="nav-controls">
+            <button class="sound-toggle-btn" id="soundBtn" onclick="toggleSound()" title="تشغيل / كتم الصوت">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- شريط الأقسام والتبويبات -->
+    <nav class="tabs-bar">
+        <button class="tab-btn active" onclick="switchTab('tab-intro')"><i class="fa-solid fa-desktop"></i> أساسيات الحاسب</button>
+        <button class="tab-btn" onclick="switchTab('tab-hardware')"><i class="fa-solid fa-memory"></i> العتاد والذاكرة</button>
+        <button class="tab-btn" onclick="switchTab('tab-software')"><i class="fa-solid fa-code"></i> البرمجيات والفيروسات</button>
+        <button class="tab-btn" onclick="switchTab('tab-networks')"><i class="fa-solid fa-network-wired"></i> الشبكات والإنترنت</button>
+        <button class="tab-btn" onclick="switchTab('tab-ai')"><i class="fa-solid fa-brain"></i> الذكاء الاصطناعي</button>
+        <button class="tab-btn" onclick="switchTab('tab-control')"><i class="fa-solid fa-sliders"></i> التحكم الآلي</button>
+        <button class="tab-btn" onclick="switchTab('tab-stats')"><i class="fa-solid fa-chart-line"></i> التحليل الإحصائي</button>
+        <button class="tab-btn" onclick="switchTab('tab-food-industry')"><i class="fa-solid fa-industry"></i> التصنيع الغذائي</button>
+        <button class="tab-btn" onclick="switchTab('tab-scientists')"><i class="fa-solid fa-flask-vial"></i> موسوعة العلماء</button>
+        <button class="tab-btn" onclick="switchTab('tab-exam-bank')"><i class="fa-solid fa-graduation-cap"></i> بنك الأسئلة والمقالي</button>
+    </nav>
+
+    <!-- الحاوية الرئيسية للمحتوى -->
+    <main class="main-container">
+
+        <!-- 1. تبويب أساسيات الحاسب -->
+        <section id="tab-intro" class="section-view active">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-laptop-code"></i>
+                        تعريف الحاسب وفكرة عمله
+                    </div>
+                    <span class="badge">الفصل الأول</span>
+                </div>
+                <p style="color: #e2e8f0; line-height: 1.8; margin-bottom: 20px;">
+                    <strong>الحاسوب (Computer):</strong> هو جهاز إلكتروني يقوم باستقبال البيانات وتخزينها، ومن ثم إجراء مجموعة من العمليات الحسابية والمنطقية عليها وفقاً لسلسلة من التعليمات (البرامج) المخزنة في ذاكرته، وبعدها أو خلالها يقوم بإخراج النتائج على وحدات الإخراج.
+                </p>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-solid fa-brain grid-card-icon"></i>
+                        <h4>فكرة عمل الكمبيوتر</h4>
+                        <p>جهاز لديه القدرة على المعالجة من خلال شرائح إلكترونية حاكى فيها صانعوها عمل العقل البشري. المعالجة وحدها لا تكفي بل يجب تلقينه وتزويده بطريقة الحل.</p>
+                    </div>
+                    <div class="grid-card">
+                        <i class="fa-solid fa-shapes grid-card-icon"></i>
+                        <h4>مثلث المعالجة الإلكترونية (EDP)</h4>
+                        <p>تحويل الشيء من شكله الخام/الطبيعي إلى شكل جديد مفيد عبر شرائح إلكترونية. والبيانات هي أي شيء يعبر عنه (صوت، ضغط دم، رياح، أرقام).</p>
+                    </div>
+                    <div class="grid-card">
+                        <i class="fa-solid fa-users-gear grid-card-icon"></i>
+                        <h4>أركان منظومة الحاسب</h4>
+                        <p><strong>1. Hardware:</strong> الكيان المادي الملموس.<br><strong>2. Software:</strong> البرامج والشفرات اللاملموسة.<br><strong>3. Peopleware:</strong> العنصر البشري (مستخدم، مطور، مصنع).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-server"></i>
+                        تصنيف الحاسبات حسب الحجم والقدرة
+                    </div>
+                    <span class="badge">مهم للامتحان</span>
+                </div>
+                
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-bolt"></i> الحاسب العملاق (Supercomputer)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            حاسوب عملاق ذو إمكانيات هائلة جداً، يستخدم لمعالجة وتخزين كميات ضخمة من البيانات، ويستخدم على نطاق دولي (يربط بين الدول أو المدن الكبرى) ومخصص للبحث العلمي والمحاكاة المعقدة.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-building"></i> الحاسب الكبير المركزي (Mainframe)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            يسمى بالحاسب الآلي المركزي، يستخدم لربط شبكة من الحاسبات على مستوى مدينة كاملة (للشركات والمصارف) أو المؤسسات الضخمة جداً.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-network-wired"></i> الحاسب المتوسط (Minicomputer)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            يستخدم لربط شبكة من الحواسيب على مستوى مؤسسة أو شركة متوسطة أو صغيرة الحجم.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-desktop"></i> الحاسب الدقيق (Microcomputer) وأشكاله</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            يشمل عدة أشكال رئيسية:<br>
+                            • <strong>الحاسب الشخصي (Personal Computer - PC):</strong> الأشهر والأكثر انتشاراً وتعاملاً لرخص سعره وتطوره المستمر.<br>
+                            • <strong>الحاسب المحمول (Portable / Laptop):</strong> يشبه الشخصي وصغير الحجم يعمل ببطارية قابلة للشحن.<br>
+                            • <strong>الحاسب المنزلي (Home Computer):</strong> يستخدم منزلياً للأطفال للتعلم والترفيه وإمكانياته أقل من الشخصي.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. تبويب العتاد والذاكرة -->
+        <section id="tab-hardware" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-microchip"></i>
+                        المكونات المادية (Hardware)
+                    </div>
+                    <span class="badge">وحدات الإدخال والإخراج</span>
+                </div>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-solid fa-arrow-right-to-bracket grid-card-icon"></i>
+                        <h4>وحدات الإدخال (Input Units)</h4>
+                        <p>الفأرة، لوحة المفاتيح، الميكروفون، عصا التحكم، القلم الضوئي، الكاميرا الرقمية، قارئ العلامات الضوئية (OMR)، والماسح الضوئي (ينقل الصور والنصوص لملف إلكتروني وتقاس دقته بعدد النقاط في البوصة DPI).</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-arrow-right-from-bracket grid-card-icon"></i>
+                        <h4>وحدات الإخراج (Output Units)</h4>
+                        <p>الشاشة (تقاس بالبوصة وتحتاج بطاقة شاشة)، الطابعة (تقاس سرعتها بصفحة/دقيقة أو حرف/ثانية ودقتها بعدد النقاط في البوصة DPI ومنها ليزر ونفاثة حبر ونقطية)، الراسمات، وسماعات الصوت.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-right-left grid-card-icon"></i>
+                        <h4>وحدات مشتركة (إدخال وإخراج)</h4>
+                        <p><strong>المودم:</strong> يرسل البيانات عبر خطوط الهاتف ويبدأ بإشارة الاتفاق.<br><strong>مشغلات الأقراص:</strong> إدخال عند قراءة وتشغيل البرامج، وإخراج عند حفظ البيانات عليها.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-memory"></i>
+                        المعالجة وأنواع الذاكرة (Memory & CPU)
+                    </div>
+                    <span class="badge">مقارنة الذاكرة</span>
+                </div>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-microchip"></i> وحدة المعالجة المركزية (CPU) واللوحة الأم</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>اللوحة الرئيسية (Motherboard):</strong> تحوي الدوائر الإلكترونية وتنقل البيانات بين مختلف الأجزاء.<br>
+                            • <strong>المعالج (CPU):</strong> يتكون من وحدة الحساب والمنطق (ALU) للعمليات الحسابية والمنطقية، ووحدة التحكم (Control Unit) لتنسيق جميع العمليات، وذاكرة وسيطة فائقة السرعة، وتقاس سرعته بالميجاهيرتز والجيجاهيرتز.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-table-list"></i> جدول مقارنة أنواع الذاكرة (RAM vs ROM vs Cache)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            <table style="width:100%; border-collapse: collapse; margin-top: 10px; color: #fff; font-size: 0.95rem;">
+                                <tr style="background: rgba(67, 97, 238, 0.3); border-bottom: 1px solid var(--accent);">
+                                    <th style="padding: 10px; text-align: right;">وجه المقارنة</th>
+                                    <th style="padding: 10px; text-align: right;">ذاكرة القراءة فقط (ROM)</th>
+                                    <th style="padding: 10px; text-align: right;">ذاكرة الوصول العشوائي (RAM)</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 8px; font-weight: bold; color: var(--accent);">الاستخدام</td>
+                                    <td style="padding: 8px;">ذاكرة الحاسب الأساسية</td>
+                                    <td style="padding: 8px;">ذاكرة المستخدم المؤقتة</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 8px; font-weight: bold; color: var(--accent);">نوعها</td>
+                                    <td style="padding: 8px;">دائمة (لا تفقد محتواها)</td>
+                                    <td style="padding: 8px;">مؤقتة (تتلاشى بانقطاع الكهرباء)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 8px; font-weight: bold; color: var(--accent);">البرامج</td>
+                                    <td style="padding: 8px;">تعد بمعرفة الشركة المصنعة</td>
+                                    <td style="padding: 8px;">يختارها ويحملها المستخدم</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; font-weight: bold; color: var(--accent);">طبيعتها</td>
+                                    <td style="padding: 8px;">قراءة فقط (Read Only)</td>
+                                    <td style="padding: 8px;">قراءة وكتابة (Read & Write)</td>
+                                </tr>
+                            </table>
+                            <p style="margin-top: 12px; color: var(--accent);">
+                                ⚡ <strong>الذاكرة الوسيطة (Cache Memory):</strong> ذاكرة فائقة السرعة تستخدم لتقليل الوقت الذي تحتاجه وحدة المعالجة للحصول على البيانات من الذاكرة الرئيسية.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. تبويب البرمجيات والفيروسات -->
+        <section id="tab-software" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-code"></i>
+                        أنواع البرمجيات (Software)
+                    </div>
+                    <span class="badge">الكيان البرمجي</span>
+                </div>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-brands fa-windows grid-card-icon"></i>
+                        <h4>1. برامج نظم التشغيل</h4>
+                        <p>مسؤولة عن التحكم في كل المهام والوسيط الأساسي بين المستخدم والعتاد (مثل Windows و DOS).</p>
+                    </div>
+                    <div class="grid-card">
+                        <i class="fa-solid fa-file-word grid-card-icon"></i>
+                        <h4>2. البرامج التطبيقية</h4>
+                        <p>تُعد من المبرمجين لحل مشكلة وتطبيق محدد (مثل حزمة MS Office: Word, Excel, PowerPoint).</p>
+                    </div>
+                    <div class="grid-card">
+                        <i class="fa-solid fa-terminal grid-card-icon"></i>
+                        <h4>3. لغات البرمجة</h4>
+                        <p>وسيلة تخاطب مع الحاسب وتنقسم إلى لغة الآلة، لغة التجميع، واللغات عالية المستوى (فورتران، باسكال، سي، سي++، بيسك، كوبول).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        الفيروسات الإلكترونية وأنواعها التخريبية
+                    </div>
+                    <span class="badge badge-exam">سؤال امتحاني هام</span>
+                </div>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-bug"></i> ما هو الفيروس؟ ولماذا ينتشر؟</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            برنامج صُمم بهدف إلحاق الضرر بنظام الحاسب أو سرقة البيانات، قادر على التكاثر والربط بالبرامج الأخرى. انتشرت الفيروسات بسبب توافق البرامج وانتشار البرمجيات المقرصنة وغير الأصلية.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-biohazard"></i> الأنواع والأسلحة البرمجية الخبيثة</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>حصان طروادة (Trojan Horse):</strong> كود تخريبي يضاف للبرنامج ولا يشعر به النظام حتى تحين اللحظة المحددة.<br>
+                            • <strong>القنبلة المنطقية (Logic Bomb):</strong> تعمل عند حدوث شرط معين (مثل فصل موظف من الشركة فتقوم بتخريب البيانات).<br>
+                            • <strong>القنبلة الموقوتة (Time Bomb):</strong> نوع من القنابل المنطقية تنفجر في تاريخ أو ساعة محددة (مثل 10 إبريل).<br>
+                            • <strong>الباب الخلفي (Trapdoor):</strong> كود يزرع أثناء التثبيت ليتجاوز الحماية ويبقى نائماً حتى يستغله المخترق.<br>
+                            • <strong>الدودة (Worm):</strong> تتميز بقدرتها على إعادة توليد نفسها وتنتشر تلقائياً عبر الأجهزة المتصلة بالشبكة.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-user-shield"></i> تدابير الحماية وإجراءات المستخدم</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            1. الاحتفاظ بنسخ احتياطية نظيفة بعيداً عن الجهاز.<br>
+                            2. فحص البرامج في جهاز مستقل غير متصل بالشبكة قبل اعتمادها.<br>
+                            3. تغيير كلمات المرور بانتظام وعدم ترك الشاشة مفتوحة عند المغادرة.<br>
+                            4. غلق فتحة التأمين للأقراص المرنة لمنع الكتابة غير المقصودة.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. تبويب الشبكات والإنترنت -->
+        <section id="tab-networks" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-network-wired"></i>
+                        شبكات الحاسوب (Computer Networks)
+                    </div>
+                    <span class="badge">مفاهيم وفوائد</span>
+                </div>
+                <p style="color: #cbd5e1; line-height: 1.8; margin-bottom: 20px;">
+                    <strong>الشبكة:</strong> مجموعة حواسيب تتصل مع بعضها بواسطة مكونات مادية وبرمجية ضمن شروط وقواعد لتبادل البيانات.<br>
+                    <strong>فوائدها:</strong> المشاركة في المصادر (طابعات وأقراص)، نقل المعلومات بسرعة، التحكم المركزي بالملفات عبر الخادم (Server)، وتوفير الإنترنت.
+                </p>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-solid fa-globe grid-card-icon"></i>
+                        <h4>حسب النطاق الجغرافي</h4>
+                        <p><strong>LAN:</strong> شبكة محلية لمنطقة محدودة دون معدات اتصالات.<br><strong>WAN:</strong> شبكة واسعة تفصلها مسافات كبيرة تحتاج خطوط اتصالات.<br><strong>Internet:</strong> الشبكة العملاقة العالمية.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-users-between-lines grid-card-icon"></i>
+                        <h4>حسب العلاقة بين الأجهزة</h4>
+                        <p><strong>الند للند (Peer-to-Peer):</strong> أجهزة متساوية وتوزيع متساوٍ للملفات.<br><strong>الزبون والخادم (Client/Server):</strong> أجهزة مزودة للمعلومات (خوادم) وأخرى تطلبها (زبائن) للمؤسسات الكبرى.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-lock grid-card-icon"></i>
+                        <h4>إنترانت وإكسترانت</h4>
+                        <p><strong>الإنترانت (Intranet):</strong> شبكة داخلية خاصة بموظفي المؤسسة فقط.<br><strong>الإكسترانت (Extranet):</strong> تسمح لأطراف محددة من خارج المؤسسة بالاستفادة من خدماتها.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-timeline"></i>
+                        تاريخ ومحطات نشأة الإنترنت
+                    </div>
+                    <span class="badge">تسلسل زمني</span>
+                </div>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-clock-rotate-left"></i> المحطات التاريخية لنمو الإنترنت</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>الستينيات:</strong> ظهور الفكرة في أمريكا لأغراض دفاعية وعسكرية.<br>
+                            • <strong>السبعينيات:</strong> اختراع البريد الإلكتروني (E-mail).<br>
+                            • <strong>الثمانينيات:</strong> بدء دخول واستخدام الشبكة في الجامعات الأمريكية.<br>
+                            • <strong>التسعينيات:</strong> الانتشار العالمي الصاروخي بمعدل نمو قياسي وصل إلى <strong>341%</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. تبويب الذكاء الاصطناعي -->
+        <section id="tab-ai" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-brain"></i>
+                        الذكاء الاصطناعي (Artificial Intelligence)
+                    </div>
+                    <span class="badge">هندسة الآلات الذكية</span>
+                </div>
+                <p style="color: #e2e8f0; line-height: 1.8; margin-bottom: 20px;">
+                    <strong>التعريف:</strong> هو فرع من فروع علم الحاسب وهو علم هندسة صناعة الآلات والأنظمة الذكية التي تحاكي العقل البشري وتصرفاته.
+                </p>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-solid fa-lightbulb grid-card-icon"></i>
+                        <h4>أهم سمات الذكاء</h4>
+                        <p>التعلم والاستفادة من التجارب السابقة، تحمل المواقف المعقدة، معالجة نقص المعلومات، تمييز المعلومات الهامة، الإبداع والتصرف السريع الصائب.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-dna grid-card-icon"></i>
+                        <h4>الشبكات العصبية والخوارزميات</h4>
+                        <p>الأولوية القصوى هي ابتكار خوارزميات تحل مسائل معقدة وتقلد المنطق البشري، واستخدام شبكات عصبية تحاكي الدماغ البشري.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-vr-cardboard grid-card-icon"></i>
+                        <h4>مجالات استخدام الذكاء الاصطناعي</h4>
+                        <p>تشخيص الأمراض والعمليات الجراحية، تداول الأسهم بالبورصة، التحكم الآلي الصناعي، ألعاب الفيديو، واسترجاع وسائط المعلومات النشطة.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-vial-circle-check"></i>
+                        اختبار تورينج وتاريخ الذكاء الاصطناعي
+                    </div>
+                    <span class="badge">Alan Turing Test</span>
+                </div>
+                <p style="color: #cbd5e1; line-height: 1.8;">
+                    <strong>اختبار آلان تورينج (Turing Test):</strong> يقوم فيه إنسان بطرح أسئلة على حاسوب وإنسان آخر في نفس الوقت دون رؤيتهما، فإذا عجز المحكّم عن التفريق بين إجابة الإنسان والآلة يُصنف الجهاز بأنه <strong>ذكي</strong>.<br>
+                    • 1956: مؤتمر الذكاء الاصطناعي الشهير بالجامعات الأمريكية.<br>
+                    • الستينيات: تمويل وزارة الدفاع الأمريكية للأبحاث.<br>
+                    • التسعينيات وما بعدها: الانتعاش والنجاحات التكنولوجية العظيمة.
+                </p>
+            </div>
+        </section>
+
+        <!-- 6. تبويب التحكم الآلي -->
+        <section id="tab-control" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-sliders"></i>
+                        التحكم الآلي (Automatic Control)
+                    </div>
+                    <span class="badge badge-exam">سؤال مقالي أساسي</span>
+                </div>
+                <p style="color: #e2e8f0; line-height: 1.8; margin-bottom: 20px;">
+                    <strong>التعريف:</strong> مجموعة من العمليات المنظمة الموجهة نحو تحقيق هدف محدد والمحافظة عليه.<br>
+                    • <strong>مثال طبيعي:</strong> سحب اليد فوراً عند لمس جسم ساخن عبر الجهاز العصبي للمحافظة على سلامة الإنسان.<br>
+                    • <strong>أول تطوير:</strong> ميكانيكية تنظيم العوامة في اليونان (300 ق.م) للتحكم في مستوى الماء.<br>
+                    • <strong>أول جهاز تحكم:</strong> جهاز التحكم الطارد الذي طوره <strong>جيمس واط (1769)</strong> للتحكم في سرعة ماكينة البخار.
+                </p>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-star"></i> مميزات وفوائد التحكم الآلي للمصانع (اكتب بأسلوبك)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            1. <strong>عدم الإجهاد:</strong> الإنسان يتعب وتقل كفاءته بينما الجهاز الآلي لا يصيبه التعب والإجهاد.<br>
+                            2. <strong>زيادة الإنتاجية:</strong> رفع الناتج لكل عامل وتوجيه العمالة لمهام إشرافية وتخطيطية أهم.<br>
+                            3. <strong>زيادة عمر الآلات:</strong> تشغيل مثالي يقلل فترات التوقف المكلفة ويحافظ على الاستثمار الثابت.<br>
+                            4. <strong>رفع الجودة والتوفير:</strong> توفير المواد الخام والطاقة وتحسين مواصفات المنتج النهائي.<br>
+                            5. <strong>السيطرة على الأنظمة المعقدة:</strong> إدارة العمليات التي تفوق قدرة واستيعاب العقل البشري.<br>
+                            6. <strong>توفير الطاقة:</strong> مثل الثرموستات في الثلاجة الذي يفصل ويعمل لفترات محددة.<br>
+                            7. <strong>السلامة والأمان:</strong> التعامل مع البيئات الخطرة والمواد المشعة بأمان تام.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. تبويب التحليل الإحصائي -->
+        <section id="tab-stats" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        علم الإحصاء والبرمجيات الإحصائية
+                    </div>
+                    <span class="badge">SPSS, SAS, STATA, Excel</span>
+                </div>
+                <p style="color: #cbd5e1; line-height: 1.8; margin-bottom: 20px;">
+                    <strong>علم الإحصاء:</strong> وسيلة لجمع الحقائق في قوالب رقمية وتلخيصها واستنتاج القرارات والتنبؤ المستقبلي بالظواهر للقطاع الزراعي والغذائي.
+                </p>
+
+                <div class="info-grid">
+                    <div class="grid-card">
+                        <i class="fa-solid fa-square-poll-vertical grid-card-icon"></i>
+                        <h4>برنامج SPSS</h4>
+                        <p>أقدم البرامج (1968)، سهل جداً عبر القوائم دون الحاجة لكتابة أوامر، يتفوق في الإحصاء الوصفي والعلوم الاجتماعية، لكنه لا يتعامل مع ملفات البيانات الضخمة جداً.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-chart-line grid-card-icon"></i>
+                        <h4>برنامج STATA</h4>
+                        <p>حديث ومتطور، يناسب الاقتصاد القياسي، يتفوق في تحليل الانحدار المرتب، سهل الاستخدام بالقوائم والأوامر، ويعالج ملفات أكبر من SPSS.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-gears grid-card-icon"></i>
+                        <h4>برنامج SAS</h4>
+                        <p>من أقوى البرامج وأصعبها، كان حكراً على وزارة الزراعة الأمريكية، يتعامل مع البيانات الضخمة جداً في الصناعات الغذائية والزراعية ويحتاج إتقان لغة برمجته.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-file-excel grid-card-icon"></i>
+                        <h4>برنامج MS EXCEL</h4>
+                        <p>جزء من Office، سهل ومفتوح، يتكامل مع مختلف البرامج، لكنه يحتاج إضافات تجارية باهظة للتحليلات الإحصائية المتقدمة جداً.</p>
+                    </div>
+
+                    <div class="grid-card">
+                        <i class="fa-solid fa-globe-americas grid-card-icon"></i>
+                        <h4>المنظمات الدولية للإحصاء الزراعي</h4>
+                        <p>• <strong>FAO:</strong> منظمة الأغذية والزراعة للأمم المتحدة لجمع وتوحيد مقاييس ونشر بيانات الغذاء عالمياً.<br>• <strong>المنظمة العربية للتنمية الزراعية:</strong> نشر الكتاب الإحصائي السنوي الزراعي للدول العربية.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. تبويب التصنيع الغذائي -->
+        <section id="tab-food-industry" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-industry"></i>
+                        الحاسب الآلي في التصنيع الغذائي والإنتاج
+                    </div>
+                    <span class="badge">CAD & CAM ومعدات المصنع</span>
+                </div>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-arrows-split-up-and-left"></i> أساليب الإنتاج الثلاثة</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            1. <strong>الإنتاج اليدوي:</strong> يعتمد كلياً على الجهد العضلي للعمالة البشرية.<br>
+                            2. <strong>الإنتاج بالماكينات:</strong> كل ماكينة تعمل بمفردها وينقل العامل المواد بينها.<br>
+                            3. <strong>الإنتاج الآلي:</strong> تحكم بالحاسوب في كافة العمليات دون تدخل بشري ومستمر 24 ساعة بمستوى جودة ثابت.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-compass-drafting"></i> أنظمة الحاسوب في المصنع (CAD & CAM)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>CAD (التصميم بمساعدة الحاسوب):</strong> إعداد الرسومات الهندسية وتصميم المعدات وتحويل الأبعاد بدقة.<br>
+                            • <strong>CAM (التصنيع بمساعدة الحاسوب):</strong> برمجة وتوجيه الآلات ومعدات خطوط الإنتاج والسيطرة عليها.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-bottle-droplet"></i> خط تصنيع الألبان والأغذية</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>التوحيد القياسي:</strong> ضبط نسبة الدهن (1.5% لمنخفض الدهن، 3% للطبيعي).<br>
+                            • <strong>البسترة:</strong> تسخين الحليب على 72 - 75 مْ لمدة 15 - 20 ثانية عبر المبادلات الحرارية.<br>
+                            • <strong>التجنيس:</strong> تفتيت حبيبات الدهن لمنع تكون طبقة القشطة.<br>
+                            • <strong>مكونات الخط:</strong> معالجة الماء، خزانات الخلط، غرف التبريد، طلمبات، التعقيم، التعبئة، التحضين، والتجفيف.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-vial"></i> أجهزة التحليل المعملي الحديثة (GC & HPLC & pH)</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            • <strong>جهاز الكروماتوجرافي الغازي (GC):</strong> لفصل المركبات العضوية الطيارة، الطور المتحرك غاز والطور الثابت صلب في أنبوبة شعرية حتى 10 أمتار.<br>
+                            • <strong>جهاز HPLC:</strong> عالي الدقة لفصل وتقدير المكونات، الطور المتحرك سائل والطور الثابت صلب أو سائل في عمود 25 سم.<br>
+                            • <strong>مقياس الحموضة (pH Meter):</strong> يقيس فرق الجهد الكهربي عبر القطب الزجاجي الحساس لأيونات الهيدروجين، وتتم معايرته بثلاثة محاليل قياسية (pH=7 متعادل، pH=4 حامضي، pH=10 قاعدي).<br>
+                            • <strong>برنامج USDA:</strong> برنامج وزارة الزراعة الأمريكية لحساب القيم والعناصر الغذائية.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. تبويب موسوعة العلماء -->
+        <section id="tab-scientists" class="section-view">
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-award"></i>
+                        موسوعة رواد العلم والتكنولوجيا الواردين بالمنهج
+                    </div>
+                    <span class="badge">شخصيات تاريخية ملهمة</span>
+                </div>
+
+                <!-- توماس إديسون -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-lightbulb"></i></div>
+                    <div class="scientist-info">
+                        <h3>توماس إديسون (1847 - 1931)</h3>
+                        <span class="era">مخترع ورجل أعمال أمريكي</span>
+                        <p>أضاء العالم باختراع المصباح الكهربائي العملي، وسجل رقماً قياسياً بـ 1093 براءة اختراع، وأسس أول مختبر للأبحاث الصناعية في العالم.</p>
+                    </div>
+                </div>
+
+                <!-- ماري كوري -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-atom"></i></div>
+                    <div class="scientist-info">
+                        <h3>ماري كوري (1867 - 1934)</h3>
+                        <span class="era">عالمة فيزياء وكيمياء بولندية-فرنسية</span>
+                        <p>رائدة أبحاث النشاط الإشعاعي، أول امرأة تفوز بنوبل والشخص الوحيد المتوج بها في مجالين علميين مختلفين، اكتشفت عنصري البولونيوم والراديوم وطورت استخدام الأشعة السينية طبياً.</p>
+                    </div>
+                </div>
+
+                <!-- نيكولا تسلا -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-bolt-lightning"></i></div>
+                    <div class="scientist-info">
+                        <h3>نيكولا تسلا (1856 - 1943)</h3>
+                        <span class="era">فيزيائي ومهندس صربي-أمريكي</span>
+                        <p>طور نظام التيار المتردد (AC) الذي أحدث ثورة نقل الطاقة لمسافات بعيدة، وصاحب ابتكارات رائدة في اللاسلكي والمحركات وملفات تسلا.</p>
+                    </div>
+                </div>
+
+                <!-- إسحق نيوتن -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-apple-whole"></i></div>
+                    <div class="scientist-info">
+                        <h3>إسحق نيوتن (1643 - 1727)</h3>
+                        <span class="era">عالم رياضيات وفيزياء وفلك إنجليزي</span>
+                        <p>واضع قوانين الحركة الثلاثة وقانون الجاذبية الأرضية العام، ومؤسس حساب التفاضل والتكامل وإنجازات كبرى في دراسة الضوء والبصريات.</p>
+                    </div>
+                </div>
+
+                <!-- جراهام بيل -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-phone"></i></div>
+                    <div class="scientist-info">
+                        <h3>ألكسندر غراهام بيل (1847 - 1922)</h3>
+                        <span class="era">مخترع ومهندس اسكتلندي-أمريكي</span>
+                        <p>صاحب براءة اختراع أول هاتف عملي عام 1876، وتطوير الفونوغراف لتسجيل الصوت والعمل على تقنيات الطيران والاتصالات الضوئية.</p>
+                    </div>
+                </div>
+
+                <!-- جاليليو جاليلي -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-satellite"></i></div>
+                    <div class="scientist-info">
+                        <h3>غاليليو غاليلي (1564 - 1642)</h3>
+                        <span class="era">أبو العلم الحديث والفلك الرصدي إيطالي</span>
+                        <p>طور التلسكوب واكتشف أقمار المشتري وأطوار الزهرة وبقع الشمس، ودعم علمياً مركزية الشمس ودحض فكرة مركزية الأرض.</p>
+                    </div>
+                </div>
+
+                <!-- أحمد زويل -->
+                <div class="scientist-card">
+                    <div class="scientist-avatar"><i class="fa-solid fa-stopwatch-20"></i></div>
+                    <div class="scientist-info">
+                        <h3>أحمد زويل (1946 - 2016)</h3>
+                        <span class="era">عالم كيميائي مصري-أمريكي (نوبل 1999)</span>
+                        <p>أول عربي وأفريقي يفوز بنوبل في مجال علمي، ابتكر تقنية "الفيمتو ثانية" لتصوير حركة الذرات أثناء التفاعلات الكيميائية ولُقب بـ "أبو كيمياء الفيمتو".</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. تبويب بنك الأسئلة والمقالي -->
+        <section id="tab-exam-bank" class="section-view">
+            <!-- اختبار تفاعلي سريع -->
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-circle-question"></i>
+                        اختبار تفاعلي تدريبي على المنهج
+                    </div>
+                    <div class="quiz-score-badge" id="scoreDisplay">النقاط: 0 / 5</div>
+                </div>
+
+                <div class="quiz-container" id="quizBox">
+                    <div class="question-box">
+                        <div class="question-text" id="qText">السؤال يظهر هنا...</div>
+                        <div class="answers-grid" id="optionsContainer"></div>
+                        <div class="explanation-box" id="explainBox"></div>
+                    </div>
+                    <button class="btn-action" id="nextQBtn" onclick="nextQuestion()" style="display:none;">السؤال التالي <i class="fa-solid fa-arrow-left"></i></button>
+                </div>
+            </div>
+
+            <!-- أسئلة مقالية متوقعة بإجاباتها -->
+            <div class="glass-card">
+                <div class="card-header-flex">
+                    <div class="card-title">
+                        <i class="fa-solid fa-pen-nib"></i>
+                        الأسئلة المقالية النموذجية المتوقعة في الامتحان
+                    </div>
+                    <span class="badge badge-exam">إجابات مختصرة ومثالية</span>
+                </div>
+
+                <div class="accordion-group">
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-clipboard-question"></i> س1: لماذا سمي بمثلث المعالجة الإلكترونية للبيانات؟</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            <strong>الإجابة:</strong><br>
+                            1. <strong>المعالجة:</strong> تحويل أي شيء من شكله الخام الطبيعي إلى شكل جديد يمكن الاستفادة منه.<br>
+                            2. <strong>الإلكترونية:</strong> لأنها تتم بواسطة أجهزة وشرائح إلكترونية دقيقة وليس يدوياً أو ميكانيكياً.<br>
+                            3. <strong>البيانات:</strong> لأن البيانات تشمل أي شيء يمكن التعبير عنه (صوت، ضغط دم، حروف، أرقام).
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-clipboard-question"></i> س2: ما هي أهم مميزات وفوائد إدخال التحكم الآلي في المصانع؟</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            <strong>الإجابة:</strong><br>
+                            1. عدم تعرض الأجهزة للإجهاد والتعب مقارنة بالعامل البشري.<br>
+                            2. زيادة الإنتاجية وثبات مستوى الجودة والمواصفات للمنتج.<br>
+                            3. تقليل فترات التوقف وزيادة العمر الافتراضي للآلات والمعدات.<br>
+                            4. توفير استهلاك الطاقة والمواد الخام وتوفير الأمان والسلامة في العمليات الخطرة.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-clipboard-question"></i> س3: قارن باختصار بين البرامج الإحصائية (SPSS و SAS و STATA)؟</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            <strong>الإجابة:</strong><br>
+                            • <strong>SPSS:</strong> سهل جداً، يعتمد على القوائم، يتفوق في العلوم الاجتماعية والإحصاء الوصفي، ولا يناسب الملفات الضخمة جداً.<br>
+                            • <strong>STATA:</strong> متطور وسهل، ممتاز في الاقتصاد القياسي وتحليل الانحدار المرتب، ويستوعب ملفات أكبر.<br>
+                            • <strong>SAS:</strong> أقوى البرامج وأصعبها، يتطلب برمجة خاصة، ومصمم لقواعد البيانات الضخمة جداً في الزراعة والغذاء.
+                        </div>
+                    </div>
+
+                    <div class="interactive-item">
+                        <div class="item-head" onclick="toggleAccordion(this)">
+                            <div class="item-head-title"><i class="fa-solid fa-clipboard-question"></i> س4: ما هو الفرق بين أنظمة CAD وأنظمة CAM في المصانع الغذائية؟</div>
+                            <i class="fa-solid fa-chevron-down item-chevron"></i>
+                        </div>
+                        <div class="item-body">
+                            <strong>الإجابة:</strong><br>
+                            • <strong>CAD (Computer-Aided Design):</strong> يُستخدم في الرسم والتصميم الهندسي لخطوط الإنتاج والمعدات وإجراء التعديلات والتحويلات الهندسية.<br>
+                            • <strong>CAM (Computer-Aided Manufacturing):</strong> يُستخدم للتحكم الفعلي والبرمجة والتوجيه والسيطرة على ماكينات ومعدات التصنيع أثناء العمل.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- الفوتر -->
+    <footer class="app-footer">
+        تم إعداد وبرمجة التطبيق التعليمي التفاعلي لطلاب <strong>برنامج تكنولوجيا الأغذية والألبان</strong> 👨‍🔬<br>
+        إشراف وإعداد: <strong>الاسطى عبده</strong> | جامعة سوهاج
+    </footer>
+
+    <!-- محرك الصوت والمنطق البرمجي -->
+    <script>
+        // محرك المؤثرات الصوتية عبر Web Audio API
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTone(freq, type, duration) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        function soundClick() { playTone(587.33, 'sine', 0.1); } // D5
+        function soundSuccess() { 
+            playTone(523.25, 'triangle', 0.12);
+            setTimeout(() => playTone(659.25, 'triangle', 0.15), 100);
+            setTimeout(() => playTone(783.99, 'triangle', 0.25), 200);
+        }
+        function soundError() { 
+            playTone(220, 'sawtooth', 0.15);
+            setTimeout(() => playTone(180, 'sawtooth', 0.25), 120);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            btn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+            btn.style.color = soundEnabled ? 'var(--accent)' : 'var(--danger)';
+            if (soundEnabled) soundClick();
+        }
+
+        // التبديل بين التبويبات
+        function switchTab(tabId) {
+            soundClick();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            const target = document.getElementById(tabId);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // الأكورديون التفاعلي
+        function toggleAccordion(element) {
+            soundClick();
+            const item = element.parentElement;
+            const isOpen = item.classList.contains('open');
+            
+            // إغلاق باقي العناصر في نفس المجموعة إن أردت، أو تركها مستقلة
+            item.classList.toggle('open');
+        }
+
+        // بنك الأسئلة التفاعلية
+        const quizQuestions = [
+            {
+                q: "جهاز تحكم آلي طوّره جيمس واط عام 1769 للتحكم في سرعة ماكينة البخار هو:",
+                options: ["منظم العوامة", "جهاز التحكم الطارد المركزي", "جهاز HPLC", "المودم"],
+                correct: 1,
+                exp: "جهاز التحكم الطارد المركزي الذي طوره جيمس واط عام 1769 كان أول جهاز تحكم آلي للسرعة."
+            },
+            {
+                q: "ذاكرة إلكترونية مؤقتة تتلاشى محتوياتها بانقطاع التيار الكهربائي ويختار برامجها المستخدم:",
+                options: ["ذاكرة ROM", "ذاكرة RAM", "الذاكرة المخبأة Cache", "القرص الصلب"],
+                correct: 1,
+                exp: "ذاكرة RAM هي ذاكرة الوصول العشوائي المؤقتة التي يمكن القراءة منها والكتابة فيها."
+            },
+            {
+                q: "أي من الفيروسات التالية يُبرمج ليعمل وينفجر عند حدوث شرط معين مثل فصل موظف؟",
+                options: ["حصان طروادة", "القنبلة المنطقية (Logic Bomb)", "الدودة (Worm)", "الباب الخلفي"],
+                correct: 1,
+                exp: "القنبلة المنطقية (Logic Bomb) تعمل وتخرب البيانات عند تحقق شرط أو ظرف معين."
+            },
+            {
+                q: "أي البرامج الإحصائية التالية يتميز بسهولة استخدامه عبر القوائم وتفوقه في الإحصاء الوصفي والعلوم الاجتماعية؟",
+                options: ["SAS", "SPSS", "STATA", "EVIEWS"],
+                correct: 1,
+                exp: "برنامج SPSS هو الأسهل عبر القوائم ويعتبر الرائد في مجالات البحوث الاجتماعية والإحصاء الوصفي."
+            },
+            {
+                q: "العالم المصري الحائز على جائزة نوبل عام 1999 لابتكاره تقنية الفيمتو ثانية هو:",
+                options: ["توماس إديسون", "نيكولا تسلا", "أحمد زويل", "غاليليو غاليلي"],
+                correct: 2,
+                exp: "العالم د. أحمد زويل نال نوبل في الكيمياء لتصوير الذرات بالفيمتو ثانية ولُقب بأبي كيمياء الفيمتو."
+            }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            const qData = quizQuestions[currentQIndex];
+            document.getElementById('qText').innerText = `${currentQIndex + 1}. ${qData.q}`;
+            const optContainer = document.getElementById('optionsContainer');
+            optContainer.innerHTML = '';
+            document.getElementById('explainBox').style.display = 'none';
+            document.getElementById('nextQBtn').style.display = 'none';
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle"></i>`;
+                btn.onclick = () => checkAnswer(idx, btn);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIdx, btnElement) {
+            const qData = quizQuestions[currentQIndex];
+            const allBtns = document.querySelectorAll('.answer-btn');
+            allBtns.forEach(b => b.classList.add('disabled'));
+
+            if (selectedIdx === qData.correct) {
+                soundSuccess();
+                btnElement.classList.add('correct');
+                btnElement.querySelector('i').className = 'fa-solid fa-circle-check';
+                score++;
+            } else {
+                soundError();
+                btnElement.classList.add('wrong');
+                btnElement.querySelector('i').className = 'fa-solid fa-circle-xmark';
+                allBtns[qData.correct].classList.add('correct');
+                allBtns[qData.correct].querySelector('i').className = 'fa-solid fa-circle-check';
+            }
+
+            document.getElementById('scoreDisplay').innerText = `النقاط: ${score} / ${quizQuestions.length}`;
+            const expBox = document.getElementById('explainBox');
+            expBox.innerHTML = `💡 <strong>توضيح:</strong> ${qData.exp}`;
+            expBox.style.display = 'block';
+
+            document.getElementById('nextQBtn').style.display = 'inline-flex';
+        }
+
+        function nextQuestion() {
+            soundClick();
+            currentQIndex++;
+            if (currentQIndex < quizQuestions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById('quizBox').innerHTML = `
+                    <div style="text-align:center; padding: 25px;">
+                        <i class="fa-solid fa-trophy" style="font-size: 4rem; color: #f59e0b; margin-bottom: 15px;"></i>
+                        <h2 style="font-family:'Changa'; font-size: 1.8rem; margin-bottom: 10px;">أحسنت يا بطل! أنهيت الاختبار</h2>
+                        <p style="font-size: 1.2rem; color: var(--accent); margin-bottom: 20px;">درجتك النهائية: ${score} من ${quizQuestions.length}</p>
+                        <button class="btn-action" onclick="restartQuiz()"><i class="fa-solid fa-rotate-right"></i> إعادة الاختبار</button>
+                    </div>
+                `;
+            }
+        }
+
+        function restartQuiz() {
+            currentQIndex = 0;
+            score = 0;
+            document.getElementById('scoreDisplay').innerText = `النقاط: 0 / ${quizQuestions.length}`;
+            document.getElementById('quizBox').innerHTML = `
+                <div class="question-box">
+                    <div class="question-text" id="qText"></div>
+                    <div class="answers-grid" id="optionsContainer"></div>
+                    <div class="explanation-box" id="explainBox"></div>
+                </div>
+                <button class="btn-action" id="nextQBtn" onclick="nextQuestion()" style="display:none;">السؤال التالي <i class="fa-solid fa-arrow-left"></i></button>
+            `;
+            loadQuestion();
+        }
+
+        // بدء التشغيل
+        window.onload = () => {
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
