@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>علوم الأغذية - الدفعة 27</title>
+    <!-- خط Cairo المميز -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات Firebase السحابية -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            /* الوضع الليلي الافتراضي */
+            --bg-primary: #0b1110;
+            --bg-secondary: rgba(18, 30, 27, 0.85);
+            --border-card: rgba(212, 175, 55, 0.2);
+            --accent-gold: #d4af37;
+            --accent-emerald: #10b981;
+            --text-main: #f3f4f6;
+            --text-sub: #9ca3af;
+            --card-gradient: linear-gradient(145deg, rgba(24, 40, 36, 0.9), rgba(12, 22, 20, 0.9));
+            --footer-bg: rgba(11, 17, 16, 0.95);
+            --header-bg: rgba(11, 17, 16, 0.92);
+            --radial-glow: rgba(16, 185, 129, 0.08);
+            --accent-highlight: #7c9aff;
+        }
+
+        /* الوضع النهاري */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(255, 255, 255, 0.9);
+            --border-card: rgba(212, 175, 55, 0.35);
+            --accent-gold: #b38600;
+            --accent-emerald: #059669;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --card-gradient: linear-gradient(145deg, #ffffff, #f1f5f9);
+            --footer-bg: rgba(255, 255, 255, 0.95);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --radial-glow: rgba(16, 185, 129, 0.12);
+            --accent-highlight: #4361ee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: radial-gradient(circle at top, var(--radial-glow) 0%, transparent 70%);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 95px;
+        }
+
+        /* رأس الصفحة */
+        header {
+            position: sticky;
+            top: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-card);
+            z-index: 100;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title-box h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .header-title-box span {
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            display: block;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-theme {
+            background: var(--bg-secondary);
+            color: var(--accent-gold);
+            border: 1px solid var(--border-card);
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-theme:active {
+            transform: scale(0.9);
+        }
+
+        .btn-back {
+            background: rgba(212, 175, 55, 0.12);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-back:active {
+            transform: scale(0.92);
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* الحاوية الرئيسية */
+        .container {
+            max-width: 550px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 18px 16px;
+            flex-grow: 1;
+        }
+
+        /* تأثيرات الانتقال والتداخل البصري بين الشاشات */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+            transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .section-label {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-gold);
+            border-radius: 2px;
+        }
+
+        /* تصميم البطاقات */
+        .grid-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .app-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .app-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at right, rgba(212, 175, 55, 0.08), transparent 60%);
+            pointer-events: none;
+        }
+
+        .app-card:active {
+            transform: scale(0.96);
+            border-color: var(--accent-gold);
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .card-icon {
+            width: 46px;
+            height: 46px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 6px;
+            transition: transform 0.3s ease;
+        }
+
+        .card-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .app-card:hover .card-icon {
+            transform: rotate(-5deg) scale(1.08);
+        }
+
+        .card-text h3 {
+            font-size: 1.02rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .card-text p {
+            font-size: 0.76rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .card-arrow {
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            opacity: 0.8;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+
+        .app-card:hover .card-arrow {
+            transform: translateX(-4px);
+        }
+
+        .card-primary-glow {
+            border: 1px solid rgba(212, 175, 55, 0.45);
+        }
+
+        .card-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-emerald);
+            margin-right: 6px;
+        }
+
+        .badge-mystery {
+            background: rgba(212, 175, 55, 0.18);
+            color: var(--accent-gold);
+            border: 1px dashed rgba(212, 175, 55, 0.5);
+        }
+
+        /* شاشة المحتوى */
+        .content-sub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .content-box-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 22px 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .content-box-card:active {
+            transform: scale(0.94);
+            border-color: var(--accent-gold);
+        }
+
+        .content-box-card .box-icon-img {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 8px;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .content-box-card h4 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .content-box-card span {
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            display: block;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* كرت شحن كود الهدية */
+        .promo-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .promo-input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            background: var(--bg-primary);
+            color: var(--accent-gold);
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn-promo {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+            color: #000;
+            font-weight: 900;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-promo:active {
+            transform: scale(0.95);
+        }
+
+        /* تصميمات الحسابات */
+        .auth-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 24px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 8px;
+            display: block;
+        }
+
+        .auth-header h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 800;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            background: var(--bg-primary);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+            color: #000;
+            font-size: 1rem;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transition: transform 0.15s ease;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.97);
+        }
+
+        /* زر الإجراء المميز لتحدي المعلومات */
+        .btn-action-quiz {
+            background: linear-gradient(135deg, #ffd700 0%, #d4af37 50%, #b38600 100%) !important;
+            color: #0b1110 !important;
+            font-size: 1.15rem !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.5px !important;
+            padding: 16px !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45) !important;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .btn-action-quiz:active {
+            transform: scale(0.96) !important;
+        }
+
+        /* النوافذ المنبثقة */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-overlay.show {
+            display: flex !important;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 32px 24px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.15);
+            transform: scale(0.8) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-box h3 {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .modal-box p {
+            font-size: 0.92rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-modal-primary {
+            flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+            color: #000;
+            font-weight: 900;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transition: transform 0.15s ease;
+        }
+        .btn-modal-primary:active { transform: scale(0.96); }
+
+        .btn-modal-secondary {
+            flex: 1;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border-card);
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        /* تصميم الملف الشخصي */
+        .profile-header {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 16px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .profile-phone {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 12px;
+            direction: ltr;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-weight: 700;
+        }
+
+        .avatar-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .avatar-option {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .avatar-option.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.15);
+            transform: scale(1.1);
+        }
+
+        /* تنسيقات الزر العائم للوحة المتصدرين (FAB) */
+        .fab-leaderboard {
+            position: fixed;
+            bottom: 85px; /* يظهر فوق الفوتر تماماً */
+            left: 20px; /* في الجزء السفلي الأيسر */
+            width: 62px;
+            height: 62px;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.45);
+            z-index: 140;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .fab-leaderboard img {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+        }
+
+        .fab-leaderboard:hover {
+            transform: scale(1.08) rotate(5deg);
+        }
+
+        .fab-leaderboard:active {
+            transform: scale(0.9);
+        }
+
+        /* تأثير الحركة الخاص عند الضغط */
+        .fab-animate {
+            animation: fabPulse 0.5s ease-out forwards;
+        }
+
+        @keyframes fabPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.8); }
+            50% { transform: scale(1.2) rotate(15deg); box-shadow: 0 0 0 25px rgba(212, 175, 55, 0); }
+            100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        /* تنسيقات لوحة المتصدرين (الداخلية) */
+        .podium {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            margin-top: 20px;
+        }
+        .podium-place {
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .podium-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-gold);
+            background: var(--bg-primary);
+            padding: 5px;
+            margin-bottom: -15px;
+            z-index: 2;
+            position: relative;
+        }
+        .podium-step {
+            width: 100%;
+            border-radius: 12px 12px 0 0;
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        .step-1 { height: 120px; border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+        .step-2 { height: 90px; border-color: #c0c0c0; }
+        .step-3 { height: 70px; border-color: #cd7f32; }
+        .podium-name {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+        .podium-pts {
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .lb-item {
+            display: flex;
+            align-items: center;
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 12px 16px;
+            gap: 15px;
+        }
+        .lb-item.is-me {
+            border-color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .lb-rank {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--text-sub);
+            width: 30px;
+            text-align: center;
+        }
+        .lb-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 1px solid var(--border-card);
+            padding: 4px;
+            background: var(--bg-primary);
+        }
+        .lb-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .lb-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .lb-badge {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .lb-points {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            text-align: right;
+        }
+
+        /* تنسيقات واجهة اللعبة */
+        .quiz-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 22px;
+            margin-top: 10px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .quiz-timer-box {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--text-main);
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 8px;
+            display: inline-block;
+            min-width: 80px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-card);
+            transition: color 0.3s;
+        }
+        .quiz-option-btn {
+            display: block;
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-card);
+            color: var(--text-main);
+            padding: 16px;
+            margin: 10px 0;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.98rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: right;
+            position: relative;
+            z-index: 2;
+        }
+        .quiz-option-btn:hover:not(:disabled) {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .quiz-option-btn.correct-choice {
+            background: #10b981 !important;
+            border-color: #059669 !important;
+            color: #ffffff !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5);
+            z-index: 10;
+        }
+        .quiz-option-btn.wrong-choice {
+            background: #ef4444 !important;
+            border-color: #b91c1c !important;
+            color: #ffffff !important;
+            animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .stars-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+        }
+        .falling-star, .confetti-piece {
+            position: absolute;
+            user-select: none;
+        }
+        .confetti-piece {
+            width: 10px; height: 10px;
+            opacity: 0;
+        }
+
+        /* الفوتر */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 150;
+            padding: 10px 16px;
+            text-align: center;
+            background: var(--footer-bg);
+            border-top: 1px solid var(--border-card);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .footer-highlight {
+            color: var(--accent-highlight);
+            font-weight: 800;
+            font-size: 0.82rem;
+            margin-bottom: 2px;
+            line-height: 1.35;
+        }
+
+        .footer-author {
+            font-size: 0.74rem;
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .footer-author .author-name {
+            color: var(--accent-highlight);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- رسالة ترحيبية -->
+    <div id="welcome-modal" class="modal-overlay">
+        <div class="modal-box">
+            <img src="https://img.icons8.com/fluency/96/sparkling.png" style="width: 64px; height: 64px; margin-bottom: 10px;" alt="Welcome">
+            <h3>أهلاً بك في تطبيق علوم الأغذية</h3>
+            <p>أنشئ حسابك الآن لتتمكن من حفظ نقاطك، وتتبع تقدمك في الاختبارات والمنافسات.</p>
+            <div class="modal-buttons">
+                <button class="btn-modal-primary" onclick="goToRegister()">إنشاء حساب</button>
+                <button class="btn-modal-secondary" onclick="dismissWelcomeModal()">لاحقاً</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسالة نجاح الحساب -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="modal-box">
+            <img src="https://img.icons8.com/fluency/96/party-popper.png" style="width: 64px; height: 64px; margin-bottom: 10px;" alt="Success">
+            <h3>تم إنشاء حسابك بنجاح</h3>
+            <p>أهلًا وسهلًا بك! نتمنى لك تجربة رائعة ومفيدة معنا.</p>
+        </div>
+    </div>
+
+    <!-- نافذة تعليمات تحدي المعلومات -->
+    <div id="quiz-rules-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 420px;">
+            <img src="https://img.icons8.com/fluency/96/goal.png" style="width: 70px; height: 70px; margin-bottom: 8px;" alt="Rules">
+            <h3>قواعد تحدي العباقرة</h3>
+            <p style="text-align: right; font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px;">
+                يا هلا يا دولي! 🧠🔥<br>
+                اللعبة مكونة من <b>5 أسئلة عشوائية</b>. النظام هنا فيه حماس ومخاطرة والوقت سيف:<br>
+                • كل إجابة <b>صحيحة</b>: +5 نقاط ⭐<br>
+                • كل إجابة <b>غلط</b>: -3 نقاط ❌<br>
+                • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال، لو خلص بيتحسب السؤال غلط! ⏱️<br>
+                • 5/5 صح: هتاخد <b>+10 نقاط بونص</b> 🏆<br>
+                • 5/5 غلط: هتاخد <b>-10 نقاط عقاب</b> 😅<br><br>
+                جاهز تكسر الدنيا ولا خايف؟ 😉
+            </p>
+            <div class="modal-buttons">
+                <button class="btn-modal-primary btn-action-quiz" onclick="startActualQuiz()">يلا بينا 🚀</button>
+                <button class="btn-modal-secondary" onclick="closeQuizRules()">خايف، ارجع 🏃‍♂️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة نهاية التحدي والنتيجة -->
+    <div id="quiz-result-modal" class="modal-overlay">
+        <div class="modal-box" id="result-modal-box">
+            <img id="result-img" src="https://img.icons8.com/fluency/96/trophy.png" style="width: 80px; height: 80px; margin-bottom: 12px;" alt="Result">
+            <h3 id="result-title" style="font-size: 1.6rem; margin-bottom: 15px;">خلصت المعركة يا دولي!</h3>
+            <p id="result-desc" style="font-size: 1.05rem; margin-bottom: 24px; line-height: 1.7; font-weight: 700;"></p>
+            <button class="btn-modal-primary" style="font-size: 1.1rem; padding: 16px;" onclick="closeQuizResult()">تسجيل النقاط والعودة 🎮</button>
+        </div>
+    </div>
+
+    <!-- رأس الصفحة -->
+    <header>
+        <div class="header-title-box">
+            <div class="card-icon" style="width: 38px; height: 38px;">
+                <img src="https://img.icons8.com/fluency/96/test-tube.png" alt="Test Tube Logo">
+            </div>
+            <div>
+                <h1 id="top-title">علوم الأغذية</h1>
+                <span id="top-subtitle">الفرقة الرابعة - دفعة 27</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <button class="btn-theme" onclick="handleProfileClick()" title="الملف الشخصي" style="padding: 4px;">
+                <img id="header-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" style="width: 26px; height: 26px; object-fit: contain;" alt="User">
+            </button>
+            <button id="btn-theme-toggle" class="btn-theme" onclick="toggleTheme()" title="تبديل الوضع">
+                <span id="theme-icon">☀️</span>
+            </button>
+            <button id="btn-back" class="btn-back" onclick="navigateBack()">
+                <span>رجوع</span> ↩
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- المستوى الأول: الواجهة الرئيسية -->
+        <div id="view-home" class="view-section active">
+            <div class="section-label">الأقسام الرئيسية</div>
+            <div class="grid-cards">
+                
+                <div class="app-card card-primary-glow" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/books.png" alt="Subjects">
+                        </div>
+                        <div class="card-text">
+                            <h3>مواد الترم الأول <span class="card-badge">متاح الآن</span></h3>
+                            <p>المحاضرات والسكاشن للفرقة الرابعة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <!-- خانة تحدي المعلومات -->
+                <div class="app-card card-primary-glow" onclick="openQuizRulesModal()">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/brain.png" alt="Quiz">
+                        </div>
+                        <div class="card-text">
+                            <h3>تحدي المعلومات <span class="card-badge">جديد 🔥</span></h3>
+                            <p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اختبر معلوماتك العامة وزود نقاطك</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="playClickSound(); alert('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن!');">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/test-passed.png" alt="Exams">
+                        </div>
+                        <div class="card-text">
+                            <h3>إختبارات</h3>
+                            <p>تدريبات شاملة ونماذج امتحانات</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <!-- بطاقة قريباً -->
+                <div class="app-card" onclick="playClickSound(); alert('مفاجأة قادمة للدفعة قريبًا... ترقبوا! ✨');">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/gift.png" alt="Mystery">
+                        </div>
+                        <div class="card-text">
+                            <h3>قريبًا <span class="card-badge badge-mystery">مفاجأة</span></h3>
+                            <p>محتوى مميز قادم للدفعة قريبًا</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- شاشة الحسابات -->
+        <div id="view-auth" class="view-section">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <!-- أيقونة تسجيل الدخول المحدثة -->
+                    <img src="https://img.icons8.com/fluency/96/user-shield.png" class="auth-header-icon" alt="Auth">
+                    <h2>منطقة الطلاب</h2>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="tab-login" onclick="switchAuthTab('login')">تسجيل دخول</button>
+                    <button class="auth-tab-btn" id="tab-register" onclick="switchAuthTab('register')">حساب جديد</button>
+                </div>
+
+                <div id="form-login">
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="login-phone" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="login-password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <button class="btn-submit" onclick="loginUser()">دخول 🚀</button>
+                </div>
+
+                <div id="form-register" style="display: none;">
+                    <div class="form-group">
+                        <label>الاسم بالكامل</label>
+                        <input type="text" id="reg-name" class="form-input" placeholder="اسمك الرباعي">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="reg-phone" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="reg-password" class="form-input" placeholder="أدخل كلمة مرور قوية">
+                    </div>
+                    <div class="form-group">
+                        <label>تأكيد كلمة المرور</label>
+                        <input type="password" id="reg-confirm-password" class="form-input" placeholder="أعد إدخال كلمة المرور">
+                    </div>
+                    <button class="btn-submit" onclick="registerUser()">إنشاء حساب ✅</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة الملف الشخصي -->
+        <div id="view-profile" class="view-section">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar">
+                </div>
+                <div class="profile-name" id="display-name">اسم الطالب</div>
+                <div class="profile-phone" id="display-phone">01000000000</div>
+                <div class="card-badge" style="display: inline-block;">برنامج علوم وتكنولوجيا الأغذية</div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-value" id="display-points">100</div>
+                    <div class="stat-label">مجموع النقاط ⭐</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="display-rank-badge" style="font-size: 1.15rem;">🌱 مبتدئ</div>
+                    <div class="stat-label">الرتبة الحالية 🏅</div>
+                </div>
+            </div>
+
+            <!-- كرت شحن كود الهدية السحابي -->
+            <div class="promo-card">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="https://img.icons8.com/fluency/96/gift.png" style="width: 24px; height: 24px;" alt="Gift">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">شحن كود هدية</span>
+                </div>
+                <div class="promo-input-group">
+                    <input type="text" id="promo-code-input" class="promo-input" placeholder="أدخل كود الهدية">
+                    <button class="btn-promo" onclick="redeemPromoCode()">تفعيل ✨</button>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="app-card" onclick="navigateTo('view-edit-profile', 'تعديل البيانات', 'تحديث ملفك الشخصي')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit">
+                        </div>
+                        <div class="card-text">
+                            <h3>تعديل الملف الشخصي</h3>
+                            <p>تغيير الاسم والصورة الرمزية</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="logoutUser()">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(239, 68, 68, 0.1);">
+                            <img src="https://img.icons8.com/fluency/96/exit.png" alt="Logout">
+                        </div>
+                        <div class="card-text">
+                            <h3 style="color: #ef4444;">تسجيل الخروج</h3>
+                            <p>تسجيل الخروج من هذا الجهاز</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #ef4444;">←</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة تعديل الملف الشخصي -->
+        <div id="view-edit-profile" class="view-section">
+            <div class="auth-card">
+                <div class="form-group">
+                    <label style="text-align: center;">اختر صورتك الرمزية</label>
+                    <div class="avatar-selector">
+                        <div class="avatar-option selected" title="ولد" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/user-male.png', this)">
+                            <img src="https://img.icons8.com/fluency/96/user-male.png" alt="Boy">
+                        </div>
+                        <div class="avatar-option" title="بنت" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/user-female.png', this)">
+                            <img src="https://img.icons8.com/fluency/96/user-female.png" alt="Girl">
+                        </div>
+                        <div class="avatar-option" title="فلاح" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/farmer-male.png', this)">
+                            <img src="https://img.icons8.com/fluency/96/farmer-male.png" alt="Farmer">
+                        </div>
+                        <div class="avatar-option" title="خريج" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/student-male.png', this)">
+                            <img src="https://img.icons8.com/fluency/96/student-male.png" alt="Graduate">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>الاسم بالكامل</label>
+                    <input type="text" id="edit-name-input" class="form-input">
+                </div>
+                <button class="btn-submit" onclick="saveProfileChanges()">حفظ التعديلات 💾</button>
+            </div>
+        </div>
+
+        <!-- شاشة لوحة المتصدرين (الجديدة) -->
+        <div id="view-leaderboard" class="view-section">
+            <div class="section-label">أبطال الدفعة (Top Rankings)</div>
+            <div id="leaderboard-content">
+                <p style="text-align: center; margin-top: 20px;">جاري تحميل البيانات...</p>
+            </div>
+        </div>
+
+        <!-- المستوى الثاني: قائمة المواد -->
+        <div id="view-term-subjects" class="view-section">
+            <div class="section-label">مواد الفصل الدراسي الأول</div>
+            <div class="grid-cards">
+                <div class="app-card" onclick="openSubject('تكنولوجيا اللحوم والأسماك')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/steak.png" alt="Meat">
+                        </div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا اللحوم والأسماك</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا الحبوب')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/wheat.png" alt="Grains">
+                        </div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا الحبوب</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا السكر')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/sugar-cubes.png" alt="Sugar">
+                        </div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا السكر</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('كيمياء ألبان')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/test-tube.png" alt="Chemistry">
+                        </div>
+                        <div class="card-text">
+                            <h3>كيمياء ألبان</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('تكنولوجيا الجبن')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/cheese.png" alt="Cheese">
+                        </div>
+                        <div class="card-text">
+                            <h3>تكنولوجيا الجبن</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" onclick="openSubject('الإدارة الفنية لمصانع الالبان')">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/factory.png" alt="Factory">
+                        </div>
+                        <div class="card-text">
+                            <h3>الإدارة الفنية لمصانع الالبان</h3>
+                            <p>نظري وعملي المادة</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المستوى الثالث: محتوى المادة -->
+        <div id="view-subject-content" class="view-section">
+            <div id="selected-subject-label" class="section-label">محتوى المادة</div>
+            <div class="content-sub-grid">
+                <div class="content-box-card" onclick="handleTheoryClick();">
+                    <img src="https://img.icons8.com/fluency/96/open-book.png" class="box-icon-img" alt="Theory">
+                    <h4>النظري</h4>
+                    <span>المحاضرات والشرح</span>
+                </div>
+                <div class="content-box-card" onclick="playClickSound(); alert('سيتم فتح قسم العملي والسكاشن لهذه المادة');">
+                    <img src="https://img.icons8.com/fluency/96/microscope.png" class="box-icon-img" alt="Practical">
+                    <h4>العملي</h4>
+                    <span>السكاشن والتجارب</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- المستوى الرابع: كتاب المقرر -->
+        <div id="view-grains-theory" class="view-section">
+            <div class="section-label">قسم النظري - تكنولوجيا الحبوب</div>
+            <div class="grid-cards">
+                <a href="grains_book.pdf" download class="app-card card-primary-glow" onclick="playClickSound();">
+                    <div class="card-info">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/literature.png" alt="Course Book">
+                        </div>
+                        <div class="card-text">
+                            <h3>كتاب المقرر</h3>
+                            <p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اضغط لتنزيل الملف</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">⬇</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- واجهة لعبة تحدي المعلومات -->
+        <div id="view-quiz-game" class="view-section">
+            <div id="quiz-container"></div>
+        </div>
+
+    </div>
+
+    <!-- الزر العائم للوحة المتصدرين (FAB) -->
+    <div id="fab-leaderboard" class="fab-leaderboard" onclick="triggerLeaderboardEffect(this)" title="لوحة المتصدرين">
+        <img src="https://img.icons8.com/fluency/96/trophy.png" alt="Leaderboard">
+    </div>
+
+    <!-- الفوتر -->
+    <footer>
+        <div class="footer-highlight">
+            تم التطوير والبرمجة بالكامل لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان 👨‍🔬
+        </div>
+        <div class="footer-author">
+            إشراف وإعداد: <span class="author-name">المهندس عبدالرحمن محمود</span> | كلية الزراعة - جامعة سوهاج
+        </div>
+    </footer>
+
+    <!-- سكريبت التشغيل وربط Firebase -->
+    <script>
+        /* إعدادات Firebase الخاصة بمشروعك */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt-e7RSQ_nGWDARMuktaVOY5_mCXCKVmQ",
+            authDomain: "foodscienceapp.firebaseapp.com",
+            projectId: "foodscienceapp",
+            storageBucket: "foodscienceapp.firebasestorage.app",
+            messagingSenderId: "713983239462",
+            appId: "1:713983239462:web:0c70ceb39a1c3a1be58de7",
+            measurementId: "G-LWZYWRQSHB"
+        };
+
+        // تهيئة Firebase وقاعدة البيانات
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // تهيئة بنك الأكواد السحابية الأولية لو لم تكن موجودة
+        (function initCloudPromoCodes() {
+            const promoRef = db.ref('promo_codes');
+            promoRef.once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    promoRef.set({
+                        "DEV50": { points: 50, used: false },
+                        "AGRI100": { points: 100, used: false },
+                        "FOOD27": { points: 75, used: false },
+                        "GOLD2026": { points: 150, used: false },
+                        "HERO77": { points: 30, used: false }
+                    });
+                }
+            });
+        })();
+
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playClickSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(540, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(820, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {}
+        }
+
+        function playBackSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(280, audioCtx.currentTime + 0.06);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.06);
+            } catch (e) {}
+        }
+
+        function playSuccessSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.5);
+            } catch (e) {}
+        }
+
+        function playErrorSound() {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.setValueAtTime(100, now + 0.2);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.4);
+            } catch (e) {}
+        }
+
+        function shootStars() {
+            const container = document.createElement('div');
+            container.className = 'stars-container';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < 25; i++) {
+                const star = document.createElement('div');
+                star.className = 'falling-star';
+                star.innerHTML = '⭐';
+                star.style.left = '50%';
+                star.style.top = '50%';
+                star.style.fontSize = Math.random() * 20 + 15 + 'px';
+                star.style.transition = 'all 0.8s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                container.appendChild(star);
+
+                setTimeout(() => {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 200 + 50;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    star.style.transform = `translate(${x}px, ${y}px) rotate(${Math.random() * 360}deg) scale(${Math.random() * 1.5 + 0.5})`;
+                    star.style.opacity = '0';
+                }, 10);
+            }
+            setTimeout(() => container.remove(), 850);
+        }
+
+        function triggerConfetti() {
+            const container = document.createElement('div');
+            container.className = 'stars-container';
+            document.body.appendChild(container);
+            const colors = ['#10b981', '#d4af37', '#3b82f6', '#ef4444', '#a855f7'];
+
+            for (let i = 0; i < 80; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.top = '-10px';
+                piece.style.opacity = '1';
+                piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                const duration = Math.random() * 2 + 1;
+                piece.style.transition = `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+                
+                container.appendChild(piece);
+
+                setTimeout(() => {
+                    piece.style.top = '100vh';
+                    piece.style.transform = `rotate(${Math.random() * 720}deg)`;
+                    piece.style.opacity = '0';
+                }, 50);
+            }
+            setTimeout(() => container.remove(), 3200);
+        }
+
+        function toggleTheme() {
+            playClickSound();
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-icon').innerText = newTheme === 'light' ? '🌙' : '☀️';
+            localStorage.setItem('app-theme', newTheme);
+        }
+
+        (function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('app-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+        })();
+
+        let navHistory = [{ viewId: 'view-home', title: 'علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 27' }];
+        let currentActiveSubject = '';
+
+        function navigateTo(viewId, title, subtitle) {
+            playClickSound();
+            const activeSection = document.querySelector('.view-section.active');
+            if (activeSection) activeSection.classList.remove('active');
+            
+            // إخفاء الزر العائم إذا كنا داخل لوحة المتصدرين أو التحدي
+            const fab = document.getElementById('fab-leaderboard');
+            if(fab) {
+                if(viewId === 'view-leaderboard' || viewId === 'view-quiz-game') {
+                    fab.style.display = 'none';
+                } else {
+                    fab.style.display = 'flex';
+                }
+            }
+
+            setTimeout(() => {
+                document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
+                const nextSection = document.getElementById(viewId);
+                nextSection.style.display = 'block';
+                setTimeout(() => nextSection.classList.add('active'), 20);
+            }, 100);
+            
+            navHistory.push({ viewId, title, subtitle });
+            updateHeader();
+        }
+
+        function openSubject(subjectName) {
+            currentActiveSubject = subjectName;
+            document.getElementById('selected-subject-label').innerText = 'محتوى مادة: ' + subjectName;
+            navigateTo('view-subject-content', subjectName, 'اختر نوع المحتوى');
+        }
+
+        function handleTheoryClick() {
+            playClickSound();
+            if (currentActiveSubject === 'تكنولوجيا الحبوب') {
+                navigateTo('view-grains-theory', 'تكنولوجيا الحبوب', 'قسم النظري');
+            } else {
+                alert('سيتم فتح قسم النظري والمحاضرات لهذه المادة');
+            }
+        }
+
+        function navigateBack() {
+            if (navHistory.length > 1) {
+                playBackSound();
+                navHistory.pop();
+                const previous = navHistory[navHistory.length - 1];
+                
+                const activeSection = document.querySelector('.view-section.active');
+                if (activeSection) activeSection.classList.remove('active');
+
+                // إدارة ظهور الزر العائم أثناء العودة
+                const fab = document.getElementById('fab-leaderboard');
+                if(fab) {
+                    if(previous.viewId === 'view-leaderboard' || previous.viewId === 'view-quiz-game') {
+                        fab.style.display = 'none';
+                    } else {
+                        fab.style.display = 'flex';
+                    }
+                }
+
+                setTimeout(() => {
+                    document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
+                    const prevSection = document.getElementById(previous.viewId);
+                    prevSection.style.display = 'block';
+                    setTimeout(() => prevSection.classList.add('active'), 20);
+                }, 100);
+
+                updateHeader();
+            }
+        }
+
+        function updateHeader() {
+            const current = navHistory[navHistory.length - 1];
+            document.getElementById('top-title').innerText = current.title;
+            document.getElementById('top-subtitle').innerText = current.subtitle;
+            const btnBack = document.getElementById('btn-back');
+            btnBack.style.display = (navHistory.length > 1) ? 'flex' : 'none';
+        }
+
+        window.history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', function (event) {
+            window.history.pushState(null, null, window.location.href);
+            if (navHistory.length > 1) navigateBack();
+        });
+
+
+        /* نظام الرتب والشارات */
+        function getUserRank(points) {
+            const pts = points || 0;
+            if (pts >= 17000) return "🌌 أسطورة";
+            if (pts >= 12000) return "👑 النخبة";
+            if (pts >= 8000)  return "💎 أستاذ";
+            if (pts >= 5000)  return "🏆 خبير";
+            if (pts >= 3000)  return "⚙️ محترف";
+            if (pts >= 1500)  return "🔬 واعد";
+            if (pts >= 500)   return "⚡ متقدم";
+            return "🌱 مبتدئ";
+        }
+
+
+        /* نظام الحسابات وربط السيرفر السحابي (Firebase) */
+        let currentUser = null;
+        let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            if (!currentUser && !localStorage.getItem('welcome_dismissed')) {
+                setTimeout(() => { document.getElementById('welcome-modal').classList.add('show'); }, 800);
+            }
+        });
+
+        function checkLoginStatus() {
+            const loggedInPhone = localStorage.getItem('active_user_phone');
+            if (loggedInPhone) {
+                db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        currentUser = snapshot.val();
+                        updateProfileUI();
+                    } else {
+                        currentUser = null;
+                        document.getElementById('header-avatar-img').src = 'https://img.icons8.com/fluency/96/user-male.png';
+                    }
+                });
+            } else {
+                currentUser = null;
+                document.getElementById('header-avatar-img').src = 'https://img.icons8.com/fluency/96/user-male.png';
+            }
+        }
+
+        function dismissWelcomeModal() {
+            playBackSound();
+            document.getElementById('welcome-modal').classList.remove('show');
+            localStorage.setItem('welcome_dismissed', 'true');
+        }
+
+        function goToRegister() {
+            dismissWelcomeModal();
+            navigateTo('view-auth', 'تسجيل الدخول', 'إنشاء حساب جديد');
+            switchAuthTab('register');
+        }
+
+        function switchAuthTab(tab) {
+            playClickSound();
+            if (tab === 'login') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('tab-register').classList.remove('active');
+                document.getElementById('form-login').style.display = 'block';
+                document.getElementById('form-register').style.display = 'none';
+            } else {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+                document.getElementById('form-register').style.display = 'block';
+                document.getElementById('form-login').style.display = 'none';
+            }
+        }
+
+        function registerUser() {
+            playClickSound();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-password').value;
+            const confirmPass = document.getElementById('reg-confirm-password').value;
+
+            if (!name || !phone || !pass || !confirmPass) { alert('يرجى ملء جميع الحقول المطلوبة!'); return; }
+            if (pass !== confirmPass) { alert('كلمة المرور غير متطابقة!'); return; }
+
+            const userRef = db.ref('users/' + phone);
+            userRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    alert('هذا الرقم مسجل بالفعل! يرجى تسجيل الدخول.');
+                    switchAuthTab('login');
+                } else {
+                    const newUser = { 
+                        name: name, 
+                        phone: phone, 
+                        password: pass, 
+                        avatar: 'https://img.icons8.com/fluency/96/user-male.png', 
+                        points: 100,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    userRef.set(newUser).then(() => {
+                        localStorage.setItem('active_user_phone', phone);
+                        localStorage.setItem('welcome_dismissed', 'true');
+                        currentUser = newUser;
+                        updateProfileUI();
+
+                        const successModal = document.getElementById('success-modal');
+                        successModal.classList.add('show');
+                        setTimeout(() => { 
+                            successModal.classList.remove('show'); 
+                            navHistory = []; 
+                            navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27'); 
+                        }, 2500);
+                    });
+                }
+            });
+        }
+
+        function loginUser() {
+            playClickSound();
+            const phone = document.getElementById('login-phone').value.trim();
+            const pass = document.getElementById('login-password').value;
+
+            if (!phone || !pass) { alert('يرجى إدخال رقم الهاتف وكلمة المرور'); return; }
+
+            db.ref('users/' + phone).once('value', (snapshot) => {
+                if (!snapshot.exists()) {
+                    alert('هذا الحساب غير موجود! برجاء إنشاء حساب جديد.');
+                    return;
+                }
+                const user = snapshot.val();
+                if (user.password !== pass) {
+                    alert('كلمة المرور غير صحيحة!');
+                    return;
+                }
+
+                localStorage.setItem('active_user_phone', phone);
+                currentUser = user;
+                checkLoginStatus();
+                
+                document.getElementById('login-password').value = '';
+                navHistory = [];
+                navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+            });
+        }
+
+        function logoutUser() {
+            playBackSound();
+            if (confirm('هل تريد بالتأكيد تسجيل الخروج؟')) {
+                if (currentUser) {
+                    db.ref('users/' + currentUser.phone).off();
+                }
+                localStorage.removeItem('active_user_phone');
+                currentUser = null; 
+                document.getElementById('header-avatar-img').src = 'https://img.icons8.com/fluency/96/user-male.png';
+                navHistory = [];
+                navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+            }
+        }
+
+        function updateProfileUI() {
+            if (currentUser) {
+                const avatarSrc = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                document.getElementById('header-avatar-img').src = avatarSrc;
+                document.getElementById('display-avatar-img').src = avatarSrc;
+                document.getElementById('display-name').innerText = currentUser.name;
+                document.getElementById('display-phone').innerText = currentUser.phone;
+                document.getElementById('display-points').innerText = currentUser.points || 0;
+                
+                // تحديث الرتبة في الملف الشخصي
+                document.getElementById('display-rank-badge').innerText = getUserRank(currentUser.points);
+                
+                document.getElementById('edit-name-input').value = currentUser.name;
+                selectEditAvatar(avatarSrc, null, true);
+            }
+        }
+
+        function handleProfileClick() {
+            if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك');
+            else navigateTo('view-auth', 'منطقة الطلاب', 'يرجى تسجيل الدخول');
+        }
+
+        function selectEditAvatar(avatarUrl, element, isInit = false) {
+            if (!isInit) playClickSound();
+            editSelectedAvatar = avatarUrl;
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.querySelector('img') && opt.querySelector('img').src === avatarUrl) opt.classList.add('selected');
+            });
+        }
+
+        function saveProfileChanges() {
+            playClickSound();
+            const newName = document.getElementById('edit-name-input').value.trim();
+            if (!newName) { alert('الاسم لا يمكن أن يكون فارغاً!'); return; }
+
+            if (currentUser) {
+                db.ref('users/' + currentUser.phone).update({
+                    name: newName,
+                    avatar: editSelectedAvatar
+                }).then(() => {
+                    alert('تم حفظ التعديلات بنجاح ✨');
+                    navigateBack();
+                });
+            }
+        }
+
+        /* شحن كود الهدية السحابي (Single-Use Promo Code via Firebase) */
+        function redeemPromoCode() {
+            playClickSound();
+            if (!currentUser) return;
+
+            const input = document.getElementById('promo-code-input');
+            const code = input.value.trim().toUpperCase();
+
+            if (!code) {
+                alert("يرجى كتابة الكود أولاً!");
+                return;
+            }
+
+            const codeRef = db.ref('promo_codes/' + code);
+            codeRef.transaction((codeData) => {
+                if (codeData === null) {
+                    return null; // الكود غير موجود
+                }
+                if (codeData.used) {
+                    return; // تم استخدامه مسبقاً
+                }
+                // تعليم الكود كـ مستخدم في السيرفر
+                codeData.used = true;
+                codeData.usedBy = currentUser.phone;
+                codeData.usedByName = currentUser.name;
+                codeData.usedAt = new Date().toISOString();
+                return codeData;
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    playErrorSound();
+                    alert("حدث خطأ في الاتصال بالسيرفر، حاول مرة أخرى!");
+                } else if (!committed) {
+                    playErrorSound();
+                    if (!snapshot.exists()) {
+                        alert("عذراً، هذا الكود غير صالح!");
+                    } else {
+                        alert("للأسف، هذا الكود تم استخدامه بالفعل مسبقاً!");
+                    }
+                } else {
+                    const pointsToAdd = snapshot.val().points || 50;
+                    // إضافة النقاط لحساب الطالب في قاعدة البيانات
+                    db.ref('users/' + currentUser.phone + '/points').transaction((currentPts) => {
+                        return (currentPts || 0) + pointsToAdd;
+                    }).then(() => {
+                        playSuccessSound();
+                        shootStars();
+                        input.value = '';
+                        alert(`مبروك يا دولي! تم شحن ${pointsToAdd}+ نقطة في رصيدك السحابي بنجاح 🎉`);
+                    });
+                }
+            });
+        }
+
+
+        /* منطق الزر العائم (FAB) ولوحة المتصدرين (Live Leaderboard) */
+        function triggerLeaderboardEffect(btn) {
+            playClickSound();
+            // تفعيل التأثير الحركي المذهل
+            btn.classList.add('fab-animate');
+            
+            // الانتظار حتى انتهاء التأثير ثم فتح اللوحة
+            setTimeout(() => {
+                btn.classList.remove('fab-animate');
+                openLeaderboard();
+            }, 500); 
+        }
+
+        function openLeaderboard() {
+            navigateTo('view-leaderboard', 'لوحة المتصدرين', 'أبطال ورتب الدفعة');
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboard-content');
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
+
+            db.ref('users').orderByChild('points').once('value').then(snapshot => {
+                let usersArr = [];
+                snapshot.forEach(child => {
+                    usersArr.push({ id: child.key, ...child.val() });
+                });
+                // Firebase orderByChild sorts ascending, so we reverse to get highest first
+                usersArr.reverse();
+
+                if (usersArr.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px;">لا يوجد لاعبين حتى الآن.</p>';
+                    return;
+                }
+
+                let html = '';
+                
+                // --- تصميم منصة التتويج للمراكز الثلاثة الأولى ---
+                html += '<div class="podium">';
+                // الترتيب المرئي: الثاني (يسار)، الأول (وسط)، الثالث (يمين)
+                const top3 = [usersArr[1], usersArr[0], usersArr[2]]; 
+                const classes = ['step-2', 'step-1', 'step-3'];
+                const medals = ['🥈', '🥇', '🥉'];
+
+                top3.forEach((u, i) => {
+                    if(u) {
+                        const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                        const isMeBorder = (currentUser && u.id === currentUser.phone) ? 'border-color: var(--accent-emerald);' : '';
+                        html += `
+                        <div class="podium-place">
+                            <div class="podium-name">${u.name.split(' ')[0]}</div>
+                            <div class="podium-pts">${u.points || 0}⭐</div>
+                            <img src="${avatar}" class="podium-avatar" style="${isMeBorder}">
+                            <div class="podium-step ${classes[i]}">${medals[i]}</div>
+                        </div>
+                        `;
+                    } else {
+                        html += `<div class="podium-place"><div class="podium-step ${classes[i]}" style="opacity: 0.1;">-</div></div>`;
+                    }
+                });
+                html += '</div>';
+
+                // --- قائمة باقي الطلاب ---
+                html += '<div class="leaderboard-list">';
+                usersArr.forEach((u, index) => {
+                    const isMe = currentUser && u.id === currentUser.phone;
+                    const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                    const rankStr = getUserRank(u.points);
+                    // أيقونة الترتيب لأول 3، ورقم للباقي
+                    let rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+                    
+                    html += `
+                        <div class="lb-item ${isMe ? 'is-me' : ''}">
+                            <div class="lb-rank">${rankIcon}</div>
+                            <img src="${avatar}" class="lb-avatar">
+                            <div class="lb-details">
+                                <div class="lb-name">${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div>
+                                <div class="lb-badge">${rankStr}</div>
+                            </div>
+                            <div class="lb-points">${u.points || 0}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+            }).catch(err => {
+                container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
+            });
+        }
+
+
+        /* بنك الأسئلة الشامل (150 سؤال) */
+        const masterQuestionsBank = {
+            "علوم وطبيعة": [
+                {q: "ما هو الغاز الأكثر وفرة في الغلاف الجوي للأرض؟", a: ["النيتروجين", "الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين"], correct: 0},
+                {q: "كم عدد عظام جسم الإنسان البالغ؟", a: ["206 عظمة", "180 عظمة", "250 عظمة", "300 عظمة"], correct: 0},
+                {q: "ما هو الحيوان البري الأسرع في العالم؟", a: ["الفهد (الشيتا)", "الأسد", "الغزال", "الفيل"], correct: 0},
+                {q: "ما هو أكبر عضو في جسم الإنسان؟", a: ["الجلد", "الكبد", "القلب", "المخ"], correct: 0},
+                {q: "في أي جزء من جسم الإنسان يتم إنتاج كرات الدم الحمراء؟", a: ["نخاع العظم", "الكبد", "الطحال", "الكلية"], correct: 0},
+                {q: "ما هو المعدن الوحيد السائل في درجة حرارة الغرفة؟", a: ["الزئبق", "الرصاص", "الحديد", "الألومنيوم"], correct: 0},
+                {q: "ما هو الغاز الذي تمتصه النباتات بعملية البناء الضوئي؟", a: ["ثاني أكسيد الكربون", "الأكسجين", "النيتروجين", "الهيدروجين"], correct: 0},
+                {q: "ما هي فصيلة الدم التي تعتبر معطياً عاماً؟", a: ["O سالب", "AB موجب", "A موجب", "B سالب"], correct: 0},
+                {q: "ما هي نسبة الماء على سطح كوكب الأرض تقريباً؟", a: ["71 بالمئة", "50 بالمئة", "30 بالمئة", "90 بالمئة"], correct: 0},
+                {q: "كم عدد حجرات القلب البشري؟", a: ["4 حجرات", "حجرتان", "3 حجرات", "5 حجرات"], correct: 0}
+            ],
+            "تاريخ وجغرافيا": [
+                {q: "ما هي عاصمة دولة أستراليا؟", a: ["كانبيرا", "سيدني", "ملبورن", "بريزبان"], correct: 0},
+                {q: "ما هو البحر الذي يقع بين إفريقيا وأوروبا؟", a: ["البحر الأبيض المتوسط", "البحر الأحمر", "البحر الأسود", "بحر قزوين"], correct: 0},
+                {q: "من هو إمبراطور فرنسا الشهير الذي هزم في معركة واترلو؟", a: ["نابليون بونابرت", "لويس الرابع عشر", "شارل ديجول", "هنري الرابع"], correct: 0},
+                {q: "في أي عام قامت الحرب العالمية الأولى؟", a: ["عام 1914", "عام 1939", "عام 1918", "عام 1945"], correct: 0},
+                {q: "ما هو أطول نهر في العالم؟", a: ["نهر النيل", "نهر الأمازون", "نهر المسيسيبي", "نهر الدانوب"], correct: 0},
+                {q: "ما هي أصغر دولة في العالم من حيث المساحة؟", a: ["الفاتيكان", "موناكو", "سان مارينو", "ليختنشتاين"], correct: 0},
+                {q: "في أي دولة أقيمت أول دورة ألعاب أولمبية حديثة عام 1896؟", a: ["اليونان", "فرنسا", "إيطاليا", "بريطانيا"], correct: 0},
+                {q: "كم عدد الدول العربية في قارة إفريقيا؟", a: ["10 دول", "12 دولة", "8 دول", "14 دولة"], correct: 0},
+                {q: "ما هي الدولة الأكثر سكاناً في العالم حالياً؟", a: ["الهند", "الصين", "الولايات المتحدة", "إندونيسيا"], correct: 0},
+                {q: "جبل إفرست يقع على حدود أي دولتين؟", a: ["نيبال والصين", "الهند وباكستان", "الصين ومنغوليا", "سويسرا وإيطاليا"], correct: 0}
+            ],
+            "كرة قدم": [
+                {q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم في الملعب؟", a: ["11 لاعباً", "10 لاعبين", "9 لاعبين", "12 لاعباً"], correct: 0},
+                {q: "ما هي الدولة التي فازت بأول كأس عالم لكرة القدم عام 1930؟", a: ["الأوروغواي", "البرازيل", "الأرجنتين", "إيطاليا"], correct: 0},
+                {q: "كم عدد المرات التي فازت فيها البرازيل بلقب كأس العالم؟", a: ["5 مرات", "4 مرات", "3 مرات", "6 مرات"], correct: 0},
+                {q: "ما هو المصطلح الذي يطلق على تسجيل اللاعب لثلاثة أهداف في مباراة واحدة؟", a: ["هاتريك (Hat-trick)", "سوبر هاتريك", "دبل كيك", "بانينكا"], correct: 0},
+                {q: "ما هو اسم النادي الذي يُلقب بـ 'النادي الملكي' في إسبانيا؟", a: ["ريال مدريد", "برشلونة", "اتلتيكو مدريد", "إشبيلية"], correct: 0},
+                {q: "من هو اللاعب الذي يُلقب بـ 'الأسطورة' أو 'الجوهرة السوداء'؟", a: ["بيليه", "مارادونا", "ميسي", "كريستيانو رونالدو"], correct: 0},
+                {q: "من هو المنتخب الملقب بـ 'الديوك'؟", a: ["منتخب فرنسا", "منتخب إيطاليا", "منتخب البرتغال", "منتخب بلجيكا"], correct: 0},
+                {q: "ما هو اسم البطولة الأغلى للأندية في قارة أوروبا؟", a: ["دوري أبطال أوروبا", "الدوري الأوروبي", "دوري المؤتمر", "السوبر الأوروبي"], correct: 0},
+                {q: "من هو اللاعب الذي يُلقب بـ 'البرغوث'؟", a: ["ليونيل ميسي", "كريستيانو رونالدو", "نيمار جونيور", "كيليان مبابي"], correct: 0},
+                {q: "ما هي الدولة التي فازت بكأس العالم 2010؟", a: ["إسبانيا", "هولندا", "ألمانيا", "البرازيل"], correct: 0}
+            ],
+            "تكنولوجيا": [
+                {q: "ماذا تعني اختصار تقنية الذكاء الاصطناعي (AI)؟", a: ["الذكاء الاصطناعي", "البرمجة المتقدمة", "التطبيقات الذكية", "شبكات الإنترنت"], correct: 0},
+                {q: "من هو مؤسس شركة مايكروسوفت (Microsoft)؟", a: ["بيل جيتس", "ستيف جوبز", "مارك زوكربيرج", "إيلون ماسك"], correct: 0},
+                {q: "ما هو نظام التشغيل الأكثر استخداماً للهواتف الذكية في العالم؟", a: ["أندرويد", "آي أو إس (iOS)", "ويندوز فون", "لينكس"], correct: 0},
+                {q: "من هو الشريك المؤسس لشركة أبل (Apple) مع ستيف جوبز؟", a: ["ستيف وزنياك", "بيل جيتس", "لاري പേج", "مارك زوكربيرج"], correct: 0},
+                {q: "ما هي وحدة التخزين الأصغر في الكمبيوتر؟", a: ["البت (Bit)", "البايت", "الكيلوبايت", "الميجابايت"], correct: 0},
+                {q: "كم عدد البايتات في الكيلوبايت الواحد؟", a: ["1024 بايت", "1000 بايت", "512 بايت", "2048 بايت"], correct: 0},
+                {q: "ما هو المعالج الأساسي للكمبيوتر الذي يُطلق عليه 'عقل الكمبيوتر'؟", a: ["وحدة المعالجة المركزية (CPU)", "كرت الشاشة", "الذاكرة العشوائية", "قرص التخزين"], correct: 0},
+                {q: "ما هي لغة البرمجة المسؤولة عن تنسيق وألوان وشكل صفحات الويب؟", a: ["CSS", "HTML", "C++", "Java"], correct: 0},
+                {q: "ما هو التطبيق السحابي الشهير لتخزين الملفات التابع لشركة جوجل؟", a: ["جوجل درايف", "ون درايف", "آي كلاود", "ميجا"], correct: 0},
+                {q: "ما هو المصطلح الذي يطلق على البرمجيات الخبيثة التي تبتز المستخدمين؟", a: ["برمجيات الفدية (Ransomware)", "الفيروسات البسيطة", "ملفات التجسس", "الإعلانات المزعجة"], correct: 0}
+            ],
+            "معلومات عامة": [
+                {q: "كم عدد حروف الهجاء في اللغة العربية؟", a: ["28 حرفاً", "26 حرفاً", "29 حرفاً", "30 حرفاً"], correct: 0},
+                {q: "ما هي السورة القرآنية التي تُسمى بـ 'قلب القرآن'؟", a: ["سورة يس", "سورة البقرة", "سورة الملك", "سورة الكهف"], correct: 0},
+                {q: "كم عدد ألوان طقس قزح (قوس المطر) الرئيسية؟", a: ["7 ألوان", "5 ألوان", "6 ألوان", "8 ألوان"], correct: 0},
+                {q: "من هو صاحب رواية 'البؤساء' الشهيرة؟", a: ["فيكتور هوغو", "وليام شكسبير", "تولستوي", "تشارلز ديكنز"], correct: 0},
+                {q: "ما هو الطائر الذي لا يمتلك القدرة على الطيران ولكنه سباح ممتاز في الماء؟", a: ["البطريق", "النعامة", "الدجاجة", "الطاووس"], correct: 0},
+                {q: "ما هي العملة الرسمية لدولة اليابان؟", a: ["الين", "الدولار", "اليورو", "اليوان"], correct: 0},
+                {q: "ما هو الحيوان البحري الذي يمتلك ثلاثة قلوب؟", a: ["الأخطبوط", "الحوت", "الدلفين", "القرش"], correct: 0},
+                {q: "كم عدد أسنان الإنسان البالغ الطبيعية؟", a: ["32 سناً", "28 سناً", "30 سناً", "34 سناً"], correct: 0},
+                {q: "ما هو الكوكب الذي يمتلك أكبر عدد من الأقمار في المجموعة الشمسية؟", a: ["زحل", "المشتري", "المريخ", "أورانوس"], correct: 0},
+                {q: "ما هو العنصر الأكثر وجوداً في قشرة الأرض الصلبة؟", a: ["الأكسجين", "السيليكون", "الحديد", "الألومنيوم"], correct: 0}
+            ],
+            "فلك وفضاء": [
+                {q: "ما هو الكوكب ذو الحلقات الأبرز في المجموعة الشمسية؟", a: ["زحل", "المشتري", "أورانوس", "المريخ"], correct: 0},
+                {q: "ماذا تسمى المجرة التي ننتمي إليها؟", a: ["درب التبانة", "أندروميدا", "مجرة المثلث", "درب القبان"], correct: 0},
+                {q: "ما هو أقرب نجم لكوكب الأرض؟", a: ["الشمس", "بروكسيما سنتوري", "الشعرى اليمانية", "النجم القطبي"], correct: 0},
+                {q: "من هو أول إنسان صعد إلى الفضاء؟", a: ["يوري غاغارين", "نيل آرمسترونغ", "باز ألدرن", "جون جلين"], correct: 0},
+                {q: "أي كوكب يلقب بـ 'توأم الأرض'؟", a: ["الزهرة", "المريخ", "عطارد", "المشتري"], correct: 0},
+                {q: "ما هو اسم أول قمر صناعي أطلق في الفضاء؟", a: ["سبوتنيك 1", "أبولو 11", "إكسبلورر 1", "فوستوك"], correct: 0},
+                {q: "ما هو أكبر كواكب المجموعة الشمسية؟", a: ["المشتري", "زحل", "نبتون", "الأرض"], correct: 0},
+                {q: "أي الكواكب هو الأبعد عن الشمس؟", a: ["نبتون", "أورانوس", "زحل", "المريخ"], correct: 0},
+                {q: "ما اسم الظاهرة التي تحدث عندما يمر القمر بين الأرض والشمس؟", a: ["كسوف الشمس", "خسوف القمر", "المد والجزر", "الشفق القطبي"], correct: 0},
+                {q: "كم يبلغ عدد الكواكب الأساسية في مجموعتنا الشمسية؟", a: ["8 كواكب", "9 كواكب", "7 كواكب", "10 كواكب"], correct: 0},
+                {q: "أي الكواكب يومه أطول من سنته؟", a: ["الزهرة", "عطارد", "زحل", "المريخ"], correct: 0},
+                {q: "ماذا تسمى النجوم التي تسقط وتحترق في الغلاف الجوي؟", a: ["الشهب", "النيازك", "المذنبات", "الكويكبات"], correct: 0},
+                {q: "ما هو اسم المسبار الفضائي الذي وصل لأبعد نقطة عن الأرض؟", a: ["فويجر 1", "كيوريوسيتي", "كاسيني", "هابل"], correct: 0},
+                {q: "ما هو الغاز المكون الأساسي للشمس؟", a: ["الهيدروجين", "الهيليوم", "الأكسجين", "النيتروجين"], correct: 0},
+                {q: "ما هو اسم أول كلبة صعدت إلى الفضاء؟", a: ["لايكا", "بيلكا", "ستريلكا", "ماكس"], correct: 0}
+            ],
+            "سينما وفنون": [
+                {q: "فيلم أكشن شهير بطولة كيانو ريفز تدور أحداثه في حافلة لا تتوقف؟", a: ["Speed (سرعة)", "The Matrix", "John Wick", "Heat"], correct: 0},
+                {q: "من هو مخرج الفيلم الملحمي The Dark Knight؟", a: ["كريستوفر نولان", "جيمس كاميرون", "ستيفن سبيلبرغ", "مارتن سكورسيزي"], correct: 0},
+                {q: "من هو الممثل العبقري الذي قام بدور 'الجوكر' في The Dark Knight؟", a: ["هيث ليدجر", "خواكين فينيكس", "جاك نيكلسون", "جاريد ليتو"], correct: 0},
+                {q: "فيلم يتبادل فيه جون ترافولتا ونيكولاس كيج وجوههما؟", a: ["Face/Off (الوجه المخلوع)", "The Rock", "Con Air", "Pulp Fiction"], correct: 0},
+                {q: "من هو بطل فيلم الدراما (The Pursuit of Happyness - السعي للسعادة)؟", a: ["ويل سميث", "دينزل واشنطن", "مورغان فريمان", "توم هانكس"], correct: 0},
+                {q: "من هو الممثل الأسطوري لسلسلة أفلام الأكشن والمخيال (Terminator)؟", a: ["أرنولد شوارزنيجر", "سيلفستر ستالون", "بروس ويليس", "جان كلود فان دام"], correct: 0},
+                {q: "فيلم سرقة بنوك شهير عام 1995 يجمع بين آل باتشينو وروبرت دي نيرو؟", a: ["Heat (حرارة)", "The Godfather", "Scarface", "Goodfellas"], correct: 0},
+                {q: "من رسم اللوحة الشهيرة 'الموناليزا'؟", a: ["ليوناردو دا فينشي", "بابلو بيكاسو", "فينسنت فان جوخ", "مايكل أنجلو"], correct: 0},
+                {q: "ما هي جنسية الرسام العالمي بابلو بيكاسو؟", a: ["إسباني", "إيطالي", "فرنسي", "ألماني"], correct: 0},
+                {q: "من هو مخرج فيلم تيتانيك وفيلم أفاتار؟", a: ["جيمس كاميرون", "بيتر جاكسون", "ريدلي سكوت", "كوينتن تارانتينو"], correct: 0},
+                {q: "مدينة أمريكية تعتبر عاصمة صناعة السينما في العالم؟", a: ["هوليوود (لوس أنجلوس)", "نيويورك", "شيكاغو", "ميامي"], correct: 0},
+                {q: "من رسم لوحة 'ليلة النجوم' الشهيرة؟", a: ["فينسنت فان جوخ", "كلود مونيه", "سلفادور دالي", "رامبرانت"], correct: 0},
+                {q: "في أي دولة نشأ فن الأنمي (الرسوم المتحركة)؟", a: ["اليابان", "الصين", "كوريا الجنوبية", "أمريكا"], correct: 0},
+                {q: "من هو الممثل الصامت الذي اشتهر بشخصية 'المتشرد'؟", a: ["تشارلي تشابلن", "باستر كيتون", "ستان لوريل", "أوليفر هاردي"], correct: 0},
+                {q: "ما هو أول فيلم رسوم متحركة طويل ملون من إنتاج ديزني؟", a: ["سنو وايت والأقزام السبعة", "بينوكيو", "سندريلا", "الأسد الملك"], correct: 0},
+                {q: "فنان مصري لُقب بـ 'العندليب الأسمر'؟", a: ["عبد الحليم حافظ", "فريد الأطرش", "محمد عبد الوهاب", "محرم فؤاد"], correct: 0},
+                {q: "سلسلة أفلام سحرية تدور أحداثها حول مدرسة هوجوورتس للسحر؟", a: ["هاري بوتر", "سيد الخواتم", "مباريات الجوع", "سجلات نارنيا"], correct: 0},
+                {q: "فن النحت يعتبر من الفنون..؟", a: ["التشكيلية", "الموسيقية", "المسرحية", "الأدبية"], correct: 0},
+                {q: "من هو الممثل الفائز بأوسكار أفضل ممثل عن فيلم 'The Godfather'؟", a: ["مارلون براندو", "آل باتشينو", "روبرت دي نيرو", "جيمس كان"], correct: 0},
+                {q: "فيلم الأكشن الشهير للمخرج مايكل باي وبطولة نيكولاس كيج وشون كونري؟", a: ["The Rock (الصخرة)", "Armageddon", "Transformers", "Bad Boys"], correct: 0}
+            ],
+            "اختراعات واكتشافات": [
+                {q: "من هو مخترع المصباح الكهربائي العملي؟", a: ["توماس إديسون", "نيكولا تسلا", "البرت آينشتاين", "ألكسندر بيل"], correct: 0},
+                {q: "من هو مكتشف البنسلين (أول مضاد حيوي)؟", a: ["ألكسندر فليمنج", "لويس باستير", "ماري كوري", "روبرت كوخ"], correct: 0},
+                {q: "من يُنسب إليه اختراع الهاتف؟", a: ["ألكسندر غراهام بيل", "أنطونيو ميوتشي", "غولييلمو ماركوني", "صمويل مورس"], correct: 0},
+                {q: "من اكتشف قانون الجاذبية الأرضية؟", a: ["إسحاق نيوتن", "جاليليو جاليلي", "يوهانس كيبلر", "أينشتاين"], correct: 0},
+                {q: "من هو الكيميائي الذي اخترع الديناميت؟", a: ["ألفريد نوبل", "ديميتري مندلييف", "جون دالتون", "أنطوان لافوازييه"], correct: 0},
+                {q: "الأخوان اللذان اخترعا أول طائرة ناجحة هما؟", a: ["الأخوان رايت", "الأخوان مونتجولفييه", "الأخوان لوميير", "الأخوان ماكدونالد"], correct: 0},
+                {q: "من هو مخترع الراديو؟", a: ["غولييلمو ماركوني", "هاينريش هيرتز", "نيكولا تسلا", "إدوين أرمسترونغ"], correct: 0},
+                {q: "العالم العربي مكتشف الدورة الدموية الصغرى هو؟", a: ["ابن النفيس", "ابن سينا", "الرازي", "الخوارزمي"], correct: 0},
+                {q: "من هو مخترع آلة الطباعة الحديثة؟", a: ["يوهان غوتنبرغ", "ليوناردو دا فينشي", "جون بيل", "إسحاق نيوتن"], correct: 0},
+                {q: "عالمة فيزياء شهيرة اكتشفت عنصري الراديوم والبولونيوم؟", a: ["ماري كوري", "روزليند فرانكلين", "أدا لوفلايس", "ليزي مايتنر"], correct: 0},
+                {q: "من هو مخترع جهاز التلغراف الكهربائي؟", a: ["صمويل مورس", "توماس إديسون", "ألكسندر بيل", "ماركوني"], correct: 0},
+                {q: "من هو المكتشف الذي وصل إلى قارة أمريكا عام 1492؟", a: ["كريستوفر كولومبوس", "فاسكو دا غاما", "فرديناند ماجلان", "جيمس كوك"], correct: 0},
+                {q: "من هو مبتكر شبكة الويب العالمية (WWW)؟", a: ["تيم بيرنرز لي", "بيل جيتس", "مارك زوكربيرج", "لاري بايج"], correct: 0},
+                {q: "من هو العالم الفيزيائي الذي صاغ النظرية النسبية؟", a: ["ألبرت أينشتاين", "ماكس بلانك", "نيلز بور", "ستيفن هوكينغ"], correct: 0},
+                {q: "أول لقاح تم اكتشافه في العالم كان ضد مرض..؟", a: ["الجدري", "شلل الأطفال", "داء الكلب", "الحصبة"], correct: 0}
+            ]
+        };
+
+        let activeQuizQuestions = [];
+        let currentQuizIndex = 0;
+        let quizScoreCount = 0;
+        let isAnswerLocked = false;
+        
+        let timerInterval;
+        let timeLeft = 15;
+
+        function openQuizRulesModal() {
+            playClickSound();
+            document.getElementById('quiz-rules-modal').classList.add('show');
+        }
+
+        function closeQuizRules() {
+            playBackSound();
+            document.getElementById('quiz-rules-modal').classList.remove('show');
+        }
+
+        function startActualQuiz() {
+            closeQuizRules();
+            playClickSound();
+
+            activeQuizQuestions = [];
+            const categories = Object.keys(masterQuestionsBank);
+            
+            categories.forEach(cat => {
+                const questionsList = masterQuestionsBank[cat];
+                const randomIndex = Math.floor(Math.random() * questionsList.length);
+                let selectedQ = {...questionsList[randomIndex]};
+                selectedQ.categoryName = cat;
+                activeQuizQuestions.push(selectedQ);
+            });
+
+            activeQuizQuestions = shuffleArray(activeQuizQuestions).slice(0, 5);
+
+            currentQuizIndex = 0;
+            quizScoreCount = 0;
+
+            navigateTo('view-quiz-game', 'تحدي المعلومات', 'جولة تحدي العباقرة');
+            renderQuizQuestion();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderQuizQuestion() {
+            isAnswerLocked = false;
+            const container = document.getElementById('quiz-container');
+            const qData = activeQuizQuestions[currentQuizIndex];
+
+            let optionsWithIndices = qData.a.map((opt, idx) => ({ text: opt, isCorrect: idx === qData.correct }));
+            optionsWithIndices = shuffleArray(optionsWithIndices);
+
+            let html = `
+                <div class="section-label" style="justify-content: space-between;">
+                    <span>السؤال ${currentQuizIndex + 1} من 5</span>
+                    <span style="color: var(--accent-gold); font-size: 0.8rem;">مجال: ${qData.categoryName}</span>
+                </div>
+                <div class="quiz-card">
+                    <div id="quiz-timer" class="quiz-timer-box">⏱️ 15</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5; color: var(--text-main);">${qData.q}</h3>
+                    <div id="options-list" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+
+            optionsWithIndices.forEach((opt, idx) => {
+                html += `<button class="quiz-option-btn" id="opt-btn-${idx}" onclick="handleQuizAnswer(this, ${opt.isCorrect})">${idx + 1}. ${opt.text}</button>`;
+            });
+
+            html += `</div>
+                     <div id="next-question-area" style="margin-top: 20px; display: none;">
+                        <button class="btn-submit btn-action-quiz" onclick="proceedToNextQuestion()">السؤال التالي ➡️</button>
+                     </div>
+                   </div>`;
+            container.innerHTML = html;
+            
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 15;
+            const timerEl = document.getElementById('quiz-timer');
+            timerEl.innerHTML = `⏱️ ${timeLeft}`;
+            timerEl.style.color = 'var(--text-main)';
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.innerHTML = `⏱️ ${timeLeft}`;
+                
+                if (timeLeft <= 5) {
+                    timerEl.style.color = '#ef4444';
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleQuizAnswer(null, false, true);
+                }
+            }, 1000);
+        }
+
+        function handleQuizAnswer(buttonElem, isCorrect, isTimeout = false) {
+            if (isAnswerLocked) return;
+            isAnswerLocked = true;
+            clearInterval(timerInterval);
+
+            const allButtons = document.querySelectorAll('.quiz-option-btn');
+            
+            if (isCorrect && !isTimeout) {
+                quizScoreCount++;
+                playSuccessSound();
+                shootStars();
+                buttonElem.classList.add('correct-choice');
+            } else {
+                playErrorSound();
+                if (buttonElem) buttonElem.classList.add('wrong-choice');
+                
+                allButtons.forEach(btn => {
+                    if (btn.innerText.includes(activeQuizQuestions[currentQuizIndex].a[activeQuizQuestions[currentQuizIndex].correct])) {
+                        btn.classList.add('correct-choice');
+                        btn.style.transform = 'scale(1)';
+                    }
+                });
+            }
+
+            allButtons.forEach(btn => btn.disabled = true);
+            document.getElementById('next-question-area').style.display = 'block';
+        }
+
+        function proceedToNextQuestion() {
+            playClickSound();
+            currentQuizIndex++;
+            if (currentQuizIndex < 5) {
+                renderQuizQuestion();
+            } else {
+                finishQuizGame();
+            }
+        }
+
+        function finishQuizGame() {
+            let wrongCount = 5 - quizScoreCount;
+            let totalPointsChange = (quizScoreCount * 5) - (wrongCount * 3);
+
+            let bonusMsg = "";
+            if (quizScoreCount === 5) {
+                totalPointsChange += 10;
+                bonusMsg = "<br>🔥 <b>يا وحش يا دولي! جابتهم كلهم صح وخدت بونص +10 نقاط إضافية!</b>";
+            } else if (quizScoreCount === 0) {
+                totalPointsChange -= 10;
+                bonusMsg = "<br>😅 <b>للأسف جبتهم كلهم غلط واتخصم منك عقاب -10 نقاط، شد حيلك المرة الجاية!</b>";
+            }
+
+            // تحديث النقاط سحابياً
+            if (currentUser) {
+                db.ref('users/' + currentUser.phone + '/points').transaction((currentPts) => {
+                    let updated = (currentPts || 0) + totalPointsChange;
+                    return updated < 0 ? 0 : updated;
+                });
+            }
+
+            const imgEl = document.getElementById('result-img');
+            const titleEl = document.getElementById('result-title');
+            const descEl = document.getElementById('result-desc');
+
+            if (quizScoreCount >= 4) {
+                imgEl.src = "https://img.icons8.com/fluency/96/trophy.png";
+                titleEl.innerText = "أنت عبقري الدفعة يا دولي!";
+            } else if (quizScoreCount >= 2) {
+                imgEl.src = "https://img.icons8.com/fluency/96/medal.png";
+                titleEl.innerText = "مستوى ممتاز وشغل عالي!";
+            } else {
+                imgEl.src = "https://img.icons8.com/fluency/96/flash-on.png";
+                titleEl.innerText = "محتاج تركز أكتر يا هندسة!";
+            }
+
+            descEl.innerHTML = `جاوبت ${quizScoreCount} من 5 أسئلة صح.<br><br>
+                                رصيد نقاطك: <span style="color: ${totalPointsChange >= 0 ? 'var(--accent-emerald)' : '#ef4444'}; font-weight: 900; font-size: 1.15rem;">${totalPointsChange >= 0 ? '+' + totalPointsChange : totalPointsChange} نقطة</span>
+                                ${bonusMsg}`;
+
+            document.getElementById('quiz-result-modal').classList.add('show');
+            triggerConfetti();
+        }
+
+        function closeQuizResult() {
+            playBackSound();
+            document.getElementById('quiz-result-modal').classList.remove('show');
+            navHistory = [];
+            navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+        }
+
+    </script>
+</body>
+</html>
