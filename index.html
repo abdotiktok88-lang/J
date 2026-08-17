@@ -60,7 +60,7 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            padding-bottom: 95px; /* مساحة للفوتر الثابت تحت */
+            padding-bottom: 95px;
         }
 
         /* رأس الصفحة */
@@ -336,6 +336,285 @@
             font-weight: 600;
         }
 
+        /* تصميمات الحسابات */
+        .auth-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 24px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .auth-header-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .auth-header h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 800;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            background: var(--bg-primary);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+            color: #000;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transition: transform 0.15s ease;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.97);
+        }
+
+        /* النوافذ المنبثقة */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex !important;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 22px;
+            padding: 30px 24px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: scale(1);
+        }
+
+        .modal-box h3 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .modal-box p {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-modal-primary {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-modal-secondary {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* تصميم الملف الشخصي */
+        .profile-header {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            font-size: 3.5rem;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 16px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .profile-phone {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 12px;
+            direction: ltr;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-weight: 700;
+        }
+
+        .avatar-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .avatar-option {
+            font-size: 1.5rem;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-option.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.15);
+            transform: scale(1.1);
+        }
+
         /* الفوتر المثبت تماماً بأسفل الشاشة (Fixed Footer) */
         footer {
             position: fixed;
@@ -375,6 +654,28 @@
 </head>
 <body>
 
+    <!-- رسالة ترحيبية للزائر غير المسجل -->
+    <div id="welcome-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🌟</div>
+            <h3>أهلاً بك في تطبيق علوم الأغذية</h3>
+            <p>أنشئ حسابك الآن لتتمكن من حفظ نقاطك، وتتبع تقدمك في الاختبارات والمنافسات.</p>
+            <div class="modal-buttons">
+                <button class="btn-modal-primary" onclick="goToRegister()">إنشاء حساب</button>
+                <button class="btn-modal-secondary" onclick="dismissWelcomeModal()">لاحقاً</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسالة نجاح إنشاء الحساب -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎉</div>
+            <h3>تم إنشاء حسابك بنجاح</h3>
+            <p>أهلًا وسهلًا بك! نتمنى لك تجربة رائعة ومفيدة معنا.</p>
+        </div>
+    </div>
+
     <!-- رأس الصفحة -->
     <header>
         <div class="header-title-box">
@@ -385,6 +686,9 @@
             </div>
         </div>
         <div class="header-controls">
+            <button class="btn-theme" onclick="handleProfileClick()" title="الملف الشخصي">
+                <span id="header-avatar">👤</span>
+            </button>
             <button id="btn-theme-toggle" class="btn-theme" onclick="toggleTheme()" title="تبديل الوضع">
                 <span id="theme-icon">☀️</span>
             </button>
@@ -435,6 +739,120 @@
                     <div class="card-arrow">←</div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- شاشة الحسابات (تسجيل دخول / إنشاء حساب) -->
+        <div id="view-auth" class="view-section">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-header-icon">🎓</div>
+                    <h2>منطقة الطلاب</h2>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="tab-login" onclick="switchAuthTab('login')">تسجيل دخول</button>
+                    <button class="auth-tab-btn" id="tab-register" onclick="switchAuthTab('register')">حساب جديد</button>
+                </div>
+
+                <!-- فورم تسجيل الدخول -->
+                <div id="form-login">
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="login-phone" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="login-password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <button class="btn-submit" onclick="loginUser()">دخول 🚀</button>
+                </div>
+
+                <!-- فورم إنشاء حساب -->
+                <div id="form-register" style="display: none;">
+                    <div class="form-group">
+                        <label>الاسم بالكامل</label>
+                        <input type="text" id="reg-name" class="form-input" placeholder="اسمك الرباعي">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="reg-phone" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="reg-password" class="form-input" placeholder="أدخل كلمة مرور قوية">
+                    </div>
+                    <div class="form-group">
+                        <label>تأكيد كلمة المرور</label>
+                        <input type="password" id="reg-confirm-password" class="form-input" placeholder="أعد إدخال كلمة المرور">
+                    </div>
+                    <button class="btn-submit" onclick="registerUser()">إنشاء حساب ✅</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة الملف الشخصي -->
+        <div id="view-profile" class="view-section">
+            <div class="profile-header">
+                <div class="profile-avatar" id="display-avatar">👨‍🔬</div>
+                <div class="profile-name" id="display-name">اسم الطالب</div>
+                <div class="profile-phone" id="display-phone">01000000000</div>
+                <div class="card-badge" style="display: inline-block;">برنامج علوم وتكنولوجيا الأغذية</div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-value" id="display-points">100</div>
+                    <div class="stat-label">مجموع النقاط ⭐</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">مبتدئ</div>
+                    <div class="stat-label">المستوى الحالي 🏅</div>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="app-card" onclick="navigateTo('view-edit-profile', 'تعديل البيانات', 'تحديث ملفك الشخصي')">
+                    <div class="card-info">
+                        <div class="card-icon">✏️</div>
+                        <div class="card-text">
+                            <h3>تعديل الملف الشخصي</h3>
+                            <p>تغيير الاسم والصورة الرمزية</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
+                <div class="app-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="logoutUser()">
+                    <div class="card-info">
+                        <div class="card-icon" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">🚪</div>
+                        <div class="card-text">
+                            <h3 style="color: #ef4444;">تسجيل الخروج</h3>
+                            <p>تسجيل الخروج من هذا الجهاز</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #ef4444;">←</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة تعديل الملف الشخصي -->
+        <div id="view-edit-profile" class="view-section">
+            <div class="auth-card">
+                <div class="form-group">
+                    <label style="text-align: center;">اختر صورتك الرمزية</label>
+                    <div class="avatar-selector">
+                        <div class="avatar-option selected" onclick="selectEditAvatar('👨‍🔬', this)">👨‍🔬</div>
+                        <div class="avatar-option" onclick="selectEditAvatar('👩‍🔬', this)">👩‍🔬</div>
+                        <div class="avatar-option" onclick="selectEditAvatar('🎓', this)">🎓</div>
+                        <div class="avatar-option" onclick="selectEditAvatar('🌟', this)">🌟</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>الاسم بالكامل</label>
+                    <input type="text" id="edit-name-input" class="form-input">
+                </div>
+                <button class="btn-submit" onclick="saveProfileChanges()">حفظ التعديلات 💾</button>
             </div>
         </div>
 
@@ -543,7 +961,7 @@
         </div>
     </footer>
 
-    <!-- التحكم الصوتي والتنقل ومفتاح الثيم -->
+    <!-- التحكم الصوتي والتنقل ومفتاح الثيم ونظام الحسابات -->
     <script>
         // إعداد الصوت التفاعلي
         let audioCtx;
@@ -665,6 +1083,248 @@
             document.getElementById('top-subtitle').innerText = current.subtitle;
             const btnBack = document.getElementById('btn-back');
             btnBack.style.display = (navHistory.length > 1) ? 'flex' : 'none';
+        }
+
+        // ==========================================
+        // نظام الحسابات (Local Storage Auth)
+        // ==========================================
+
+        let currentUser = null;
+        let editSelectedAvatar = '👨‍🔬';
+
+        // تحميل حالة التسجيل والرسالة الترحيبية
+        window.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            
+            // التحقق من النافذة الترحيبية
+            if (!currentUser && !localStorage.getItem('welcome_dismissed')) {
+                setTimeout(() => {
+                    document.getElementById('welcome-modal').classList.add('show');
+                }, 800);
+            }
+        });
+
+        // الحصول على قاعدة بيانات المستخدمين
+        function getUsersDB() {
+            return JSON.parse(localStorage.getItem('users_db')) || {};
+        }
+
+        function saveUsersDB(db) {
+            localStorage.setItem('users_db', JSON.stringify(db));
+        }
+
+        // فحص حالة الجلسة
+        function checkLoginStatus() {
+            const loggedInPhone = localStorage.getItem('active_user_phone');
+            if (loggedInPhone) {
+                const db = getUsersDB();
+                if (db[loggedInPhone]) {
+                    currentUser = db[loggedInPhone];
+                    updateProfileUI();
+                    return;
+                }
+            }
+            currentUser = null;
+            document.getElementById('header-avatar').innerText = '👤';
+        }
+
+        // إغلاق النافذة الترحيبية
+        function dismissWelcomeModal() {
+            playBackSound();
+            document.getElementById('welcome-modal').classList.remove('show');
+            localStorage.setItem('welcome_dismissed', 'true');
+        }
+
+        function goToRegister() {
+            dismissWelcomeModal();
+            navigateTo('view-auth', 'تسجيل الدخول', 'إنشاء حساب جديد');
+            switchAuthTab('register');
+        }
+
+        // تبديل بين فورم الدخول والتسجيل
+        function switchAuthTab(tab) {
+            playClickSound();
+            if (tab === 'login') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('tab-register').classList.remove('active');
+                document.getElementById('form-login').style.display = 'block';
+                document.getElementById('form-register').style.display = 'none';
+            } else {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+                document.getElementById('form-register').style.display = 'block';
+                document.getElementById('form-login').style.display = 'none';
+            }
+        }
+
+        // إنشاء حساب جديد
+        function registerUser() {
+            playClickSound();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-password').value;
+            const confirmPass = document.getElementById('reg-confirm-password').value;
+
+            if (!name || !phone || !pass || !confirmPass) {
+                alert('يرجى ملء جميع الحقول المطلوبة!');
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                alert('كلمة المرور غير متطابقة!');
+                return;
+            }
+
+            const db = getUsersDB();
+            if (db[phone]) {
+                alert('هذا الرقم مسجل بالفعل! يرجى تسجيل الدخول.');
+                switchAuthTab('login');
+                document.getElementById('login-phone').value = phone;
+                return;
+            }
+
+            const newUser = {
+                name: name,
+                phone: phone,
+                password: pass,
+                avatar: '👨‍🔬',
+                points: 100
+            };
+
+            db[phone] = newUser;
+            saveUsersDB(db);
+
+            // تسجيل الدخول التلقائي
+            localStorage.setItem('active_user_phone', phone);
+            localStorage.setItem('welcome_dismissed', 'true'); // منع ظهور رسالة الترحيب مجدداً
+            currentUser = newUser;
+            updateProfileUI();
+
+            // إظهار رسالة النجاح
+            const successModal = document.getElementById('success-modal');
+            successModal.classList.add('show');
+            
+            setTimeout(() => {
+                successModal.classList.remove('show');
+                // إعادة تصفير الهيستوري والذهاب للرئيسية
+                navHistory = [];
+                navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+            }, 2500);
+
+            // تصفير الفورم
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-phone').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-confirm-password').value = '';
+        }
+
+        // تسجيل الدخول
+        function loginUser() {
+            playClickSound();
+            const phone = document.getElementById('login-phone').value.trim();
+            const pass = document.getElementById('login-password').value;
+
+            if (!phone || !pass) {
+                alert('يرجى إدخال رقم الهاتف وكلمة المرور');
+                return;
+            }
+
+            const db = getUsersDB();
+            const user = db[phone];
+
+            if (!user) {
+                alert('هذا الحساب غير موجود! برجاء إنشاء حساب جديد.');
+                return;
+            }
+
+            if (user.password !== pass) {
+                alert('كلمة المرور غير صحيحة!');
+                return;
+            }
+
+            localStorage.setItem('active_user_phone', phone);
+            currentUser = user;
+            updateProfileUI();
+            
+            // تصفير الفورم
+            document.getElementById('login-password').value = '';
+
+            navHistory = [];
+            navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+        }
+
+        // تسجيل الخروج
+        function logoutUser() {
+            playBackSound();
+            if (confirm('هل تريد بالتأكيد تسجيل الخروج؟')) {
+                localStorage.removeItem('active_user_phone');
+                currentUser = null;
+                document.getElementById('header-avatar').innerText = '👤';
+                navHistory = [];
+                navigateTo('view-home', 'علوم الأغذية', 'الفرقة الرابعة - دفعة 27');
+            }
+        }
+
+        // تحديث واجهة الملف الشخصي
+        function updateProfileUI() {
+            if (currentUser) {
+                document.getElementById('header-avatar').innerText = currentUser.avatar;
+                document.getElementById('display-avatar').innerText = currentUser.avatar;
+                document.getElementById('display-name').innerText = currentUser.name;
+                document.getElementById('display-phone').innerText = currentUser.phone;
+                document.getElementById('display-points').innerText = currentUser.points;
+                
+                // ملء بيانات التعديل
+                document.getElementById('edit-name-input').value = currentUser.name;
+                selectEditAvatar(currentUser.avatar, null, true);
+            }
+        }
+
+        // فتح الملف الشخصي أو شاشة الدخول
+        function handleProfileClick() {
+            if (currentUser) {
+                navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك');
+            } else {
+                navigateTo('view-auth', 'منطقة الطلاب', 'يرجى تسجيل الدخول');
+            }
+        }
+
+        // اختيار الصورة الرمزية في شاشة التعديل
+        function selectEditAvatar(avatar, element, isInit = false) {
+            if (!isInit) playClickSound();
+            editSelectedAvatar = avatar;
+            
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.innerText === avatar) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
+
+        // حفظ تعديلات الملف الشخصي
+        function saveProfileChanges() {
+            playClickSound();
+            const newName = document.getElementById('edit-name-input').value.trim();
+            
+            if (!newName) {
+                alert('الاسم لا يمكن أن يكون فارغاً!');
+                return;
+            }
+
+            const db = getUsersDB();
+            if (db[currentUser.phone]) {
+                db[currentUser.phone].name = newName;
+                db[currentUser.phone].avatar = editSelectedAvatar;
+                saveUsersDB(db);
+                
+                currentUser.name = newName;
+                currentUser.avatar = editSelectedAvatar;
+                updateProfileUI();
+                
+                alert('تم حفظ التعديلات بنجاح ✨');
+                navigateBack();
+            }
         }
     </script>
 </body>
