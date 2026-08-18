@@ -14,6 +14,7 @@
     
     <!-- مكتبات Firebase السحابية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <style>
@@ -59,18 +60,62 @@
             overflow-x: hidden; display: flex; flex-direction: column; padding-bottom: 30px;
         }
 
+        /* التنبيه العلوي المنزلق */
+        #top-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 450px; background: var(--card-gradient);
+            border: 1px solid var(--accent-gold); border-radius: 16px;
+            padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+            z-index: 10000; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            transition: top 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s ease;
+            opacity: 0;
+        }
+        #top-toast.show { top: 20px; opacity: 1; }
+        #top-toast.toast-error { border-color: #ef4444; }
+        #top-toast.toast-success { border-color: #10b981; }
+        #top-toast-icon { width: 32px; height: 32px; flex-shrink: 0; }
+        #top-toast-text { font-size: 0.88rem; font-weight: 700; color: var(--text-main); line-height: 1.4; text-align: right; }
+
+        /* شاشات البداية والترحيب */
+        .intro-screen-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(circle at center, var(--radial-glow) 0%, transparent 80%);
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 24px; text-align: center; box-sizing: border-box;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(60px);
+            animation: slideRightAnim 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        .slide-in-right-delay-1 { animation-delay: 0.2s; }
+        .slide-in-right-delay-2 { animation-delay: 0.4s; }
+        .slide-in-right-delay-3 { animation-delay: 0.6s; }
+
+        @keyframes slideRightAnim { to { opacity: 1; transform: translateX(0); } }
+
+        .intro-card {
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 32px 24px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(212, 175, 55, 0.15);
+        }
+
         /* تصميم الهيدر */
         header {
             position: sticky; top: 0; 
             background: linear-gradient(180deg, rgba(18, 30, 28, 0.95) 0%, rgba(11, 17, 16, 0.85) 100%);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 12px 16px; 
-            display: flex; align-items: center; justify-content: space-between;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid rgba(212, 175, 55, 0.25);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            z-index: 100;
-            overflow: hidden;
+            z-index: 100; overflow: hidden;
         }
 
         [data-theme="light"] header {
@@ -193,25 +238,30 @@
         .auth-tab-btn { flex: 1; min-width: 80px; padding: 12px; border: none; background: transparent; color: var(--text-sub); font-weight: 800; font-size: 0.85rem; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;}
         .auth-tab-btn.active { background: var(--accent-gold); color: #000; box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3); }
         .form-group { margin-bottom: 16px; text-align: right; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-sub); margin-bottom: 8px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-sub); margin-bottom: 8px; text-align: right; }
         .form-input { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-card); background: var(--bg-primary); color: var(--text-main); font-size: 0.95rem; font-weight: 600; outline: none; transition: 0.3s; }
         .form-input:focus { border-color: var(--accent-gold); }
         .btn-submit { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%); color: #000; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-submit:active { transform: scale(0.97); }
         
         .profile-header { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 20px; }
-        .profile-avatar { width: 90px; height: 90px; margin: 0 auto 16px; background: var(--bg-secondary); border: 2px solid var(--accent-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: contain; }
+        .profile-avatar { width: 90px; height: 90px; margin: 0 auto 16px; background: var(--bg-secondary); border: 2px solid var(--accent-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px; }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         .profile-name { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
         .profile-phone { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin-bottom: 12px; direction: ltr; }
         .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-box { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 16px; padding: 16px; text-align: center; }
         .stat-value { font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); }
         .stat-label { font-size: 0.8rem; color: var(--text-sub); font-weight: 700; }
-        .avatar-selector { display: flex; justify-content: center; gap: 12px; margin: 16px 0; }
+        .avatar-selector { display: flex; justify-content: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
         .avatar-option { width: 54px; height: 54px; border-radius: 14px; background: var(--bg-primary); border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 6px; }
         .avatar-option img { width: 100%; height: 100%; object-fit: contain; }
         .avatar-option.selected { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.15); transform: scale(1.1); }
+
+        /* الأكورديون */
+        .faq-item { background: var(--bg-secondary); border: 1px solid var(--border-card); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+        .faq-question { padding: 14px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .faq-answer { padding: 0 14px 14px; font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; display: none; border-top: 1px dashed var(--border-card); margin-top: 5px; padding-top: 10px; text-align: right; }
 
         .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
         .social-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 12px; text-decoration: none; color: #fff; font-weight: 800; font-size: 0.9rem; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -221,7 +271,7 @@
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 2000; opacity: 0; transition: opacity 0.35s ease; }
         .modal-overlay.show { display: flex !important; opacity: 1; }
-        .modal-box { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 24px; padding: 32px 24px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.15); transform: scale(0.8) translateY(20px); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
+        .modal-box { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 24px; padding: 32px 24px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.15); transform: scale(0.8) translateY(20px); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; max-height: 90vh; overflow-y: auto;}
         .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
         .modal-box h3 { font-size: 1.35rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px; }
         .modal-box p { font-size: 0.92rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; font-weight: 600; }
@@ -233,7 +283,7 @@
 
         .podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-bottom: 30px; margin-top: 20px; }
         .podium-place { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; }
-        .podium-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--accent-gold); background: var(--bg-primary); padding: 5px; margin-bottom: -15px; z-index: 2; position: relative; }
+        .podium-avatar { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--accent-gold); background: var(--bg-primary); padding: 5px; margin-bottom: -15px; z-index: 2; position: relative; object-fit: cover;}
         .podium-step { width: 100%; border-radius: 12px 12px 0 0; background: var(--card-gradient); border: 1px solid var(--border-card); display: flex; justify-content: center; align-items: flex-start; padding-top: 15px; font-weight: 900; font-size: 1.5rem; color: var(--accent-gold); }
         .step-1 { height: 120px; border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
         .step-2 { height: 90px; border-color: #c0c0c0; }
@@ -244,7 +294,7 @@
         .lb-item { display: flex; align-items: center; background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 16px; padding: 12px 16px; gap: 15px; }
         .lb-item.is-me { border-color: var(--accent-emerald); background: rgba(16, 185, 129, 0.1); }
         .lb-rank { font-size: 1.2rem; font-weight: 900; color: var(--text-sub); width: 30px; text-align: center; }
-        .lb-avatar { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--border-card); padding: 4px; background: var(--bg-primary); }
+        .lb-avatar { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--border-card); padding: 2px; background: var(--bg-primary); object-fit: cover;}
         .lb-details { flex: 1; display: flex; flex-direction: column; }
         .lb-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
         .lb-badge { font-size: 0.75rem; color: var(--text-sub); font-weight: 700; margin-top: 2px; }
@@ -261,19 +311,11 @@
         .falling-star, .confetti-piece { position: absolute; user-select: none; }
         .confetti-piece { width: 10px; height: 10px; opacity: 0; }
 
-        /* تنسيقات عناصر الإدارة */
-        .admin-item-card {
-            background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px;
-            display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        .admin-item-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .admin-item-info { display: flex; flex-direction: column; flex: 1; }
         .admin-item-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
         .admin-item-sub { font-size: 0.8rem; color: var(--text-sub); font-weight: 600; direction: ltr; text-align: right;}
-        .admin-action-btn {
-            background: rgba(212, 175, 55, 0.15); border: 1px solid var(--accent-gold); color: var(--accent-gold);
-            padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
-        }
+        .admin-action-btn { background: rgba(212, 175, 55, 0.15); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
         .admin-action-btn:active { transform: scale(0.9); }
         .admin-action-btn.danger { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .admin-status-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 8px; font-weight: 800; }
@@ -282,6 +324,38 @@
     </style>
 </head>
 <body>
+
+    <!-- التنبيه العلوي المنزلق -->
+    <div id="top-toast">
+        <img id="top-toast-icon" src="https://img.icons8.com/fluency/96/info.png" alt="Icon">
+        <div id="top-toast-text">رسالة تنبيه</div>
+    </div>
+
+    <!-- شاشة الترحيب (تظهر للزائر الجديد فقط) -->
+    <div id="full-splash-screen" class="intro-screen-overlay" style="display: none;">
+        <div class="intro-card">
+            <img src="https://img.icons8.com/fluency/96/graduation-cap.png" style="width: 80px; height: 80px; margin: 0 auto 15px;" class="slide-in-right" alt="App">
+            <h1 class="slide-in-right slide-in-right-delay-1" style="font-size: 1.4rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 8px;">مرحباً بك يا باشمهندس</h1>
+            <p class="slide-in-right slide-in-right-delay-2" style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.8;">
+                تطبيق برنامج علوم وتكنولوجيا الأغذية والألبان<br>
+                <span style="color: var(--accent-emerald);">الفرقة الرابعة - دفعة 28</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- شاشة النبذة والتعريف (تظهر للزائر الجديد فقط) -->
+    <div id="full-onboarding-screen" class="intro-screen-overlay" style="display: none;">
+        <div class="intro-card">
+            <img src="https://img.icons8.com/fluency/96/books.png" style="width: 75px; height: 75px; margin: 0 auto 15px;" class="slide-in-right" alt="Books">
+            <h2 class="slide-in-right slide-in-right-delay-1" style="font-size: 1.3rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px;">تطبيقك الأكاديمي الشامل 📚</h2>
+            <p class="slide-in-right slide-in-right-delay-2" style="font-size: 0.9rem; color: var(--text-sub); font-weight: 600; line-height: 1.8; margin-bottom: 24px; text-align: right;">
+                • تصفح وتحميل جميع كتب ومذكرات المقررات (نظري وعملي) مباشرة.<br>
+                • بنك أسئلة وتحديات أسبوعية لتجميع النقاط وتصدر الترتيب العام.<br>
+                • ملف شخصي متكامل وخدمة إشعارات فورية بكل جديد يخص الدفعة.
+            </p>
+            <button class="btn-submit slide-in-right slide-in-right-delay-3" onclick="finishOnboardingFlow()">الانتقال لتسجيل الدخول 🚀</button>
+        </div>
+    </div>
 
     <!-- القائمة الجانبية Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -303,6 +377,9 @@
             </div>
             <div class="sidebar-link" onclick="handleProfileClick()">
                 <img src="https://img.icons8.com/fluency/96/user-shield.png" alt="Profile"> ملفي الشخصي
+            </div>
+            <div class="sidebar-link" onclick="navigateTo('view-settings', 'الإعدادات', 'خيارات التطبيق والحساب'); closeSidebar();">
+                <img src="https://img.icons8.com/fluency/96/settings.png" alt="Settings"> الإعدادات
             </div>
             <div class="sidebar-link" onclick="triggerLeaderboardEffect(document.getElementById('fab-leaderboard')); closeSidebar();">
                 <img src="https://img.icons8.com/fluency/96/trophy.png" alt="Leaderboard"> لوحة المتصدرين
@@ -340,21 +417,21 @@
         </div>
 
         <div class="sidebar-footer">
-            تم التطوير والبرمجة بالكامل لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان 👨‍🔬
+            تم التطوير والبرمجة بالكامل لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان 👨‍🔬[cite: 1]
             <br>
-            <span style="font-weight: 800; font-size: 0.8rem; color: var(--accent-gold); display: block; margin-top: 5px;">م/عبدالرحمن محمود - كلية الزراعة - جامعة سوهاج</span>
-            <span style="color: var(--text-sub); font-weight: bold; margin-top: 8px; display: block;">الإصدار V 1.0.0</span>
+            <span style="font-weight: 800; font-size: 0.8rem; color: var(--accent-gold); display: block; margin-top: 5px;">م/عبدالرحمن محمود - كلية الزراعة - جامعة سوهاج</span>[cite: 1]
+            <span style="color: var(--text-sub); font-weight: bold; margin-top: 8px; display: block;">الإصدار V 1.0.0 (Build 28)</span>
         </div>
     </div>
 
-    <!-- نافذة التنبيهات المخصصة -->
-    <div id="custom-alert-modal" class="modal-overlay">
+    <!-- رسائل البث للمستخدمين -->
+    <div id="broadcast-msg-modal" class="modal-overlay">
         <div class="modal-box">
-            <button class="btn-close-modal" onclick="closeModal('custom-alert-modal')">×</button>
-            <img id="custom-alert-icon" src="https://img.icons8.com/fluency/96/info.png" style="width: 70px; height: 70px; margin-bottom: 15px;" alt="Alert">
-            <h3 id="custom-alert-title" style="margin-bottom: 10px;">تنبيه</h3>
-            <p id="custom-alert-desc" style="margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem;"></p>
-            <button class="btn-modal-primary" onclick="closeModal('custom-alert-modal')">حسناً</button>
+            <button class="btn-close-modal" onclick="closeModal('broadcast-msg-modal')">×</button>
+            <img src="https://img.icons8.com/fluency/96/megaphone.png" style="width: 70px; height: 70px; margin-bottom: 15px;" alt="Broadcast">
+            <h3 id="broadcast-msg-title" style="color: var(--accent-gold); margin-bottom: 10px;">تحديث جديد 📢</h3>
+            <p id="broadcast-msg-body" style="margin-bottom: 25px; line-height: 1.8; font-size: 0.95rem; text-align: right;"></p>
+            <button class="btn-modal-primary" onclick="closeModal('broadcast-msg-modal')">فهمت ذلك ✅</button>
         </div>
     </div>
 
@@ -370,19 +447,6 @@
             </div>
             <input type="hidden" id="edit-points-user-phone">
             <button class="btn-modal-primary" style="width: 100%; margin-top: 10px;" onclick="saveEditedUserPoints()">حفظ التعديل ✅</button>
-        </div>
-    </div>
-
-    <!-- نافذة الترحيب واللعبة والمطور -->
-    <div id="welcome-modal" class="modal-overlay">
-        <div class="modal-box">
-            <img src="https://img.icons8.com/fluency/96/sparkling.png" style="width: 64px; height: 64px; margin-bottom: 10px;" alt="Welcome">
-            <h3>أهلاً بك في تطبيق علوم الأغذية</h3>
-            <p>أنشئ حسابك الآن لتتمكن من حفظ نقاطك، وتتبع تقدمك في الاختبارات والمنافسات.</p>
-            <div class="modal-buttons">
-                <button class="btn-modal-primary" onclick="goToRegister()">إنشاء حساب</button>
-                <button class="btn-modal-secondary" onclick="dismissWelcomeModal()">لاحقاً</button>
-            </div>
         </div>
     </div>
 
@@ -421,7 +485,7 @@
             <img src="my-photo.png" style="width: 120px; height: 120px; margin-bottom: 5px; border-radius: 50%; border: 3px solid var(--accent-gold); object-fit: cover; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);" alt="م. عبدالرحمن محمود" onerror="this.src='https://img.icons8.com/fluency/96/user-male.png'">
             <h3 style="color: var(--accent-highlight); margin-bottom: 10px;">م. عبدالرحمن محمود</h3>
             <p style="margin-bottom: 15px; font-size: 0.85rem; line-height: 1.8;">
-                طالب بالفرقة الرابعة، بكلية الزراعة - جامعة سوهاج، مهتم بمجالات الجودة وسلامة الغذاء - جرافيك ديزاينر - تايبست - Web Developer (حديثًا)😂.
+                طالب بالفرقة الرابعة، بكلية الزراعة - جامعة سوهاج، مهتم بمجالات الجودة وسلامة الغذاء - جرافيك ديزاينر - تايبست - Web Developer (حديثًا)😂.[cite: 1]
             </p>
             <div class="social-grid">
                 <a href="https://wa.me/+201061032507" target="_blank" class="social-btn wa"><img src="https://img.icons8.com/ios-filled/50/000000/whatsapp--v1.png"> واتساب</a>
@@ -470,7 +534,7 @@
                     <div class="card-arrow">←</div>
                 </div>
 
-                <div class="app-card" onclick="showAppAlert('قريباً جداً', 'قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'https://img.icons8.com/fluency/96/test-passed.png')">
+                <div class="app-card" onclick="showTopToast('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'info')">
                     <div class="card-info">
                         <div class="card-icon"><img src="https://img.icons8.com/fluency/96/test-passed.png" alt="Exams"></div>
                         <div class="card-text"><h3>إختبارات</h3><p>تدريبات شاملة ونماذج امتحانات</p></div>
@@ -478,7 +542,7 @@
                     <div class="card-arrow">←</div>
                 </div>
 
-                <div class="app-card" onclick="showAppAlert('مفاجأة قادمة', 'محتوى مميز ومفاجأة رائعة قادمة للدفعة قريباً... ترقبوا! ✨', 'https://img.icons8.com/fluency/96/gift.png')">
+                <div class="app-card" onclick="showTopToast('محتوى مميز ومفاجأة رائعة قادمة للدفعة قريباً... ترقبوا! ✨', 'info')">
                     <div class="card-info">
                         <div class="card-icon"><img src="https://img.icons8.com/fluency/96/gift.png" alt="Mystery"></div>
                         <div class="card-text"><h3>قريبًا <span class="card-badge badge-mystery">مفاجأة</span></h3><p>محتوى مميز قادم للدفعة قريبًا</p></div>
@@ -492,7 +556,7 @@
             </div>
         </div>
 
-        <!-- شاشة الحسابات -->
+        <!-- شاشة الحسابات (جدار الحماية - Auth Gate) -->
         <div id="view-auth" class="view-section">
             <div class="auth-card">
                 <div class="auth-header">
@@ -504,15 +568,17 @@
                     <button class="auth-tab-btn" id="tab-register" onclick="switchAuthTab('register')">حساب جديد</button>
                 </div>
                 <div id="form-login">
-                    <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="login-phone" class="form-input" placeholder="01XXXXXXXXX" dir="ltr" style="text-align: right;"></div>
-                    <div class="form-group"><label>كلمة المرور</label><input type="password" id="login-password" class="form-input" placeholder="••••••••"></div>
+                    <div class="form-group"><label style="text-align: right;">رقم الهاتف أو البريد</label><input type="text" id="login-phone" class="form-input" placeholder="01XXXXXXXXX أو الإيميل" dir="ltr" style="text-align: right;"></div>
+                    <div class="form-group"><label style="text-align: right;">كلمة المرور</label><input type="password" id="login-password" class="form-input" placeholder="••••••••"></div>
                     <button class="btn-submit" onclick="loginUser()">دخول 🚀</button>
+                    <p style="text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--accent-gold); cursor: pointer;" onclick="navigateTo('view-sub-forgot-password', 'استرجاع كلمة المرور', 'إعادة تعيين كلمة السر')">نسيت كلمة المرور؟ اضغط هنا</p>
                 </div>
                 <div id="form-register" style="display: none;">
-                    <div class="form-group"><label>الاسم بالكامل</label><input type="text" id="reg-name" class="form-input" placeholder="اسمك الرباعي"></div>
-                    <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="reg-phone" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;"></div>
-                    <div class="form-group"><label>كلمة المرور</label><input type="password" id="reg-password" class="form-input" placeholder="أدخل كلمة مرور قوية"></div>
-                    <div class="form-group"><label>تأكيد كلمة المرور</label><input type="password" id="reg-confirm-password" class="form-input" placeholder="أعد إدخال كلمة المرور"></div>
+                    <div class="form-group"><label style="text-align: right;">الاسم بالكامل</label><input type="text" id="reg-name" class="form-input" placeholder="اسمك الرباعي"></div>
+                    <div class="form-group"><label style="text-align: right;">رقم الهاتف</label><input type="tel" id="reg-phone" class="form-input" placeholder="01XXXXXXXXX" dir="ltr" style="text-align: right;"></div>
+                    <div class="form-group"><label style="text-align: right;">البريد الإلكتروني (Gmail)</label><input type="email" id="reg-email" class="form-input" placeholder="example@gmail.com" dir="ltr" style="text-align: right;"></div>
+                    <div class="form-group"><label style="text-align: right;">كلمة المرور</label><input type="password" id="reg-password" class="form-input" placeholder="أدخل كلمة مرور قوية"></div>
+                    <div class="form-group"><label style="text-align: right;">تأكيد كلمة المرور</label><input type="password" id="reg-confirm-password" class="form-input" placeholder="أعد إدخال كلمة المرور"></div>
                     <button class="btn-submit" onclick="registerUser()">إنشاء حساب ✅</button>
                 </div>
             </div>
@@ -532,7 +598,7 @@
             </div>
             <div class="grid-cards">
                 <div class="app-card" onclick="navigateTo('view-edit-profile', 'تعديل البيانات', 'تحديث ملفك الشخصي')">
-                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit"></div><div class="card-text"><h3>تعديل الملف الشخصي</h3><p>تغيير الاسم والصورة الرمزية</p></div></div>
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit"></div><div class="card-text"><h3>تعديل الملف الشخصي</h3><p>تغيير الاسم والصورة الرمزية أو من الهاتف</p></div></div>
                     <div class="card-arrow">←</div>
                 </div>
                 <div class="app-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="logoutUser()">
@@ -542,16 +608,26 @@
             </div>
         </div>
 
-        <!-- تعديل الملف الشخصي -->
+        <!-- شاشة تعديل الملف الشخصي (اسم + صورة من الهاتف أو أفتار) -->
         <div id="view-edit-profile" class="view-section">
             <div class="auth-card">
                 <div class="form-group">
-                    <label style="text-align: center;">اختر صورتك الرمزية</label>
+                    <label style="text-align: center;">صورتك الحالية</label>
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <img id="edit-avatar-preview" src="https://img.icons8.com/fluency/96/user-male.png" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent-gold); object-fit: cover;">
+                    </div>
+                    
+                    <label style="text-align: center; font-size: 0.8rem;">اختر أفتار جاهز</label>
                     <div class="avatar-selector">
                         <div class="avatar-option selected" title="ولد" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/user-male.png', this)"><img src="https://img.icons8.com/fluency/96/user-male.png"></div>
                         <div class="avatar-option" title="بنت" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/user-female.png', this)"><img src="https://img.icons8.com/fluency/96/user-female.png"></div>
                         <div class="avatar-option" title="فلاح" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/farmer-male.png', this)"><img src="https://img.icons8.com/fluency/96/farmer-male.png"></div>
                         <div class="avatar-option" title="خريج" onclick="selectEditAvatar('https://img.icons8.com/fluency/96/student-male.png', this)"><img src="https://img.icons8.com/fluency/96/student-male.png"></div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 10px;">
+                        <input type="file" id="phone-photo-input" accept="image/*" style="display: none;" onchange="handleCustomPhotoUpload(event)">
+                        <button type="button" class="admin-action-btn" style="width: 100%; padding: 10px;" onclick="document.getElementById('phone-photo-input').click()">📁 اختيار صورة مخصصة من هاتفك</button>
                     </div>
                 </div>
                 <div class="form-group"><label>الاسم بالكامل</label><input type="text" id="edit-name-input" class="form-input"></div>
@@ -559,10 +635,195 @@
             </div>
         </div>
 
-        <!-- لوحة التحكم (Admin Panel) الشاملة -->
+        <!-- ================= شاشة الإعدادات الشاملة (Settings View) ================= -->
+        <div id="view-settings" class="view-section">
+            
+            <!-- قسم 1: الحساب والأمان -->
+            <div class="section-label">إعدادات الحساب والأمان</div>
+            <div class="grid-cards" style="margin-bottom: 20px;">
+                <div class="app-card" onclick="navigateTo('view-sub-edit-name', 'تعديل الاسم', 'تحديث اسم حسابك المعتمد')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/user-male.png" alt="Name"></div><div class="card-text"><h3>تعديل الاسم</h3><p>تحديث اسم حسابك المعتمد</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-sub-edit-phone', 'رقم الهاتف', 'تعديل رقم الهاتف المسجل')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/phone.png" alt="Phone"></div><div class="card-text"><h3>رقم الهاتف</h3><p>تعديل رقم هاتفك المسجل</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-sub-edit-email', 'البريد الإلكتروني', 'تغيير البريد الإلكتروني Gmail')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/mail.png" alt="Email"></div><div class="card-text"><h3>البريد الإلكتروني</h3><p>تغيير البريد الإلكتروني Gmail</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-sub-edit-password', 'تغيير كلمة المرور', 'التحقق وتعيين كلمة مرور جديدة')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/key.png" alt="Password"></div><div class="card-text"><h3>تغيير كلمة المرور</h3><p>التحقق وتعيين كلمة مرور جديدة</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+            </div>
+
+            <!-- قسم 2: المظهر والتطبيق -->
+            <div class="section-label">المظهر والتطبيق</div>
+            <div class="grid-cards" style="margin-bottom: 20px;">
+                <div class="app-card">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/paint-palette.png" alt="Theme"></div><div class="card-text"><h3>مظهر التطبيق</h3><p>التبديل بين الفاتح والداكن وتلقائي</p></div></div>
+                    <select id="setting-theme-select" class="form-input" style="width: auto; padding: 6px 12px; margin: 0; font-size: 0.85rem;" onchange="handleThemeSelect(this.value)">
+                        <option value="system">📱 حسب الجهاز</option>
+                        <option value="light">☀️ الوضع الفاتح</option>
+                        <option value="dark">🌙 الوضع الداكن</option>
+                    </select>
+                </div>
+                <div class="app-card" onclick="clearAppDataAndCache()">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/broom.png" alt="Cache"></div><div class="card-text"><h3>مسح البيانات المؤقتة</h3><p>تحديث محتوى التطبيق وإعادة تحميله</p></div></div>
+                    <div class="card-arrow">↻</div>
+                </div>
+            </div>
+
+            <!-- قسم 3: الدعم والمساعدة والشكاوى -->
+            <div class="section-label">الدعم والمساعدة</div>
+            <div class="grid-cards" style="margin-bottom: 20px;">
+                <div class="app-card" onclick="navigateTo('view-faq', 'الأسئلة الشائعة', 'إجابات أهم استفسارات الطلاب')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/faq.png" alt="FAQ"></div><div class="card-text"><h3>الأسئلة الشائعة</h3><p>كل ما تريد معرفته عن التطبيق والنقاط</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-report-issue', 'الإبلاغ عن مشكلة', 'أرسل شكواك للمطور مباشرة')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/bug.png" alt="Report"></div><div class="card-text"><h3>الإبلاغ عن مشكلة</h3><p>واجهت خطأ؟ أرسله للإدارة فوراً</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-suggest-feature', 'اقتراح تطوير', 'شاركنا أفكارك لتطوير التطبيق')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/idea.png" alt="Suggest"></div><div class="card-text"><h3>اقتراح ميزة أو تطوير</h3><p>ساعدنا في إضافة أقسام جديدة تخدم الدفعة</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+                <div class="app-card" onclick="window.open('https://wa.me/+201061032507', '_blank')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/whatsapp.png" alt="WhatsApp"></div><div class="card-text"><h3>تواصل معنا مباشرة</h3><p>محادثة واتساب سريعة مع المطور</p></div></div>
+                    <div class="card-arrow">↗</div>
+                </div>
+                <div class="app-card" onclick="navigateTo('view-terms', 'شروط الاستخدام', 'سياسة وقواعد استخدام التطبيق')">
+                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/terms-and-conditions.png" alt="Terms"></div><div class="card-text"><h3>شروط الاستخدام</h3><p>السياسات والضوابط الأكاديمية</p></div></div>
+                    <div class="card-arrow">←</div>
+                </div>
+            </div>
+
+            <p class="sidebar-footer" style="background: none; border: none;">الإصدار 1.0.0 (Build 28) - كلية الزراعة سوهاج[cite: 1]</p>
+        </div>
+
+        <!-- ================= واجهات فرعية مستقلة لتعديل الحساب ================= -->
+        <div id="view-sub-edit-name" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 12px;">تعديل الاسم</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">اكتب اسمك الجديد بالكامل ليتم تحديثه في النظام.</p>
+                <div class="form-group"><label>الاسم الكامل</label><input type="text" id="sub-view-name-input" class="form-input" placeholder="الاسم الكامل"></div>
+                <button class="btn-submit" onclick="saveSettingNameDirectly()">حفظ الاسم ✅</button>
+            </div>
+        </div>
+
+        <div id="view-sub-edit-phone" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 12px;">تعديل رقم الهاتف</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل رقم هاتفك الجديد (11 رقم).</p>
+                <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="sub-view-phone-input" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;"></div>
+                <button class="btn-submit" onclick="saveSettingPhoneDirectly()">حفظ الرقم ✅</button>
+            </div>
+        </div>
+
+        <div id="view-sub-edit-email" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 12px;">البريد الإلكتروني</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل بريد Gmail الجديد لتأمين حسابك واستلام روابط استرجاع كلمة المرور.</p>
+                <div class="form-group"><label>البريد الإلكتروني (Gmail)</label><input type="email" id="sub-view-email-input" class="form-input" placeholder="example@gmail.com" dir="ltr" style="text-align: right;"></div>
+                <button class="btn-submit" onclick="saveSettingEmailDirectly()">تحديث البريد ✉️</button>
+            </div>
+        </div>
+
+        <div id="view-sub-edit-password" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 12px;">تغيير كلمة المرور</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل كلمة المرور الحالية ثم الجديدة للتحقق.</p>
+                <div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="sub-view-old-pass" class="form-input" placeholder="••••••••"></div>
+                <div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="sub-view-new-pass" class="form-input" placeholder="••••••••"></div>
+                <button class="btn-submit" onclick="saveSettingPasswordDirectly()">تغيير الباسورد 🔐</button>
+                <p style="text-align: center; margin-top: 18px; font-size: 0.85rem; color: var(--accent-gold); cursor: pointer;" onclick="navigateTo('view-sub-forgot-password', 'استرجاع كلمة المرور', 'إعادة تعيين كلمة السر')">نسيت كلمة المرور؟ إعادة تعيينها الآن</p>
+            </div>
+        </div>
+
+        <div id="view-sub-forgot-password" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 12px;">استرجاع كلمة المرور 🔑</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل بريدك الإلكتروني المسجل لنرسل لك رابطاً آمناً لإعادة تعيين كلمة المرور فوراً.</p>
+                <div class="form-group"><label>البريد الإلكتروني (Gmail)</label><input type="email" id="sub-view-forgot-email" class="form-input" placeholder="example@gmail.com" dir="ltr" style="text-align: right;"></div>
+                <button class="btn-submit" onclick="sendResetPasswordLink()">إرسال رابط التحقق 🚀</button>
+            </div>
+        </div>
+
+        <!-- واجهة الأسئلة الشائعة (FAQ) -->
+        <div id="view-faq" class="view-section">
+            <div class="section-label">أهم الأسئلة المتكررة</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف يمكنني تحميل مذكرات المقررات؟ <span>▼</span></div>
+                <div class="faq-answer">ادخل على قسم "مواد الترم الأول" من الصفحة الرئيسية، اختر المادة ثم حدد (نظري أو عملي) واضغط على بطاقة التحميل ليتم تنزيل ملف الـ PDF مباشرة على هاتفك.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">ما هي فائدة النقاط في تحدي المعلومات؟ <span>▼</span></div>
+                <div class="faq-answer">النقاط تحدد ترتيبك في لوحة المتصدرين وتمنحك رتباً أعلى بدءاً من "مبتدئ" وحتى رتبة "أسطورة". هناك مكافآت وبونص للأوائل دورياً!</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف أحصل على أكواد الهدايا والشحن؟ <span>▼</span></div>
+                <div class="faq-answer">يتم نشر أكواد الهدايا في جروب الدفعة وفي المناسبات، يمكنك كتابة الكود داخل خانة "شحن كود مكافأة" في القائمة الجانبية للحصول على نقاط فورية.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">نسيت كلمة المرور، ماذا أفعل؟ <span>▼</span></div>
+                <div class="faq-answer">إذا كنت قد قمت بإضافة بريدك الإلكتروني في الإعدادات، يمكنك استخدام خيار استرجاع كلمة المرور أو التواصل مباشرة مع المطور عبر واتساب لإعادة تعيينها.</div>
+            </div>
+        </div>
+
+        <!-- واجهة الإبلاغ عن مشكلة -->
+        <div id="view-report-issue" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 10px;">الإبلاغ عن مشكلة فنية 🐞</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">اكتب تفاصيل المشكلة التي واجهتك وسيتم فحصها فوراً عبر لوحة الإدارة.</p>
+                <div class="form-group">
+                    <label>عنوان المشكلة</label>
+                    <input type="text" id="report-title-input" class="form-input" placeholder="مثال: تعليق في تحميل مذكرة اللحوم">
+                </div>
+                <div class="form-group">
+                    <label>وصف المشكلة بالتفصيل</label>
+                    <textarea id="report-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح ما حدث معك بالتفصيل..."></textarea>
+                </div>
+                <button class="btn-submit" onclick="submitTicket('مشكلة')">إرسال البلاغ 🚀</button>
+            </div>
+        </div>
+
+        <!-- واجهة اقتراح تطوير -->
+        <div id="view-suggest-feature" class="view-section">
+            <div class="auth-card">
+                <h3 style="margin-bottom: 10px;">اقتراح تطوير وميزات جديدة 💡</h3>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">شاركنا بأفكارك لتطوير تطبيق الدفعة وإضافة مزايا تخدم الجميع.</p>
+                <div class="form-group">
+                    <label>عنوان الاقتراح</label>
+                    <input type="text" id="suggest-title-input" class="form-input" placeholder="مثال: إضافة قسم لجداول الامتحانات">
+                </div>
+                <div class="form-group">
+                    <label>تفاصيل الفكرة</label>
+                    <textarea id="suggest-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح فكرتك وكيف ستفيد زملائك..."></textarea>
+                </div>
+                <button class="btn-submit" onclick="submitTicket('اقتراح')">إرسال الاقتراح ✨</button>
+            </div>
+        </div>
+
+        <!-- واجهة شروط الاستخدام -->
+        <div id="view-terms" class="view-section">
+            <div class="auth-card" style="text-align: right; line-height: 1.8; font-size: 0.9rem;">
+                <h3 style="text-align: center; color: var(--accent-gold); margin-bottom: 15px;">شروط وسياسة الاستخدام 📜</h3>
+                <p>1. هذا التطبيق مخصص وموجه لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان بكلية الزراعة - جامعة سوهاج.[cite: 1]</p>
+                <p>2. يُحظر استخدام أسماء غير لائقة في الحسابات الشخصية أو إرسال بلاغات وهمية في لوحة الإدارة.</p>
+                <p>3. المواد العلمية والمذكرات المرفوعة هي للمنفعة الدراسية والأكاديمية الشخصية فقط ولا يجوز استغلالها تجارياً.</p>
+                <p>4. يحق لإدارة التطبيق إيقاف أو تعديل نقاط الحسابات في حال ثبوت التلاعب في التحديات أو الأكواد البرمجية.</p>
+            </div>
+        </div>
+
+        <!-- لوحة التحكم (Admin Panel) الشاملة بعد التحديث -->
         <div id="view-admin-panel" class="view-section">
             <div class="auth-tabs">
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
+                <button class="auth-tab-btn" id="tab-admin-tickets" onclick="switchAdminTab('tickets')">الشكاوى والمقترحات</button>
+                <button class="auth-tab-btn" id="tab-admin-broadcast" onclick="switchAdminTab('broadcast')">رسائل البث</button>
                 <button class="auth-tab-btn" id="tab-admin-books" onclick="switchAdminTab('books')">روابط الكتب</button>
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
                 <button class="auth-tab-btn" id="tab-admin-codes" onclick="switchAdminTab('codes')">الأكواد</button>
@@ -575,6 +836,29 @@
                 </div>
                 <div class="section-label">قائمة الطلاب المسجلين</div>
                 <div id="admin-users-list" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- تبويب الشكاوى والمقترحات الجديد -->
+            <div id="admin-section-tickets" style="display: none;">
+                <div class="section-label">صندوق الشكاوى والمقترحات الواردة</div>
+                <div id="admin-tickets-list" style="margin-top: 15px;"><p style="text-align: center;">جاري التحميل...</p></div>
+            </div>
+
+            <!-- تبويب رسائل البث المنبثقة للطلاب -->
+            <div id="admin-section-broadcast" style="display: none;">
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إرسال رسالة منبثقة لجميع الطلاب 📢</h3>
+                    <div class="form-group">
+                        <label>عنوان الرسالة / التنبيه</label>
+                        <input type="text" id="admin-broadcast-title" class="form-input" placeholder="مثال: تم رفع مذكرة العملي الآن!">
+                    </div>
+                    <div class="form-group">
+                        <label>نص الرسالة</label>
+                        <textarea id="admin-broadcast-body" class="form-input" rows="3" style="resize: none;" placeholder="اكتب الرسالة التي ستظهر للطلاب عند فتح التطبيق..."></textarea>
+                    </div>
+                    <button class="btn-submit" onclick="publishBroadcastAlert()">نشر الرسالة لجميع المستخدمين 🚀</button>
+                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="clearBroadcastAlert()">حذف الرسالة الحالية 🗑️</button>
+                </div>
             </div>
 
             <!-- تبويب إدارة روابط الكتب والملفات -->
@@ -664,9 +948,9 @@
                 <img src="https://img.icons8.com/fluency/96/info.png" style="width: 70px; height: 70px; margin-bottom: 20px;" alt="Info">
                 <h3 style="font-size: 1.4rem; font-weight: 900; margin-bottom: 20px; color: var(--text-main);">عن التطبيق</h3>
                 <p style="text-align: center; line-height: 2; font-size: 1rem; color: var(--text-sub); font-weight: 700; margin-bottom: 30px;">
-                    هذا التطبيق هو عمل خالص لوجه الله تعالى، صُمم خصيصاً لمساعدة طلاب الدفعة 28 وتسهيل رحلتهم الدراسية، ليكون دليلاً ومرجعاً لهم وللدفعات القادمة من بعدهم. ندعو الله أن يتقبل هذا العمل ليكون صدقة جارية لي ولكل من ساهم وسيساهم في إثراء وتطوير المحتوى العلمي بداخله.
+                    هذا التطبيق هو عمل خالص لوجه الله تعالى، صُمم خصيصاً لمساعدة طلاب الدفعة 28 وتسهيل رحلتهم الدراسية، ليكون دليلاً ومرجعاً لهم وللدفعات القادمة من بعدهم. ندعو الله أن يتقبل هذا العمل ليكون صدقة جارية لي ولكل من ساهم وسيساهم في إثراء وتطوير المحتوى العلمي بداخله.[cite: 1]
                 </p>
-                <img src="https://img.icons8.com/fluency/240/hand-planting.png" style="width: 150px; height: 150px; opacity: 0.9;" alt="Charity Plant">
+                <img src="https://img.icons8.com/fluency/240/hand-planting.png" style="width: 150px; height: 150px; opacity: 0.9;" alt="Charity Plant">[cite: 1]
             </div>
         </div>
 
@@ -751,6 +1035,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
 
         (function initCloudPromoCodes() {
             const promoRef = db.ref('promo_codes');
@@ -817,6 +1102,34 @@
         }
         function playClickSound() { playSound('click'); } function playBackSound() { playSound('back'); } function playSuccessSound() { playSound('success'); } function playErrorSound() { playSound('error'); }
 
+        /* دالة التنبيه العلوي المنزلق */
+        let toastTimeout;
+        function showTopToast(msg, type = 'info') {
+            const toast = document.getElementById('top-toast');
+            const toastText = document.getElementById('top-toast-text');
+            const toastIcon = document.getElementById('top-toast-icon');
+
+            toast.className = ''; 
+            if (type === 'error') {
+                toast.classList.add('toast-error');
+                toastIcon.src = 'https://img.icons8.com/fluency/96/error.png';
+                playErrorSound();
+            } else if (type === 'success') {
+                toast.classList.add('toast-success');
+                toastIcon.src = 'https://img.icons8.com/fluency/96/ok.png';
+                playSuccessSound();
+            } else {
+                toastIcon.src = 'https://img.icons8.com/fluency/96/info.png';
+                playClickSound();
+            }
+
+            toastText.innerText = msg;
+            toast.classList.add('show');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
         function shootStars() {
             const container = document.createElement('div'); container.className = 'stars-container'; document.body.appendChild(container);
             for (let i = 0; i < 25; i++) {
@@ -842,12 +1155,31 @@
 
         function toggleTheme() {
             playClickSound(); const currentTheme = document.documentElement.getAttribute('data-theme'); const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme); document.getElementById('theme-icon').innerText = newTheme === 'light' ? '🌙' : '☀️'; localStorage.setItem('app-theme', newTheme);
+            setAppTheme(newTheme);
+        }
+
+        function setAppTheme(theme) {
+            if (theme === 'system') {
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                document.getElementById('theme-icon').innerText = prefersDark ? '☀️' : '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('theme-icon').innerText = theme === 'light' ? '🌙' : '☀️';
+            }
+            localStorage.setItem('app-theme', theme);
+            const selectEl = document.getElementById('setting-theme-select');
+            if (selectEl) selectEl.value = theme;
+        }
+
+        function handleThemeSelect(val) {
+            playClickSound();
+            setAppTheme(val);
         }
 
         (function loadSavedTheme() {
-            const savedTheme = localStorage.getItem('app-theme') || 'dark'; document.documentElement.setAttribute('data-theme', savedTheme);
-            const icon = document.getElementById('theme-icon'); if (icon) icon.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+            const savedTheme = localStorage.getItem('app-theme') || 'dark';
+            setAppTheme(savedTheme);
         })();
 
         let navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
@@ -883,7 +1215,7 @@
             
             const fab = document.getElementById('fab-leaderboard');
             if (fab) {
-                if (viewId === 'view-leaderboard' || viewId === 'view-quiz-game' || viewId === 'view-about' || viewId === 'view-admin-panel') {
+                if (viewId === 'view-leaderboard' || viewId === 'view-quiz-game' || viewId === 'view-about' || viewId === 'view-admin-panel' || viewId === 'view-settings' || viewId === 'view-faq' || viewId === 'view-terms' || viewId === 'view-report-issue' || viewId === 'view-suggest-feature' || viewId.startsWith('view-sub-')) {
                     fab.style.display = 'none';
                 } else {
                     fab.style.display = 'flex';
@@ -921,14 +1253,6 @@
             }
         });
 
-        function showAppAlert(title, message, iconUrl = 'https://img.icons8.com/fluency/96/info.png') {
-            playClickSound();
-            document.getElementById('custom-alert-icon').src = iconUrl;
-            document.getElementById('custom-alert-title').innerText = title;
-            document.getElementById('custom-alert-desc').innerText = message;
-            document.getElementById('custom-alert-modal').classList.add('show');
-        }
-
         function openSidebar() { playClickSound(); document.getElementById('sidebar-overlay').classList.add('active'); document.getElementById('sidebar').classList.add('active'); }
         function closeSidebar() { playBackSound(); document.getElementById('sidebar-overlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
 
@@ -945,20 +1269,73 @@
 
         let currentUser = null; let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
 
+        /* تسلسل البدء وفحص المستخدم */
         window.addEventListener('DOMContentLoaded', () => {
-            checkLoginStatus();
             updateSoundUI();
-            if (!currentUser && !localStorage.getItem('welcome_dismissed')) { setTimeout(() => { document.getElementById('welcome-modal').classList.add('show'); }, 800); }
+            checkAppEntryFlow();
+            checkBroadcastAlerts();
         });
 
-        function checkLoginStatus() {
+        function checkAppEntryFlow() {
             const loggedInPhone = localStorage.getItem('active_user_phone');
-            if (loggedInPhone) { db.ref('users/' + loggedInPhone).on('value', (snapshot) => { if (snapshot.exists()) { currentUser = snapshot.val(); updateProfileUI(); } else { logoutUserLocally(); } }); } else { logoutUserLocally(); }
+            if (loggedInPhone) {
+                db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        currentUser = snapshot.val();
+                        updateProfileUI();
+                        goHomeDirectly();
+                    } else {
+                        logoutUserLocally();
+                        showAuthGateDirectly();
+                    }
+                });
+            } else {
+                const seenSplash = localStorage.getItem('seen_splash_v28');
+                if (seenSplash) {
+                    showAuthGateDirectly();
+                } else {
+                    const splash = document.getElementById('full-splash-screen');
+                    splash.style.display = 'flex';
+                    setTimeout(() => {
+                        splash.style.opacity = '0';
+                        setTimeout(() => {
+                            splash.style.display = 'none';
+                            document.getElementById('full-onboarding-screen').style.display = 'flex';
+                        }, 500);
+                    }, 2500);
+                }
+            }
         }
 
-        function dismissWelcomeModal() { playBackSound(); document.getElementById('welcome-modal').classList.remove('show'); localStorage.setItem('welcome_dismissed', 'true'); }
+        function finishOnboardingFlow() {
+            playClickSound();
+            localStorage.setItem('seen_splash_v28', 'true');
+            const onb = document.getElementById('full-onboarding-screen');
+            onb.style.opacity = '0';
+            setTimeout(() => {
+                onb.style.display = 'none';
+                showAuthGateDirectly();
+            }, 400);
+        }
 
-        function goToRegister() { dismissWelcomeModal(); navigateTo('view-auth', 'تسجيل الدخول', 'إنشاء حساب جديد'); switchAuthTab('register'); }
+        function showAuthGateDirectly() {
+            navigateTo('view-auth', 'منطقة الطلاب', 'يرجى تسجيل الدخول أو إنشاء حساب');
+        }
+
+        function checkBroadcastAlerts() {
+            db.ref('broadcast_message').on('value', (snap) => {
+                if (snap.exists() && snap.val()) {
+                    const data = snap.val();
+                    const lastSeenId = localStorage.getItem('last_seen_broadcast');
+                    if (data.active && data.id !== lastSeenId) {
+                        document.getElementById('broadcast-msg-title').innerText = data.title || "تنبيه عام 📢";
+                        document.getElementById('broadcast-msg-body').innerText = data.body || "";
+                        document.getElementById('broadcast-msg-modal').classList.add('show');
+                        localStorage.setItem('last_seen_broadcast', data.id);
+                    }
+                }
+            });
+        }
 
         function switchAuthTab(tab) {
             playClickSound();
@@ -973,19 +1350,41 @@
 
         function registerUser() {
             playClickSound();
-            const name = document.getElementById('reg-name').value.trim(); const phone = document.getElementById('reg-phone').value.trim();
-            const pass = document.getElementById('reg-password').value; const confirmPass = document.getElementById('reg-confirm-password').value;
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-password').value;
+            const confirmPass = document.getElementById('reg-confirm-password').value;
 
-            if (!name || !phone || !pass || !confirmPass) { showAppAlert('بيانات ناقصة', 'يرجى ملء جميع الحقول المطلوبة لإنشاء الحساب!', 'https://img.icons8.com/fluency/96/error.png'); return; }
-            if (pass !== confirmPass) { showAppAlert('كلمة المرور', 'كلمة المرور غير متطابقة، تأكد منها وحاول مرة أخرى!', 'https://img.icons8.com/fluency/96/error.png'); return; }
+            if (!name || !phone || !pass || !confirmPass) { 
+                showTopToast('يرجى ملء جميع الحقول المطلوبة لإنشاء الحساب!', 'error'); 
+                return; 
+            }
+            if (pass !== confirmPass) { 
+                showTopToast('كلمة المرور غير متطابقة، تأكد منها وحاول مرة أخرى!', 'error'); 
+                return; 
+            }
 
             const userRef = db.ref('users/' + phone);
             userRef.once('value', (snapshot) => {
-                if (snapshot.exists()) { showAppAlert('موجود بالفعل', 'هذا الرقم مسجل بالفعل في النظام! يرجى تسجيل الدخول.', 'https://img.icons8.com/fluency/96/error.png'); switchAuthTab('login'); } else {
-                    const newUser = { name: name, phone: phone, password: pass, avatar: 'https://img.icons8.com/fluency/96/user-male.png', points: 100 };
+                if (snapshot.exists()) { 
+                    showTopToast('هذا الرقم مسجل بالفعل في النظام! يرجى تسجيل الدخول.', 'error'); 
+                    switchAuthTab('login'); 
+                } else {
+                    const newUser = { 
+                        name: name, 
+                        phone: phone, 
+                        email: email || '', 
+                        password: pass, 
+                        avatar: 'https://img.icons8.com/fluency/96/user-male.png', 
+                        points: 100,
+                        createdAt: new Date().toISOString()
+                    };
                     userRef.set(newUser).then(() => {
-                        localStorage.setItem('active_user_phone', phone); localStorage.setItem('welcome_dismissed', 'true');
-                        currentUser = newUser; updateProfileUI(); showAppAlert('مبروك', 'تم إنشاء الحساب بنجاح!');
+                        localStorage.setItem('active_user_phone', phone);
+                        currentUser = newUser; 
+                        updateProfileUI(); 
+                        showTopToast('تم إنشاء الحساب بنجاح!', 'success');
                         goHomeDirectly();
                     });
                 }
@@ -994,23 +1393,48 @@
 
         function loginUser() {
             playClickSound();
-            const phone = document.getElementById('login-phone').value.trim(); const pass = document.getElementById('login-password').value;
-            if (!phone || !pass) { showAppAlert('بيانات ناقصة', 'يرجى إدخال رقم الهاتف وكلمة المرور لتسجيل الدخول.', 'https://img.icons8.com/fluency/96/error.png'); return; }
+            const inputVal = document.getElementById('login-phone').value.trim();
+            const pass = document.getElementById('login-password').value;
+            if (!inputVal || !pass) { 
+                showTopToast('يرجى إدخال رقم الهاتف أو البريد وكلمة المرور لتسجيل الدخول.', 'error'); 
+                return; 
+            }
 
-            db.ref('users/' + phone).once('value', (snapshot) => {
-                if (!snapshot.exists()) { showAppAlert('غير مسجل', 'هذا الحساب غير موجود! برجاء إنشاء حساب جديد.', 'https://img.icons8.com/fluency/96/error.png'); return; }
-                const user = snapshot.val();
-                if (user.password !== pass) { showAppAlert('خطأ', 'كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.', 'https://img.icons8.com/fluency/96/error.png'); return; }
-                localStorage.setItem('active_user_phone', phone); currentUser = user; checkLoginStatus();
-                document.getElementById('login-password').value = ''; goHomeDirectly();
+            db.ref('users').once('value', (snapshot) => {
+                let foundUser = null;
+                snapshot.forEach(child => {
+                    const u = child.val();
+                    if (u.phone === inputVal || (u.email && u.email.toLowerCase() === inputVal.toLowerCase())) {
+                        foundUser = u;
+                    }
+                });
+
+                if (!foundUser) {
+                    showTopToast('هذا الحساب غير موجود! برجاء إنشاء حساب جديد.', 'error');
+                    return;
+                }
+
+                if (foundUser.password !== pass) {
+                    showTopToast('كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.', 'error');
+                    return;
+                }
+
+                localStorage.setItem('active_user_phone', foundUser.phone);
+                currentUser = foundUser;
+                updateProfileUI();
+                document.getElementById('login-password').value = '';
+                showTopToast('تم تسجيل الدخول بنجاح ✨', 'success');
+                goHomeDirectly();
             });
         }
 
         function logoutUser() {
             playBackSound();
             if (confirm('هل تريد بالتأكيد تسجيل الخروج؟')) {
-                closeSidebar(); if (currentUser) db.ref('users/' + currentUser.phone).off(); logoutUserLocally();
-                goHomeDirectly();
+                closeSidebar(); 
+                if (currentUser) db.ref('users/' + currentUser.phone).off(); 
+                logoutUserLocally();
+                showAuthGateDirectly();
             }
         }
         
@@ -1028,7 +1452,15 @@
                 document.getElementById('sidebar-stats-box').style.display = 'flex'; document.getElementById('sidebar-badge').innerText = rnk; document.getElementById('sidebar-points').innerText = pts + ' ⭐'; document.getElementById('sidebar-logout').style.display = 'flex';
                 document.getElementById('display-avatar-img').src = avatarSrc; document.getElementById('display-name').innerText = currentUser.name;
                 document.getElementById('display-phone').innerText = currentUser.phone; document.getElementById('display-points').innerText = pts;
-                document.getElementById('display-rank-badge').innerText = rnk; document.getElementById('edit-name-input').value = currentUser.name; selectEditAvatar(avatarSrc, null, true);
+                document.getElementById('display-rank-badge').innerText = rnk; document.getElementById('edit-name-input').value = currentUser.name; 
+                document.getElementById('edit-avatar-preview').src = avatarSrc;
+                
+                // ملء الواجهات الفرعية
+                document.getElementById('sub-view-name-input').value = currentUser.name || '';
+                document.getElementById('sub-view-phone-input').value = currentUser.phone || '';
+                document.getElementById('sub-view-email-input').value = currentUser.email || '';
+
+                selectEditAvatar(avatarSrc, null, true);
 
                 if (currentUser.phone === "01061032507") {
                     document.getElementById('sidebar-admin-panel').style.display = 'flex';
@@ -1038,39 +1470,201 @@
             }
         }
 
-        function handleProfileClick() { closeSidebar(); if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك'); else navigateTo('view-auth', 'منطقة الطلاب', 'يرجى تسجيل الدخول'); }
+        function handleProfileClick() { closeSidebar(); if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك'); else showAuthGateDirectly(); }
 
+        /* تعديل الملف واختيار صورة الهاتف */
         function selectEditAvatar(avatarUrl, element, isInit = false) {
-            if (!isInit) playClickSound(); editSelectedAvatar = avatarUrl;
-            document.querySelectorAll('.avatar-option').forEach(opt => { opt.classList.remove('selected'); if (opt.querySelector('img') && opt.querySelector('img').src === avatarUrl) opt.classList.add('selected'); });
+            if (!isInit) playClickSound(); 
+            editSelectedAvatar = avatarUrl;
+            document.getElementById('edit-avatar-preview').src = avatarUrl;
+            document.querySelectorAll('.avatar-option').forEach(opt => { 
+                opt.classList.remove('selected'); 
+                if (opt.querySelector('img') && opt.querySelector('img').src === avatarUrl) opt.classList.add('selected'); 
+            });
+        }
+
+        function handleCustomPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    showTopToast('يرجى اختيار صورة بحجم أقل من 2 ميجابايت!', 'error');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Img = e.target.result;
+                    editSelectedAvatar = base64Img;
+                    document.getElementById('edit-avatar-preview').src = base64Img;
+                    document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                    playSuccessSound();
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         function saveProfileChanges() {
             playClickSound(); const newName = document.getElementById('edit-name-input').value.trim();
-            if (!newName) { showAppAlert('تنبيه', 'الاسم لا يمكن أن يكون فارغاً!', 'https://img.icons8.com/fluency/96/error.png'); return; }
-            if (currentUser) { db.ref('users/' + currentUser.phone).update({ name: newName, avatar: editSelectedAvatar }).then(() => { showAppAlert('نجاح', 'تم حفظ التعديلات بنجاح ✨', 'https://img.icons8.com/fluency/96/ok.png'); navigateBack(); }); }
+            if (!newName) { showTopToast('الاسم لا يمكن أن يكون فارغاً!', 'error'); return; }
+            if (currentUser) { 
+                db.ref('users/' + currentUser.phone).update({ name: newName, avatar: editSelectedAvatar }).then(() => { 
+                    showTopToast('تم حفظ التعديلات بنجاح ✨', 'success'); 
+                    navigateBack(); 
+                }); 
+            }
+        }
+
+        /* دوال الواجهات الفرعية المستقلة لتعديل الإعدادات */
+        function saveSettingNameDirectly() {
+            playClickSound();
+            const val = document.getElementById('sub-view-name-input').value.trim();
+            if (!val) { showTopToast('يرجى كتابة الاسم بشكل صحيح!', 'error'); return; }
+            db.ref('users/' + currentUser.phone).update({ name: val }).then(() => {
+                showTopToast('تم تحديث الاسم بنجاح ✅', 'success');
+                navigateBack();
+            });
+        }
+
+        function saveSettingPhoneDirectly() {
+            playClickSound();
+            const newPhone = document.getElementById('sub-view-phone-input').value.trim();
+            if (!newPhone || newPhone.length < 11) { showTopToast('يرجى كتابة رقم هاتف صحيح!', 'error'); return; }
+            if (newPhone === currentUser.phone) { navigateBack(); return; }
+
+            db.ref('users/' + newPhone).once('value', (snap) => {
+                if (snap.exists()) {
+                    showTopToast('هذا الرقم مستخدم بالفعل لحساب آخر!', 'error');
+                } else {
+                    let updatedUser = { ...currentUser, phone: newPhone };
+                    db.ref('users/' + newPhone).set(updatedUser).then(() => {
+                        db.ref('users/' + currentUser.phone).remove();
+                        localStorage.setItem('active_user_phone', newPhone);
+                        currentUser = updatedUser;
+                        showTopToast('تم تغيير رقم الهاتف بنجاح!', 'success');
+                        updateProfileUI();
+                        navigateBack();
+                    });
+                }
+            });
+        }
+
+        function saveSettingEmailDirectly() {
+            playClickSound();
+            const emailVal = document.getElementById('sub-view-email-input').value.trim();
+            if (!emailVal || !emailVal.includes('@')) { showTopToast('يرجى كتابة بريد إلكتروني صالح!', 'error'); return; }
+            db.ref('users/' + currentUser.phone).update({ email: emailVal }).then(() => {
+                showTopToast('تم حفظ البريد الإلكتروني لتأمين حسابك بنجاح ✉️', 'success');
+                navigateBack();
+            });
+        }
+
+        function saveSettingPasswordDirectly() {
+            playClickSound();
+            const oldPass = document.getElementById('sub-view-old-pass').value;
+            const newPass = document.getElementById('sub-view-new-pass').value;
+
+            if (oldPass !== currentUser.password) {
+                showTopToast('كلمة المرور الحالية غير صحيحة!', 'error');
+                return;
+            }
+            if (!newPass || newPass.length < 6) {
+                showTopToast('يجب ألا تقل كلمة المرور الجديدة عن 6 أحرف!', 'error');
+                return;
+            }
+
+            db.ref('users/' + currentUser.phone).update({ password: newPass }).then(() => {
+                document.getElementById('sub-view-old-pass').value = '';
+                document.getElementById('sub-view-new-pass').value = '';
+                showTopToast('تم تغيير كلمة المرور بنجاح 🔐', 'success');
+                navigateBack();
+            });
+        }
+
+        function sendResetPasswordLink() {
+            playClickSound();
+            const email = document.getElementById('sub-view-forgot-email').value.trim();
+            if (!email || !email.includes('@')) { showTopToast('يرجى كتابة بريد إلكتروني صالح!', 'error'); return; }
+
+            auth.sendPasswordResetEmail(email).then(() => {
+                showTopToast('تم إرسال رابط إعادة التعيين لبريدك المسجل! افتح الرسالة لتغيير الباسورد.', 'success');
+                setTimeout(() => navigateBack(), 2000);
+            }).catch(err => {
+                showTopToast('حدث خطأ أو البريد غير موجود: ' + err.message, 'error');
+            });
+        }
+
+        function clearAppDataAndCache() {
+            playClickSound();
+            if (confirm('هل تريد مسح البيانات المؤقتة لتحديث محتوى ومذكرات التطبيق؟')) {
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+                showTopToast('تم تنظيف الذاكرة المؤقتة بنجاح، جاري إعادة التحميل...');
+                setTimeout(() => window.location.reload(true), 1200);
+            }
+        }
+
+        function toggleFaq(el) {
+            playClickSound();
+            const ans = el.nextElementSibling;
+            const isOpen = ans.style.display === 'block';
+            document.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
+            ans.style.display = isOpen ? 'none' : 'block';
+        }
+
+        /* الشكاوى والمقترحات */
+        function submitTicket(type) {
+            playClickSound();
+            if (!currentUser) { showAuthGateDirectly(); return; }
+
+            const title = type === 'مشكلة' ? document.getElementById('report-title-input').value.trim() : document.getElementById('suggest-title-input').value.trim();
+            const desc = type === 'مشكلة' ? document.getElementById('report-desc-input').value.trim() : document.getElementById('suggest-desc-input').value.trim();
+
+            if (!title || !desc) {
+                showTopToast('يرجى كتابة العنوان والوصف بالكامل!', 'error');
+                return;
+            }
+
+            const ticketData = {
+                type: type,
+                title: title,
+                desc: desc,
+                senderPhone: currentUser.phone,
+                senderName: currentUser.name,
+                sentAt: new Date().toISOString()
+            };
+
+            db.ref('user_tickets').push(ticketData).then(() => {
+                if (type === 'مشكلة') {
+                    document.getElementById('report-title-input').value = '';
+                    document.getElementById('report-desc-input').value = '';
+                } else {
+                    document.getElementById('suggest-title-input').value = '';
+                    document.getElementById('suggest-desc-input').value = '';
+                }
+                showTopToast(`تم استلام ال${type} وسيتم فحصها فوراً من قبل المطور ✨`, 'success');
+                navigateBack();
+            });
         }
 
         function redeemPromoCodeSidebar() {
             playClickSound();
-            if (!currentUser) { showAppAlert('تنبيه', 'يجب تسجيل الدخول أولاً لشحن الأكواد!', 'https://img.icons8.com/fluency/96/error.png'); return; }
+            if (!currentUser) { showTopToast('يجب تسجيل الدخول أولاً لشحن الأكواد!', 'error'); return; }
             const input = document.getElementById('sidebar-promo-input'); const code = input.value.trim().toUpperCase();
-            if (!code) { showAppAlert('تنبيه', 'يرجى كتابة الكود أولاً!', 'https://img.icons8.com/fluency/96/error.png'); return; }
+            if (!code) { showTopToast('يرجى كتابة الكود أولاً!', 'error'); return; }
 
             const codeRef = db.ref('promo_codes/' + code);
             codeRef.transaction((codeData) => {
                 if (codeData === null) return null; if (codeData.used) return; 
                 codeData.used = true; codeData.usedBy = currentUser.phone; codeData.usedByName = currentUser.name; codeData.usedAt = new Date().toISOString(); return codeData;
             }, (error, committed, snapshot) => {
-                if (error) { playErrorSound(); showAppAlert('خطأ', 'حدث خطأ في الاتصال بالسيرفر، حاول مرة أخرى!', 'https://img.icons8.com/fluency/96/cancel.png'); } 
-                else if (!committed) {
-                    playErrorSound();
-                    if (!snapshot.exists()) showAppAlert('عذراً', 'هذا الكود غير صالح أو غير موجود!', 'https://img.icons8.com/fluency/96/cancel.png');
-                    else showAppAlert('عذراً', 'للأسف، هذا الكود تم استخدامه بالفعل مسبقاً!', 'https://img.icons8.com/fluency/96/cancel.png');
+                if (error || !committed) {
+                    showTopToast('عذراً، هذا الكود غير صالح أو تم استخدامه بالفعل!', 'error');
                 } else {
                     const pointsToAdd = snapshot.val().points || 50;
                     db.ref('users/' + currentUser.phone + '/points').transaction((currentPts) => { return (currentPts || 0) + pointsToAdd; })
-                    .then(() => { playSuccessSound(); shootStars(); input.value = ''; closeSidebar(); showAppAlert('مبروك يا دولي!', `تم شحن ${pointsToAdd}+ نقطة في رصيدك السحابي بنجاح 🎉`, 'https://img.icons8.com/fluency/96/ok.png'); });
+                    .then(() => { playSuccessSound(); shootStars(); input.value = ''; closeSidebar(); showTopToast(`تم شحن ${pointsToAdd}+ نقطة في رصيدك السحابي بنجاح 🎉`, 'success'); });
                 }
             });
         }
@@ -1129,17 +1723,15 @@
             playClickSound();
             const safeKey = getSafeSubjectKey(currentActiveSubject);
             
-            // قراءة الرابط من قاعدة بيانات Firebase
             db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
                 if (snapshot.exists() && snapshot.val()) {
                     const rawUrl = snapshot.val();
                     downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
                 } else {
-                    // رابط افتراضي إذا لم يتم إدخال رابط بعد
                     if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
                         downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
                     } else {
-                        showAppAlert('جاري التجهيز', 'سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'https://img.icons8.com/fluency/96/open-book.png');
+                        showTopToast('سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'info');
                     }
                 }
             });
@@ -1147,7 +1739,6 @@
 
         function downloadBookFromDrive(url, fileName) {
             let directUrl = url;
-            // تحويل رابط Google Drive لرابط تنزيل مباشر تلقائياً
             const match = url.match(/\/d\/(.+?)\//) || url.match(/id=(.+?)(&|$)/);
             if (match && match[1]) {
                 directUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
@@ -1165,6 +1756,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            showTopToast('تم بدء تحميل الملف بنجاح ⬇️', 'success');
         }
 
         /* بنك الأسئلة الشامل الأساسي */
@@ -1174,90 +1766,17 @@
                 {q: "كم عدد عظام جسم الإنسان البالغ؟", a: ["206 عظمة", "180 عظمة", "250 عظمة", "300 عظمة"], correct: 0},
                 {q: "ما هو الحيوان البري الأسرع في العالم؟", a: ["الفهد (الشيتا)", "الأسد", "الغزال", "الفيل"], correct: 0},
                 {q: "ما هو أكبر عضو في جسم الإنسان؟", a: ["الجلد", "الكبد", "القلب", "المخ"], correct: 0},
-                {q: "في أي جزء من جسم الإنسان يتم إنتاج كرات الدم الحمراء؟", a: ["نخاع العظم", "الكبد", "الطحال", "الكلية"], correct: 0},
-                {q: "ما هو المعدن الوحيد السائل في درجة حرارة الغرفة؟", a: ["الزئبق", "الرصاص", "الحديد", "الألومنيوم"], correct: 0},
-                {q: "ما هو الغاز الذي تمتصه النباتات بعملية البناء الضوئي؟", a: ["ثاني أكسيد الكربون", "الأكسجين", "النيتروجين", "الهيدروجين"], correct: 0},
-                {q: "ما هي فصيلة الدم التي تعتبر معطياً عاماً؟", a: ["O سالب", "AB موجب", "A موجب", "B سالب"], correct: 0},
-                {q: "ما هي نسبة الماء على سطح كوكب الأرض تقريباً؟", a: ["71 بالمئة", "50 بالمئة", "30 بالمئة", "90 بالمئة"], correct: 0},
-                {q: "كم عدد حجرات القلب البشري؟", a: ["4 حجرات", "حجرتان", "3 حجرات", "5 حجرات"], correct: 0}
+                {q: "في أي جزء من جسم الإنسان يتم إنتاج كرات الدم الحمراء؟", a: ["نخاع العظم", "الكبد", "الطحال", "الكلية"], correct: 0}
             ],
             "تاريخ وجغرافيا": [
                 {q: "ما هي عاصمة دولة أستراليا؟", a: ["كانبيرا", "سيدني", "ملبورن", "بريزبان"], correct: 0},
                 {q: "ما هو البحر الذي يقع بين إفريقيا وأوروبا؟", a: ["البحر الأبيض المتوسط", "البحر الأحمر", "البحر الأسود", "بحر قزوين"], correct: 0},
-                {q: "من هو إمبراطور فرنسا الشهير الذي هزم في معركة واترلو؟", a: ["نابليون بونابرت", "لويس الرابع عشر", "شارل ديجول", "هنري الرابع"], correct: 0},
-                {q: "في أي عام قامت الحرب العالمية الأولى؟", a: ["عام 1914", "عام 1939", "عام 1918", "عام 1945"], correct: 0},
-                {q: "ما هو أطول نهر في العالم؟", a: ["نهر النيل", "نهر الأمازون", "نهر المسيسيبي", "نهر الدانوب"], correct: 0},
-                {q: "ما هي أصغر دولة في العالم من حيث المساحة؟", a: ["الفاتيكان", "موناكو", "سان مارينو", "ليختنشتاين"], correct: 0},
-                {q: "في أي دولة أقيمت أول دورة ألعاب أولمبية حديثة عام 1896؟", a: ["اليونان", "فرنسا", "إيطاليا", "بريطانيا"], correct: 0},
-                {q: "كم عدد الدول العربية في قارة إفريقيا؟", a: ["10 دول", "12 دولة", "8 دول", "14 دولة"], correct: 0},
-                {q: "ما هي الدولة الأكثر سكاناً في العالم حالياً؟", a: ["الهند", "الصين", "الولايات المتحدة", "إندونيسيا"], correct: 0},
-                {q: "جبل إفرست يقع على حدود أي دولتين؟", a: ["نيبال والصين", "الهند وباكستان", "الصين ومنغوليا", "سويسرا وإيطاليا"], correct: 0}
-            ],
-            "كرة قدم": [
-                {q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم في الملعب؟", a: ["11 لاعباً", "10 لاعبين", "9 لاعبين", "12 لاعباً"], correct: 0},
-                {q: "ما هي الدولة التي فازت بأول كأس عالم لكرة القدم عام 1930؟", a: ["الأوروغواي", "البرازيل", "الأرجنتين", "إيطاليا"], correct: 0},
-                {q: "كم عدد المرات التي فازت فيها البرازيل بلقب كأس العالم؟", a: ["5 مرات", "4 مرات", "3 مرات", "6 مرات"], correct: 0},
-                {q: "ما هو المصطلح الذي يطلق على تسجيل اللاعب لثلاثة أهداف في مباراة واحدة؟", a: ["هاتريك (Hat-trick)", "سوبر هاتريك", "دبل كيك", "بانينكا"], correct: 0},
-                {q: "ما هو اسم النادي الذي يُلقب بـ 'النادي الملكي' في إسبانيا؟", a: ["ريال مدريد", "برشلونة", "اتلتيكو مدريد", "إشبيلية"], correct: 0},
-                {q: "من هو اللاعب الذي يُلقب بـ 'الأسطورة' أو 'الجوهرة السوداء'؟", a: ["بيليه", "مارادونا", "ميسي", "كريستيانو رونالدو"], correct: 0},
-                {q: "من هو المنتخب الملقب بـ 'الديوك'؟", a: ["منتخب فرنسا", "منتخب إيطاليا", "منتخب البرتغال", "منتخب بلجيكا"], correct: 0},
-                {q: "ما هو اسم البطولة الأغلى للأندية في قارة أوروبا؟", a: ["دوري أبطال أوروبا", "الدوري الأوروبي", "دوري المؤتمر", "السوبر الأوروبي"], correct: 0},
-                {q: "من هو اللاعب الذي يُلقب بـ 'البرغوث'؟", a: ["ليونيل ميسي", "كريستيانو رونالدو", "نيمار جونيور", "كيليان مبابي"], correct: 0},
-                {q: "ما هي الدولة التي فازت بكأس العالم 2010؟", a: ["إسبانيا", "هولندا", "ألمانيا", "البرازيل"], correct: 0}
-            ],
-            "تكنولوجيا": [
-                {q: "ماذا تعني اختصار تقنية الذكاء الاصطناعي (AI)؟", a: ["الذكاء الاصطناعي", "البرمجة المتقدمة", "التطبيقات الذكية", "شبكات الإنترنت"], correct: 0},
-                {q: "من هو مؤسس شركة مايكروسوفت (Microsoft)؟", a: ["بيل جيتس", "ستيف جوبز", "مارك زوكربيرج", "إيلون ماسك"], correct: 0},
-                {q: "ما هو نظام التشغيل الأكثر استخداماً للهواتف الذكية في العالم؟", a: ["أندرويد", "آي أو إس (iOS)", "ويندوز فون", "لينكس"], correct: 0},
-                {q: "من هو الشريك المؤسس لشركة أبل (Apple) مع ستيف جوبز؟", a: ["ستيف وزنياك", "بيل جيتس", "لاري പേج", "مارك زوكربيرج"], correct: 0},
-                {q: "ما هي وحدة التخزين الأصغر في الكمبيوتر؟", a: ["البت (Bit)", "البايت", "الكيلوبايت", "الميجابايت"], correct: 0},
-                {q: "كم عدد البايتات في الكيلوبايت الواحد؟", a: ["1024 بايت", "1000 بايت", "512 بايت", "2048 بايت"], correct: 0},
-                {q: "ما هو المعالج الأساسي للكمبيوتر الذي يُطلق عليه 'عقل الكمبيوتر'؟", a: ["وحدة المعالجة المركزية (CPU)", "كرت الشاشة", "الذاكرة العشوائية", "قرص التخزين"], correct: 0},
-                {q: "ما هي لغة البرمجة المسؤولة عن تنسيق وألوان وشكل صفحات الويب؟", a: ["CSS", "HTML", "C++", "Java"], correct: 0},
-                {q: "ما هو التطبيق السحابي الشهير لتخزين الملفات التابع لشركة جوجل؟", a: ["جوجل درايف", "ون درايف", "آي كلاود", "ميجا"], correct: 0},
-                {q: "ما هو المصطلح الذي يطلق على البرمجيات الخبيثة التي تبتز المستخدمين؟", a: ["برمجيات الفدية (Ransomware)", "الفيروسات البسيطة", "ملفات التجسس", "الإعلانات المزعجة"], correct: 0}
+                {q: "من هو إمبراطور فرنسا الشهير الذي هزم في معركة واترلو؟", a: ["نابليون بونابرت", "لويس الرابع عشر", "شارل ديجول", "هنري الرابع"], correct: 0}
             ],
             "معلومات عامة": [
                 {q: "كم عدد حروف الهجاء في اللغة العربية؟", a: ["28 حرفاً", "26 حرفاً", "29 حرفاً", "30 حرفاً"], correct: 0},
                 {q: "ما هي السورة القرآنية التي تُسمى بـ 'قلب القرآن'؟", a: ["سورة يس", "سورة البقرة", "سورة الملك", "سورة الكهف"], correct: 0},
-                {q: "كم عدد ألوان طقس قزح (قوس المطر) الرئيسية؟", a: ["7 ألوان", "5 ألوان", "6 ألوان", "8 ألوان"], correct: 0},
-                {q: "من هو صاحب رواية 'البؤساء' الشهيرة؟", a: ["فيكتور هوغو", "وليام شكسبير", "تولستوي", "تشارلز ديكنز"], correct: 0},
-                {q: "ما هو الطائر الذي لا يمتلك القدرة على الطيران ولكنه سباح ممتاز في الماء؟", a: ["البطريق", "النعامة", "الدجاجة", "الطاووس"], correct: 0},
-                {q: "ما هي العملة الرسمية لدولة اليابان؟", a: ["الين", "الدولار", "اليورو", "اليوان"], correct: 0},
-                {q: "ما هو الحيوان البحري الذي يمتلك ثلاثة قلوب؟", a: ["الأخطبوط", "الحوت", "الدلفين", "القرش"], correct: 0},
-                {q: "كم عدد أسنان الإنسان البالغ الطبيعية؟", a: ["32 سناً", "28 سناً", "30 سناً", "34 سناً"], correct: 0},
-                {q: "ما هو الكوكب الذي يمتلك أكبر عدد من الأقمار في المجموعة الشمسية؟", a: ["زحل", "المشتري", "المريخ", "أورانوس"], correct: 0},
-                {q: "ما هو العنصر الأكثر وجوداً في قشرة الأرض الصلبة؟", a: ["الأكسجين", "السيليكون", "الحديد", "الألومنيوم"], correct: 0}
-            ],
-            "فلك وفضاء": [
-                {q: "ما هو الكوكب ذو الحلقات الأبرز في المجموعة الشمسية؟", a: ["زحل", "المشتري", "أورانوس", "المريخ"], correct: 0},
-                {q: "ماذا تسمى المجرة التي ننتمي إليها؟", a: ["درب التبانة", "أندروميدا", "مجرة المثلث", "درب القبان"], correct: 0},
-                {q: "ما هو أقرب نجم لكوكب الأرض؟", a: ["الشمس", "بروكسيما سنتوري", "الشعرى اليمانية", "النجم القطبي"], correct: 0},
-                {q: "من هو أول إنسان صعد إلى الفضاء؟", a: ["يوري غاغارين", "نيل آرمسترونغ", "باز ألدرن", "جون جلين"], correct: 0},
-                {q: "أي كوكب يلقب بـ 'توأم الأرض'؟", a: ["الزهرة", "المريخ", "عطارد", "المشتري"], correct: 0},
-                {q: "ما هو اسم أول قمر صناعي أطلق في الفضاء؟", a: ["سبوتنيك 1", "أبولو 11", "إكسبلورر 1", "فوستوك"], correct: 0},
-                {q: "ما هو أكبر كواكب المجموعة الشمسية؟", a: ["المشتري", "زحل", "نبتون", "الأرض"], correct: 0},
-                {q: "أي الكواكب هو الأبعد عن الشمس؟", a: ["نبتون", "أورانوس", "زحل", "المريخ"], correct: 0}
-            ],
-            "سينما وفنون": [
-                {q: "فيلم أكشن شهير بطولة كيانو ريفز تدور أحداثه في حافلة لا تتوقف؟", a: ["Speed (سرعة)", "The Matrix", "John Wick", "Heat"], correct: 0},
-                {q: "من هو مخرج الفيلم الملحمي The Dark Knight؟", a: ["كريستوفر نولان", "جيمس كاميرون", "ستيفن سبيلبرغ", "مارتن سكورسيزي"], correct: 0},
-                {q: "من هو الممثل العبقري الذي قام بدور 'الجوكر' في The Dark Knight؟", a: ["هيث ليدجر", "خواكين فينيكس", "جاك نيكلسون", "جاريد ليتو"], correct: 0},
-                {q: "فيلم يتبادل فيه جون ترافولتا ونيكولاس كيج وجوههما؟", a: ["Face/Off (الوجه المخلوع)", "The Rock", "Con Air", "Pulp Fiction"], correct: 0},
-                {q: "من هو الممثل الأسطوري لسلسلة أفلام الأكشن والمخيال (Terminator)؟", a: ["أرنولد شوارزنيجر", "سيلفستر ستالون", "بروس ويليس", "جان كلود فان دام"], correct: 0},
-                {q: "فيلم سرقة بنوك شهير عام 1995 يجمع بين آل باتشينو وروبرت دي نيرو؟", a: ["Heat (حرارة)", "The Godfather", "Scarface", "Goodfellas"], correct: 0},
-                {q: "من رسم اللوحة الشهيرة 'الموناليزا'؟", a: ["ليوناردو دا فينشي", "بابلو بيكاسو", "فينسنت فان جوخ", "مايكل أنجلو"], correct: 0},
-                {q: "من هو مخرج فيلم تيتانيك وفيلم أفاتار؟", a: ["جيمس كاميرون", "بيتر جاكسون", "ريدلي سكوت", "كوينتن تارانتينو"], correct: 0}
-            ],
-            "اختراعات واكتشافات": [
-                {q: "من هو مخترع المصباح الكهربائي العملي؟", a: ["توماس إديسون", "نيكولا تسلا", "البرت آينشتاين", "ألكسندر بيل"], correct: 0},
-                {q: "من هو مكتشف البنسلين (أول مضاد حيوي)؟", a: ["ألكسندر فليمنج", "لويس باستير", "ماري كوري", "روبرت كوخ"], correct: 0},
-                {q: "من يُنسب إليه اختراع الهاتف؟", a: ["ألكسندر غراهام بيل", "أنطونيو ميوتشي", "غولييلمو ماركوني", "صمويل مورس"], correct: 0},
-                {q: "من اكتشف قانون الجاذبية الأرضية؟", a: ["إسحاق نيوتن", "جاليليو جاليلي", "يوهانس كيبلر", "أينشتاين"], correct: 0},
-                {q: "من هو الكيميائي الذي اخترع الديناميت؟", a: ["ألفريد نوبل", "ديميتري مندلييف", "جون دالتون", "أنطوان لافوازييه"], correct: 0},
-                {q: "الأخوان اللذان اخترعا أول طائرة ناجحة هما؟", a: ["الأخوان رايت", "الأخوان مونتجولفييه", "الأخوان لوميير", "الأخوان ماكدونالد"], correct: 0},
-                {q: "العالم العربي مكتشف الدورة الدموية الصغرى هو؟", a: ["ابن النفيس", "ابن سينا", "الرازي", "الخوارزمي"], correct: 0},
-                {q: "من هو مبتكر شبكة الويب العالمية (WWW)؟", a: ["تيم بيرنرز لي", "بيل جيتس", "مارك زوكربيرج", "لاري بايج"], correct: 0}
+                {q: "ما هي العملة الرسمية لدولة اليابان؟", a: ["الين", "الدولار", "اليورو", "اليوان"], correct: 0}
             ]
         };
 
@@ -1267,7 +1786,6 @@
             closeModal('quiz-rules-modal'); playClickSound();
             activeQuizQuestions = [];
             
-            // دمج الأسئلة الأساسية
             const categories = Object.keys(masterQuestionsBank);
             categories.forEach(cat => {
                 const questionsList = masterQuestionsBank[cat];
@@ -1277,7 +1795,6 @@
                 activeQuizQuestions.push(selectedQ);
             });
 
-            // جلب أي أسئلة مضافة جديدة من السحابة ودمجها
             db.ref('custom_questions').once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
@@ -1345,7 +1862,7 @@
 
         function closeQuizResult() { playBackSound(); document.getElementById('quiz-result-modal').classList.remove('show'); goHomeDirectly(); }
 
-        /* دوال لوحة التحكم */
+        /* لوحة التحكم */
         let adminAllUsersData = [];
 
         function openAdminPanel() {
@@ -1354,18 +1871,22 @@
                 navigateTo('view-admin-panel', 'لوحة التحكم', 'إدارة التطبيق والمستخدمين والمحتوى');
                 loadAdminData();
             } else {
-                showAppAlert('صلاحيات', 'عذراً، هذه الصفحة مخصصة لمدير التطبيق فقط.', 'https://img.icons8.com/fluency/96/error.png');
+                showTopToast('عذراً، هذه الصفحة مخصصة لمدير التطبيق فقط.', 'error');
             }
         }
 
         function switchAdminTab(tabName) {
             playClickSound();
-            ['users','books','quiz','codes'].forEach(t => {
-                document.getElementById('tab-admin-' + t).classList.remove('active');
-                document.getElementById('admin-section-' + t).style.display = 'none';
+            ['users','tickets','broadcast','books','quiz','codes'].forEach(t => {
+                const tabBtn = document.getElementById('tab-admin-' + t);
+                const tabSec = document.getElementById('admin-section-' + t);
+                if (tabBtn) tabBtn.classList.remove('active');
+                if (tabSec) tabSec.style.display = 'none';
             });
             document.getElementById('tab-admin-' + tabName).classList.add('active');
             document.getElementById('admin-section-' + tabName).style.display = 'block';
+
+            if (tabName === 'tickets') loadAdminTickets();
         }
 
         function loadAdminData() {
@@ -1394,10 +1915,10 @@
             usersArray.forEach(u => {
                 html += `
                 <div class="admin-item-card">
-                    <img src="${u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-card); padding: 2px;">
+                    <img src="${u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-card); padding: 2px; object-fit: cover;">
                     <div class="admin-item-info">
                         <div class="admin-item-name">${u.name}</div>
-                        <div class="admin-item-sub">${u.phone}</div>
+                        <div class="admin-item-sub">${u.phone} ${u.email ? ` | ${u.email}` : ''}</div>
                     </div>
                     <button class="admin-action-btn" onclick="openEditPointsModal('${u.id}', '${u.name}', ${u.points || 0})">
                         ${u.points || 0} ⭐
@@ -1409,7 +1930,7 @@
 
         function filterAdminUsers() {
             const query = document.getElementById('admin-search-user').value.trim().toLowerCase();
-            const filtered = adminAllUsersData.filter(u => u.name.toLowerCase().includes(query) || u.phone.includes(query));
+            const filtered = adminAllUsersData.filter(u => u.name.toLowerCase().includes(query) || u.phone.includes(query) || (u.email && u.email.toLowerCase().includes(query)));
             renderAdminUsers(filtered);
         }
 
@@ -1428,14 +1949,81 @@
             
             db.ref('users/' + phone).update({ points: newPoints }).then(() => {
                 closeModal('edit-points-modal');
-                showAppAlert('تم التعديل', 'تم تحديث نقاط الطالب بنجاح!', 'https://img.icons8.com/fluency/96/ok.png');
+                showTopToast('تم تحديث نقاط الطالب بنجاح!', 'success');
                 loadAdminData();
-            }).catch(err => {
-                showAppAlert('خطأ', 'حدث مشكلة أثناء التعديل!', 'https://img.icons8.com/fluency/96/error.png');
             });
         }
 
-        /* دوال حفظ روابط الكتب من لوحة التحكم */
+        function loadAdminTickets() {
+            const container = document.getElementById('admin-tickets-list');
+            db.ref('user_tickets').on('value', (snap) => {
+                if (!snap.exists()) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد شكاوى أو مقترحات واردة حالياً.</p>';
+                    return;
+                }
+                let html = '';
+                snap.forEach(child => {
+                    const t = child.val();
+                    const id = child.key;
+                    html += `
+                    <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <span class="card-badge" style="background: ${t.type === 'مشكلة' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)'}; color: ${t.type === 'مشكلة' ? '#ef4444' : 'var(--accent-gold)'}; font-size: 0.75rem;">${t.type}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-sub);">${new Date(t.sentAt).toLocaleDateString('ar-EG')}</span>
+                        </div>
+                        <h4 style="color: var(--text-main); font-size: 0.95rem;">${t.title}</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5;">${t.desc}</p>
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px; border-top: 1px dashed var(--border-card); padding-top: 6px;">
+                            <span style="font-size: 0.75rem; color: var(--accent-gold);">من: ${t.senderName} (${t.senderPhone})</span>
+                            <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteTicket('${id}')">حذف 🗑️</button>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        function deleteTicket(ticketId) {
+            playErrorSound();
+            if (confirm('هل تريد مسح هذا السجل؟')) {
+                db.ref('user_tickets/' + ticketId).remove();
+            }
+        }
+
+        function publishBroadcastAlert() {
+            playClickSound();
+            const title = document.getElementById('admin-broadcast-title').value.trim();
+            const body = document.getElementById('admin-broadcast-body').value.trim();
+
+            if (!title || !body) {
+                showTopToast('يرجى كتابة العنوان ونص الرسالة أولاً!', 'error');
+                return;
+            }
+
+            const broadcastData = {
+                id: 'msg_' + Date.now(),
+                title: title,
+                body: body,
+                active: true,
+                publishedAt: new Date().toISOString()
+            };
+
+            db.ref('broadcast_message').set(broadcastData).then(() => {
+                showTopToast('تم بث الرسالة بنجاح! ستظهر لجميع الطلاب عند فتح التطبيق 📢', 'success');
+            });
+        }
+
+        function clearBroadcastAlert() {
+            playErrorSound();
+            if (confirm('هل تريد إلغاء الرسالة المنبثقة الحالية؟')) {
+                db.ref('broadcast_message').remove().then(() => {
+                    document.getElementById('admin-broadcast-title').value = '';
+                    document.getElementById('admin-broadcast-body').value = '';
+                    showTopToast('تم حذف رسالة البث الحالية بنجاح.');
+                });
+            }
+        }
+
         function saveBookDriveLink() {
             playClickSound();
             const subject = document.getElementById('admin-book-subject').value;
@@ -1443,20 +2031,17 @@
             const url = document.getElementById('admin-book-url').value.trim();
 
             if (!url) {
-                showAppAlert('بيانات ناقصة', 'يرجى وضع رابط Google Drive للملف أولاً!', 'https://img.icons8.com/fluency/96/error.png');
+                showTopToast('يرجى وضع رابط Google Drive للملف أولاً!', 'error');
                 return;
             }
 
             const safeKey = getSafeSubjectKey(subject);
             db.ref(`subject_files/${safeKey}/${type}`).set(url).then(() => {
                 document.getElementById('admin-book-url').value = '';
-                showAppAlert('تم الحفظ', `تم تحديث وتثبيت رابط (${subject} - ${type === 'theory' ? 'النظري' : 'العملي'}) بنجاح!`, 'https://img.icons8.com/fluency/96/ok.png');
-            }).catch(err => {
-                showAppAlert('خطأ', 'حدث خطأ أثناء الحفظ بالسيرفر!', 'https://img.icons8.com/fluency/96/error.png');
+                showTopToast(`تم تحديث وتثبيت رابط (${subject} - ${type === 'theory' ? 'النظري' : 'العملي'}) بنجاح!`, 'success');
             });
         }
 
-        /* دوال إضافة أسئلة سحابية جديدة من لوحة التحكم */
         function saveNewCloudQuestion() {
             playClickSound();
             const cat = document.getElementById('admin-new-q-cat').value.trim() || 'عام';
@@ -1467,7 +2052,7 @@
             const opt3 = document.getElementById('admin-new-q-opt3').value.trim();
 
             if (!qText || !correctAns || !opt1 || !opt2 || !opt3) {
-                showAppAlert('بيانات ناقصة', 'يرجى كتابة نص السؤال وجميع الخيارات الأربعة كاملة!', 'https://img.icons8.com/fluency/96/error.png');
+                showTopToast('يرجى كتابة نص السؤال وجميع الخيارات الأربعة كاملة!', 'error');
                 return;
             }
 
@@ -1485,7 +2070,7 @@
                 document.getElementById('admin-new-q-opt1').value = '';
                 document.getElementById('admin-new-q-opt2').value = '';
                 document.getElementById('admin-new-q-opt3').value = '';
-                showAppAlert('نجاح', 'تمت إضافة السؤال بنجاح إلى بنك الأسئلة باللعبة! 🧠✨', 'https://img.icons8.com/fluency/96/ok.png');
+                showTopToast('تمت إضافة السؤال بنجاح إلى بنك الأسئلة باللعبة! 🧠✨', 'success');
             });
         }
 
@@ -1495,12 +2080,12 @@
             let codePts = parseInt(document.getElementById('admin-new-code-pts').value);
 
             if(!codeName || !codePts || codePts <= 0) {
-                showAppAlert('بيانات ناقصة', 'يرجى كتابة اسم الكود وعدد النقاط بشكل صحيح!', 'https://img.icons8.com/fluency/96/error.png'); return;
+                showTopToast('يرجى كتابة اسم الكود وعدد النقاط بشكل صحيح!', 'error'); return;
             }
 
             db.ref('promo_codes/' + codeName).once('value').then(snap => {
                 if(snap.exists()) {
-                    showAppAlert('موجود بالفعل', 'هذا الكود موجود بالفعل في النظام!', 'https://img.icons8.com/fluency/96/error.png');
+                    showTopToast('هذا الكود موجود بالفعل في النظام!', 'error');
                 } else {
                     db.ref('promo_codes/' + codeName).set({
                         points: codePts,
@@ -1509,7 +2094,7 @@
                     }).then(() => {
                         document.getElementById('admin-new-code').value = '';
                         document.getElementById('admin-new-code-pts').value = '';
-                        showAppAlert('نجاح', `تم إنشاء الكود ${codeName} بقيمة ${codePts} نقطة بنجاح!`, 'https://img.icons8.com/fluency/96/ok.png');
+                        showTopToast(`تم إنشاء الكود ${codeName} بقيمة ${codePts} نقطة بنجاح!`, 'success');
                         loadAdminData();
                     });
                 }
