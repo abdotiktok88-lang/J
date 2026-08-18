@@ -1349,47 +1349,73 @@
         }
 
         function registerUser() {
-            playClickSound();
-            const name = document.getElementById('reg-name').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const pass = document.getElementById('reg-password').value;
-            const confirmPass = document.getElementById('reg-confirm-password').value;
+    playClickSound();
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-password').value;
+    const confirmPass = document.getElementById('reg-confirm-password').value;
 
-            if (!name || !phone || !pass || !confirmPass) { 
-                showTopToast('يرجى ملء جميع الحقول المطلوبة لإنشاء الحساب!', 'error'); 
-                return; 
-            }
-            if (pass !== confirmPass) { 
-                showTopToast('كلمة المرور غير متطابقة، تأكد منها وحاول مرة أخرى!', 'error'); 
-                return; 
-            }
+    if (!name || !phone || !email || !pass || !confirmPass) { 
+        showTopToast('يرجى ملء جميع الحقول بما فيها البريد الإلكتروني!', 'error'); 
+        return; 
+    }
+    if (pass !== confirmPass) { 
+        showTopToast('كلمة المرور غير متطابقة، تأكد منها وحاول مرة أخرى!', 'error'); 
+        return; 
+    }
+    if (pass.length < 6) {
+        showTopToast('كلمة المرور يجب ألا تقل عن 6 أحرف أو أرقام!', 'error');
+        return;
+    }
 
-            const userRef = db.ref('users/' + phone);
-            userRef.once('value', (snapshot) => {
-                if (snapshot.exists()) { 
-                    showTopToast('هذا الرقم مسجل بالفعل في النظام! يرجى تسجيل الدخول.', 'error'); 
-                    switchAuthTab('login'); 
-                } else {
+    // 1. فحص رقم الهاتف في Realtime Database
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', (snapshot) => {
+        if (snapshot.exists()) { 
+            showTopToast('هذا الرقم مسجل بالفعل في النظام! يرجى تسجيل الدخول.', 'error'); 
+            switchAuthTab('login'); 
+        } else {
+            // 2. إنشاء الحساب رسمياً في Firebase Authentication
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // إرسال رابط تأكيد للبريد تلقائياً
+                    userCredential.user.sendEmailVerification().catch(e => console.error(e));
+                    
+                    // 3. حفظ بيانات المستخدم في Realtime Database
                     const newUser = { 
                         name: name, 
                         phone: phone, 
-                        email: email || '', 
+                        email: email, 
                         password: pass, 
                         avatar: 'https://img.icons8.com/fluency/96/user-male.png', 
                         points: 100,
                         createdAt: new Date().toISOString()
                     };
-                    userRef.set(newUser).then(() => {
+
+                    return userRef.set(newUser).then(() => {
                         localStorage.setItem('active_user_phone', phone);
                         currentUser = newUser; 
                         updateProfileUI(); 
-                        showTopToast('تم إنشاء الحساب بنجاح!', 'success');
+                        showTopToast('تم إنشاء الحساب بنجاح وإرسال رابط التفعيل ✉️', 'success');
                         goHomeDirectly();
                     });
-                }
-            });
+                })
+                .catch((authError) => {
+                    console.error("Auth Error:", authError);
+                    if (authError.code === 'auth/email-already-in-use') {
+                        showTopToast('هذا البريد مستخدم بالفعل لحساب آخر!', 'error');
+                    } else if (authError.code === 'auth/invalid-email') {
+                        showTopToast('صيغة البريد الإلكتروني غير صحيحة!', 'error');
+                    } else if (authError.code === 'auth/operation-not-allowed') {
+                        showTopToast('يرجى تفعيل Email/Password في Firebase Console!', 'error');
+                    } else {
+                        showTopToast('خطأ أثناء إنشاء الحساب: ' + authError.message, 'error');
+                    }
+                });
         }
+    });
+}
 
         function loginUser() {
             playClickSound();
