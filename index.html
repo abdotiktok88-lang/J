@@ -1574,36 +1574,77 @@
         }
 
         function saveSettingEmailDirectly() {
-            playClickSound();
-            const emailVal = document.getElementById('sub-view-email-input').value.trim();
-            if (!emailVal || !emailVal.includes('@')) { showTopToast('يرجى كتابة بريد إلكتروني صالح!', 'error'); return; }
-            db.ref('users/' + currentUser.phone).update({ email: emailVal }).then(() => {
-                showTopToast('تم حفظ البريد الإلكتروني لتأمين حسابك بنجاح ✉️', 'success');
+    playClickSound();
+    const newEmail = document.getElementById('sub-view-email-input').value.trim();
+    if (!newEmail || !newEmail.includes('@')) { 
+        showTopToast('يرجى كتابة بريد إلكتروني صالح!', 'error'); 
+        return; 
+    }
+
+    if (!currentUser || !currentUser.password) {
+        showTopToast('حدث خطأ في جلب بيانات الحساب!', 'error');
+        return;
+    }
+
+    const currentEmail = currentUser.email;
+    const userPass = currentUser.password;
+
+    // حالة 1: المستخدم كان عنده إيميل قديم ومسجل في Auth
+    if (currentEmail && currentEmail.includes('@')) {
+        // تسجيل دخول في Auth أولاً لتأكيد الصلاحية
+        auth.signInWithEmailAndPassword(currentEmail, userPass)
+            .then((userCredential) => {
+                // تحديث الإيميل في Firebase Auth
+                return userCredential.user.updateEmail(newEmail);
+            })
+            .then(() => {
+                // تحديث الإيميل في Realtime Database
+                return db.ref('users/' + currentUser.phone).update({ email: newEmail });
+            })
+            .then(() => {
+                currentUser.email = newEmail;
+                showTopToast('تم تحديث البريد الإلكتروني في الفايربيز بنجاح ✉️', 'success');
                 navigateBack();
+            })
+            .catch((error) => {
+                console.error("Email Update Error:", error);
+                // لو الحساب مكنش موجود في Auth أصلاً، نعمله إنشاء جديد
+                if (error.code === 'auth/user-not-found') {
+                    createNewAuthAccount(newEmail, userPass);
+                } else if (error.code === 'auth/email-already-in-use') {
+                    showTopToast('هذا البريد مستخدم بالفعل لحساب آخر!', 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showTopToast('صيغة البريد الإلكتروني غير صحيحة!', 'error');
+                } else {
+                    showTopToast('خطأ: ' + error.message, 'error');
+                }
             });
-        }
+    } else {
+        // حالة 2: المستخدم مكنش ضايف إيميل قبل كده، ننشئ له حساب في Auth فوراً
+        createNewAuthAccount(newEmail, userPass);
+    }
+}
 
-        function saveSettingPasswordDirectly() {
-            playClickSound();
-            const oldPass = document.getElementById('sub-view-old-pass').value;
-            const newPass = document.getElementById('sub-view-new-pass').value;
-
-            if (oldPass !== currentUser.password) {
-                showTopToast('كلمة المرور الحالية غير صحيحة!', 'error');
-                return;
+// دالة مساعدة لإنشاء حساب في Auth وتحديث الـ Database
+function createNewAuthAccount(email, password) {
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+            return db.ref('users/' + currentUser.phone).update({ email: email });
+        })
+        .then(() => {
+            currentUser.email = email;
+            showTopToast('تم ربط وحفظ البريد الإلكتروني بنجاح ✉️', 'success');
+            navigateBack();
+        })
+        .catch((err) => {
+            console.error("Create Auth Error:", err);
+            if (err.code === 'auth/email-already-in-use') {
+                showTopToast('هذا البريد مستخدم بالفعل لحساب آخر!', 'error');
+            } else {
+                showTopToast('حدث خطأ أثناء حفظ البريد: ' + err.message, 'error');
             }
-            if (!newPass || newPass.length < 6) {
-                showTopToast('يجب ألا تقل كلمة المرور الجديدة عن 6 أحرف!', 'error');
-                return;
-            }
-
-            db.ref('users/' + currentUser.phone).update({ password: newPass }).then(() => {
-                document.getElementById('sub-view-old-pass').value = '';
-                document.getElementById('sub-view-new-pass').value = '';
-                showTopToast('تم تغيير كلمة المرور بنجاح 🔐', 'success');
-                navigateBack();
-            });
-        }
+        });
+}
 
         function sendResetPasswordLink() {
             playClickSound();
