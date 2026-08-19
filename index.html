@@ -59,7 +59,7 @@
         body {
             background-color: var(--bg-primary); color: var(--text-main); min-height: 100vh;
             background-image: radial-gradient(circle at top, var(--radial-glow) 0%, transparent 70%);
-            overflow-x: hidden; display: flex; flex-direction: column; padding-bottom: 80px; /* زيادة المساحة لشريط التنقل */
+            overflow-x: hidden; display: flex; flex-direction: column; padding-bottom: 65px;
         }
 
         /* التنبيه العلوي المنزلق */
@@ -213,17 +213,6 @@
         .inspirational-quote::after { content: '❞'; bottom: -15px; left: 5px; }
         .highlight-word { font-family: inherit !important; font-weight: inherit; color: var(--accent-gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
 
-        /* FAB */
-        .fab-leaderboard {
-            position: fixed; bottom: 80px; left: 20px; width: 62px; height: 62px; background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
-            border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.45); z-index: 160; cursor: pointer; transition: 0.3s;
-        }
-        .fab-leaderboard img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
-        .fab-leaderboard:hover { transform: scale(1.08) rotate(5deg); }
-        .fab-leaderboard:active { transform: scale(0.9); }
-        .fab-animate { animation: fabPulse 0.5s ease-out forwards; }
-        @keyframes fabPulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.8); } 50% { transform: scale(1.2) rotate(15deg); box-shadow: 0 0 0 25px rgba(212, 175, 55, 0); } 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } }
-
         .content-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
         .content-box-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 18px; padding: 22px 12px; text-align: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1); }
         .content-box-card:active { transform: scale(0.94); border-color: var(--accent-gold); }
@@ -247,12 +236,23 @@
         .btn-submit:active { transform: scale(0.97); }
         
         .profile-header { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 20px; }
-        .profile-avatar { width: 90px; height: 90px; margin: 0 auto 16px; background: var(--bg-secondary); border: 2px solid var(--accent-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px; }
+        .profile-avatar { width: 90px; height: 90px; margin: 0 auto 16px; background: var(--bg-secondary); border: 2px solid var(--accent-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px; position: relative;}
         .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        
+        /* إطار البروفايل المميز */
+        .premium-gold-frame {
+            border: 3px solid #ffd700 !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.4) !important;
+            animation: frameGlow 2s infinite alternate;
+        }
+        @keyframes frameGlow {
+            from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.4); }
+        }
+
         .profile-name { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
         .profile-phone { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin-bottom: 12px; direction: ltr; }
         
-        /* شارات البروفايل */
         .profile-badges-container {
             display: flex;
             justify-content: center;
@@ -328,6 +328,7 @@
         .quiz-option-btn:hover:not(:disabled) { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.12); transform: translateY(-2px); }
         .quiz-option-btn.correct-choice { background: #10b981 !important; border-color: #059669 !important; color: #ffffff !important; transform: scale(1.05) !important; box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5); z-index: 10; }
         .quiz-option-btn.wrong-choice { background: #ef4444 !important; border-color: #b91c1c !important; color: #ffffff !important; animation: shake 0.4s both; }
+        .quiz-option-btn.hidden-by-hint { opacity: 0.15 !important; pointer-events: none !important; text-decoration: line-through; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
         .stars-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
         .falling-star, .confetti-piece { position: absolute; user-select: none; }
@@ -491,10 +492,8 @@
         }
         
         /* --------------------------------- */
-        /* إضافات الـ Bottom Nav و Stats */
+        /* شريط التنقل السفلي المصغر والأنيق */
         /* --------------------------------- */
-
-        /* شريط التنقل السفلي */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -504,34 +503,38 @@
             border-top: 1px solid var(--border-card);
             display: flex;
             justify-content: space-around;
-            padding: 10px 5px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+            padding: 6px 4px 4px;
+            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.25);
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            height: 52px;
         }
 
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 2px;
             color: var(--text-sub);
             text-decoration: none;
             cursor: pointer;
             flex: 1;
-            transition: 0.3s;
+            transition: transform 0.2s, color 0.2s;
         }
 
         .nav-item img {
-            width: 24px;
-            height: 24px;
-            filter: grayscale(100%) opacity(0.7);
-            transition: 0.3s;
+            width: 20px;
+            height: 20px;
+            filter: grayscale(100%) opacity(0.65);
+            transition: 0.2s;
         }
 
         .nav-item span {
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             font-weight: 700;
+            line-height: 1;
         }
 
         .nav-item.active {
@@ -540,7 +543,7 @@
 
         .nav-item.active img {
             filter: grayscale(0%) opacity(1);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
         
         /* شريط الرصيد العلوي في الرئيسية */
@@ -598,33 +601,30 @@
             cursor: not-allowed;
         }
         
-        /* المتصدرين الشخصي */
+        /* بطاقة المتصدرين الشخصية المصغرة */
         .personal-rank-card {
-            background: rgba(16, 185, 129, 0.05);
+            background: var(--card-gradient);
             border: 1px solid var(--accent-emerald);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         .rank-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            font-size: 0.85rem;
+            padding: 4px 0;
+            font-size: 0.78rem;
             color: var(--text-sub);
-            border-bottom: 1px dashed var(--border-card);
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.15);
         }
         .rank-row:last-child { border-bottom: none; }
         .rank-row.is-me {
-            color: var(--text-main);
-            font-weight: 900;
-            font-size: 0.95rem;
+            color: var(--accent-emerald);
+            font-weight: 800;
+            font-size: 0.85rem;
         }
-        .trend-icon { font-size: 0.8rem; margin-right: 5px; }
-        .trend-up { color: var(--accent-emerald); }
-        .trend-down { color: #ef4444; }
-        .trend-flat { color: var(--text-sub); }
 
         /* شريط التقدم */
         .xp-progress-wrapper {
@@ -727,9 +727,6 @@
         </div>
         
         <div class="sidebar-links">
-            <div class="sidebar-link" onclick="goHomeDirectly(); closeSidebar();">
-                <img src="https://img.icons8.com/fluency/96/home.png" alt="Home"> الرئيسية
-            </div>
             <div class="sidebar-link" onclick="handleProfileClick()">
                 <img src="https://img.icons8.com/fluency/96/user-shield.png" alt="Profile"> ملفي الشخصي
             </div>
@@ -838,18 +835,26 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل نقاط الطالب -->
+    <!-- نافذة تعديل نقاط وعملات الطالب في لوحة التحكم -->
     <div id="edit-points-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 350px;">
             <button class="btn-close-modal" onclick="closeModal('edit-points-modal')">×</button>
-            <img src="https://img.icons8.com/fluency/96/star.png" style="width: 60px; height: 60px; margin-bottom: 15px;" alt="Points">
-            <h3 style="margin-bottom: 5px;">تعديل النقاط</h3>
+            <img src="https://img.icons8.com/fluency/96/star.png" style="width: 60px; height: 60px; margin-bottom: 10px;" alt="Points">
+            <h3 style="margin-bottom: 5px;">تعديل الرصيد</h3>
             <p id="edit-points-user-name" style="font-size: 0.9rem; color: var(--accent-gold); margin-bottom: 15px; font-weight: bold;"></p>
+            
             <div class="form-group">
-                <input type="number" id="edit-points-input" class="form-input" style="text-align: center; font-size: 1.5rem; font-weight: 900; color: var(--accent-gold);">
+                <label style="color: var(--accent-emerald);">نقاط الخبرة (XP)</label>
+                <input type="number" id="edit-points-input" class="form-input" style="text-align: center; font-size: 1.3rem; font-weight: 900; color: var(--accent-emerald);">
             </div>
+
+            <div class="form-group">
+                <label style="color: var(--accent-gold);">العملات (Coins)</label>
+                <input type="number" id="edit-coins-input" class="form-input" style="text-align: center; font-size: 1.3rem; font-weight: 900; color: var(--accent-gold);">
+            </div>
+
             <input type="hidden" id="edit-points-user-phone">
-            <button class="btn-modal-primary" style="width: 100%; margin-top: 10px;" onclick="saveEditedUserPoints()">حفظ التعديل ✅</button>
+            <button class="btn-modal-primary" style="width: 100%; margin-top: 10px;" onclick="saveEditedUserBalance()">حفظ التعديلات ✅</button>
         </div>
     </div>
 
@@ -980,7 +985,7 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- شاشة الإحصائيات الجديدة (Stats View) -->
+        <!-- شاشة الإحصائيات (Stats View) -->
         <!-- ============================================== -->
         <div id="view-stats" class="view-section">
             <div class="section-label">إحصائياتي والأداء</div>
@@ -1076,7 +1081,7 @@
             <!-- تبويب البروفايل الأساسي -->
             <div id="prof-section-main">
                 <div class="profile-header">
-                    <div class="profile-avatar"><img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar"></div>
+                    <div class="profile-avatar" id="profile-avatar-container"><img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar"></div>
                     <div class="profile-name" id="display-name">اسم الطالب</div>
                     <div class="card-badge" id="display-rank-badge" style="display: inline-block; margin-bottom: 8px;">🌱 مبتدئ</div>
                     
@@ -1117,22 +1122,22 @@
                 <div class="auth-card" style="padding: 10px;">
                     <div class="store-item">
                         <div class="store-item-info">
-                            <h4>تلميح في التحدي (مساعدة)</h4>
-                            <p>يفتح عند 500 XP - التكلفة: 50 عملة</p>
+                            <h4>تلميح في التحدي (حذف إجابتين) 💡</h4>
+                            <p id="store-hint-desc">يفتح عند 500 XP - التكلفة: 50 عملة</p>
                         </div>
                         <button class="store-btn" id="store-btn-hint" onclick="buyStoreItem('hint', 50, 500)">شراء</button>
                     </div>
                     <div class="store-item">
                         <div class="store-item-info">
-                            <h4>تجميد السلسلة (Streak Freeze)</h4>
-                            <p>يفتح عند 1200 XP - التكلفة: 150 عملة</p>
+                            <h4>تجميد السلسلة (Streak Freeze) 🛡️</h4>
+                            <p id="store-freeze-desc">يفتح عند 1200 XP - التكلفة: 150 عملة</p>
                         </div>
                         <button class="store-btn" id="store-btn-freeze" onclick="buyStoreItem('freeze', 150, 1200)">شراء</button>
                     </div>
                     <div class="store-item">
                         <div class="store-item-info">
-                            <h4>إطار بروفايل مميز</h4>
-                            <p>يفتح عند 3000 XP - التكلفة: 300 عملة</p>
+                            <h4>إطار بروفايل مميز (ذهبي لامع) ✨</h4>
+                            <p id="store-frame-desc">يفتح عند 3000 XP - التكلفة: 300 عملة</p>
                         </div>
                         <button class="store-btn" id="store-btn-frame" onclick="buyStoreItem('frame', 300, 3000)">شراء</button>
                     </div>
@@ -1472,14 +1477,13 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- لوحة المتصدرين المحسنة (مع المركز المجهول) -->
+        <!-- لوحة المتصدرين المحسنة (مع المركز المجهول المصغر) -->
         <!-- ============================================== -->
         <div id="view-leaderboard" class="view-section">
             <div class="section-label">أبطال الدفعة (Top Rankings)</div>
             
-            <!-- بطاقة الترتيب الشخصي -->
+            <!-- بطاقة الترتيب الشخصي المصغرة -->
             <div id="personal-rank-box" class="personal-rank-card" style="display: none;">
-                <h4 style="color: var(--accent-emerald); font-size: 0.9rem; margin-bottom: 10px; text-align: center;">ترتيبك الحالي 🎯</h4>
                 <div id="personal-rank-content"></div>
             </div>
 
@@ -1562,7 +1566,7 @@
 
     </div>
     
-    <!-- شريط التنقل السفلي الثابت (Bottom Nav) -->
+    <!-- شريط التنقل السفلي الثابت المصغر (Bottom Nav) -->
     <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
         <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">
             <img src="https://img.icons8.com/fluency/96/home.png" alt="Home">
@@ -1772,7 +1776,7 @@
             else if(viewId === 'view-stats') updateNavState('nav-stats');
             else if(viewId === 'view-leaderboard') updateNavState('nav-leaderboard');
             else if(viewId === 'view-profile') updateNavState('nav-profile');
-            else updateNavState(null); // إزالة التحديد لو شاشة فرعية
+            else updateNavState(null);
 
             window.history.pushState({ viewId: viewId }, "");
         }
@@ -1819,7 +1823,6 @@
             const mainViews = ['view-home', 'view-stats', 'view-leaderboard', 'view-profile', 'view-auth'];
             
             if (btnBack) {
-                // إظهار زر الرجوع فقط في الشاشات الفرعية
                 if(mainViews.includes(current.viewId)) {
                     btnBack.style.display = 'none';
                 } else {
@@ -1837,7 +1840,6 @@
                 showViewSection(previous.viewId);
                 updateHeader();
                 
-                // تحديث الـ Bottom Nav عند الرجوع
                 if(previous.viewId === 'view-home') updateNavState('nav-home');
                 else if(previous.viewId === 'view-stats') updateNavState('nav-stats');
                 else if(previous.viewId === 'view-leaderboard') updateNavState('nav-leaderboard');
@@ -1864,23 +1866,27 @@
 
         // تحديد الرتب والمستويات
         function getUserRank(points) {
-    const pts = points || 0;
-    if (pts >= 17000) return "🌌 أسطورة";
-    if (pts >= 12000) return "👑 النخبة";
-    if (pts >= 8000)  return "💎 أستاذ";
-    if (pts >= 5000)  return "🏆 خبير";
-    if (pts >= 3000)  return "⚙️ محترف";
-    if (pts >= 1500)  return "🔬 واعد";
-    if (pts >= 500)   return "⚡ متقدم";
-    return "🌱 مبتدئ";
+            const pts = points || 0;
+            if (pts >= 17000) return "🌌 أسطورة";
+            if (pts >= 12000) return "👑 النخبة";
+            if (pts >= 8000)  return "💎 أستاذ";
+            if (pts >= 5000)  return "🏆 خبير";
+            if (pts >= 3000)  return "⚙️ محترف";
+            if (pts >= 1500)  return "🔬 واعد";
+            if (pts >= 500)   return "⚡ متقدم";
+            return "🌱 مبتدئ";
         }
         
         function getNextLevelXP(currentXp) {
             const xp = currentXp || 0;
             if (xp < 500) return 500;
             if (xp < 1500) return 1500;
-            if (xp < 3500) return 3500;
-            return 3500; // الحد الأقصى
+            if (xp < 3000) return 3000;
+            if (xp < 5000) return 5000;
+            if (xp < 8000) return 8000;
+            if (xp < 12000) return 12000;
+            if (xp < 17000) return 17000;
+            return 17000;
         }
 
         let currentUser = null; let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
@@ -1898,11 +1904,13 @@
                 db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         currentUser = snapshot.val();
-                        // تحديث الهيكل القديم لو مش موجود
                         if(currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
                         if(currentUser.coins === undefined) currentUser.coins = 0;
                         if(currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
                         if(currentUser.quizCorrect === undefined) currentUser.quizCorrect = 0;
+                        if(currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
+                        if(currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
+                        if(currentUser.active_frame === undefined) currentUser.active_frame = 'none';
                         
                         updateProfileUI();
                         document.getElementById('main-bottom-nav').style.display = 'flex';
@@ -1956,7 +1964,7 @@
         function checkDailyLogin() {
             if(!currentUser) return;
             
-            const todayDate = new Date().toLocaleDateString('en-CA'); // صيغة YYYY-MM-DD
+            const todayDate = new Date().toLocaleDateString('en-CA');
             let lastLoginStr = localStorage.getItem('last_daily_login_date');
             let currentStreak = parseInt(localStorage.getItem('daily_login_streak') || '0');
             
@@ -1965,8 +1973,6 @@
             const claimBtn = document.getElementById('btn-claim-daily');
 
             if (lastLoginStr !== todayDate) {
-                // يوم جديد
-                // فحص هل ضيع يوم؟
                 if(lastLoginStr) {
                     const lastDate = new Date(lastLoginStr);
                     const today = new Date(todayDate);
@@ -1974,7 +1980,12 @@
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                     
                     if(diffDays > 1) {
-                        currentStreak = 0; // تصفير السلسلة
+                        if (currentUser.has_streak_freeze) {
+                            db.ref('users/' + currentUser.phone + '/has_streak_freeze').set(false);
+                            showTopToast('تم استخدام "تجميد السلسلة" وحماية أيامك المتتالية بنجاح! 🛡️', 'info');
+                        } else {
+                            currentStreak = 0;
+                        }
                     }
                 }
                 
@@ -1984,7 +1995,6 @@
                 claimBtn.disabled = false;
                 
             } else {
-                // استلم مسبقاً اليوم
                 homeCard.style.display = 'block';
                 streakText.innerText = `سلسلة الأيام: ${currentStreak} أيام (مستمر 🔥)`;
                 claimBtn.innerText = 'تم الاستلام اليوم ✅';
@@ -2004,21 +2014,20 @@
             totalDays += 1;
             
             let xpReward = 35;
-            let coinReward = 0;
+            let coinReward = 5;
             let extraMsg = '';
 
             if (currentStreak === 7) {
                 xpReward += 250;
                 coinReward += 50;
                 extraMsg = '<br>🔥 مكافأة أسبوعية: +250 XP و +50 عملة!';
-                currentStreak = 0; // إعادة دورة الأسبوع
+                currentStreak = 0;
             }
 
-            // تحديث السحابة
             db.ref('users/' + currentUser.phone).transaction((user) => {
                 if (user) {
                     user.xp = (user.xp || 0) + xpReward;
-                    user.points = user.xp; // للحفاظ على التوافق مع الكود القديم
+                    user.points = user.xp;
                     user.coins = (user.coins || 0) + coinReward;
                 }
                 return user;
@@ -2167,10 +2176,13 @@
                                 password: pass, 
                                 avatar: 'https://img.icons8.com/fluency/96/user-male.png', 
                                 xp: 100,
-                                points: 100, // للتوافق
+                                points: 100,
                                 coins: 0,
                                 quizPlayed: 0,
                                 quizCorrect: 0,
+                                hintsCount: 0,
+                                has_streak_freeze: false,
+                                active_frame: 'none',
                                 createdAt: new Date().toISOString()
                             };
 
@@ -2256,9 +2268,10 @@
             });
             document.getElementById(`tab-prof-${tab}`).classList.add('active');
             document.getElementById(`prof-section-${tab}`).style.display = 'block';
+            if (tab === 'store') updateStoreUI();
         }
 
-        // شراء من المتجر
+        // شراء وتفعيل خدمات المتجر مباشرة في حساب المستخدم
         function buyStoreItem(itemId, cost, xpRequired) {
             playClickSound();
             const currentXP = currentUser.xp || currentUser.points || 0;
@@ -2273,13 +2286,42 @@
                 return;
             }
 
+            if(itemId === 'freeze' && currentUser.has_streak_freeze) {
+                showTopToast('أنت تمتلك درع تجميد السلسلة بالفعل! 🛡️', 'info');
+                return;
+            }
+
+            if(itemId === 'frame' && currentUser.active_frame === 'gold') {
+                showTopToast('أنت تمتلك الإطار الذهبي بالفعل! ✨', 'info');
+                return;
+            }
+
             if(confirm(`هل تريد بالتأكيد شراء هذه الميزة مقابل ${cost} عملة؟`)) {
-                db.ref('users/' + currentUser.phone).update({
+                let updates = {
                     coins: currentCoins - cost
-                }).then(() => {
+                };
+
+                if (itemId === 'hint') {
+                    updates.hintsCount = (currentUser.hintsCount || 0) + 1;
+                } else if (itemId === 'freeze') {
+                    updates.has_streak_freeze = true;
+                } else if (itemId === 'frame') {
+                    updates.active_frame = 'gold';
+                }
+
+                db.ref('users/' + currentUser.phone).update(updates).then(() => {
                     playSuccessSound();
-                    showTopToast('تم الشراء بنجاح! سيتم تطبيق الميزة قريباً 🎉', 'success');
-                    // هنا يمكن إضافة تأثير الشراء أو حفظ الميزة للمستخدم
+                    shootStars();
+                    
+                    if (itemId === 'hint') {
+                        showTopToast(`تم الشراء! لديك الآن ${updates.hintsCount} تلميحات لاستخدامها في التحدي 💡`, 'success');
+                    } else if (itemId === 'freeze') {
+                        showTopToast('تم تفعيل درع تجميد السلسلة بنجاح! 🛡️', 'success');
+                    } else if (itemId === 'frame') {
+                        showTopToast('تم تفعيل الإطار الذهبي المميز لبروفايلك بنجاح! ✨', 'success');
+                    }
+                    
+                    updateProfileUI();
                 });
             }
         }
@@ -2288,16 +2330,25 @@
             if(!currentUser) return;
             const xp = currentUser.xp || currentUser.points || 0;
             
-            // تفعيل/تعطيل أزرار المتجر بناءً على الـ XP
             const btnHint = document.getElementById('store-btn-hint');
             const btnFreeze = document.getElementById('store-btn-freeze');
             const btnFrame = document.getElementById('store-btn-frame');
 
-            if(btnHint) btnHint.disabled = xp < 500;
-            if(btnFreeze) btnFreeze.disabled = xp < 1200;
-            if(btnFrame) btnFrame.disabled = xp < 3000;
+            if(btnHint) {
+                btnHint.disabled = xp < 500;
+                document.getElementById('store-hint-desc').innerHTML = `يفتح عند 500 XP - التكلفة: 50 عملة (لديك: ${currentUser.hintsCount || 0})`;
+            }
+            if(btnFreeze) {
+                btnFreeze.disabled = xp < 1200 || currentUser.has_streak_freeze;
+                if(currentUser.has_streak_freeze) btnFreeze.innerText = 'مُفعل ✅';
+                else btnFreeze.innerText = 'شراء';
+            }
+            if(btnFrame) {
+                btnFrame.disabled = xp < 3000 || currentUser.active_frame === 'gold';
+                if(currentUser.active_frame === 'gold') btnFrame.innerText = 'مُفعل ✅';
+                else btnFrame.innerText = 'شراء';
+            }
         }
-
 
         function updateProfileUI() {
             if (currentUser) {
@@ -2308,6 +2359,16 @@
                 const nextXp = getNextLevelXP(xp);
                 const progressPercent = Math.min((xp / nextXp) * 100, 100);
                 
+                // تطبيق الإطار الذهبي إن وجد
+                const avatarContainer = document.getElementById('profile-avatar-container');
+                if (avatarContainer) {
+                    if (currentUser.active_frame === 'gold') {
+                        avatarContainer.classList.add('premium-gold-frame');
+                    } else {
+                        avatarContainer.classList.remove('premium-gold-frame');
+                    }
+                }
+
                 // تحديث القائمة الجانبية
                 document.getElementById('sidebar-avatar').src = avatarSrc; 
                 document.getElementById('sidebar-name').innerText = currentUser.name.split(' ').slice(0, 2).join(' ');
@@ -2586,10 +2647,8 @@
             });
         }
 
-        function triggerLeaderboardEffect(btn) { playClickSound(); btn.classList.add('fab-animate'); setTimeout(() => { btn.classList.remove('fab-animate'); openLeaderboard(); }, 500); }
-
         // ==============================================
-        // لوحة المتصدرين الشخصية والمجهولة
+        // لوحة المتصدرين الشخصية والمجهولة (المصغرة)
         // ==============================================
         function openLeaderboard() { 
             navigateTo('view-leaderboard', 'لوحة المتصدرين', 'أبطال ورتب الدفعة'); 
@@ -2609,11 +2668,10 @@
                 snapshot.forEach(child => { 
                     let u = child.val();
                     u.id = child.key;
-                    u.xp = u.xp || u.points || 0; // توحيد النقاط
+                    u.xp = u.xp || u.points || 0;
                     usersArr.push(u); 
                 }); 
                 
-                // ترتيب تنازلي حسب XP
                 usersArr.sort((a, b) => b.xp - a.xp);
 
                 if (usersArr.length === 0) { 
@@ -2621,31 +2679,28 @@
                     return; 
                 }
 
-                // عرض الترتيب الشخصي
+                // عرض الترتيب الشخصي المصغر والأنيق
                 if (currentUser) {
                     const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone);
                     if (myIndex !== -1) {
                         personalBox.style.display = 'block';
                         let pHtml = '';
                         
-                        // اللي قبلك (لو موجود ومش من التوب 10)
                         if (myIndex > 0) {
                             pHtml += `<div class="rank-row">
-                                        <span>المركز #${myIndex} (مجهول)</span>
+                                        <span>#${myIndex} (مجهول)</span>
                                         <span>${usersArr[myIndex - 1].xp} XP</span>
                                       </div>`;
                         }
                         
-                        // أنت
                         pHtml += `<div class="rank-row is-me">
-                                    <span>المركز #${myIndex + 1} (أنت)</span>
+                                    <span>#${myIndex + 1} (أنت) 🎯</span>
                                     <span>${usersArr[myIndex].xp} XP</span>
                                   </div>`;
                                   
-                        // اللي بعدك (لو موجود)
                         if (myIndex < usersArr.length - 1) {
                             pHtml += `<div class="rank-row">
-                                        <span>المركز #${myIndex + 2} (مجهول)</span>
+                                        <span>#${myIndex + 2} (مجهول)</span>
                                         <span>${usersArr[myIndex + 1].xp} XP</span>
                                       </div>`;
                         }
@@ -2664,7 +2719,8 @@
                     if(u) {
                         const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'; 
                         const isMeBorder = (currentUser && u.id === currentUser.phone) ? 'border-color: var(--accent-emerald);' : '';
-                        html += `<div class="podium-place"><div class="podium-name">${u.name.split(' ')[0]}</div><div class="podium-pts">${u.xp} XP</div><img src="${avatar}" class="podium-avatar" style="${isMeBorder}"><div class="podium-step ${classes[i]}">${medals[i]}</div></div>`;
+                        const frameClass = u.active_frame === 'gold' ? 'premium-gold-frame' : '';
+                        html += `<div class="podium-place"><div class="podium-name">${u.name.split(' ')[0]}</div><div class="podium-pts">${u.xp} XP</div><img src="${avatar}" class="podium-avatar ${frameClass}" style="${isMeBorder}"><div class="podium-step ${classes[i]}">${medals[i]}</div></div>`;
                     } else { 
                         html += `<div class="podium-place"><div class="podium-step ${classes[i]}" style="opacity: 0.1;">-</div></div>`; 
                     }
@@ -2672,15 +2728,15 @@
                 
                 html += '</div><div class="leaderboard-list">';
                 
-                // عرض من 4 لـ 10
                 for(let i = 3; i < top10Users.length; i++) {
                     const u = top10Users[i];
                     const actualRank = i + 1;
                     const isMe = currentUser && u.id === currentUser.phone; 
                     const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'; 
                     const rankStr = getUserRank(u.xp); 
+                    const frameClass = u.active_frame === 'gold' ? 'premium-gold-frame' : '';
                     
-                    html += `<div class="lb-item ${isMe ? 'is-me' : ''}"><div class="lb-rank">${actualRank}</div><img src="${avatar}" class="lb-avatar"><div class="lb-details"><div class="lb-name">${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div><div class="lb-badge">${rankStr}</div></div><div class="lb-points">${u.xp}</div></div>`;
+                    html += `<div class="lb-item ${isMe ? 'is-me' : ''}"><div class="lb-rank">${actualRank}</div><img src="${avatar}" class="lb-avatar ${frameClass}"><div class="lb-details"><div class="lb-name">${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div><div class="lb-badge">${rankStr}</div></div><div class="lb-points">${u.xp}</div></div>`;
                 }
                 html += '</div>'; 
                 container.innerHTML = html;
@@ -2875,8 +2931,8 @@
         let isAnswerLocked = false; 
         let timerInterval; 
         let timeLeft = 15;
+        let hintUsedInCurrentQuestion = false;
 
-        // دالة خلط آمنة
         function shuffleArray(array) {
             let arr = array.slice();
             for (let i = arr.length - 1; i > 0; i--) {
@@ -2886,17 +2942,16 @@
             return arr;
         }
 
-        // دالة بدء التحدي بنظام "الكوتشينة" (عدم التكرار حتى نفاد البنك)
+        // دالة بدء التحدي بنظام "الكوتشينة"
         function startActualQuiz() {
             closeModal('quiz-rules-modal'); 
             playClickSound();
             
-            // 1. تجميع كل الأسئلة في مصفوفة موحدة
             let allAvailableQuestions = [];
             Object.keys(masterQuestionsBank).forEach(cat => {
                 masterQuestionsBank[cat].forEach((q, idx) => {
                     allAvailableQuestions.push({ 
-                        id: `${cat}_${idx}`, // معرّف فريد لكل سؤال
+                        id: `${cat}_${idx}`,
                         q: q.q, 
                         a: [...q.a], 
                         correct: q.correct, 
@@ -2905,7 +2960,6 @@
                 });
             });
 
-            // 2. سحب الأسئلة السحابية من Firebase إن وُجدت
             db.ref('custom_questions').once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
@@ -2927,23 +2981,17 @@
             });
         }
 
-        // معالجة رصيد الأسئلة وسحب الـ 5 بدون تكرار
         function processDeckAndLaunch(allQuestions) {
             let userDeck = JSON.parse(localStorage.getItem('user_quiz_deck') || '[]');
 
-            // لو الكوتشينة خلصت أو لسه جديدة أو عدد الأسئلة المتبقية أقل من 5
             if (!userDeck || userDeck.length < 5) {
-                // نعيد خلط كل الأسئلة ونحطها في الكوتشينة من جديد
                 userDeck = shuffleArray(allQuestions);
                 if (localStorage.getItem('user_quiz_deck') && localStorage.getItem('user_quiz_deck') !== '[]') {
                     showTopToast('أحسنت! أتممت بنك الأسئلة بالكامل وتم تجديده بنجاح 🔄✨', 'info');
                 }
             }
 
-            // نسحب أول 5 أسئلة من الكوتشينة
             activeQuizQuestions = userDeck.splice(0, 5);
-
-            // نحفظ الكوتشينة المتبقية في جهاز المستخدم
             localStorage.setItem('user_quiz_deck', JSON.stringify(userDeck));
 
             currentQuizIndex = 0; 
@@ -2954,6 +3002,7 @@
 
         function renderQuizQuestion() {
             isAnswerLocked = false;
+            hintUsedInCurrentQuestion = false;
             const container = document.getElementById('quiz-container');
             const qData = activeQuizQuestions[currentQuizIndex];
             
@@ -2962,17 +3011,24 @@
                 return;
             }
 
-            // خلط الخيارات بصورة آمنة
             let optionsWithIndices = qData.a.map((opt, idx) => ({ 
                 text: opt, 
-                isCorrect: (idx === qData.correct) 
+                isCorrect: (idx === qData.correct),
+                originalIdx: idx
             }));
             optionsWithIndices = shuffleArray(optionsWithIndices);
             
+            const hasHints = currentUser && (currentUser.hintsCount || 0) > 0;
+            const hintBtnHtml = hasHints ? 
+                `<button id="btn-use-hint" class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="useHint5050()">💡 مساعدة (${currentUser.hintsCount})</button>` : '';
+
             let html = `
                 <div class="section-label" style="justify-content: space-between;">
                     <span>السؤال ${currentQuizIndex + 1} من 5</span>
-                    <span style="color: var(--accent-gold); font-size: 0.8rem;">مجال: ${qData.categoryName}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${hintBtnHtml}
+                        <span style="color: var(--accent-gold); font-size: 0.8rem;">مجال: ${qData.categoryName}</span>
+                    </div>
                 </div>
                 <div class="quiz-card">
                     <div id="quiz-timer" class="quiz-timer-box">⏱️ 15</div>
@@ -2980,7 +3036,7 @@
                     <div id="options-list" style="display: flex; flex-direction: column; gap: 8px;">`;
                     
             optionsWithIndices.forEach((opt, idx) => { 
-                html += `<button class="quiz-option-btn" onclick="handleQuizAnswer(this, ${opt.isCorrect})">${idx + 1}. ${opt.text}</button>`; 
+                html += `<button class="quiz-option-btn" data-correct="${opt.isCorrect}" onclick="handleQuizAnswer(this, ${opt.isCorrect})">${idx + 1}. ${opt.text}</button>`; 
             });
             
             html += `</div>
@@ -2993,6 +3049,40 @@
                 
             container.innerHTML = html; 
             startTimer();
+        }
+
+        // استخدام التلميح لحذف إجابتين
+        function useHint5050() {
+            if (isAnswerLocked || hintUsedInCurrentQuestion) return;
+            if (!currentUser || (currentUser.hintsCount || 0) <= 0) {
+                showTopToast('ليس لديك تلميحات متبقية! يمكنك شراء تلميحات من المتجر 🛍️', 'error');
+                return;
+            }
+
+            playSuccessSound();
+            hintUsedInCurrentQuestion = true;
+            
+            // خصم تلميح من حساب المستخدم
+            const newCount = currentUser.hintsCount - 1;
+            currentUser.hintsCount = newCount;
+            db.ref('users/' + currentUser.phone + '/hintsCount').set(newCount);
+            
+            const hintBtn = document.getElementById('btn-use-hint');
+            if (hintBtn) {
+                hintBtn.disabled = true;
+                hintBtn.innerText = `💡 مساعدة (${newCount})`;
+            }
+
+            // حذف خيارين خاطئين
+            const buttons = Array.from(document.querySelectorAll('.quiz-option-btn'));
+            const wrongButtons = buttons.filter(btn => btn.getAttribute('data-correct') === 'false');
+            const shuffledWrong = shuffleArray(wrongButtons).slice(0, 2);
+            
+            shuffledWrong.forEach(btn => {
+                btn.classList.add('hidden-by-hint');
+            });
+
+            showTopToast('تم حذف خيارين خاطئين بنجاح! 💡', 'info');
         }
 
         function startTimer() {
@@ -3051,9 +3141,8 @@
         function finishQuizGame() {
             let wrongCount = 5 - quizScoreCount; 
             
-            // نقاط الخبرة XP والعملات Coins
             let xpChange = (quizScoreCount * 5) - (wrongCount * 3); 
-            let coinsChange = (quizScoreCount * 2); // مكافأة الكوينز
+            let coinsChange = (quizScoreCount * 2);
             let bonusMsg = "";
             
             if (quizScoreCount === 5) { 
@@ -3070,7 +3159,7 @@
                     if (user) {
                         let newXp = (user.xp || user.points || 0) + xpChange;
                         user.xp = newXp < 0 ? 0 : newXp;
-                        user.points = user.xp; // للتوافق
+                        user.points = user.xp;
                         
                         let newCoins = (user.coins || 0) + coinsChange;
                         user.coins = newCoins < 0 ? 0 : newCoins;
@@ -3160,14 +3249,15 @@
             
             let html = '';
             usersArray.forEach(u => {
+                const frameClass = u.active_frame === 'gold' ? 'premium-gold-frame' : '';
                 html += `
                 <div class="admin-item-card">
-                    <img src="${u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-card); padding: 2px; object-fit: cover;">
+                    <img src="${u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'}" class="${frameClass}" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-card); padding: 2px; object-fit: cover;">
                     <div class="admin-item-info">
                         <div class="admin-item-name">${u.name}</div>
-                        <div class="admin-item-sub">${u.phone} ${u.email ? ` | ${u.email}` : ''}</div>
+                        <div class="admin-item-sub">${u.phone} | ${u.coins || 0} 💸</div>
                     </div>
-                    <button class="admin-action-btn" onclick="openEditPointsModal('${u.id}', '${u.name}', ${u.xp || u.points || 0})">
+                    <button class="admin-action-btn" onclick="openEditPointsModal('${u.id}', '${u.name}', ${u.xp || u.points || 0}, ${u.coins || 0})">
                         ${u.xp || u.points || 0} XP
                     </button>
                 </div>`;
@@ -3181,22 +3271,28 @@
             renderAdminUsers(filtered);
         }
 
-        function openEditPointsModal(phone, name, currentPoints) {
+        function openEditPointsModal(phone, name, currentPoints, currentCoins) {
             playClickSound();
             document.getElementById('edit-points-user-name').innerText = name;
             document.getElementById('edit-points-user-phone').value = phone;
             document.getElementById('edit-points-input').value = currentPoints;
+            document.getElementById('edit-coins-input').value = currentCoins !== undefined ? currentCoins : 0;
             document.getElementById('edit-points-modal').classList.add('show');
         }
 
-        function saveEditedUserPoints() {
+        function saveEditedUserBalance() {
             playClickSound();
             const phone = document.getElementById('edit-points-user-phone').value;
             const newPoints = parseInt(document.getElementById('edit-points-input').value) || 0;
+            const newCoins = parseInt(document.getElementById('edit-coins-input').value) || 0;
             
-            db.ref('users/' + phone).update({ xp: newPoints, points: newPoints }).then(() => {
+            db.ref('users/' + phone).update({ 
+                xp: newPoints, 
+                points: newPoints,
+                coins: newCoins
+            }).then(() => {
                 closeModal('edit-points-modal');
-                showTopToast('تم تحديث نقاط خبرة الطالب بنجاح!', 'success');
+                showTopToast('تم تحديث رصيد الطالب بنجاح!', 'success');
                 loadAdminData();
             });
         }
