@@ -1898,24 +1898,42 @@
             checkDailyLogin();
         });
 
+        // 1. فتح فوري بدون لاج باستخدام الكاش المحلي والتزامن في الخلفية
         function checkAppEntryFlow() {
             const loggedInPhone = localStorage.getItem('active_user_phone');
+            const cachedUserData = localStorage.getItem('cached_user_data');
+
             if (loggedInPhone) {
+                // عرض البيانات فوراً من الذاكرة الداخلية للسرعة
+                if (cachedUserData) {
+                    try {
+                        currentUser = JSON.parse(cachedUserData);
+                        updateProfileUI();
+                        const bottomNav = document.getElementById('main-bottom-nav');
+                        if (bottomNav) bottomNav.style.display = 'flex';
+                    } catch (e) {}
+                }
+
+                // المزامنة في الخلفية من Firebase
                 db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         currentUser = snapshot.val();
-                        if(currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
-                        if(currentUser.coins === undefined) currentUser.coins = 0;
-                        if(currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
-                        if(currentUser.quizCorrect === undefined) currentUser.quizCorrect = 0;
-                        if(currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
-                        if(currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
-                        if(currentUser.active_frame === undefined) currentUser.active_frame = 'none';
-                        
+                        if (currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
+                        if (currentUser.coins === undefined) currentUser.coins = 0;
+                        if (currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
+                        if (currentUser.quizCorrect === undefined) currentUser.quizCorrect = 0;
+                        if (currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
+                        if (currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
+                        if (currentUser.active_frame === undefined) currentUser.active_frame = 'none';
+
+                        // تحديث الذاكرة الداخلية
+                        localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
+
                         updateProfileUI();
-                        document.getElementById('main-bottom-nav').style.display = 'flex';
-                        
-                        if(navHistory[navHistory.length-1].viewId === 'view-auth') {
+                        const bottomNav = document.getElementById('main-bottom-nav');
+                        if (bottomNav) bottomNav.style.display = 'flex';
+
+                        if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                             goHomeDirectly();
                         }
                     } else {
@@ -2082,6 +2100,7 @@
         function confirmLogoutAction() {
             closeModal('modal-logout-confirm');
             localStorage.removeItem('active_user_phone');
+            localStorage.removeItem('cached_user_data');
             currentUser = null;
             if (auth) {
                 auth.signOut().catch(e => console.log(e));
@@ -2188,6 +2207,7 @@
 
                             return userRef.set(newUser).then(() => {
                                 localStorage.setItem('active_user_phone', phone);
+                                localStorage.setItem('cached_user_data', JSON.stringify(newUser));
                                 currentUser = newUser; 
                                 updateProfileUI(); 
                                 document.getElementById('main-bottom-nav').style.display = 'flex';
@@ -2237,6 +2257,7 @@
                 }
 
                 localStorage.setItem('active_user_phone', foundUser.phone);
+                localStorage.setItem('cached_user_data', JSON.stringify(foundUser));
                 currentUser = foundUser;
                 updateProfileUI();
                 document.getElementById('login-password').value = '';
@@ -2247,9 +2268,13 @@
         }
         
         function logoutUserLocally() {
-            localStorage.removeItem('active_user_phone'); currentUser = null; 
-            document.getElementById('sidebar-avatar').src = 'https://img.icons8.com/fluency/96/user-male.png'; document.getElementById('sidebar-name').innerText = 'غير مسجل';
-            document.getElementById('sidebar-stats-box').style.display = 'none'; document.getElementById('sidebar-logout').style.display = 'none';
+            localStorage.removeItem('active_user_phone');
+            localStorage.removeItem('cached_user_data');
+            currentUser = null; 
+            document.getElementById('sidebar-avatar').src = 'https://img.icons8.com/fluency/96/user-male.png'; 
+            document.getElementById('sidebar-name').innerText = 'غير مسجل';
+            document.getElementById('sidebar-stats-box').style.display = 'none'; 
+            document.getElementById('sidebar-logout').style.display = 'none';
             document.getElementById('sidebar-admin-panel').style.display = 'none';
             document.getElementById('main-bottom-nav').style.display = 'none';
             document.getElementById('home-balance-bar').style.display = 'none';
