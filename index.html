@@ -1587,6 +1587,15 @@
     </nav>
 
     <script>
+        // تسجيل الـ Service Worker لتفعيل وضع الأوفلاين
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker Registered Successfully'))
+                    .catch((err) => console.log('Service Worker Failed to Register: ', err));
+            });
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyAt-e7RSQ_nGWDARMuktaVOY5_mCXCKVmQ",
             authDomain: "foodscienceapp.firebaseapp.com",
@@ -1771,7 +1780,6 @@
             navHistory.push({ viewId, title, subtitle });
             updateHeader();
             
-            // تحديث الـ Bottom Nav حسب الشاشة
             if(viewId === 'view-home') updateNavState('nav-home');
             else if(viewId === 'view-stats') updateNavState('nav-stats');
             else if(viewId === 'view-leaderboard') updateNavState('nav-leaderboard');
@@ -1898,13 +1906,12 @@
             checkDailyLogin();
         });
 
-        // 1. فتح فوري بدون لاج باستخدام الكاش المحلي والتزامن في الخلفية
+        // تشغيل فوري وسلس عبر الكاش المحلي والتزامن في الخلفية
         function checkAppEntryFlow() {
             const loggedInPhone = localStorage.getItem('active_user_phone');
             const cachedUserData = localStorage.getItem('cached_user_data');
 
             if (loggedInPhone) {
-                // عرض البيانات فوراً من الذاكرة الداخلية للسرعة
                 if (cachedUserData) {
                     try {
                         currentUser = JSON.parse(cachedUserData);
@@ -1914,7 +1921,6 @@
                     } catch (e) {}
                 }
 
-                // المزامنة في الخلفية من Firebase
                 db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         currentUser = snapshot.val();
@@ -1926,7 +1932,6 @@
                         if (currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
                         if (currentUser.active_frame === undefined) currentUser.active_frame = 'none';
 
-                        // تحديث الذاكرة الداخلية
                         localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
                         updateProfileUI();
@@ -2704,7 +2709,6 @@
                     return; 
                 }
 
-                // عرض الترتيب الشخصي المصغر والأنيق
                 if (currentUser) {
                     const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone);
                     if (myIndex !== -1) {
@@ -3087,7 +3091,6 @@
             playSuccessSound();
             hintUsedInCurrentQuestion = true;
             
-            // خصم تلميح من حساب المستخدم
             const newCount = currentUser.hintsCount - 1;
             currentUser.hintsCount = newCount;
             db.ref('users/' + currentUser.phone + '/hintsCount').set(newCount);
@@ -3098,7 +3101,6 @@
                 hintBtn.innerText = `💡 مساعدة (${newCount})`;
             }
 
-            // حذف خيارين خاطئين
             const buttons = Array.from(document.querySelectorAll('.quiz-option-btn'));
             const wrongButtons = buttons.filter(btn => btn.getAttribute('data-correct') === 'false');
             const shuffledWrong = shuffleArray(wrongButtons).slice(0, 2);
