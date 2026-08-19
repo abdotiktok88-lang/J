@@ -2972,10 +2972,12 @@
         }
 
         // دالة بدء التحدي بنظام "الكوتشينة"
+        // دالة بدء التحدي بنظام الكوتشينة (تعمل بالنت وبدون نت فوراً)
         function startActualQuiz() {
             closeModal('quiz-rules-modal'); 
             playClickSound();
             
+            // 1. تجميع الـ 100 سؤال المدمجين داخل التطبيق
             let allAvailableQuestions = [];
             Object.keys(masterQuestionsBank).forEach(cat => {
                 masterQuestionsBank[cat].forEach((q, idx) => {
@@ -2989,7 +2991,26 @@
                 });
             });
 
+            // 2. إذا كان النت مفصولاً، ابدأ اللعبة بالأسئلة المدمجة فوراً
+            if (!navigator.onLine) {
+                processDeckAndLaunch(allAvailableQuestions);
+                return;
+            }
+
+            // 3. إذا كان متصلاً بالنت، اسحب الأسئلة الإضافية من السحابة مع مهلة أمان
+            let isLaunched = false;
+            const safetyTimeout = setTimeout(() => {
+                if (!isLaunched) {
+                    isLaunched = true;
+                    processDeckAndLaunch(allAvailableQuestions);
+                }
+            }, 1200);
+
             db.ref('custom_questions').once('value').then((snapshot) => {
+                if (isLaunched) return;
+                clearTimeout(safetyTimeout);
+                isLaunched = true;
+
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
                         let customQ = child.val();
@@ -3006,7 +3027,10 @@
                 }
                 processDeckAndLaunch(allAvailableQuestions);
             }).catch(() => {
-                processDeckAndLaunch(allAvailableQuestions);
+                if (!isLaunched) {
+                    clearTimeout(safetyTimeout);
+                    processDeckAndLaunch(allAvailableQuestions);
+                }
             });
         }
 
