@@ -17,34 +17,34 @@
 
     <style>
         :root {
-            --bg-primary: #0b1110;
-            --bg-secondary: rgba(18, 30, 28, 0.85);
-            --border-card: rgba(212, 175, 55, 0.2);
-            --accent-gold: #d4af37;
-            --accent-emerald: #10b981;
-            --text-main: #f3f4f6;
-            --text-sub: #9ca3af;
-            --card-gradient: linear-gradient(145deg, rgba(24, 40, 36, 0.9), rgba(12, 22, 20, 0.9));
-            --header-bg: rgba(11, 17, 16, 0.92);
-            --radial-glow: rgba(16, 185, 129, 0.08);
-            --accent-highlight: #7c9aff;
-            --nav-bg: rgba(11, 17, 16, 0.98);
-        }
+    --bg-primary: #090d16;            /* خلفية داكنة وعميقة تميل للأزرق الفضائي */
+    --bg-secondary: rgba(15, 23, 42, 0.85); /* خلفية زجاجية ثانوية للكروت */
+    --border-card: rgba(99, 102, 241, 0.25); /* حدود نيون خفيفة تميل للأزرق/البنفسجي */
+    --accent-gold: #f59e0b;          /* أصفر ذهبي ساطع وبارز للعملات والنجوم */
+    --accent-emerald: #06b6d4;       /* فيوزري/سيان (Cyan) حديث للـ XP والنجاح بدلاً من الأخضر التقليدي */
+    --text-main: #f8fafc;            /* أبيض ناصع للنصوص الأساسية */
+    --text-sub: #94a3b8;             /* رمادي هادئ للنصوص الفرعية */
+    --card-gradient: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); /* تدرج كروي فخم */
+    --header-bg: rgba(9, 13, 22, 0.92);
+    --radial-glow: rgba(99, 102, 241, 0.12); /* توهج خلفي أزرق خفيف في أعلى الشاشة */
+    --accent-highlight: #818cf8;     /* أزرق فاتح مميز للعناصر التفاعلية */
+    --nav-bg: rgba(9, 13, 22, 0.98);
+}
 
         [data-theme="light"] {
-            --bg-primary: #f8fafc;
-            --bg-secondary: rgba(255, 255, 255, 0.9);
-            --border-card: rgba(212, 175, 55, 0.35);
-            --accent-gold: #b38600;
-            --accent-emerald: #059669;
-            --text-main: #0f172a;
-            --text-sub: #64748b;
-            --card-gradient: linear-gradient(145deg, #ffffff, #f1f5f9);
-            --header-bg: rgba(255, 255, 255, 0.92);
-            --radial-glow: rgba(16, 185, 129, 0.12);
-            --accent-highlight: #4361ee;
-            --nav-bg: rgba(255, 255, 255, 0.98);
-        }
+    --bg-primary: #f8fafc;            /* خلفية فاتحة ونظيفة */
+    --bg-secondary: rgba(255, 255, 255, 0.95);
+    --border-card: rgba(99, 102, 241, 0.2);
+    --accent-gold: #d97706;          /* ذهبي غامق وواضح */
+    --accent-emerald: #0891b2;       /* سيان داكن احترافي */
+    --text-main: #0f172a;            /* أسود داكن للنصوص */
+    --text-sub: #64748b;             /* رمادي متوسط وواضح */
+    --card-gradient: linear-gradient(145deg, #ffffff, #f1f5f9);
+    --header-bg: rgba(255, 255, 255, 0.92);
+    --radial-glow: rgba(99, 102, 241, 0.08);
+    --accent-highlight: #6366f1;     /* أزرق نيلي عصري */
+    --nav-bg: rgba(255, 255, 255, 0.98);
+}
 
         * {
             margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif;
@@ -798,7 +798,7 @@
                 اسحب لاختيار فئة التحدي، ثم أنشئ غرفة وشارك الكود مع زميلك للمواجهة المباشرة!
             </p>
 
-            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">اختر فئة التحدي (اسحب يمين وشمال ↔️):</div>
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">اختر فئة التحدي :</div>
             
             <div class="derby-carousel-container">
                 <div class="derby-tier-slide tier-spiderman active" onclick="selectDerbyTier(10, 15, this)">
@@ -866,7 +866,7 @@
             <h2 class="slide-in-right slide-in-right-delay-1" style="font-size: 1.3rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px;">تطبيقك الأكاديمي الشامل 📚</h2>
             <p class="slide-in-right slide-in-right-delay-2" style="font-size: 0.9rem; color: var(--text-sub); font-weight: 600; line-height: 1.8; margin-bottom: 24px; text-align: right;">
                 • تصفح وتحميل جميع كتب ومذكرات المقررات (نظري وعملي) مباشرة.<br>
-                • بنك أسئلة وتحديات أسبوعية لتجميع النقاط وتصدر الترتيب العام.<br>
+                • بنك أسئلة وتحديات تنافسية لتجميع النقاط وتصدر الترتيب العام.<br>
                 • ملف شخصي متكامل ومتجر سلع وخدمات لطلاب الدفعة.
             </p>
             <button class="btn-submit slide-in-right slide-in-right-delay-3" onclick="finishOnboardingFlow()">الانتقال لتسجيل الدخول 🚀</button>
@@ -1109,7 +1109,7 @@
                 <div class="app-card card-primary-glow" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
                     <div class="card-info">
                         <div class="card-icon"><img src="https://img.icons8.com/fluency/96/books.png" alt="Subjects"></div>
-                        <div class="card-text"><h3>مواد الترم الأول</h3><p>المحاضرات والسكاشن للفرقة الرابعة</p></div>
+                        <div class="card-text"><h3>مواد الترم الأول</h3><p>الكتب، المحاضرات والسكاشن</p></div>
                     </div>
                     <div class="card-arrow">←</div>
                 </div>
@@ -1805,6 +1805,16 @@
                     <button class="btn-submit" onclick="adminPublishCollegeAlert()">نشر الإعلان فوراً 📢</button>
                 </div>
 
+                <!-- 🏛️ كارت تحكم قاعة المشاهير الجديد -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 8px; text-align: center;">إدارة قاعة المشاهير 🏛️</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">اقفل أو افتح القسم للطلاب بشكل فوري</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-lock-fame" class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff;" onclick="setHallOfFameLockStatus(true)">قفل القسم 🔒</button>
+                        <button id="btn-unlock-fame" class="btn-submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" onclick="setHallOfFameLockStatus(false)">فتح القسم 🔓</button>
+                    </div>
+                </div>
+
                 <!-- تحديث روابط جداول السكاشن -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">تحديث روابط الجداول 🗓️</h3>
@@ -1815,7 +1825,7 @@
                             <option value="sec3">جدول سكشن 3</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>رابط صورة/ملف الجدول</label><input type="url" id="adm-schedule-url" class="form-input" dir="ltr" placeholder="رابط الصورة أو الملف المباشر"></div>
+                    <div class="form-group"><label>رابط ملف/صورة الجدول (Google Drive)</label><input type="url" id="adm-schedule-url" class="form-input" dir="ltr" placeholder="رابط العرض المباشر"></div>
                     <button class="btn-submit" onclick="adminSaveScheduleUrl()">تحديث الجدول 💾</button>
                 </div>
             </div>
@@ -1980,16 +1990,17 @@
 
         <!-- لوحة المتصدرين المحسنة مع زر قاعة المشاهير -->
         <div id="view-leaderboard" class="view-section">
-            <div class="fame-banner-btn" onclick="openHallOfFame()">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.8rem;">🏛️</span>
-                    <div style="text-align: right;">
-                        <h4 style="color: var(--accent-gold); font-size: 1rem; margin-bottom: 2px;">قاعة المشاهير والأساطير</h4>
-                        <p style="font-size: 0.75rem; color: var(--text-sub); margin: 0;">لوحة شرف أفضل 6 طلاب في الدفعة</p>
-                    </div>
-                </div>
-                <div style="color: var(--accent-gold); font-size: 1.4rem; font-weight: bold;">←</div>
-            </div>
+            <!-- زر قاعة المشاهير في لوحة المتصدرين مع شارة قريباً -->
+<div class="fame-banner-btn" onclick="checkHallOfFameStatus()">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.8rem;">🏛️</span>
+        <div style="text-align: right;">
+            <h4 style="color: var(--accent-gold); font-size: 1rem; margin-bottom: 2px;">قاعة المشاهير والأساطير <span id="fame-status-badge" style="font-size: 0.65rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 2px 6px; border-radius: 6px; display: none;">قريباً ⏳</span></h4>
+            <p style="font-size: 0.75rem; color: var(--text-sub); margin: 0;">الطلاب الذين حققوا أعلى الإنجازات في التطبيق</p>
+        </div>
+    </div>
+    <div style="color: var(--accent-gold); font-size: 1.4rem; font-weight: bold;">←</div>
+</div>
 
             <div class="section-label">أبطال الدفعة (Top Rankings)</div>
             
@@ -4292,6 +4303,50 @@ function shuffleArray(array) {
             }, 1800);
         }
     }
+// دالة لتغيير حالة القفل من لوحة الأدمن وحفظها في فايربيز
+function setHallOfFameLockStatus(lockState) {
+    playClickSound();
+    db.ref('settings/hall_of_fame_locked').set(lockState).then(() => {
+        showTopToast(lockState ? 'تم قفل قاعة المشاهير بنجاح 🔒' : 'تم فتح قاعة المشاهير للطلاب 🔓', 'success');
+        updateAdminFameButtonsUI(lockState);
+    });
+}
+
+// تحديث شكل الأزرار في لوحة الأدمن حسب الحالة الحالية
+function updateAdminFameButtonsUI(isLocked) {
+    const lockBtn = document.getElementById('btn-lock-fame');
+    const unlockBtn = document.getElementById('btn-unlock-fame');
+    if (lockBtn && unlockBtn) {
+        lockBtn.style.opacity = isLocked ? '0.5' : '1';
+        unlockBtn.style.opacity = isLocked ? '1' : '0.5';
+    }
+}
+
+// الاستماع لتغييرات حالة القفل لتحديث أزرار الأدمن تلقائياً وشارة الواجهة
+db.ref('settings/hall_of_fame_locked').on('value', snap => {
+    const isLocked = snap.exists() ? snap.val() : false;
+    updateAdminFameButtonsUI(isLocked);
+    
+    const badge = document.getElementById('fame-status-badge');
+    if (badge) {
+        badge.style.display = isLocked ? 'inline-block' : 'none';
+    }
+});
+
+// دالة التحقق عند الضغط على زر قاعة المشاهير من المتصدرين
+function checkHallOfFameStatus() {
+    playClickSound();
+    db.ref('settings/hall_of_fame_locked').once('value').then(snap => {
+        const isLocked = snap.exists() ? snap.val() : false;
+        
+        if (isLocked) {
+            showTopToast('قاعة المشاهير مغلقة مؤقتاً للتحديثات، ترقبونا قريباً! ⏳', 'error');
+        } else {
+            navigateTo('view-hall-of-fame', 'قاعة المشاهير', 'أبرز 6 أبطال في الدفعة');
+            loadHallOfFameData();
+        }
+    });
+}
 
     function renderArenaChoices(question, qIndex, isHost) {
         const list = document.getElementById('arena-options-list');
