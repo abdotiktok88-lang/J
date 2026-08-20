@@ -642,6 +642,145 @@
         .store-btn.active-item { background: var(--bg-primary); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); }
         .store-btn.owned-item { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); }
         .store-btn.danger-toggle { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; }
+/* ================= سلايدر فئات الديربي الموحد ================= */
+.derby-carousel-container {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 10px 6px 18px;
+    -webkit-overflow-scrolling: touch;
+}
+.derby-carousel-container::-webkit-scrollbar {
+    height: 4px;
+}
+.derby-carousel-container::-webkit-scrollbar-thumb {
+    background: var(--accent-gold);
+    border-radius: 4px;
+}
+
+/* كارت الفئة الأساسي بجميع أبعاده ومحاذاة النصوص */
+.derby-tier-slide {
+    flex: 0 0 220px !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    scroll-snap-align: center;
+    border-radius: 20px;
+    padding: 12px 10px 10px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end !important;
+    align-items: center;
+    gap: 4px !important;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    border: 2.5px solid transparent !important;
+    background-size: cover !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+    filter: none !important;
+}
+
+/* تنسيق النصوص والشارات لجميع الكروت */
+.derby-tier-title-text {
+    font-size: 1.05rem !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    margin-bottom: 2px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+.derby-tier-badge-cost {
+    font-size: 0.78rem !important;
+    font-weight: 800;
+    padding: 3px 12px !important;
+    border-radius: 14px;
+}
+.derby-tier-badge-reward {
+    font-size: 0.74rem !important;
+    font-weight: 700;
+    margin-top: 2px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* 1. Spider-Man */
+.derby-tier-slide.tier-spiderman {
+    background-color: #B91C2B !important;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,42,74,0.15) 15%, rgba(15,42,74,0.58) 50%, rgba(15,42,74,0.96) 85%), url('spiderman.png') !important;
+    border-color: #0F2A4A !important;
+}
+.tier-spiderman .derby-tier-badge-cost { background: #0F2A4A !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+.tier-spiderman .derby-tier-badge-reward { color: #FFD700 !important; }
+
+/* 2. Captain America */
+.derby-tier-slide.tier-captain {
+    background-color: #163D7A !important;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(12,33,66,0.15) 15%, rgba(12,33,66,0.58) 50%, rgba(12,33,66,0.96) 85%), url('captain.png') !important;
+    border-color: #B8202F !important;
+}
+.tier-captain .derby-tier-badge-cost { background: #B8202F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+.tier-captain .derby-tier-badge-reward { color: #FFFFFF !important; }
+
+/* 3. Iron Man */
+.derby-tier-slide.tier-ironman {
+    background-color: #8B111E !important;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(74,6,12,0.15) 15%, rgba(74,6,12,0.58) 50%, rgba(74,6,12,0.96) 85%), url('ironman.png') !important;
+    border-color: #C99700 !important;
+}
+.tier-ironman .derby-tier-badge-cost { background: #C99700 !important; color: #000000 !important; font-weight: 900 !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+.tier-ironman .derby-tier-badge-reward { color: #FFF3B0 !important; }
+
+/* 4. Thor */
+.derby-tier-slide.tier-thor {
+    background-color: #283B5C !important;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(19,29,46,0.15) 15%, rgba(19,29,46,0.58) 50%, rgba(19,29,46,0.96) 85%), url('thor.png') !important;
+    border-color: #526D8F !important;
+}
+.tier-thor .derby-tier-badge-cost { background: #526D8F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+.tier-thor .derby-tier-badge-reward { color: #FFD166 !important; }
+
+/* 5. Doctor Doom */
+.derby-tier-slide.tier-doom {
+    background-color: #183C2B !important;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(13,33,24,0.15) 15%, rgba(13,33,24,0.58) 50%, rgba(13,33,24,0.96) 85%), url('doom.png') !important;
+    border-color: #31572C !important;
+}
+.tier-doom .derby-tier-badge-cost { background: #31572C !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+.tier-doom .derby-tier-badge-reward { color: #FFD966 !important; }
+
+/* تأثير التحديد (Active) */
+.derby-tier-slide.active {
+    filter: none !important;
+    border: 2.5px solid #FFD700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    transform: scale(1.03);
+}
+
+/* حالة التحديد (Active) بدون أي تفتيح للصورة */
+.derby-tier-slide.active {
+    filter: none !important;
+    border: 2.5px solid #FFD700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    transform: scale(1.03);
+}
+
+/* تأثير التحديد (Active): تم إلغاء brightness نهائياً للحفاظ على حدة الصورة والظلال الأصلية */
+.derby-tier-slide.active {
+    border: 2.5px solid #FFD700 !important;
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.65) !important;
+    transform: scale(1.03);
+}
+
+        /* تأثير التحديد (Active): تفتيح وإطار متوهج دون مسح الخلفية */
+        /* تأثير التحديد بعد إلغاء السطوع نهائياً للحفاظ على الألوان الأصلية */
+.derby-tier-slide.active {
+    filter: none !important; /* إلغاء تفتيح الصورة تماماً */
+    border: 2.5px solid #FFD700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    transform: scale(1.03);
+}
+
 
     </style>
 </head>
@@ -667,48 +806,60 @@
     <div id="modal-derby-setup" class="modal-overlay">
         <div class="modal-box" style="max-width: 420px; text-align: right;">
             <button class="btn-close-modal" onclick="closeModal('modal-derby-setup')">×</button>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                 <span style="font-size: 1.8rem;">⚔️</span>
                 <h3 style="color: var(--accent-gold); margin: 0;">ديربي الدفعة 1v1</h3>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 14px;">
-                تحدَّ زميلاً لك في مواجهة حية مباشرة على 10 أسئلة متزامنة. الأسرع والأكثر دقة يحصد جائزة التحدي وبونص الخبرة!
+            <p style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 12px;">
+                اسحب لاختيار فئة التحدي، ثم أنشئ غرفة وشارك الكود مع زميلك للمواجهة المباشرة!
             </p>
 
-            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">اختر فئة التحدي:</div>
-            <div class="derby-tier-selector">
-                <div class="derby-tier-btn active" onclick="selectDerbyTier(10, 15, this)">
-                    <span class="derby-tier-title">🟢 ودي</span>
-                    <span class="derby-tier-cost">10 عملات</span>
-                    <span class="derby-tier-reward">فوز: 20 💸 + 15 XP</span>
-                </div>
-                <div class="derby-tier-btn" onclick="selectDerbyTier(25, 25, this)">
-                    <span class="derby-tier-title">🔵 تحدي</span>
-                    <span class="derby-tier-cost">25 عملة</span>
-                    <span class="derby-tier-reward">فوز: 50 💸 + 25 XP</span>
-                </div>
-                <div class="derby-tier-btn" onclick="selectDerbyTier(50, 45, this)">
-                    <span class="derby-tier-title">🟡 حماسي</span>
-                    <span class="derby-tier-cost">50 عملة</span>
-                    <span class="derby-tier-reward">فوز: 100 💸 + 45 XP</span>
-                </div>
-                <div class="derby-tier-btn" onclick="selectDerbyTier(100, 80, this)">
-                    <span class="derby-tier-title">🔴 ناري</span>
-                    <span class="derby-tier-cost">100 عملة</span>
-                    <span class="derby-tier-reward">فوز: 200 💸 + 80 XP</span>
-                </div>
-                <div class="derby-tier-btn" style="grid-column: span 2;" onclick="selectDerbyTier(250, 150, this)">
-                    <span class="derby-tier-title">👑 الملوك (أسطوري)</span>
-                    <span class="derby-tier-cost">250 عملة</span>
-                    <span class="derby-tier-reward">فوز: 500 💸 + 150 XP</span>
-                </div>
-            </div>
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">اختر فئة التحدي (اسحب يمين وشمال ↔️):</div>
+            
+            <!-- سلايدر كروت الفئات بنظام السحب -->
+           <!-- سلايدر فئات الديربي بصور الأبطال السينمائية الحقيقية -->
+<div class="derby-carousel-container">
+    <!-- 1. Spider-Man -->
+    <div class="derby-tier-slide tier-spiderman active" onclick="selectDerbyTier(10, 15, this)">
+        <div class="derby-tier-title-text">Spider-Man</div>
+        <div class="derby-tier-badge-cost">الرسوم: 10 عملات</div>
+        <div class="derby-tier-badge-reward">🏆 الجائزة: 20 💸 + 15 XP</div>
+    </div>
+
+    <!-- 2. Captain America -->
+    <div class="derby-tier-slide tier-captain" onclick="selectDerbyTier(25, 25, this)">
+        <div class="derby-tier-title-text">Captain America</div>
+        <div class="derby-tier-badge-cost">الرسوم: 25 عملة</div>
+        <div class="derby-tier-badge-reward">🏆 الجائزة: 50 💸 + 25 XP</div>
+    </div>
+
+    <!-- 3. Iron Man -->
+    <div class="derby-tier-slide tier-ironman" onclick="selectDerbyTier(50, 45, this)">
+        <div class="derby-tier-title-text">Iron Man</div>
+        <div class="derby-tier-badge-cost">الرسوم: 50 عملة</div>
+        <div class="derby-tier-badge-reward">🏆 الجائزة: 100 💸 + 45 XP</div>
+    </div>
+
+    <!-- 4. Thor -->
+    <div class="derby-tier-slide tier-thor" onclick="selectDerbyTier(100, 80, this)">
+        <div class="derby-tier-title-text">Thor</div>
+        <div class="derby-tier-badge-cost">الرسوم: 100 عملة</div>
+        <div class="derby-tier-badge-reward">🏆 الجائزة: 200 💸 + 80 XP</div>
+    </div>
+
+    <!-- 5. Doctor Doom -->
+    <div class="derby-tier-slide tier-doom" onclick="selectDerbyTier(250, 150, this)">
+        <div class="derby-tier-title-text">Doctor Doom</div>
+        <div class="derby-tier-badge-cost">الرسوم: 250 عملة</div>
+        <div class="derby-tier-badge-reward">🏆 الجائزة: 500 💸 + 150 XP</div>
+    </div>
+</div>
 
             <button class="btn-submit" style="margin-bottom: 12px;" onclick="createDerbyRoomAction()">
                 إنشاء غرفة وتحدي زميل ⚔️
             </button>
 
-            <div style="border-top: 1px dashed var(--border-card); padding-top: 12px; margin-top: 12px;">
+            <div style="border-top: 1px dashed var(--border-card); padding-top: 12px; margin-top: 8px;">
                 <div class="form-group" style="margin-bottom: 8px;">
                     <input type="text" id="derby-join-code-input" class="form-input" placeholder="أدخل كود الغرفة (مثال: DERBY-123)" style="text-align: center; text-transform: uppercase; font-weight: 800; font-size: 0.95rem;">
                 </div>
@@ -843,7 +994,7 @@
             <div class="theme-options-grid">
                 <button class="theme-option-btn" id="theme-btn-dark" onclick="selectThemeMode('dark')">
                     <div class="theme-option-info"><span>🌙</span><span>الوضع الليلي (الداكن)</span></div>
-                    <span class="theme-check" id="check-dark">✓</span>
+                    <span class="theme-check" id="check-dark"></span>
                 </button>
                 <button class="theme-option-btn" id="theme-btn-light" onclick="selectThemeMode('light')">
                     <div class="theme-option-info"><span>☀️</span><span>الوضع النهاري (الفاتح)</span></div>
@@ -885,13 +1036,16 @@
             <img src="https://img.icons8.com/fluency/96/goal.png" style="width: 70px; height: 70px; margin-bottom: 8px;" alt="Rules">
             <h3>قواعد تحدي العباقرة</h3>
             <p style="text-align: right; font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px;">
-                يا هلا يا دولي! 🧠🔥<br>
-                اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
-                • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
-                • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
-                • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
-                • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
-            </p>
+    يا هلا يا دولي! 🧠🔥<br>
+    اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
+    • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
+    • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
+    • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
+    • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
+    • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
+    <br>
+    <span style="color: var(--accent-highlight); font-weight: 800; display: block; text-align: center;">جاهز للتحدي ولا خايف؟ 😏🔥</span>
+</p>
             <div class="modal-buttons">
                 <button class="btn-modal-primary btn-action-quiz" onclick="startActualQuiz()">يلا بينا 🚀</button>
                 <button class="btn-modal-secondary" onclick="closeModal('quiz-rules-modal')">خايف، ارجع 🏃‍♂️</button>
@@ -1924,6 +2078,40 @@ function shuffleArray(array) {
         }
         setTimeout(() => container.remove(), 3200);
     }
+function openThemeModal() {
+    playClickSound();
+    updateThemeSelectorUI();
+    openModal('modal-theme-selector');
+}
+
+function selectThemeMode(mode) {
+    playClickSound();
+    setAppTheme(mode);
+    updateThemeSelectorUI();
+    showTopToast('تم تغيير مظهر التطبيق بنجاح ✨', 'success');
+    setTimeout(() => closeModal('modal-theme-selector'), 300);
+}
+
+function updateThemeSelectorUI() {
+    const currentPref = localStorage.getItem('app-theme') || 'dark';
+    ['dark', 'light', 'auto'].forEach(m => {
+        const btn = document.getElementById(`theme-btn-${m}`);
+        const check = document.getElementById(`check-${m}`);
+        if (btn) btn.classList.toggle('active', m === currentPref);
+        if (check) check.innerText = (m === currentPref) ? '✓' : '';
+    });
+}
+
+function closeBroadcastBanner() {
+    playClickSound();
+    const banner = document.getElementById('broadcast-msg-modal');
+    if (banner) banner.classList.remove('show');
+    db.ref('broadcast_message').once('value').then(snap => {
+        if (snap.exists() && snap.val().id) {
+            localStorage.setItem('last_seen_broadcast', snap.val().id);
+        }
+    });
+}
 
     // ================= المظهر =================
     function toggleTheme() {
@@ -2075,7 +2263,45 @@ function shuffleArray(array) {
     function closeSidebar() { playBackSound(); document.getElementById('sidebar-overlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
 
     function openDeveloperModal() { playClickSound(); document.getElementById('developer-modal').classList.add('show'); }
-    function openQuizRulesModal() { playClickSound(); document.getElementById('quiz-rules-modal').classList.add('show'); }
+    const DAILY_QUIZ_LIMIT = 10; // الحد الأقصى للجولات يومياً
+
+function openQuizRulesModal() {
+    playClickSound();
+    if (!currentUser) {
+        showTopToast('يرجى تسجيل الدخول أولاً للمشاركة في التحدي!', 'error');
+        return;
+    }
+
+    const todayDate = new Date().toLocaleDateString('en-CA');
+    const lastQuizDate = currentUser.last_quiz_date || '';
+    const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+
+    if (quizCountToday >= DAILY_QUIZ_LIMIT) {
+        showTopToast(`لقد استنفدت الحد اليومي (${DAILY_QUIZ_LIMIT} محاولات). عد غداً! ⏳`, 'error');
+        return;
+    }
+
+    const remaining = DAILY_QUIZ_LIMIT - quizCountToday;
+    const rulesDesc = document.querySelector('#quiz-rules-modal p');
+    if (rulesDesc) {
+        rulesDesc.innerHTML = `
+    يا هلا يا دولي! 🧠🔥<br>
+    اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
+    • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
+    • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
+    • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
+    • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
+    • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
+    <br>
+    <div style="color: var(--accent-highlight); font-weight: 800; font-size: 1rem; text-align: center; margin: 8px 0;">
+        جاهز للتحدي ولا خايف؟ 😏🔥
+    </div>
+    <span style="color: var(--accent-gold); font-weight: 800; display: block; text-align: center;">المحاولات المتبقية لك اليوم: ${remaining} من ${DAILY_QUIZ_LIMIT} 🎯</span>
+`;
+    }
+
+    document.getElementById('quiz-rules-modal').classList.add('show');
+}
     function closeModal(id) { playBackSound(); document.getElementById(id).classList.remove('show'); }
     function openModal(id) { document.getElementById(id).classList.add('show'); }
 
@@ -3335,12 +3561,12 @@ function shuffleArray(array) {
     }
 
     function selectDerbyTier(coins, xp, element) {
-        playClickSound();
-        selectedDerbyStake = coins;
-        selectedDerbyRewardXP = xp;
-        document.querySelectorAll('.derby-tier-btn').forEach(b => b.classList.remove('active'));
-        if (element) element.classList.add('active');
-    }
+    playClickSound();
+    selectedDerbyStake = coins;
+    selectedDerbyRewardXP = xp;
+    document.querySelectorAll('.derby-tier-slide').forEach(b => b.classList.remove('active'));
+    if (element) element.classList.add('active');
+}
 
     async function createDerbyRoomAction() {
         playClickSound();
@@ -3778,42 +4004,51 @@ function shuffleArray(array) {
     let hint5050UsedInCurrentQuestion = false;
 
     function startActualQuiz() {
-        closeModal('quiz-rules-modal'); 
-        playClickSound();
-        
-        let allAvailableQuestions = [];
-        Object.keys(masterQuestionsBank).forEach(cat => {
-            masterQuestionsBank[cat].forEach((q, idx) => {
-                allAvailableQuestions.push({ 
-                    id: `${cat}_${idx}`,
-                    q: q.q, 
-                    a: [...q.a], 
-                    correct: q.correct, 
-                    categoryName: cat 
-                });
+    closeModal('quiz-rules-modal'); 
+    playClickSound();
+
+    const todayDate = new Date().toLocaleDateString('en-CA');
+    const lastQuizDate = currentUser.last_quiz_date || '';
+    const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+
+    if (quizCountToday >= DAILY_QUIZ_LIMIT) {
+        showTopToast(`تم استهلاك جميع محاولات اليوم (${DAILY_QUIZ_LIMIT}/${DAILY_QUIZ_LIMIT})!`, 'error');
+        return;
+    }
+
+    let allAvailableQuestions = [];
+    Object.keys(masterQuestionsBank).forEach(cat => {
+        masterQuestionsBank[cat].forEach((q, idx) => {
+            allAvailableQuestions.push({ 
+                id: `${cat}_${idx}`,
+                q: q.q, 
+                a: [...q.a], 
+                correct: q.correct, 
+                categoryName: cat 
             });
         });
+    });
 
-        db.ref('custom_questions').once('value').then((snapshot) => {
-            if (snapshot.exists()) {
-                snapshot.forEach(child => {
-                    let customQ = child.val();
-                    if (customQ && customQ.q && customQ.a) {
-                        allAvailableQuestions.push({
-                            id: child.key,
-                            q: customQ.q,
-                            a: [...customQ.a],
-                            correct: customQ.correct || 0,
-                            categoryName: customQ.category || "أسئلة إضافية"
-                        });
-                    }
-                });
-            }
-            processDeckAndLaunch(allAvailableQuestions);
-        }).catch(() => {
-            processDeckAndLaunch(allAvailableQuestions);
-        });
-    }
+    db.ref('custom_questions').once('value').then((snapshot) => {
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                let customQ = child.val();
+                if (customQ && customQ.q && customQ.a) {
+                    allAvailableQuestions.push({
+                        id: child.key,
+                        q: customQ.q,
+                        a: [...customQ.a],
+                        correct: customQ.correct || 0,
+                        categoryName: customQ.category || "أسئلة إضافية"
+                    });
+                }
+            });
+        }
+        processDeckAndLaunch(allAvailableQuestions);
+    }).catch(() => {
+        processDeckAndLaunch(allAvailableQuestions);
+    });
+}
 
     function processDeckAndLaunch(allQuestions) {
         let userDeck = JSON.parse(localStorage.getItem('user_quiz_deck') || '[]');
@@ -4020,23 +4255,33 @@ function shuffleArray(array) {
         }
 
         if (currentUser) { 
-            db.ref('users/' + currentUser.phone).transaction((user) => { 
-                if (user) {
-                    let newXp = (user.xp || user.points || 0) + xpChange;
-                    user.xp = newXp < 0 ? 0 : newXp;
-                    user.points = user.xp;
-                    
-                    let newCoins = (user.coins || 0) + coinsChange;
-                    user.coins = newCoins < 0 ? 0 : newCoins;
-                    
-                    user.quizPlayed = (user.quizPlayed || 0) + 1;
-                    user.quizCorrect = (user.quizCorrect || 0) + quizScoreCount;
-                }
-                return user; 
-            }).then(() => {
-                updateStatsUI();
-            }); 
+    const todayDate = new Date().toLocaleDateString('en-CA');
+
+    db.ref('users/' + currentUser.phone).transaction((user) => { 
+        if (user) {
+            let newXp = (user.xp || user.points || 0) + xpChange;
+            user.xp = newXp < 0 ? 0 : newXp;
+            user.points = user.xp;
+
+            let newCoins = (user.coins || 0) + coinsChange;
+            user.coins = newCoins < 0 ? 0 : newCoins;
+
+            user.quizPlayed = (user.quizPlayed || 0) + 1;
+            user.quizCorrect = (user.quizCorrect || 0) + quizScoreCount;
+
+            // تحديث عداد وتاريخ المحاولات اليومية (10 محاولات)
+            if (user.last_quiz_date === todayDate) {
+                user.daily_quiz_count = (user.daily_quiz_count || 0) + 1;
+            } else {
+                user.last_quiz_date = todayDate;
+                user.daily_quiz_count = 1;
+            }
         }
+        return user; 
+    }).then(() => {
+        updateStatsUI();
+    }); 
+}
 
         const imgEl = document.getElementById('result-img'); 
         const titleEl = document.getElementById('result-title'); 
