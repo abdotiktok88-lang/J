@@ -199,16 +199,6 @@
         }
         @keyframes pulseDerby { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
 
-        .derby-tier-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .derby-tier-btn {
-            background: var(--bg-primary); border: 1.5px solid var(--border-card); border-radius: 14px;
-            padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
-        }
-        .derby-tier-btn.active { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.15); }
-        .derby-tier-title { font-size: 0.85rem; font-weight: 800; color: var(--text-main); }
-        .derby-tier-cost { font-size: 0.75rem; font-weight: 700; color: var(--accent-gold); }
-        .derby-tier-reward { font-size: 0.68rem; font-weight: 600; color: var(--accent-emerald); }
-
         .battle-arena-header {
             background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px;
             padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
@@ -266,43 +256,22 @@
         .vip-profile-card .profile-name { color: #ffffff !important; text-shadow: 0 0 12px rgba(255, 215, 0, 0.6) !important; }
         .vip-profile-card .profile-phone { color: #ffd700 !important; font-weight: 800 !important; }
 
-        /* حاوية الأفتار */
         .avatar-box-wrapper {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 16px;
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            width: 90px; height: 90px; margin: 0 auto 16px;
         }
 
         .profile-avatar { 
-            width: 100%; 
-            height: 100%; 
-            background: var(--bg-secondary); 
-            border: 2px solid var(--accent-gold); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden; 
-            padding: 4px; 
-            position: relative;
-            z-index: 1;
+            width: 100%; height: 100%; background: var(--bg-secondary); border: 2px solid var(--accent-gold); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            overflow: hidden; padding: 4px; position: relative; z-index: 1;
         }
         .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
         /* إكسسوارات الرأس */
         .hat-accessory {
-            position: absolute;
-            z-index: 10;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            position: absolute; z-index: 10; pointer-events: none; display: flex; align-items: center; justify-content: center;
+            line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
         .hat-grad { top: -16px; left: 50%; transform: translateX(-50%); font-size: 2.1rem; }
@@ -317,7 +286,6 @@
         .hat-halo { top: -20px; left: 50%; transform: translateX(-50%); font-size: 2.1rem; animation: haloFloat 2s infinite alternate; }
         @keyframes haloFloat { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-5px); } }
 
-        /* ضبط أبعاد الحاويات والإكسسوارات في منصة التتويج */
         .podium-place .avatar-box-wrapper { width: 55px; height: 55px; margin: 4px auto 0; }
         .podium-place .hat-grad { top: -12px; font-size: 1.4rem; }
         .podium-place .hat-crown { top: -14px; font-size: 1.5rem; }
@@ -436,35 +404,12 @@
         .btn-modal-secondary { flex: 1; padding: 14px; border-radius: 14px; border: 1px solid var(--border-card); background: transparent; color: var(--text-sub); font-weight: 800; font-size: 0.95rem; cursor: pointer; }
         .btn-close-modal { position: absolute; top: 15px; left: 15px; background: transparent; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
 
-        .podium { 
-            display: flex; 
-            align-items: flex-end; 
-            justify-content: center; 
-            gap: 10px; 
-            margin-bottom: 30px; 
-            margin-top: 25px; 
-        }
-        .podium-place { 
-            text-align: center; 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-width: 0;
-        }
+        .podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-bottom: 30px; margin-top: 25px; }
+        .podium-place { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
         .podium-step { 
-            width: 100%; 
-            border-radius: 12px 12px 0 0; 
-            background: var(--card-gradient); 
-            border: 1px solid var(--border-card); 
-            display: flex; 
-            justify-content: center; 
-            align-items: flex-start; 
-            padding-top: 15px; 
-            font-weight: 900; 
-            font-size: 1.5rem; 
-            color: var(--accent-gold); 
-            transition: all 0.3s; 
+            width: 100%; border-radius: 12px 12px 0 0; background: var(--card-gradient); border: 1px solid var(--border-card); 
+            display: flex; justify-content: center; align-items: flex-start; padding-top: 15px; 
+            font-weight: 900; font-size: 1.5rem; color: var(--accent-gold); transition: all 0.3s; 
         }
         .step-1 { height: 120px; border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
         .step-2 { height: 90px; border-color: #c0c0c0; }
@@ -472,15 +417,8 @@
         .podium-name { font-size: 0.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
         
         .podium-bio { 
-            font-size: 0.65rem; 
-            color: var(--accent-gold); 
-            font-style: italic; 
-            margin-bottom: 4px; 
-            font-weight: 700; 
-            line-height: 1.3; 
-            max-width: 90px; 
-            word-wrap: break-word; 
-            white-space: normal; 
+            font-size: 0.65rem; color: var(--accent-gold); font-style: italic; margin-bottom: 4px; 
+            font-weight: 700; line-height: 1.3; max-width: 90px; word-wrap: break-word; white-space: normal; 
         }
 
         .podium-pts { font-size: 0.75rem; color: var(--accent-gold); font-weight: 700; margin-bottom: 6px; }
@@ -492,6 +430,28 @@
         .lb-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
         .lb-badge { font-size: 0.75rem; color: var(--text-sub); font-weight: 700; margin-top: 2px; }
         .lb-points { font-size: 1.1rem; font-weight: 900; color: var(--accent-gold); text-align: right; }
+
+        /* قاعة المشاهير (Hall of Fame) */
+        .fame-banner-btn {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(168, 85, 247, 0.2) 100%);
+            border: 1.5px solid var(--accent-gold); border-radius: 18px; padding: 14px 18px;
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2); transition: all 0.25s ease;
+        }
+        .fame-banner-btn:active { transform: scale(0.97); }
+        .fame-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .fame-card {
+            background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px;
+            padding: 18px 12px; text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .fame-card:hover { transform: translateY(-3px); border-color: var(--accent-gold); }
+        .fame-badge-title {
+            font-size: 0.76rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 8px;
+            background: rgba(212, 175, 55, 0.15); padding: 4px 8px; border-radius: 12px; display: inline-block;
+        }
+        .fame-user-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-top: 6px; }
+        .fame-stat-val { font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); margin-top: 2px; }
 
         .quiz-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px; margin-top: 10px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
         .quiz-timer-box { font-size: 1.4rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.3); border-radius: 12px; padding: 8px; display: inline-block; min-width: 80px; margin-bottom: 15px; border: 1px solid var(--border-card); transition: color 0.3s; }
@@ -642,146 +602,170 @@
         .store-btn.active-item { background: var(--bg-primary); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); }
         .store-btn.owned-item { background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); }
         .store-btn.danger-toggle { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; }
-/* ================= سلايدر فئات الديربي الموحد ================= */
-.derby-carousel-container {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding: 10px 6px 18px;
-    -webkit-overflow-scrolling: touch;
-}
-.derby-carousel-container::-webkit-scrollbar {
-    height: 4px;
-}
-.derby-carousel-container::-webkit-scrollbar-thumb {
-    background: var(--accent-gold);
-    border-radius: 4px;
-}
 
-/* كارت الفئة الأساسي بجميع أبعاده ومحاذاة النصوص */
-.derby-tier-slide {
-    flex: 0 0 220px !important;
-    height: 300px !important;
-    min-height: 300px !important;
-    scroll-snap-align: center;
-    border-radius: 20px;
-    padding: 12px 10px 10px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end !important;
-    align-items: center;
-    gap: 4px !important;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-    border: 2.5px solid transparent !important;
-    background-size: cover !important;
-    background-position: center top !important;
-    background-repeat: no-repeat !important;
-    filter: none !important;
-}
+        /* ================= سلايدر فئات الديربي الموحد ================= */
+        .derby-carousel-container {
+            display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory;
+            padding: 10px 6px 18px; -webkit-overflow-scrolling: touch;
+        }
+        .derby-carousel-container::-webkit-scrollbar { height: 4px; }
+        .derby-carousel-container::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
 
-/* تنسيق النصوص والشارات لجميع الكروت */
-.derby-tier-title-text {
-    font-size: 1.05rem !important;
-    font-weight: 900 !important;
-    color: #FFFFFF !important;
-    margin-bottom: 2px;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
-}
-.derby-tier-badge-cost {
-    font-size: 0.78rem !important;
-    font-weight: 800;
-    padding: 3px 12px !important;
-    border-radius: 14px;
-}
-.derby-tier-badge-reward {
-    font-size: 0.74rem !important;
-    font-weight: 700;
-    margin-top: 2px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-}
+        .derby-tier-slide {
+            flex: 0 0 220px !important; height: 300px !important; min-height: 300px !important;
+            scroll-snap-align: center; border-radius: 20px; padding: 12px 10px 10px !important;
+            display: flex; flex-direction: column; justify-content: flex-end !important; align-items: center;
+            gap: 4px !important; cursor: pointer; position: relative; overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            border: 2.5px solid transparent !important; background-size: cover !important;
+            background-position: center top !important; background-repeat: no-repeat !important;
+            filter: none !important;
+        }
+        .derby-tier-title-text {
+            font-size: 1.05rem !important; font-weight: 900 !important; color: #FFFFFF !important;
+            margin-bottom: 2px; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+        }
+        .derby-tier-badge-cost {
+            font-size: 0.78rem !important; font-weight: 800; padding: 3px 12px !important; border-radius: 14px;
+        }
+        .derby-tier-badge-reward {
+            font-size: 0.74rem !important; font-weight: 700; margin-top: 2px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        }
 
-/* 1. Spider-Man */
-.derby-tier-slide.tier-spiderman {
-    background-color: #B91C2B !important;
-    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,42,74,0.15) 15%, rgba(15,42,74,0.58) 50%, rgba(15,42,74,0.96) 85%), url('spiderman.png') !important;
-    border-color: #0F2A4A !important;
-}
-.tier-spiderman .derby-tier-badge-cost { background: #0F2A4A !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
-.tier-spiderman .derby-tier-badge-reward { color: #FFD700 !important; }
+        .derby-tier-slide.tier-spiderman {
+            background-color: #B91C2B !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,42,74,0.15) 15%, rgba(15,42,74,0.58) 50%, rgba(15,42,74,0.96) 85%), url('spiderman.png') !important;
+            border-color: #0F2A4A !important;
+        }
+        .tier-spiderman .derby-tier-badge-cost { background: #0F2A4A !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-spiderman .derby-tier-badge-reward { color: #FFD700 !important; }
 
-/* 2. Captain America */
-.derby-tier-slide.tier-captain {
-    background-color: #163D7A !important;
-    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(12,33,66,0.15) 15%, rgba(12,33,66,0.58) 50%, rgba(12,33,66,0.96) 85%), url('captain.png') !important;
-    border-color: #B8202F !important;
-}
-.tier-captain .derby-tier-badge-cost { background: #B8202F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
-.tier-captain .derby-tier-badge-reward { color: #FFFFFF !important; }
+        .derby-tier-slide.tier-captain {
+            background-color: #163D7A !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(12,33,66,0.15) 15%, rgba(12,33,66,0.58) 50%, rgba(12,33,66,0.96) 85%), url('captain.png') !important;
+            border-color: #B8202F !important;
+        }
+        .tier-captain .derby-tier-badge-cost { background: #B8202F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-captain .derby-tier-badge-reward { color: #FFFFFF !important; }
 
-/* 3. Iron Man */
-.derby-tier-slide.tier-ironman {
-    background-color: #8B111E !important;
-    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(74,6,12,0.15) 15%, rgba(74,6,12,0.58) 50%, rgba(74,6,12,0.96) 85%), url('ironman.png') !important;
-    border-color: #C99700 !important;
-}
-.tier-ironman .derby-tier-badge-cost { background: #C99700 !important; color: #000000 !important; font-weight: 900 !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
-.tier-ironman .derby-tier-badge-reward { color: #FFF3B0 !important; }
+        .derby-tier-slide.tier-ironman {
+            background-color: #8B111E !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(74,6,12,0.15) 15%, rgba(74,6,12,0.58) 50%, rgba(74,6,12,0.96) 85%), url('ironman.png') !important;
+            border-color: #C99700 !important;
+        }
+        .tier-ironman .derby-tier-badge-cost { background: #C99700 !important; color: #000000 !important; font-weight: 900 !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-ironman .derby-tier-badge-reward { color: #FFF3B0 !important; }
 
-/* 4. Thor */
-.derby-tier-slide.tier-thor {
-    background-color: #283B5C !important;
-    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(19,29,46,0.15) 15%, rgba(19,29,46,0.58) 50%, rgba(19,29,46,0.96) 85%), url('thor.png') !important;
-    border-color: #526D8F !important;
-}
-.tier-thor .derby-tier-badge-cost { background: #526D8F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
-.tier-thor .derby-tier-badge-reward { color: #FFD166 !important; }
+        .derby-tier-slide.tier-thor {
+            background-color: #283B5C !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(19,29,46,0.15) 15%, rgba(19,29,46,0.58) 50%, rgba(19,29,46,0.96) 85%), url('thor.png') !important;
+            border-color: #526D8F !important;
+        }
+        .tier-thor .derby-tier-badge-cost { background: #526D8F !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-thor .derby-tier-badge-reward { color: #FFD166 !important; }
 
-/* 5. Doctor Doom */
-.derby-tier-slide.tier-doom {
-    background-color: #183C2B !important;
-    background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(13,33,24,0.15) 15%, rgba(13,33,24,0.58) 50%, rgba(13,33,24,0.96) 85%), url('doom.png') !important;
-    border-color: #31572C !important;
-}
-.tier-doom .derby-tier-badge-cost { background: #31572C !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
-.tier-doom .derby-tier-badge-reward { color: #FFD966 !important; }
+        .derby-tier-slide.tier-doom {
+            background-color: #183C2B !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(13,33,24,0.15) 15%, rgba(13,33,24,0.58) 50%, rgba(13,33,24,0.96) 85%), url('doom.png') !important;
+            border-color: #31572C !important;
+        }
+        .tier-doom .derby-tier-badge-cost { background: #31572C !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-doom .derby-tier-badge-reward { color: #FFD966 !important; }
 
-/* تأثير التحديد (Active) */
-.derby-tier-slide.active {
-    filter: none !important;
-    border: 2.5px solid #FFD700 !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
-    transform: scale(1.03);
-}
+        .derby-tier-slide.active {
+            filter: none !important; border: 2.5px solid #FFD700 !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important; transform: scale(1.03);
+        }
 
-/* حالة التحديد (Active) بدون أي تفتيح للصورة */
-.derby-tier-slide.active {
-    filter: none !important;
-    border: 2.5px solid #FFD700 !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
-    transform: scale(1.03);
-}
+        /* ================= تصميم المنظم الأكاديمي (زجاج فاتح شفاف وطافي + تباين عالي) ================= */
+        .acad-glass-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.65);
+            border-radius: 20px; padding: 18px 16px; margin-bottom: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.28);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            overflow: hidden;
+        }
+        .acad-glass-card:hover {
+            transform: translateY(-2px); border-color: #8b5cf6;
+        }
+        .acad-glass-card.completed {
+            background: rgba(220, 252, 231, 0.95);
+            border-color: #10b981;
+        }
+        .acad-glass-card h4 {
+            color: #0f172a !important; font-weight: 900 !important;
+        }
+        .acad-glass-card p {
+            color: #334155 !important; font-weight: 700 !important;
+        }
 
-/* تأثير التحديد (Active): تم إلغاء brightness نهائياً للحفاظ على حدة الصورة والظلال الأصلية */
-.derby-tier-slide.active {
-    border: 2.5px solid #FFD700 !important;
-    box-shadow: 0 0 22px rgba(255, 215, 0, 0.65) !important;
-    transform: scale(1.03);
-}
+        /* شبكة مربعات الجداول للسكاشن */
+        .schedule-grid-container {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 10px !important; margin-top: 10px !important;
+        }
 
-        /* تأثير التحديد (Active): تفتيح وإطار متوهج دون مسح الخلفية */
-        /* تأثير التحديد بعد إلغاء السطوع نهائياً للحفاظ على الألوان الأصلية */
-.derby-tier-slide.active {
-    filter: none !important; /* إلغاء تفتيح الصورة تماماً */
-    border: 2.5px solid #FFD700 !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
-    transform: scale(1.03);
-}
+        /* المربع الفاتح الطافي */
+        .schedule-neo-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.65);
+            border-radius: 18px; padding: 16px 6px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.2s ease; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+        }
+        .schedule-neo-card:active {
+            transform: scale(0.95); border-color: #8b5cf6;
+        }
+        .schedule-neo-card .card-3d-icon {
+            width: 44px; height: 44px; margin: 0 auto 6px; display: block;
+        }
+        .schedule-neo-card h4 {
+            color: #0f172a !important; font-size: 0.92rem !important; font-weight: 900 !important; margin-bottom: 2px;
+        }
+        .schedule-neo-card p {
+            color: #6b21a8 !important; font-size: 0.72rem !important; font-weight: 800 !important;
+        }
 
+        /* شارات الحالة الملونة */
+        .pill-badge {
+            display: inline-flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 800;
+            padding: 4px 10px; border-radius: 30px;
+        }
+        .badge-subject {
+            background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe;
+        }
+        .badge-timer-active {
+            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+        }
+        .badge-timer-urgent {
+            background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;
+        }
+        .badge-done {
+            background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+        }
 
+        /* أزرار الإجراءات */
+        .btn-action-glow {
+            border: none; border-radius: 12px; padding: 9px 14px; font-size: 0.82rem; font-weight: 800;
+            cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-download-file {
+            background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;
+        }
+        .btn-download-file:hover { background: #e2e8f0; }
+        .btn-check-task {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .btn-check-task.done {
+            background: #dcfce7; color: #15803d; border: 1px solid #86efac; box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -798,7 +782,7 @@
             <h3 style="color: var(--accent-gold); margin-bottom: 6px;">مكافأة الدخول اليومي 🎁</h3>
             <p id="daily-popup-streak" style="font-size: 0.9rem; color: var(--text-sub); font-weight: 700; margin-bottom: 8px;">سلسلة الأيام: 0/7 أيام</p>
             <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 20px;">استمر في تسجيل الدخول يومياً لتضاعف نقاطك وعملاتك وتتصدر الترتيب العام!</p>
-            <button id="btn-claim-daily-popup" class="btn-modal-primary" style="width: 100%;" onclick="claimDailyReward()">استلم الهدية الآن 🚀</button>
+            <button id="btn-claim-daily-popup" class="btn-modal-primary" style="width: 100%;" onclick="claimDailyRewardFast()">استلم الهدية الآن 🚀</button>
         </div>
     </div>
 
@@ -816,44 +800,37 @@
 
             <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">اختر فئة التحدي (اسحب يمين وشمال ↔️):</div>
             
-            <!-- سلايدر كروت الفئات بنظام السحب -->
-           <!-- سلايدر فئات الديربي بصور الأبطال السينمائية الحقيقية -->
-<div class="derby-carousel-container">
-    <!-- 1. Spider-Man -->
-    <div class="derby-tier-slide tier-spiderman active" onclick="selectDerbyTier(10, 15, this)">
-        <div class="derby-tier-title-text">Spider-Man</div>
-        <div class="derby-tier-badge-cost">الرسوم: 10 عملات</div>
-        <div class="derby-tier-badge-reward">🏆 الجائزة: 20 💸 + 15 XP</div>
-    </div>
+            <div class="derby-carousel-container">
+                <div class="derby-tier-slide tier-spiderman active" onclick="selectDerbyTier(10, 15, this)">
+                    <div class="derby-tier-title-text">Spider-Man</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 10 عملات</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 20 💸 + 15 XP</div>
+                </div>
 
-    <!-- 2. Captain America -->
-    <div class="derby-tier-slide tier-captain" onclick="selectDerbyTier(25, 25, this)">
-        <div class="derby-tier-title-text">Captain America</div>
-        <div class="derby-tier-badge-cost">الرسوم: 25 عملة</div>
-        <div class="derby-tier-badge-reward">🏆 الجائزة: 50 💸 + 25 XP</div>
-    </div>
+                <div class="derby-tier-slide tier-captain" onclick="selectDerbyTier(25, 25, this)">
+                    <div class="derby-tier-title-text">Captain America</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 25 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 50 💸 + 25 XP</div>
+                </div>
 
-    <!-- 3. Iron Man -->
-    <div class="derby-tier-slide tier-ironman" onclick="selectDerbyTier(50, 45, this)">
-        <div class="derby-tier-title-text">Iron Man</div>
-        <div class="derby-tier-badge-cost">الرسوم: 50 عملة</div>
-        <div class="derby-tier-badge-reward">🏆 الجائزة: 100 💸 + 45 XP</div>
-    </div>
+                <div class="derby-tier-slide tier-ironman" onclick="selectDerbyTier(50, 45, this)">
+                    <div class="derby-tier-title-text">Iron Man</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 50 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 100 💸 + 45 XP</div>
+                </div>
 
-    <!-- 4. Thor -->
-    <div class="derby-tier-slide tier-thor" onclick="selectDerbyTier(100, 80, this)">
-        <div class="derby-tier-title-text">Thor</div>
-        <div class="derby-tier-badge-cost">الرسوم: 100 عملة</div>
-        <div class="derby-tier-badge-reward">🏆 الجائزة: 200 💸 + 80 XP</div>
-    </div>
+                <div class="derby-tier-slide tier-thor" onclick="selectDerbyTier(100, 80, this)">
+                    <div class="derby-tier-title-text">Thor</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 100 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 200 💸 + 80 XP</div>
+                </div>
 
-    <!-- 5. Doctor Doom -->
-    <div class="derby-tier-slide tier-doom" onclick="selectDerbyTier(250, 150, this)">
-        <div class="derby-tier-title-text">Doctor Doom</div>
-        <div class="derby-tier-badge-cost">الرسوم: 250 عملة</div>
-        <div class="derby-tier-badge-reward">🏆 الجائزة: 500 💸 + 150 XP</div>
-    </div>
-</div>
+                <div class="derby-tier-slide tier-doom" onclick="selectDerbyTier(250, 150, this)">
+                    <div class="derby-tier-title-text">Doctor Doom</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 250 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 500 💸 + 150 XP</div>
+                </div>
+            </div>
 
             <button class="btn-submit" style="margin-bottom: 12px;" onclick="createDerbyRoomAction()">
                 إنشاء غرفة وتحدي زميل ⚔️
@@ -1036,16 +1013,16 @@
             <img src="https://img.icons8.com/fluency/96/goal.png" style="width: 70px; height: 70px; margin-bottom: 8px;" alt="Rules">
             <h3>قواعد تحدي العباقرة</h3>
             <p style="text-align: right; font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px;">
-    يا هلا يا دولي! 🧠🔥<br>
-    اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
-    • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
-    • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
-    • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
-    • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
-    • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
-    <br>
-    <span style="color: var(--accent-highlight); font-weight: 800; display: block; text-align: center;">جاهز للتحدي ولا خايف؟ 😏🔥</span>
-</p>
+                يا هلا يا دولي! 🧠🔥<br>
+                اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
+                • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
+                • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
+                • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
+                • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
+                • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
+                <br>
+                <span style="color: var(--accent-highlight); font-weight: 800; display: block; text-align: center;">جاهز للتحدي ولا خايف؟ 😏🔥</span>
+            </p>
             <div class="modal-buttons">
                 <button class="btn-modal-primary btn-action-quiz" onclick="startActualQuiz()">يلا بينا 🚀</button>
                 <button class="btn-modal-secondary" onclick="closeModal('quiz-rules-modal')">خايف، ارجع 🏃‍♂️</button>
@@ -1115,10 +1092,24 @@
 
             <div class="section-label">الأقسام الرئيسية</div>
             <div class="grid-cards">
+                <!-- كارت المنظم الأكاديمي والمنصة -->
+                <div class="app-card card-primary-glow" onclick="openAcademicHub()">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-emerald);">
+                            <img src="https://img.icons8.com/fluency/96/diploma.png" alt="Academic">
+                        </div>
+                        <div class="card-text">
+                            <h3 style="color: var(--accent-emerald);">المنظم الأكاديمي والمنصة</h3>
+                            <p>التكليفات، الجداول، ومواعيد الامتحانات</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow">←</div>
+                </div>
+
                 <div class="app-card card-primary-glow" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
                     <div class="card-info">
                         <div class="card-icon"><img src="https://img.icons8.com/fluency/96/books.png" alt="Subjects"></div>
-                        <div class="card-text"><h3>مواد الترم الأول <span class="card-badge">متاح الآن</span></h3><p>المحاضرات والسكاشن للفرقة الرابعة</p></div>
+                        <div class="card-text"><h3>مواد الترم الأول</h3><p>المحاضرات والسكاشن للفرقة الرابعة</p></div>
                     </div>
                     <div class="card-arrow">←</div>
                 </div>
@@ -1126,18 +1117,18 @@
                 <div class="app-card card-primary-glow" onclick="openQuizRulesModal()">
                     <div class="card-info">
                         <div class="card-icon"><img src="https://img.icons8.com/fluency/96/brain.png" alt="Quiz"></div>
-                        <div class="card-text"><h3>تحدي المعلومات (فردي) <span class="card-badge">ممتع 🔥</span></h3><p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اختبر معلوماتك العامة وزود نقاطك</p></div>
+                        <div class="card-text"><h3>تحدي المعلومات (فردي)</h3><p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اختبر معلوماتك العامة وزود نقاطك</p></div>
                     </div>
                     <div class="card-arrow">←</div>
                 </div>
 
-                <!-- NEW: 1v1 Derby Battle Card (Replaced 'Soon') -->
+                <!-- 1v1 Derby Battle Card -->
                 <div class="app-card card-derby-glow" onclick="openDerbySetupModal()">
                     <div class="derby-live-tag">مباشر 1v1 🔥</div>
                     <div class="card-info">
                         <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444;"><span style="font-size: 1.6rem;">⚔️</span></div>
                         <div class="card-text">
-                            <h3 style="color: #ffd700;">ديربي الدفعة 1v1 <span class="card-badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">تحدي مباشر</span></h3>
+                            <h3 style="color: #ffd700;">ديربي الدفعة 1v1</h3>
                             <p style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">تحدَّ زميلك برمز الغرفة واربح جوائز قيّمة</p>
                         </div>
                     </div>
@@ -1158,7 +1149,159 @@
             </div>
         </div>
 
-        <!-- NEW: 1v1 Derby Battle Views -->
+        <!-- قسم المنظم الأكاديمي الشامل -->
+        <div id="view-academic-hub" class="view-section">
+            <div class="auth-tabs" style="margin-bottom: 18px;">
+                <button class="auth-tab-btn active" id="tab-acad-tasks" onclick="switchAcademicTab('tasks')">
+                    <img src="https://img.icons8.com/fluency/48/todo-list.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> التكليفات
+                </button>
+                <button class="auth-tab-btn" id="tab-acad-schedules" onclick="switchAcademicTab('schedules')">
+                    <img src="https://img.icons8.com/fluency/48/calendar.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> الجداول
+                </button>
+                <button class="auth-tab-btn" id="tab-acad-exams" onclick="switchAcademicTab('exams')">
+                    <img src="https://img.icons8.com/fluency/48/diploma.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> الامتحانات
+                </button>
+                <button class="auth-tab-btn" id="tab-acad-alerts" onclick="switchAcademicTab('alerts')">
+                    <img src="https://img.icons8.com/fluency/48/megaphone.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> الإعلانات
+                </button>
+            </div>
+
+            <!-- 1. تبويب التكليفات -->
+            <div id="acad-sub-tasks">
+                <div class="section-label">📋 التكليفات والمهام المطلوبة</div>
+                <div id="acad-tasks-list">
+                    <p style="text-align: center; color: var(--text-sub); margin-top: 20px;">جاري تحميل التكليفات...</p>
+                </div>
+            </div>
+
+            <!-- 2. تبويب الجداول بنظام المربعات الزجاجية المدمجة -->
+            <div id="acad-sub-schedules" style="display: none;">
+                <div class="section-label">🗓️ جداول السكاشن الأسبوعية (الفرقة الرابعة)</div>
+                <div class="schedule-grid-container">
+                    <div class="schedule-neo-card" onclick="viewScheduleInApp('sec1', 'سكشن 1')">
+                        <img src="https://img.icons8.com/fluency/96/calendar.png" class="card-3d-icon" alt="Section 1">
+                        <h4>سكشن 1</h4>
+                        <p>عرض الجدول ↗</p>
+                    </div>
+                    <div class="schedule-neo-card" onclick="viewScheduleInApp('sec2', 'سكشن 2')">
+                        <img src="https://img.icons8.com/fluency/96/calendar.png" class="card-3d-icon" alt="Section 2">
+                        <h4>سكشن 2</h4>
+                        <p>عرض الجدول ↗</p>
+                    </div>
+                    <div class="schedule-neo-card" onclick="viewScheduleInApp('sec3', 'سكشن 3')">
+                        <img src="https://img.icons8.com/fluency/96/calendar.png" class="card-3d-icon" alt="Section 3">
+                        <h4>سكشن 3</h4>
+                        <p>عرض الجدول ↗</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. تبويب جداول الامتحانات -->
+            <div id="acad-sub-exams" style="display: none;">
+                <div class="section-label">🎯 مواعيد وجداول الاختبارات الرسمية</div>
+                <div id="acad-exams-list">
+                    <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
+                        <img src="https://img.icons8.com/fluency/96/test-passed.png" style="width: 55px; height: 55px; margin-bottom: 10px;" alt="Exams">
+                        <h4>جداول الامتحانات</h4>
+                        <p style="font-size: 0.85rem;">سيتم نشر جداول الميدتيرم والعملي والفاينال فور اعتمادها رسميًا ⏳</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. تبويب إعلانات الكلية -->
+            <div id="acad-sub-alerts" style="display: none;">
+                <div class="section-label">📢 القرارات والتنبيهات الرسمية</div>
+                <div id="acad-alerts-list">
+                    <p style="text-align: center; color: var(--text-sub); margin-top: 20px;">لا توجد إعلانات حالياً.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- واجهة عرض الجدول المدمج داخل التطبيق -->
+        <div id="view-schedule-detail" class="view-section">
+            <div class="auth-card" style="text-align: center; padding: 24px 16px;">
+                <div class="section-label" id="schedule-view-title" style="justify-content: center; margin-bottom: 16px;">جدول السكشن</div>
+                <div id="schedule-viewer-container" style="min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-primary); border-radius: 16px; padding: 14px; border: 1px dashed var(--border-card); margin-bottom: 16px;">
+                    <img src="https://img.icons8.com/fluency/96/calendar.png" style="width: 65px; height: 65px; margin-bottom: 10px;">
+                    <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
+                    <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسميًا هنا فور اعتماده ⏳</p>
+                </div>
+                <button class="btn-submit" onclick="navigateBack()">الرجوع للمنظم ⬅️</button>
+            </div>
+        </div>
+
+        <!-- واجهة قاعة المشاهير (Hall of Fame 🏛️) -->
+        <div id="view-hall-of-fame" class="view-section">
+            <div class="auth-card" style="text-align: center; padding: 20px 14px; margin-bottom: 18px; border-color: var(--accent-gold);">
+                <img src="https://img.icons8.com/fluency/96/trophy.png" style="width: 64px; height: 64px; margin-bottom: 8px;" alt="Trophy">
+                <h3 style="color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 4px;">قاعة المشاهير والأساطير 🏛️</h3>
+                <p style="font-size: 0.82rem; color: var(--text-sub);">لوحة الشرف لأفضل وأبرز طلاب الدفعة في كافة المجالات</p>
+            </div>
+
+            <div class="fame-grid" id="fame-cards-container">
+                <!-- 1. إمبراطور النقاط -->
+                <div class="fame-card">
+                    <div class="fame-badge-title">👑 إمبراطور النقاط</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p1-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar frame-gold">
+                    </div>
+                    <div id="fame-p1-name" class="fame-user-name">-</div>
+                    <div id="fame-p1-stat" class="fame-stat-val">0 XP</div>
+                </div>
+
+                <!-- 2. بطل الاستمرارية -->
+                <div class="fame-card">
+                    <div class="fame-badge-title" style="color: #f97316; background: rgba(249, 115, 22, 0.15);">🔥 بطل الاستمرارية</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p2-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar frame-fire">
+                    </div>
+                    <div id="fame-p2-name" class="fame-user-name">-</div>
+                    <div id="fame-p2-stat" class="fame-stat-val" style="color: #f97316;">0 يوم 🔥</div>
+                </div>
+
+                <!-- 3. فارس التحديات -->
+                <div class="fame-card">
+                    <div class="fame-badge-title" style="color: #a855f7; background: rgba(168, 85, 247, 0.15);">⚡ فارس التحديات</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p3-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar frame-cosmic">
+                    </div>
+                    <div id="fame-p3-name" class="fame-user-name">-</div>
+                    <div id="fame-p3-stat" class="fame-stat-val" style="color: #a855f7;">0 إجابة صحيحة</div>
+                </div>
+
+                <!-- 4. القناص الخارق -->
+                <div class="fame-card">
+                    <div class="fame-badge-title" style="color: #00f0ff; background: rgba(0, 240, 255, 0.15);">🎯 القناص الخارق</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p4-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar frame-cyber">
+                    </div>
+                    <div id="fame-p4-name" class="fame-user-name">-</div>
+                    <div id="fame-p4-stat" class="fame-stat-val" style="color: #00f0ff;">دقة 0%</div>
+                </div>
+
+                <!-- 5. جلاد الديربي -->
+                <div class="fame-card">
+                    <div class="fame-badge-title" style="color: #ef4444; background: rgba(239, 68, 68, 0.15);">⚔️ جلاد الديربي</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p5-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar" style="border-color: #ef4444;">
+                    </div>
+                    <div id="fame-p5-name" class="fame-user-name">-</div>
+                    <div id="fame-p5-stat" class="fame-stat-val" style="color: #ef4444;">0 فوز 1v1</div>
+                </div>
+
+                <!-- 6. مليونير الدفعة -->
+                <div class="fame-card">
+                    <div class="fame-badge-title" style="color: #ffd700; background: rgba(255, 215, 0, 0.15);">💰 مليونير الدفعة</div>
+                    <div class="avatar-box-wrapper" style="width: 50px; height: 50px; margin: 4px auto 0;">
+                        <img id="fame-p6-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar frame-gold">
+                    </div>
+                    <div id="fame-p6-name" class="fame-user-name">-</div>
+                    <div id="fame-p6-stat" class="fame-stat-val" style="color: #ffd700;">0 عملة 💸</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1v1 Derby Battle Views -->
         <div id="view-battle-lobby" class="view-section">
             <div class="auth-card" style="text-align: center; padding: 25px 20px;">
                 <div style="font-size: 2.5rem; margin-bottom: 8px;">⚔️</div>
@@ -1339,11 +1482,8 @@
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- شاشة الملف الشخصي والمتجر المحدثة -->
-        <!-- ============================================== -->
+        <!-- شاشة الملف الشخصي والمتجر -->
         <div id="view-profile" class="view-section">
-            
             <div class="auth-tabs" style="margin-bottom: 15px;">
                 <button class="auth-tab-btn active" id="tab-prof-main" onclick="switchProfileTab('main')">البروفايل</button>
                 <button class="auth-tab-btn" id="tab-prof-store" onclick="switchProfileTab('store')">المتجر 🛍️</button>
@@ -1414,7 +1554,6 @@
                     <p style="color: var(--text-sub); font-size: 0.9rem;">سيتم إضافة المهام الخاصة بالإنجازات والألقاب قريباً بمجرد اكتمال المحتوى الدراسي. ترقبوا! 🚀</p>
                 </div>
             </div>
-
         </div>
 
         <!-- شاشة تعديل الملف الشخصي -->
@@ -1627,6 +1766,7 @@
         <div id="view-admin-panel" class="view-section">
             <div class="auth-tabs">
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
+                <button class="auth-tab-btn" id="tab-admin-academic" onclick="switchAdminTab('academic')">المنظم الأكاديمي 🎓</button>
                 <button class="auth-tab-btn" id="tab-admin-store" onclick="switchAdminTab('store')">إدارة المتجر 🏷️</button>
                 <button class="auth-tab-btn" id="tab-admin-tickets" onclick="switchAdminTab('tickets')">الشكاوى والمقترحات</button>
                 <button class="auth-tab-btn" id="tab-admin-broadcast" onclick="switchAdminTab('broadcast')">رسائل البث</button>
@@ -1642,6 +1782,42 @@
                 </div>
                 <div class="section-label">قائمة الطلاب المسجلين</div>
                 <div id="admin-users-list" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- تبويب إدارة المنظم الأكاديمي للأدمن -->
+            <div id="admin-section-academic" style="display: none;">
+                <!-- إضافة تكليف جديد -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة تكليف / تاسك جديد 📝</h3>
+                    <div class="form-group"><label>اسم المادة</label><input type="text" id="adm-task-subject" class="form-input" placeholder="مثال: كيمياء ألبان"></div>
+                    <div class="form-group"><label>عنوان وتفاصيل التكليف</label><input type="text" id="adm-task-title" class="form-input" placeholder="مثال: تقرير السكشن الأول عن تقدير الحموضة"></div>
+                    <div class="form-group"><label>تاريخ ووقت انتهاء التسليم (Deadline)</label><input type="datetime-local" id="adm-task-deadline" class="form-input" style="color-scheme: dark;"></div>
+                    <div class="form-group"><label>رابط ملف التكليف (Google Drive - اختياري)</label><input type="url" id="adm-task-url" class="form-input" placeholder="https://drive.google.com/..." dir="ltr"></div>
+                    <button class="btn-submit" onclick="adminPublishTask()">نشر التكليف للدفعة 🚀</button>
+                </div>
+
+                <!-- إضافة إعلان جديد للكلية -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">نشر إعلان / قرار رسمي 📢</h3>
+                    <div class="form-group"><label>عنوان التنبيه</label><input type="text" id="adm-alert-title" class="form-input" placeholder="مثال: نقل موعد محاضرة تكنولوجيا السكر"></div>
+                    <div class="form-group"><label>نص التنبيه بالتفصيل</label><textarea id="adm-alert-body" class="form-input" rows="3" style="resize: none;" placeholder="اكتب نص الإعلان هنا..."></textarea></div>
+                    <div class="form-group"><label>رابط مرفق إضافي (اختياري)</label><input type="url" id="adm-alert-url" class="form-input" placeholder="رابط خارجي أو ملف" dir="ltr"></div>
+                    <button class="btn-submit" onclick="adminPublishCollegeAlert()">نشر الإعلان فوراً 📢</button>
+                </div>
+
+                <!-- تحديث روابط جداول السكاشن -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">تحديث روابط الجداول 🗓️</h3>
+                    <div class="form-group"><label>اختر السكشن</label>
+                        <select id="adm-schedule-sec" class="form-input" style="background: var(--bg-primary);">
+                            <option value="sec1">جدول سكشن 1</option>
+                            <option value="sec2">جدول سكشن 2</option>
+                            <option value="sec3">جدول سكشن 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>رابط صورة/ملف الجدول</label><input type="url" id="adm-schedule-url" class="form-input" dir="ltr" placeholder="رابط الصورة أو الملف المباشر"></div>
+                    <button class="btn-submit" onclick="adminSaveScheduleUrl()">تحديث الجدول 💾</button>
+                </div>
             </div>
 
             <!-- تبويب إدارة أسعار وعروض المتجر -->
@@ -1802,8 +1978,19 @@
             </div>
         </div>
 
-        <!-- لوحة المتصدرين المحسنة -->
+        <!-- لوحة المتصدرين المحسنة مع زر قاعة المشاهير -->
         <div id="view-leaderboard" class="view-section">
+            <div class="fame-banner-btn" onclick="openHallOfFame()">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.8rem;">🏛️</span>
+                    <div style="text-align: right;">
+                        <h4 style="color: var(--accent-gold); font-size: 1rem; margin-bottom: 2px;">قاعة المشاهير والأساطير</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-sub); margin: 0;">لوحة شرف أفضل 6 طلاب في الدفعة</p>
+                    </div>
+                </div>
+                <div style="color: var(--accent-gold); font-size: 1.4rem; font-weight: bold;">←</div>
+            </div>
+
             <div class="section-label">أبطال الدفعة (Top Rankings)</div>
             
             <div id="personal-rank-box" class="personal-rank-card" style="display: none;">
@@ -1908,6 +2095,7 @@
             <span>البروفايل</span>
         </a>
     </nav>
+
 <script>
 function shuffleArray(array) {
     const arr = [...array];
@@ -1933,6 +2121,317 @@ function shuffleArray(array) {
     }
     const db = firebase.database();
     const auth = firebase.auth();
+
+    // ================= نظام التحديث التلقائي وتخطي الكاش =================
+    const CURRENT_APP_VERSION = "1.0.1";
+
+    db.ref('app_version').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const cloudVersion = snapshot.val();
+            if (cloudVersion !== CURRENT_APP_VERSION) {
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+                window.location.reload(true);
+            }
+        }
+    });
+
+    // ================= دوال المنظم الأكاديمي والمنصة =================
+    function openAcademicHub() {
+        playClickSound();
+        navigateTo('view-academic-hub', 'المنظم الأكاديمي', 'المنصة والتكليفات والجداول');
+        loadAcademicTasks();
+    }
+
+    function switchAcademicTab(tab) {
+        playClickSound();
+        ['tasks', 'schedules', 'exams', 'alerts'].forEach(t => {
+            const b = document.getElementById(`tab-acad-${t}`);
+            const s = document.getElementById(`acad-sub-${t}`);
+            if (b) b.classList.remove('active');
+            if (s) s.style.display = 'none';
+        });
+        document.getElementById(`tab-acad-${tab}`).classList.add('active');
+        document.getElementById(`acad-sub-${tab}`).style.display = 'block';
+
+        if (tab === 'tasks') loadAcademicTasks();
+        if (tab === 'alerts') loadAcademicAlerts();
+    }
+
+    function loadAcademicTasks() {
+        const list = document.getElementById('acad-tasks-list');
+        db.ref('academic_tasks').on('value', (snap) => {
+            if (!snap.exists()) {
+                list.innerHTML = `
+                <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
+                    <img src="https://img.icons8.com/fluency/96/ok.png" style="width: 55px; height: 55px; margin-bottom: 8px;" alt="Empty">
+                    <p style="color: #0f172a; font-weight: 800; font-size: 0.95rem;">لا توجد تكليفات مطلوبة حالياً 🎉</p>
+                </div>`;
+                return;
+            }
+            let html = '';
+            const myCompletedTasks = (currentUser && currentUser.completed_tasks) ? currentUser.completed_tasks : JSON.parse(localStorage.getItem('completed_tasks_' + (currentUser ? currentUser.phone : 'guest')) || '[]');
+
+            snap.forEach(child => {
+                const task = child.val();
+                const taskId = child.key;
+                const isDone = myCompletedTasks.includes(taskId);
+
+                const deadlineDate = new Date(task.deadline);
+                const now = new Date();
+                const diffHours = Math.round((deadlineDate - now) / (1000 * 60 * 60));
+                
+                let deadlineText = diffHours > 0 ? `⏳ متبقي: ${Math.floor(diffHours / 24)} يوم و ${diffHours % 24} س` : 'انتهى موعد التسليم ⏰';
+                let isUrgent = diffHours > 0 && diffHours <= 48;
+
+                let badgeClass = isDone ? 'pill-badge badge-done' : (isUrgent ? 'pill-badge badge-timer-urgent' : 'pill-badge badge-timer-active');
+                let badgeText = isDone ? 'تم التسليم بنجاح ✔️' : deadlineText;
+
+                html += `
+                <div class="acad-glass-card ${isDone ? 'completed' : ''}" id="task-${taskId}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span class="pill-badge badge-subject">
+                            <img src="https://img.icons8.com/fluency/48/open-book.png" style="width: 14px;"> ${task.subject}
+                        </span>
+                        <span class="${badgeClass}">${badgeText}</span>
+                    </div>
+                    <h4 style="font-size: 0.96rem; margin-bottom: 12px; line-height: 1.5;">${task.title}</h4>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        ${task.url ? `
+                            <button class="btn-action-glow btn-download-file" onclick="window.open('${task.url}', '_blank')">
+                                <img src="https://img.icons8.com/fluency/48/google-drive--v2.png" style="width: 16px;"> تحميل الملف
+                            </button>` : ''}
+                        <button class="btn-action-glow btn-check-task ${isDone ? 'done' : ''}" style="flex: 1;" onclick="toggleTaskComplete('${taskId}')">
+                            <img src="https://img.icons8.com/fluency/48/${isDone ? 'checked-checkbox.png' : 'checkmark--v1.png'}" style="width: 16px;">
+                            ${isDone ? 'تم الإنجاز بنجاح' : 'تحديد كـ مكتمل'}
+                        </button>
+                        ${currentUser && currentUser.phone === '01061032507' ? `
+                            <button class="admin-action-btn danger" style="padding: 7px 10px; border-radius: 10px;" onclick="adminDeleteTask('${taskId}')">
+                                <img src="https://img.icons8.com/fluency/48/delete-trash.png" style="width: 16px;">
+                            </button>` : ''}
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        });
+    }
+
+    function toggleTaskComplete(taskId) {
+        playClickSound();
+        if (!currentUser) return;
+        
+        let completed = currentUser.completed_tasks || [];
+        if (completed.includes(taskId)) {
+            completed = completed.filter(id => id !== taskId);
+            showTopToast('تم إلغاء تحديد التكليف', 'info');
+        } else {
+            completed.push(taskId);
+            playSuccessSound();
+            shootStars();
+            showTopToast('عاش يا بطل! تم إنجاز المهمة بنجاح ✅', 'success');
+        }
+        
+        currentUser.completed_tasks = completed;
+        localStorage.setItem('completed_tasks_' + currentUser.phone, JSON.stringify(completed));
+        db.ref('users/' + currentUser.phone + '/completed_tasks').set(completed);
+        loadAcademicTasks();
+    }
+
+    function viewScheduleInApp(secKey, secName) {
+        playClickSound();
+        document.getElementById('schedule-view-title').innerText = `جدول ${secName}`;
+        const container = document.getElementById('schedule-viewer-container');
+        
+        container.innerHTML = `
+            <img src="https://img.icons8.com/fluency/96/sand-timer.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
+            <p style="color: var(--text-sub); font-size: 0.85rem;">جاري فحص حالة الجدول...</p>
+        `;
+        
+        navigateTo('view-schedule-detail', `جدول ${secName}`, 'الجدول الأسبوعي المعتمد');
+
+        db.ref('schedules/' + secKey).once('value').then(snap => {
+            if (snap.exists() && snap.val()) {
+                const imgUrl = snap.val();
+                container.innerHTML = `
+                    <img src="${imgUrl}" style="width: 100%; border-radius: 12px; max-height: 70vh; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" alt="${secName}" onerror="this.onerror=null; this.parentElement.innerHTML='<p style=\'color:#ef4444; font-weight:bold;\'>حدث خطأ أثناء تحميل صورة الجدول</p>';">
+                    <button class="btn-action-glow btn-download-file" style="margin-top: 12px; width: 100%;" onclick="window.open('${imgUrl}', '_blank')">🔍 عرض الصورة بحجم كامل</button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <img src="https://img.icons8.com/fluency/96/calendar.png" style="width: 65px; height: 65px; margin-bottom: 10px;">
+                    <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
+                    <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسمياً هنا فور اعتماده ⏳</p>
+                `;
+            }
+        });
+    }
+
+    function loadAcademicAlerts() {
+        const list = document.getElementById('acad-alerts-list');
+        db.ref('college_alerts').on('value', snap => {
+            if (!snap.exists()) {
+                list.innerHTML = `
+                <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
+                    <img src="https://img.icons8.com/fluency/96/megaphone.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
+                    <p style="color: var(--text-sub); font-size: 0.85rem;">لا توجد إعلانات رسمية حالياً.</p>
+                </div>`;
+                return;
+            }
+            let html = '';
+            snap.forEach(c => {
+                const a = c.val();
+                const alertId = c.key;
+                html += `
+                <div class="acad-glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span class="pill-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <img src="https://img.icons8.com/fluency/48/high-priority.png" style="width: 14px;"> تنبيه رسمي
+                        </span>
+                        <span style="font-size: 0.72rem; color: #475569; font-weight: 700;">${new Date(a.date).toLocaleDateString('ar-EG')}</span>
+                    </div>
+                    <h4 style="color: #6b21a8; font-size: 0.98rem; margin-bottom: 6px;">${a.title}</h4>
+                    <p style="font-size: 0.86rem; color: #1e293b; line-height: 1.6; margin-bottom: 10px;">${a.body}</p>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        ${a.url ? `
+                            <button class="btn-action-glow btn-download-file" style="flex: 1;" onclick="window.open('${a.url}', '_blank')">
+                                <img src="https://img.icons8.com/fluency/48/link.png" style="width: 16px;"> فتح الرابط / المرفق
+                            </button>` : ''}
+                        ${currentUser && currentUser.phone === '01061032507' ? `
+                            <button class="admin-action-btn danger" style="padding: 7px 10px; border-radius: 10px;" onclick="adminDeleteCollegeAlert('${alertId}')">
+                                <img src="https://img.icons8.com/fluency/48/delete-trash.png" style="width: 16px;">
+                            </button>` : ''}
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        });
+    }
+
+    function adminPublishTask() {
+        playClickSound();
+        const subject = document.getElementById('adm-task-subject').value.trim();
+        const title = document.getElementById('adm-task-title').value.trim();
+        const deadline = document.getElementById('adm-task-deadline').value;
+        const url = document.getElementById('adm-task-url').value.trim();
+
+        if (!subject || !title || !deadline) {
+            showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
+            return;
+        }
+        db.ref('academic_tasks').push({ subject, title, deadline, url, createdAt: Date.now() }).then(() => {
+            showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
+            document.getElementById('adm-task-subject').value = '';
+            document.getElementById('adm-task-title').value = '';
+            document.getElementById('adm-task-deadline').value = '';
+            document.getElementById('adm-task-url').value = '';
+        });
+    }
+
+    function adminDeleteTask(id) {
+        if (confirm('هل تريد حذف هذا التكليف نهائياً؟')) {
+            db.ref('academic_tasks/' + id).remove().then(() => showTopToast('تم حذف التكليف بنجاح.'));
+        }
+    }
+
+    function adminPublishCollegeAlert() {
+        playClickSound();
+        const title = document.getElementById('adm-alert-title').value.trim();
+        const body = document.getElementById('adm-alert-body').value.trim();
+        const url = document.getElementById('adm-alert-url').value.trim();
+
+        if (!title || !body) {
+            showTopToast('يرجى كتابة العنوان والتفاصيل!', 'error');
+            return;
+        }
+        db.ref('college_alerts').push({ title, body, url, date: Date.now() }).then(() => {
+            showTopToast('تم نشر التنبيه بنجاح! 📢', 'success');
+            document.getElementById('adm-alert-title').value = '';
+            document.getElementById('adm-alert-body').value = '';
+            document.getElementById('adm-alert-url').value = '';
+        });
+    }
+
+    function adminDeleteCollegeAlert(alertId) {
+        if (confirm('هل أنت متأكد من رغبتك في حذف هذا الإعلان نهائياً؟')) {
+            db.ref('college_alerts/' + alertId).remove().then(() => {
+                showTopToast('تم حذف الإعلان بنجاح 🗑️', 'info');
+            });
+        }
+    }
+
+    function adminSaveScheduleUrl() {
+        playClickSound();
+        const sec = document.getElementById('adm-schedule-sec').value;
+        const url = document.getElementById('adm-schedule-url').value.trim();
+        if (!url) {
+            showTopToast('يرجى إدخال الرابط أولاً!', 'error');
+            return;
+        }
+        db.ref('schedules/' + sec).set(url).then(() => {
+            showTopToast('تم حفظ وتحديث الجدول بنجاح! 🗓️', 'success');
+            document.getElementById('adm-schedule-url').value = '';
+        });
+    }
+
+    // ================= قاعة المشاهير (Hall of Fame) =================
+    function openHallOfFame() {
+        playClickSound();
+        navigateTo('view-hall-of-fame', 'قاعة المشاهير', 'أبرز 6 أبطال في الدفعة');
+        loadHallOfFameData();
+    }
+
+    function loadHallOfFameData() {
+        db.ref('users').once('value').then(snapshot => {
+            let users = [];
+            snapshot.forEach(c => {
+                const u = c.val();
+                u.phone = c.key;
+                u.xp = u.xp || u.points || 0;
+                u.streak = u.daily_streak || 0;
+                u.correct = u.quizCorrect || 0;
+                u.played = u.quizPlayed || 0;
+                u.coins = u.coins || 0;
+                u.derbyWins = u.derby_wins || 0;
+                u.accuracy = (u.played * 5 > 0) ? Math.round((u.correct / (u.played * 5)) * 100) : 0;
+                users.push(u);
+            });
+
+            if (users.length === 0) return;
+
+            let topXp = [...users].sort((a, b) => b.xp - a.xp)[0];
+            setFameCard(1, topXp, `${topXp.xp} XP`);
+
+            let topStreak = [...users].sort((a, b) => b.streak - a.streak)[0];
+            setFameCard(2, topStreak, `${topStreak.streak} يوم متتالي 🔥`);
+
+            let topQuiz = [...users].sort((a, b) => b.correct - a.correct)[0];
+            setFameCard(3, topQuiz, `${topQuiz.correct} إجابة صحيحة`);
+
+            let qualifiedForAccuracy = users.filter(u => (u.played || 0) >= 3);
+            let topAcc = qualifiedForAccuracy.length > 0 ? qualifiedForAccuracy.sort((a, b) => b.accuracy - a.accuracy)[0] : users[0];
+            setFameCard(4, topAcc, `دقة ${topAcc.accuracy}% 🎯`);
+
+            let topDerby = [...users].sort((a, b) => (b.derbyWins || 0) - (a.derbyWins || 0))[0];
+            setFameCard(5, topDerby, `${topDerby.derbyWins || 0} فوز ديربي ⚔️`);
+
+            let topCoins = [...users].sort((a, b) => (b.coins || 0) - (a.coins || 0))[0];
+            setFameCard(6, topCoins, `${topCoins.coins || 0} عملة 💸`);
+        });
+    }
+
+    function setFameCard(index, user, statText) {
+        if (!user) return;
+        const nameEl = document.getElementById(`fame-p${index}-name`);
+        const statEl = document.getElementById(`fame-p${index}-stat`);
+        const avatarEl = document.getElementById(`fame-p${index}-avatar`);
+
+        if (nameEl) nameEl.innerText = user.name.split(' ').slice(0, 2).join(' ');
+        if (statEl) statEl.innerText = statText;
+        if (avatarEl) avatarEl.src = user.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+    }
 
     // ================= إعدادات المتجر =================
     const defaultStorePrices = {
@@ -2078,40 +2577,41 @@ function shuffleArray(array) {
         }
         setTimeout(() => container.remove(), 3200);
     }
-function openThemeModal() {
-    playClickSound();
-    updateThemeSelectorUI();
-    openModal('modal-theme-selector');
-}
 
-function selectThemeMode(mode) {
-    playClickSound();
-    setAppTheme(mode);
-    updateThemeSelectorUI();
-    showTopToast('تم تغيير مظهر التطبيق بنجاح ✨', 'success');
-    setTimeout(() => closeModal('modal-theme-selector'), 300);
-}
+    function openThemeModal() {
+        playClickSound();
+        updateThemeSelectorUI();
+        openModal('modal-theme-selector');
+    }
 
-function updateThemeSelectorUI() {
-    const currentPref = localStorage.getItem('app-theme') || 'dark';
-    ['dark', 'light', 'auto'].forEach(m => {
-        const btn = document.getElementById(`theme-btn-${m}`);
-        const check = document.getElementById(`check-${m}`);
-        if (btn) btn.classList.toggle('active', m === currentPref);
-        if (check) check.innerText = (m === currentPref) ? '✓' : '';
-    });
-}
+    function selectThemeMode(mode) {
+        playClickSound();
+        setAppTheme(mode);
+        updateThemeSelectorUI();
+        showTopToast('تم تغيير مظهر التطبيق بنجاح ✨', 'success');
+        setTimeout(() => closeModal('modal-theme-selector'), 300);
+    }
 
-function closeBroadcastBanner() {
-    playClickSound();
-    const banner = document.getElementById('broadcast-msg-modal');
-    if (banner) banner.classList.remove('show');
-    db.ref('broadcast_message').once('value').then(snap => {
-        if (snap.exists() && snap.val().id) {
-            localStorage.setItem('last_seen_broadcast', snap.val().id);
-        }
-    });
-}
+    function updateThemeSelectorUI() {
+        const currentPref = localStorage.getItem('app-theme') || 'dark';
+        ['dark', 'light', 'auto'].forEach(m => {
+            const btn = document.getElementById(`theme-btn-${m}`);
+            const check = document.getElementById(`check-${m}`);
+            if (btn) btn.classList.toggle('active', m === currentPref);
+            if (check) check.innerText = (m === currentPref) ? '✓' : '';
+        });
+    }
+
+    function closeBroadcastBanner() {
+        playClickSound();
+        const banner = document.getElementById('broadcast-msg-modal');
+        if (banner) banner.classList.remove('show');
+        db.ref('broadcast_message').once('value').then(snap => {
+            if (snap.exists() && snap.val().id) {
+                localStorage.setItem('last_seen_broadcast', snap.val().id);
+            }
+        });
+    }
 
     // ================= المظهر =================
     function toggleTheme() {
@@ -2263,45 +2763,45 @@ function closeBroadcastBanner() {
     function closeSidebar() { playBackSound(); document.getElementById('sidebar-overlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
 
     function openDeveloperModal() { playClickSound(); document.getElementById('developer-modal').classList.add('show'); }
-    const DAILY_QUIZ_LIMIT = 10; // الحد الأقصى للجولات يومياً
+    const DAILY_QUIZ_LIMIT = 10;
 
-function openQuizRulesModal() {
-    playClickSound();
-    if (!currentUser) {
-        showTopToast('يرجى تسجيل الدخول أولاً للمشاركة في التحدي!', 'error');
-        return;
+    function openQuizRulesModal() {
+        playClickSound();
+        if (!currentUser) {
+            showTopToast('يرجى تسجيل الدخول أولاً للمشاركة في التحدي!', 'error');
+            return;
+        }
+
+        const todayDate = new Date().toLocaleDateString('en-CA');
+        const lastQuizDate = currentUser.last_quiz_date || '';
+        const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+
+        if (quizCountToday >= DAILY_QUIZ_LIMIT) {
+            showTopToast(`لقد استنفدت الحد اليومي (${DAILY_QUIZ_LIMIT} محاولات). عد غداً! ⏳`, 'error');
+            return;
+        }
+
+        const remaining = DAILY_QUIZ_LIMIT - quizCountToday;
+        const rulesDesc = document.querySelector('#quiz-rules-modal p');
+        if (rulesDesc) {
+            rulesDesc.innerHTML = `
+        يا هلا يا دولي! 🧠🔥<br>
+        اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
+        • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
+        • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
+        • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
+        • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
+        • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
+        <br>
+        <div style="color: var(--accent-highlight); font-weight: 800; font-size: 1rem; text-align: center; margin: 8px 0;">
+            جاهز للتحدي ولا خايف؟ 😏🔥
+        </div>
+        <span style="color: var(--accent-gold); font-weight: 800; display: block; text-align: center;">المحاولات المتبقية لك اليوم: ${remaining} من ${DAILY_QUIZ_LIMIT} 🎯</span>
+    `;
+        }
+
+        document.getElementById('quiz-rules-modal').classList.add('show');
     }
-
-    const todayDate = new Date().toLocaleDateString('en-CA');
-    const lastQuizDate = currentUser.last_quiz_date || '';
-    const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
-
-    if (quizCountToday >= DAILY_QUIZ_LIMIT) {
-        showTopToast(`لقد استنفدت الحد اليومي (${DAILY_QUIZ_LIMIT} محاولات). عد غداً! ⏳`, 'error');
-        return;
-    }
-
-    const remaining = DAILY_QUIZ_LIMIT - quizCountToday;
-    const rulesDesc = document.querySelector('#quiz-rules-modal p');
-    if (rulesDesc) {
-        rulesDesc.innerHTML = `
-    يا هلا يا دولي! 🧠🔥<br>
-    اللعبة مكونة من <b>5 أسئلة عشوائية</b> من بنك الأسئلة الشامل:<br>
-    • كل إجابة <b>صحيحة</b>: +5 نقاط خبرة و +2 عملات ⭐<br>
-    • كل إجابة <b>غلط</b>: -5 نقاط خبرة ❌<br>
-    • <b>الوقت:</b> معاك 15 ثانية بس لكل سؤال! ⏱️<br>
-    • 5/5 صح: هتاخد <b>+10 بونص و +5 عملات</b> 🏆<br>
-    • 0/5 (كلهم غلط): هيتخصم منك <b>-10 نقاط عقاب</b> ⚠️<br>
-    <br>
-    <div style="color: var(--accent-highlight); font-weight: 800; font-size: 1rem; text-align: center; margin: 8px 0;">
-        جاهز للتحدي ولا خايف؟ 😏🔥
-    </div>
-    <span style="color: var(--accent-gold); font-weight: 800; display: block; text-align: center;">المحاولات المتبقية لك اليوم: ${remaining} من ${DAILY_QUIZ_LIMIT} 🎯</span>
-`;
-    }
-
-    document.getElementById('quiz-rules-modal').classList.add('show');
-}
     function closeModal(id) { playBackSound(); document.getElementById(id).classList.remove('show'); }
     function openModal(id) { document.getElementById(id).classList.add('show'); }
 
@@ -2353,7 +2853,6 @@ function openQuizRulesModal() {
         updateSoundUI();
         checkAppEntryFlow();
         checkBroadcastAlerts();
-        checkDailyLogin();
     });
 
     function checkAppEntryFlow() {
@@ -2377,6 +2876,9 @@ function openQuizRulesModal() {
                     if (currentUser.coins === undefined) currentUser.coins = 0;
                     if (currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
                     if (currentUser.quizCorrect === undefined) currentUser.quizCorrect = 0;
+                    if (currentUser.daily_streak === undefined) currentUser.daily_streak = 0;
+                    if (currentUser.total_login_days === undefined) currentUser.total_login_days = 0;
+                    if (currentUser.derby_wins === undefined) currentUser.derby_wins = 0;
                     if (currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
                     if (currentUser.hintTimeCount === undefined) currentUser.hintTimeCount = 0;
                     if (currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
@@ -2392,6 +2894,7 @@ function openQuizRulesModal() {
                     if (currentUser.has_glow_name === undefined) currentUser.has_glow_name = false;
                     if (currentUser.owned_bio === undefined) currentUser.owned_bio = false;
                     if (currentUser.can_edit_bio === undefined) currentUser.can_edit_bio = false;
+                    if (currentUser.completed_tasks === undefined) currentUser.completed_tasks = [];
 
                     localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
@@ -2402,6 +2905,8 @@ function openQuizRulesModal() {
                     if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                         goHomeDirectly();
                     }
+
+                    checkDailyLoginCloudSync();
                 } else {
                     logoutUserLocally();
                     showAuthGateDirectly();
@@ -2442,28 +2947,28 @@ function openQuizRulesModal() {
         updateHeader();
     }
 
-    // ================= تسجيل الدخول اليومي =================
-    function checkDailyLogin() {
-        if(!currentUser) return;
+    // ================= تسجيل الدخول اليومي السحابي السريع =================
+    function checkDailyLoginCloudSync() {
+        if (!currentUser) return;
         
         const todayDate = new Date().toLocaleDateString('en-CA');
-        let lastLoginStr = localStorage.getItem('last_daily_login_date');
-        let currentStreak = parseInt(localStorage.getItem('daily_login_streak') || '0');
+        const lastLoginDate = currentUser.last_login_date || '';
+        let currentStreak = currentUser.daily_streak || 0;
 
-        if (lastLoginStr !== todayDate) {
-            if(lastLoginStr) {
-                const lastDate = new Date(lastLoginStr);
+        if (lastLoginDate !== todayDate) {
+            if (lastLoginDate) {
+                const lastDate = new Date(lastLoginDate);
                 const today = new Date(todayDate);
                 const diffTime = Math.abs(today - lastDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                 
-                if(diffDays > 1) {
+                if (diffDays > 1) {
                     if (currentUser.has_streak_freeze) {
                         db.ref('users/' + currentUser.phone + '/has_streak_freeze').set(false);
                         showTopToast('تم استخدام "تجميد السلسلة" وحماية أيامك المتتالية بنجاح! 🛡️', 'info');
                     } else {
                         currentStreak = 0;
-                        localStorage.setItem('daily_login_streak', '0');
+                        db.ref('users/' + currentUser.phone + '/daily_streak').set(0);
                     }
                 }
             }
@@ -2484,72 +2989,59 @@ function openQuizRulesModal() {
         }
     }
 
-    let isClaimingReward = false;
-
-    function claimDailyReward() {
-        if (!currentUser || isClaimingReward) return;
+    function claimDailyRewardFast() {
+        if (!currentUser) return;
         
         const todayDate = new Date().toLocaleDateString('en-CA');
-        let lastLoginStr = localStorage.getItem('last_daily_login_date');
+        const lastLoginDate = currentUser.last_login_date || '';
         
-        if (lastLoginStr === todayDate) {
+        if (lastLoginDate === todayDate) {
             closeModal('modal-daily-reward');
             showTopToast('لقد استلمت مكافأة اليوم بالفعل!', 'info');
             return;
         }
 
-        isClaimingReward = true;
-        const claimBtn = document.getElementById('btn-claim-daily-popup');
-        if (claimBtn) {
-            claimBtn.disabled = true;
-            claimBtn.innerText = 'جاري إضافة المكافأة... ⏳';
-        }
+        closeModal('modal-daily-reward');
+        playSuccessSound();
+        shootStars();
 
-        let currentStreak = parseInt(localStorage.getItem('daily_login_streak') || '0');
-        let totalDays = parseInt(localStorage.getItem('total_login_days') || '0');
-        
-        currentStreak += 1;
-        totalDays += 1;
+        let currentStreak = (currentUser.daily_streak || 0) + 1;
+        let totalDays = (currentUser.total_login_days || 0) + 1;
         
         let xpReward = 35;
         let coinReward = 20;
-        let extraMsg = '';
 
         if (currentStreak === 7) {
             xpReward += 250;
             coinReward += 50;
-            extraMsg = '<br>🔥 مكافأة أسبوعية: +250 XP و +70 عملة!';
             currentStreak = 0;
         }
 
-        localStorage.setItem('last_daily_login_date', todayDate);
-        localStorage.setItem('daily_login_streak', currentStreak);
-        localStorage.setItem('total_login_days', totalDays);
+        currentUser.xp = (currentUser.xp || 0) + xpReward;
+        currentUser.points = currentUser.xp;
+        currentUser.coins = (currentUser.coins || 0) + coinReward;
+        currentUser.daily_streak = currentStreak;
+        currentUser.total_login_days = totalDays;
+        currentUser.last_login_date = todayDate;
 
-        db.ref('users/' + currentUser.phone).transaction((user) => {
-            if (user) {
-                user.xp = (user.xp || 0) + xpReward;
-                user.points = user.xp;
-                user.coins = (user.coins || 0) + coinReward;
-            }
-            return user;
-        }).then(() => {
-            isClaimingReward = false;
-            closeModal('modal-daily-reward');
-            playSuccessSound();
-            shootStars();
-            updateStatsUI();
-            showTopToast(`تم استلام المكافأة اليومية (+${xpReward} XP و +${coinReward} عملة)! ${extraMsg}`, 'success');
-        }).catch(() => {
-            isClaimingReward = false;
-            if (claimBtn) claimBtn.disabled = false;
+        updateProfileUI();
+        updateStatsUI();
+        showTopToast(`تم استلام مكافأة اليوم (+${xpReward} XP و +${coinReward} عملة) فوراً! 🎉`, 'success');
+
+        db.ref('users/' + currentUser.phone).update({
+            xp: currentUser.xp,
+            points: currentUser.xp,
+            coins: currentUser.coins,
+            daily_streak: currentStreak,
+            total_login_days: totalDays,
+            last_login_date: todayDate
         });
     }
 
     function updateStatsUI() {
-        if(!currentUser) return;
-        document.getElementById('stat-total-days').innerText = localStorage.getItem('total_login_days') || '0';
-        document.getElementById('stat-max-streak').innerText = (localStorage.getItem('daily_login_streak') || '0') + ' 🔥';
+        if (!currentUser) return;
+        document.getElementById('stat-total-days').innerText = currentUser.total_login_days || '0';
+        document.getElementById('stat-max-streak').innerText = (currentUser.daily_streak || '0') + ' 🔥';
         
         const played = currentUser.quizPlayed || 0;
         const correct = currentUser.quizCorrect || 0;
@@ -2649,6 +3141,9 @@ function openQuizRulesModal() {
                             coins: 0,
                             quizPlayed: 0,
                             quizCorrect: 0,
+                            daily_streak: 0,
+                            total_login_days: 0,
+                            derby_wins: 0,
                             hintsCount: 0,
                             hintTimeCount: 0,
                             has_streak_freeze: false,
@@ -2664,6 +3159,7 @@ function openQuizRulesModal() {
                             has_glow_name: false,
                             owned_bio: false,
                             can_edit_bio: false,
+                            completed_tasks: [],
                             bio: '',
                             createdAt: new Date().toISOString()
                         };
@@ -3561,12 +4057,12 @@ function openQuizRulesModal() {
     }
 
     function selectDerbyTier(coins, xp, element) {
-    playClickSound();
-    selectedDerbyStake = coins;
-    selectedDerbyRewardXP = xp;
-    document.querySelectorAll('.derby-tier-slide').forEach(b => b.classList.remove('active'));
-    if (element) element.classList.add('active');
-}
+        playClickSound();
+        selectedDerbyStake = coins;
+        selectedDerbyRewardXP = xp;
+        document.querySelectorAll('.derby-tier-slide').forEach(b => b.classList.remove('active'));
+        if (element) element.classList.add('active');
+    }
 
     async function createDerbyRoomAction() {
         playClickSound();
@@ -3601,10 +4097,7 @@ function openQuizRulesModal() {
             questions: battleQuestions
         };
 
-        // خصم الرهان
         await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - selectedDerbyStake);
-        
-        // إنشاء الغرفة
         await db.ref('battles/' + randomCode).set(roomData);
         currentBattleId = randomCode;
 
@@ -3955,7 +4448,8 @@ function openQuizRulesModal() {
             await db.ref('users/' + currentUser.phone).update({
                 coins: (currentUser.coins || 0) + totalCoinsWon,
                 xp: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
-                points: (currentUser.xp || currentUser.points || 0) + room.rewardXP
+                points: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
+                derby_wins: (currentUser.derby_wins || 0) + 1
             });
         } else if (myScore < oppScore) {
             playErrorSound();
@@ -4004,51 +4498,51 @@ function openQuizRulesModal() {
     let hint5050UsedInCurrentQuestion = false;
 
     function startActualQuiz() {
-    closeModal('quiz-rules-modal'); 
-    playClickSound();
+        closeModal('quiz-rules-modal'); 
+        playClickSound();
 
-    const todayDate = new Date().toLocaleDateString('en-CA');
-    const lastQuizDate = currentUser.last_quiz_date || '';
-    const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+        const todayDate = new Date().toLocaleDateString('en-CA');
+        const lastQuizDate = currentUser.last_quiz_date || '';
+        const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
 
-    if (quizCountToday >= DAILY_QUIZ_LIMIT) {
-        showTopToast(`تم استهلاك جميع محاولات اليوم (${DAILY_QUIZ_LIMIT}/${DAILY_QUIZ_LIMIT})!`, 'error');
-        return;
-    }
+        if (quizCountToday >= DAILY_QUIZ_LIMIT) {
+            showTopToast(`تم استهلاك جميع محاولات اليوم (${DAILY_QUIZ_LIMIT}/${DAILY_QUIZ_LIMIT})!`, 'error');
+            return;
+        }
 
-    let allAvailableQuestions = [];
-    Object.keys(masterQuestionsBank).forEach(cat => {
-        masterQuestionsBank[cat].forEach((q, idx) => {
-            allAvailableQuestions.push({ 
-                id: `${cat}_${idx}`,
-                q: q.q, 
-                a: [...q.a], 
-                correct: q.correct, 
-                categoryName: cat 
+        let allAvailableQuestions = [];
+        Object.keys(masterQuestionsBank).forEach(cat => {
+            masterQuestionsBank[cat].forEach((q, idx) => {
+                allAvailableQuestions.push({ 
+                    id: `${cat}_${idx}`,
+                    q: q.q, 
+                    a: [...q.a], 
+                    correct: q.correct, 
+                    categoryName: cat 
+                });
             });
         });
-    });
 
-    db.ref('custom_questions').once('value').then((snapshot) => {
-        if (snapshot.exists()) {
-            snapshot.forEach(child => {
-                let customQ = child.val();
-                if (customQ && customQ.q && customQ.a) {
-                    allAvailableQuestions.push({
-                        id: child.key,
-                        q: customQ.q,
-                        a: [...customQ.a],
-                        correct: customQ.correct || 0,
-                        categoryName: customQ.category || "أسئلة إضافية"
-                    });
-                }
-            });
-        }
-        processDeckAndLaunch(allAvailableQuestions);
-    }).catch(() => {
-        processDeckAndLaunch(allAvailableQuestions);
-    });
-}
+        db.ref('custom_questions').once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    let customQ = child.val();
+                    if (customQ && customQ.q && customQ.a) {
+                        allAvailableQuestions.push({
+                            id: child.key,
+                            q: customQ.q,
+                            a: [...customQ.a],
+                            correct: customQ.correct || 0,
+                            categoryName: customQ.category || "أسئلة إضافية"
+                        });
+                    }
+                });
+            }
+            processDeckAndLaunch(allAvailableQuestions);
+        }).catch(() => {
+            processDeckAndLaunch(allAvailableQuestions);
+        });
+    }
 
     function processDeckAndLaunch(allQuestions) {
         let userDeck = JSON.parse(localStorage.getItem('user_quiz_deck') || '[]');
@@ -4255,33 +4749,32 @@ function openQuizRulesModal() {
         }
 
         if (currentUser) { 
-    const todayDate = new Date().toLocaleDateString('en-CA');
+            const todayDate = new Date().toLocaleDateString('en-CA');
 
-    db.ref('users/' + currentUser.phone).transaction((user) => { 
-        if (user) {
-            let newXp = (user.xp || user.points || 0) + xpChange;
-            user.xp = newXp < 0 ? 0 : newXp;
-            user.points = user.xp;
+            db.ref('users/' + currentUser.phone).transaction((user) => { 
+                if (user) {
+                    let newXp = (user.xp || user.points || 0) + xpChange;
+                    user.xp = newXp < 0 ? 0 : newXp;
+                    user.points = user.xp;
 
-            let newCoins = (user.coins || 0) + coinsChange;
-            user.coins = newCoins < 0 ? 0 : newCoins;
+                    let newCoins = (user.coins || 0) + coinsChange;
+                    user.coins = newCoins < 0 ? 0 : newCoins;
 
-            user.quizPlayed = (user.quizPlayed || 0) + 1;
-            user.quizCorrect = (user.quizCorrect || 0) + quizScoreCount;
+                    user.quizPlayed = (user.quizPlayed || 0) + 1;
+                    user.quizCorrect = (user.quizCorrect || 0) + quizScoreCount;
 
-            // تحديث عداد وتاريخ المحاولات اليومية (10 محاولات)
-            if (user.last_quiz_date === todayDate) {
-                user.daily_quiz_count = (user.daily_quiz_count || 0) + 1;
-            } else {
-                user.last_quiz_date = todayDate;
-                user.daily_quiz_count = 1;
-            }
+                    if (user.last_quiz_date === todayDate) {
+                        user.daily_quiz_count = (user.daily_quiz_count || 0) + 1;
+                    } else {
+                        user.last_quiz_date = todayDate;
+                        user.daily_quiz_count = 1;
+                    }
+                }
+                return user; 
+            }).then(() => {
+                updateStatsUI();
+            }); 
         }
-        return user; 
-    }).then(() => {
-        updateStatsUI();
-    }); 
-}
 
         const imgEl = document.getElementById('result-img'); 
         const titleEl = document.getElementById('result-title'); 
@@ -4330,7 +4823,7 @@ function openQuizRulesModal() {
 
     function switchAdminTab(tabName) {
         playClickSound();
-        ['users','store','tickets','broadcast','books','quiz','codes'].forEach(t => {
+        ['users','academic','store','tickets','broadcast','books','quiz','codes'].forEach(t => {
             const tabBtn = document.getElementById('tab-admin-' + t);
             const tabSec = document.getElementById('admin-section-' + t);
             if (tabBtn) tabBtn.classList.remove('active');
@@ -4676,3 +5169,5 @@ function openQuizRulesModal() {
         }
     }
 </script>
+</body>
+</html>
