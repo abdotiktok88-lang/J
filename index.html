@@ -47,7 +47,8 @@
 }
 
         * {
-            margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif;
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Cairo', sans-serif;
             -webkit-tap-highlight-color: transparent; user-select: none;
             transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
         }
@@ -56,6 +57,62 @@
             background-color: var(--bg-primary); color: var(--text-main); min-height: 100vh;
             background-image: radial-gradient(circle at top, var(--radial-glow) 0%, transparent 70%);
             overflow-x: hidden; display: flex; flex-direction: column; padding-bottom: 65px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 5%;
+            right: -10%;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1; /* تم التعديل للخلف التام */
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 10%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1; /* تم التعديل للخلف التام */
+        }
+
+        .floating-shapes-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1; /* تم التعديل للخلف التام */
+            overflow: hidden;
+        }
+
+        .f-shape {
+            position: absolute;
+            opacity: 0.22;
+            user-select: none;
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+            animation: floatShapeAnim 6s ease-in-out infinite alternate;
+        }
+
+        [data-theme="light"] .f-shape {
+            opacity: 0.28;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+        }
+
+        @keyframes floatShapeAnim {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-15px) rotate(8deg); }
         }
 
         #top-toast {
@@ -164,8 +221,8 @@
         .sidebar-promo-btn { width: 100%; padding: 8px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%); color: #000; font-weight: 800; cursor: pointer; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-card); text-align: center; font-size: 0.75rem; color: var(--text-sub); line-height: 1.5; background: var(--bg-secondary); }
 
-        .container { max-width: 550px; width: 100%; margin: 0 auto; padding: 18px 16px; flex-grow: 1; }
-        .view-section { display: none; opacity: 0; transform: translateY(16px) scale(0.98); transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .container { max-width: 550px; width: 100%; margin: 0 auto; padding: 18px 16px; flex-grow: 1; position: relative; z-index: 1; }
+.view-section { display: none; opacity: 0; transform: translateY(16px) scale(0.98); transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .view-section.active { display: block; opacity: 1; transform: translateY(0) scale(1); }
         .section-label { font-size: 0.95rem; font-weight: 800; color: var(--text-sub); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .section-label::before { content: ''; width: 4px; height: 16px; background: var(--accent-gold); border-radius: 2px; }
@@ -677,98 +734,281 @@
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important; transform: scale(1.03);
         }
 
-        /* ================= تصميم المنظم الأكاديمي (زجاج فاتح شفاف وطافي + تباين عالي) ================= */
+        /* ================= تبويبات المنظم الأكاديمي العلوية المحدثة ================= */
+        .auth-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            gap: 6px;
+        }
+        .auth-tab-btn {
+            flex: 1;
+            min-width: fit-content;
+            padding: 9px 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 800;
+            font-size: 0.78rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .auth-tab-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+        }
+
+        /* ================= تصميم كروت المنظم الأكاديمي (داكن وفاتح تفاعلي) ================= */
         .acad-glass-card {
             position: relative;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: 1.5px solid rgba(255, 255, 255, 0.65);
-            border-radius: 20px; padding: 18px 16px; margin-bottom: 14px;
+            background: var(--card-gradient);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid var(--border-card);
+            border-radius: 20px;
+            padding: 18px 16px;
+            margin-bottom: 14px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.28);
             transition: transform 0.2s ease, border-color 0.2s ease;
             overflow: hidden;
         }
         .acad-glass-card:hover {
-            transform: translateY(-2px); border-color: #8b5cf6;
+            transform: translateY(-2px);
+            border-color: var(--accent-highlight);
         }
         .acad-glass-card.completed {
-            background: rgba(220, 252, 231, 0.95);
+            background: linear-gradient(145deg, rgba(6, 78, 59, 0.35), rgba(15, 23, 42, 0.9));
             border-color: #10b981;
         }
         .acad-glass-card h4 {
-            color: #0f172a !important; font-weight: 900 !important;
+            color: var(--text-main) !important;
+            font-weight: 900 !important;
         }
         .acad-glass-card p {
-            color: #334155 !important; font-weight: 700 !important;
+            color: var(--text-sub) !important;
+            font-weight: 600 !important;
         }
 
         /* شبكة مربعات الجداول للسكاشن */
         .schedule-grid-container {
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
-            gap: 10px !important; margin-top: 10px !important;
+            gap: 10px !important;
+            margin-top: 10px !important;
         }
 
-        /* المربع الفاتح الطافي */
+        /* المربع الزجاجي المتفاعل مع الثيم */
         .schedule-neo-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: 1.5px solid rgba(255, 255, 255, 0.65);
-            border-radius: 18px; padding: 16px 6px;
-            text-align: center; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.2s ease; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+            background: var(--card-gradient);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid var(--border-card);
+            border-radius: 18px;
+            padding: 16px 6px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
         }
         .schedule-neo-card:active {
-            transform: scale(0.95); border-color: #8b5cf6;
+            transform: scale(0.95);
+            border-color: var(--accent-gold);
         }
         .schedule-neo-card .card-3d-icon {
-            width: 44px; height: 44px; margin: 0 auto 6px; display: block;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 6px;
+            display: block;
         }
         .schedule-neo-card h4 {
-            color: #0f172a !important; font-size: 0.92rem !important; font-weight: 900 !important; margin-bottom: 2px;
+            color: var(--text-main) !important;
+            font-size: 0.88rem !important;
+            font-weight: 900 !important;
+            margin-bottom: 2px;
         }
         .schedule-neo-card p {
-            color: #6b21a8 !important; font-size: 0.72rem !important; font-weight: 800 !important;
+            color: var(--accent-gold) !important;
+            font-size: 0.72rem !important;
+            font-weight: 800 !important;
         }
 
         /* شارات الحالة الملونة */
         .pill-badge {
-            display: inline-flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 800;
-            padding: 4px 10px; border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 30px;
         }
         .badge-subject {
-            background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-highlight);
+            border: 1px solid var(--border-card);
         }
         .badge-timer-active {
-            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(6, 182, 212, 0.3);
         }
         .badge-timer-urgent {
-            background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .badge-done {
-            background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         /* أزرار الإجراءات */
         .btn-action-glow {
-            border: none; border-radius: 12px; padding: 9px 14px; font-size: 0.82rem; font-weight: 800;
-            cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            border: none;
+            border-radius: 12px;
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .btn-download-file {
-            background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1;
+            background: var(--bg-primary);
+            color: var(--text-main);
+            border: 1px solid var(--border-card);
         }
-        .btn-download-file:hover { background: #e2e8f0; }
+        .btn-download-file:hover {
+            background: var(--bg-secondary);
+        }
         .btn-check-task {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: #ffffff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
         .btn-check-task.done {
-            background: #dcfce7; color: #15803d; border: 1px solid #86efac; box-shadow: none;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid #10b981;
+            box-shadow: none;
+        }
+/* ================= سلايدر وكروت المؤقتات التنازلية ================= */
+        .countdowns-carousel {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 4px 2px 14px;
+            margin-bottom: 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .countdowns-carousel::-webkit-scrollbar { height: 4px; }
+        .countdowns-carousel::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
+
+        .countdown-card {
+            flex: 0 0 100%;
+            scroll-snap-align: center;
+            background: var(--card-gradient);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 14px 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .countdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .countdown-title {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .countdown-tag {
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--accent-gold);
+        }
+
+        .countdown-timer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+        .timer-unit-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 6px 2px;
+        }
+        .timer-unit-val {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: var(--accent-emerald);
+            line-height: 1.1;
+        }
+        .timer-unit-label {
+            font-size: 0.65rem;
+            color: var(--text-sub);
+            font-weight: 700;
+            margin-top: 2px;
         }
     </style>
 </head>
 <body>
+
+    <!-- طبقة الأشكال والرموز المتطايرة -->
+    <!-- طبقة أيقونات علوم الأغذية والكيمياء الطافية -->
+    <div class="floating-shapes-layer">
+        <!-- دورق كيمياء تحليلي -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/test-tube.png" style="top: 14%; left: 8%; width: 34px; animation-delay: 0s;">
+        
+        <!-- سنبلة قمح وحبوب -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/wheat.png" style="top: 24%; right: 7%; width: 30px; animation-delay: 1.2s;">
+        
+        <!-- ميكروسكوب وميكروبيولوجي -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/microscope.png" style="top: 52%; left: 10%; width: 36px; animation-delay: 2.4s;">
+        
+        <!-- جبن وألبان -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/cheese.png" style="top: 68%; right: 8%; width: 32px; animation-delay: 1.8s;">
+        
+        <!-- زجاجة حليب -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/milk-bottle.png" style="bottom: 12%; left: 12%; width: 30px; animation-delay: 3s;">
+        
+        <!-- جزيء كيميائي / بكتيريا نافعة -->
+        <img class="f-shape" src="https://img.icons8.com/fluency/96/bacteria.png" style="bottom: 22%; right: 14%; width: 28px; animation-delay: 0.8s;">
+
+        <!-- نقاط توهج ضوئية عائمة -->
+        <span style="position: absolute; top: 20%; left: 24%; width: 8px; height: 8px; background: #06b6d4; border-radius: 50%; box-shadow: 0 0 12px #06b6d4;"></span>
+        <span style="position: absolute; top: 12%; right: 30%; width: 9px; height: 9px; background: #f97316; border-radius: 50%; box-shadow: 0 0 14px #f97316;"></span>
+    </div>
 
     <div id="top-toast">
         <img id="top-toast-icon" src="https://img.icons8.com/fluency/96/info.png" alt="Icon">
@@ -891,9 +1131,10 @@
             <div class="sidebar-link" onclick="handleProfileClick()">
                 <img src="https://img.icons8.com/fluency/96/user-shield.png" alt="Profile"> ملفي الشخصي
             </div>
-            <div class="sidebar-link" onclick="navigateTo('view-settings', 'الإعدادات', 'خيارات التطبيق والحساب'); closeSidebar();">
-                <img src="https://img.icons8.com/fluency/96/settings.png" alt="Settings"> الإعدادات
-            </div>
+            <div class="sidebar-link" onclick="navigateTo('view-settings', 'الإعدادات', 'خيارات التطبيق والحساب'); closeSidebar();" style="position: relative;">
+    <img src="https://img.icons8.com/fluency/96/settings.png" alt="Settings"> الإعدادات
+    <span id="badge-settings-dot" style="display: none; width: 9px; height: 9px; background-color: #ef4444; border-radius: 50%; margin-right: auto; box-shadow: 0 0 8px #ef4444;"></span>
+</div>
 
             <div class="sidebar-link" onclick="toggleMuteSound()">
                 <img id="sidebar-sound-icon" src="https://img.icons8.com/fluency/96/high-volume.png" alt="Sound"> 
@@ -1088,6 +1329,11 @@
                     <img src="https://img.icons8.com/fluency/96/coins.png" alt="Coins">
                     <span id="home-coins" class="coin-text">0</span>
                 </div>
+            </div>
+
+<!-- سلايدر المؤقتات التنازلية للأحداث والتكليفات -->
+            <div id="home-countdowns-wrapper" style="display: none;">
+                <div class="countdowns-carousel" id="home-countdowns-container"></div>
             </div>
 
             <div class="section-label">الأقسام الرئيسية</div>
@@ -1627,14 +1873,33 @@
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/faq.png" alt="FAQ"></div><div class="card-text"><h3>الأسئلة الشائعة</h3><p>كل ما تريد معرفته عن التطبيق والنقاط</p></div></div>
                     <div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="navigateTo('view-report-issue', 'الإبلاغ عن مشكلة', 'أرسل شكواك للمطور مباشرة')">
-                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/bug.png" alt="Report"></div><div class="card-text"><h3>الإبلاغ عن مشكلة</h3><p>واجهت خطأ؟ أرسله للإدارة فوراً</p></div></div>
-                    <div class="card-arrow">←</div>
-                </div>
-                <div class="app-card" onclick="navigateTo('view-suggest-feature', 'اقتراح تطوير', 'شاركنا أفكارك لتطوير التطبيق')">
-                    <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/idea.png" alt="Suggest"></div><div class="card-text"><h3>اقتراح ميزة أو تطوير</h3><p>ساعدنا في إضافة أقسام جديدة تخدم الدفعة</p></div></div>
-                    <div class="card-arrow">←</div>
-                </div>
+                <div class="app-card" onclick="navigateTo('view-report-issue', 'الإبلاغ عن مشكلة', 'أرسل شكواك للمطور مباشرة'); markTicketRepliesAsSeen('report');">
+    <div class="card-info">
+        <div class="card-icon"><img src="https://img.icons8.com/fluency/96/bug.png" alt="Report"></div>
+        <div class="card-text">
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+                الإبلاغ عن مشكلة 
+                <span id="badge-report-dot" style="display: none; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; box-shadow: 0 0 6px #ef4444;"></span>
+            </h3>
+            <p>واجهت خطأ؟ أرسله للإدارة فوراً</p>
+        </div>
+    </div>
+    <div class="card-arrow">←</div>
+</div>
+
+<div class="app-card" onclick="navigateTo('view-suggest-feature', 'اقتراح تطوير', 'شاركنا أفكارك لتطوير التطبيق'); markTicketRepliesAsSeen('suggest');">
+    <div class="card-info">
+        <div class="card-icon"><img src="https://img.icons8.com/fluency/96/idea.png" alt="Suggest"></div>
+        <div class="card-text">
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+                اقتراح ميزة أو تطوير 
+                <span id="badge-suggest-dot" style="display: none; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%; box-shadow: 0 0 6px #ef4444;"></span>
+            </h3>
+            <p>ساعدنا في إضافة أقسام جديدة تخدم الدفعة</p>
+        </div>
+    </div>
+    <div class="card-arrow">←</div>
+</div>
                 <div class="app-card" onclick="window.open('https://wa.me/+201061032507', '_blank')">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/whatsapp.png" alt="WhatsApp"></div><div class="card-text"><h3>تواصل معنا مباشرة</h3><p>محادثة واتساب سريعة مع المطور</p></div></div>
                     <div class="card-arrow">↗</div>
@@ -1718,38 +1983,51 @@
         </div>
 
         <!-- واجهة الإبلاغ عن مشكلة -->
-        <div id="view-report-issue" class="view-section">
-            <div class="auth-card">
-                <h3 style="margin-bottom: 10px;">الإبلاغ عن مشكلة فنية 🐞</h3>
-                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">اكتب تفاصيل المشكلة التي واجهتك وسيتم فحصها فوراً عبر لوحة الإدارة.</p>
-                <div class="form-group">
-                    <label>عنوان المشكلة</label>
-                    <input type="text" id="report-title-input" class="form-input" placeholder="مثال: تعليق في تحميل مذكرة اللحوم">
-                </div>
-                <div class="form-group">
-                    <label>وصف المشكلة بالتفصيل</label>
-                    <textarea id="report-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح ما حدث معك بالتفصيل..."></textarea>
-                </div>
-                <button class="btn-submit" onclick="submitTicket('مشكلة')">إرسال البلاغ 🚀</button>
-            </div>
+        <!-- واجهة الإبلاغ عن مشكلة -->
+<div id="view-report-issue" class="view-section">
+    <div class="auth-card">
+        <h3 style="margin-bottom: 10px;">الإبلاغ عن مشكلة فنية 🐞</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">اكتب تفاصيل المشكلة التي واجهتك وسيتم فحصها فوراً عبر لوحة الإدارة.</p>
+        <div class="form-group">
+            <label>عنوان المشكلة</label>
+            <input type="text" id="report-title-input" class="form-input" placeholder="مثال: تعليق في تحميل مذكرة اللحوم">
         </div>
+        <div class="form-group">
+            <label>وصف المشكلة بالتفصيل</label>
+            <textarea id="report-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح ما حدث معك بالتفصيل..."></textarea>
+        </div>
+        <button class="btn-submit" onclick="submitTicket('مشكلة')">إرسال البلاغ 🚀</button>
+        
+        <!-- صندوق ظهور الرد المباشر للطالب -->
+        <div id="my-report-replies-section" style="margin-top: 20px; display: none;">
+            <div class="section-label">📬 ردود الإدارة على شكاواك</div>
+            <div id="my-report-replies-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+</div>
 
-        <!-- واجهة اقتراح تطوير -->
-        <div id="view-suggest-feature" class="view-section">
-            <div class="auth-card">
-                <h3 style="margin-bottom: 10px;">اقتراح تطوير وميزات جديدة 💡</h3>
-                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">شاركنا بأفكارك لتطوير تطبيق الدفعة وإضافة مزايا تخدم الجميع.</p>
-                <div class="form-group">
-                    <label>عنوان الاقتراح</label>
-                    <input type="text" id="suggest-title-input" class="form-input" placeholder="مثال: إضافة قسم لجداول الامتحانات">
-                </div>
-                <div class="form-group">
-                    <label>تفاصيل الفكرة</label>
-                    <textarea id="suggest-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح فكرتك وكيف ستفيد زملائك..."></textarea>
-                </div>
-                <button class="btn-submit" onclick="submitTicket('اقتراح')">إرسال الاقتراح ✨</button>
-            </div>
+<!-- واجهة اقتراح تطوير -->
+<div id="view-suggest-feature" class="view-section">
+    <div class="auth-card">
+        <h3 style="margin-bottom: 10px;">اقتراح تطوير وميزات جديدة 💡</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">شاركنا بأفكارك لتطوير تطبيق الدفعة وإضافة مزايا تخدم الجميع.</p>
+        <div class="form-group">
+            <label>عنوان الاقتراح</label>
+            <input type="text" id="suggest-title-input" class="form-input" placeholder="مثال: إضافة قسم لجداول الامتحانات">
         </div>
+        <div class="form-group">
+            <label>تفاصيل الفكرة</label>
+            <textarea id="suggest-desc-input" class="form-input" rows="4" style="resize: none;" placeholder="اشرح فكرتك وكيف ستفيد زملائك..."></textarea>
+        </div>
+        <button class="btn-submit" onclick="submitTicket('اقتراح')">إرسال الاقتراح ✨</button>
+        
+        <!-- صندوق ظهور الرد المباشر للطالب -->
+        <div id="my-suggest-replies-section" style="margin-top: 20px; display: none;">
+            <div class="section-label">📬 ردود الإدارة على مقترحاتك</div>
+            <div id="my-suggest-replies-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+</div>
 
         <!-- واجهة شروط الاستخدام -->
         <div id="view-terms" class="view-section">
@@ -1786,6 +2064,36 @@
 
             <!-- تبويب إدارة المنظم الأكاديمي للأدمن -->
             <div id="admin-section-academic" style="display: none;">
+                
+                <!-- إضافة وإدارة المؤقتات التنازلية -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة مؤقت عد تنازلي ⏱️</h3>
+                    
+                    <div class="form-group">
+                        <label>عنوان الحدث / المؤقت</label>
+                        <input type="text" id="adm-cd-title" class="form-input" placeholder="مثال: بدء امتحانات الميدتيرم">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تاريخ ووقت انتهاء العد</label>
+                        <input type="datetime-local" id="adm-cd-target" class="form-input" style="color-scheme: dark;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>ربط بتكليف معين (اختياري)</label>
+                        <select id="adm-cd-task-link" class="form-input" style="background: var(--bg-primary);">
+                            <option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>
+                        </select>
+                        <span style="font-size: 0.72rem; color: var(--text-sub); margin-top: 3px; display: block;">
+                            * إذا تم ربطه بتكليف، سيختفي المؤقت تلقائياً عند الطالب الذي يسلم التكليف.
+                        </span>
+                    </div>
+
+                    <button class="btn-submit" onclick="adminPublishCountdown()">نشر المؤقت 🚀</button>
+
+                    <div class="section-label" style="margin-top: 20px;">المؤقتات النشطة حالياً</div>
+                    <div id="adm-countdowns-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
                 <!-- إضافة تكليف جديد -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة تكليف / تاسك جديد 📝</h3>
@@ -2248,7 +2556,9 @@ function shuffleArray(array) {
         currentUser.completed_tasks = completed;
         localStorage.setItem('completed_tasks_' + currentUser.phone, JSON.stringify(completed));
         db.ref('users/' + currentUser.phone + '/completed_tasks').set(completed);
+        
         loadAcademicTasks();
+        renderHomeCountdowns(); // تحديث فوري لحذف أو إعادة إظهار المؤقت في الواجهة الرئيسية
     }
 
     function viewScheduleInApp(secKey, secName) {
@@ -2301,10 +2611,10 @@ function shuffleArray(array) {
                         <span class="pill-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
                             <img src="https://img.icons8.com/fluency/48/high-priority.png" style="width: 14px;"> تنبيه رسمي
                         </span>
-                        <span style="font-size: 0.72rem; color: #475569; font-weight: 700;">${new Date(a.date).toLocaleDateString('ar-EG')}</span>
+                        <span style="font-size: 0.72rem; color: var(--text-sub); font-weight: 700;">${new Date(a.date).toLocaleDateString('ar-EG')}</span>
                     </div>
-                    <h4 style="color: #6b21a8; font-size: 0.98rem; margin-bottom: 6px;">${a.title}</h4>
-                    <p style="font-size: 0.86rem; color: #1e293b; line-height: 1.6; margin-bottom: 10px;">${a.body}</p>
+                    <h4 style="color: var(--accent-gold) !important; font-size: 0.98rem; margin-bottom: 6px;">${a.title}</h4>
+                    <p style="font-size: 0.86rem; color: var(--text-main) !important; line-height: 1.6; margin-bottom: 10px;">${a.body}</p>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         ${a.url ? `
                             <button class="btn-action-glow btn-download-file" style="flex: 1;" onclick="window.open('${a.url}', '_blank')">
@@ -2864,6 +3174,8 @@ function shuffleArray(array) {
         updateSoundUI();
         checkAppEntryFlow();
         checkBroadcastAlerts();
+        initUserTicketRepliesListener();
+        listenToCountdowns(); // <--- إضافة هذا السطر
     });
 
     function checkAppEntryFlow() {
@@ -3614,6 +3926,7 @@ function shuffleArray(array) {
             } else {
                 document.getElementById('sidebar-admin-panel').style.display = 'none';
             }
+            initUserTicketRepliesListener();
         }
     }
 
@@ -4261,48 +4574,52 @@ function shuffleArray(array) {
     }
 
     function syncArenaState(room) {
-        if (room.status === 'finished') {
-            concludeBattle(room);
-            return;
-        }
+    if (room.status === 'finished') {
+        concludeBattle(room);
+        return;
+    }
 
-        const isHost = room.player1.phone === currentUser.phone;
-        const me = isHost ? room.player1 : room.player2;
-        const opponent = isHost ? room.player2 : room.player1;
+    const isHost = room.player1.phone === currentUser.phone;
+    const me = isHost ? room.player1 : room.player2;
+    const opponent = isHost ? room.player2 : room.player1;
 
-        document.getElementById('arena-p1-name').innerText = me.name.split(' ')[0] + ' (أنت)';
-        document.getElementById('arena-p1-score').innerText = me.score || 0;
-        document.getElementById('arena-p1-avatar').src = me.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+    document.getElementById('arena-p1-name').innerText = me.name.split(' ')[0] + ' (أنت)';
+    document.getElementById('arena-p1-score').innerText = me.score || 0;
+    document.getElementById('arena-p1-avatar').src = me.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
 
-        document.getElementById('arena-p2-name').innerText = opponent ? opponent.name.split(' ')[0] : 'المنافس';
-        document.getElementById('arena-p2-score').innerText = opponent ? (opponent.score || 0) : 0;
-        document.getElementById('arena-p2-avatar').src = (opponent && opponent.avatar) ? opponent.avatar : 'https://img.icons8.com/fluency/96/user-male.png';
+    document.getElementById('arena-p2-name').innerText = opponent ? opponent.name.split(' ')[0] : 'المنافس';
+    document.getElementById('arena-p2-score').innerText = opponent ? (opponent.score || 0) : 0;
+    document.getElementById('arena-p2-avatar').src = (opponent && opponent.avatar) ? opponent.avatar : 'https://img.icons8.com/fluency/96/user-male.png';
 
-        if (opponent) {
-            document.getElementById('arena-p2-status').innerText = opponent.answeredCurrent ? 'أجاب ✅' : 'يفكر... ⏳';
-            document.getElementById('arena-p2-status').style.color = opponent.answeredCurrent ? 'var(--accent-emerald)' : 'var(--accent-gold)';
-        }
+    if (opponent) {
+        document.getElementById('arena-p2-status').innerText = opponent.answeredCurrent ? 'أجاب ✅' : 'يفكر... ⏳';
+        document.getElementById('arena-p2-status').style.color = opponent.answeredCurrent ? 'var(--accent-emerald)' : 'var(--accent-gold)';
+    }
 
-        const qIndex = room.currentQIndex || 0;
-        document.getElementById('arena-question-counter').innerText = `السؤال ${qIndex + 1} / 10`;
-        
-        const currentQ = room.questions[qIndex];
-        document.getElementById('arena-q-category').innerText = currentQ.category || 'عام';
-        document.getElementById('arena-q-text').innerText = currentQ.q;
+    const qIndex = room.currentQIndex || 0;
+    document.getElementById('arena-question-counter').innerText = `السؤال ${qIndex + 1} / 10`;
+    
+    const currentQ = room.questions[qIndex];
+    document.getElementById('arena-q-category').innerText = currentQ.category || 'عام';
+    document.getElementById('arena-q-text').innerText = currentQ.q;
 
-        if (document.getElementById('arena-options-list').dataset.currentQ !== String(qIndex)) {
-            hasAnsweredCurrentArenaQ = false;
-            document.getElementById('arena-p1-status').innerText = 'يفكر... ⏳';
-            document.getElementById('arena-p1-status').style.color = 'var(--accent-gold)';
-            renderArenaChoices(currentQ, qIndex, isHost);
-        }
+    // تجهيز السؤال الجديد عند تغير رقم السؤال
+    if (document.getElementById('arena-options-list').dataset.currentQ !== String(qIndex)) {
+        hasAnsweredCurrentArenaQ = false;
+        document.getElementById('arena-p1-status').innerText = 'يفكر... ⏳';
+        document.getElementById('arena-p1-status').style.color = 'var(--accent-gold)';
+        renderArenaChoices(currentQ, qIndex, isHost);
+    }
 
-        if (isHost && room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
+    // الانتقال للسؤال التالي بمجرد إجابة الطرفين (مع مهلة أمان)
+    if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
+        if (isHost) {
             setTimeout(() => {
                 advanceArenaNextQuestion(room);
-            }, 1800);
+            }, 1200);
         }
     }
+}
 // دالة لتغيير حالة القفل من لوحة الأدمن وحفظها في فايربيز
 function setHallOfFameLockStatus(lockState) {
     playClickSound();
@@ -4349,23 +4666,26 @@ function checkHallOfFameStatus() {
 }
 
     function renderArenaChoices(question, qIndex, isHost) {
-        const list = document.getElementById('arena-options-list');
-        list.dataset.currentQ = String(qIndex);
-        list.innerHTML = '';
+    const list = document.getElementById('arena-options-list');
+    list.dataset.currentQ = String(qIndex);
+    list.innerHTML = '';
 
-        let options = [...question.a];
-        const correctText = question.a[question.correct || 0];
+    // حفظ نص الإجابة الصحيحة قبل الخلط
+    const correctText = question.a[question.correct || 0];
 
-        options.forEach((optText) => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-option-btn';
-            btn.innerText = optText;
-            btn.onclick = () => handleArenaAnswerClick(btn, optText, correctText, isHost);
-            list.appendChild(btn);
-        });
+    // خلط مصفوفة الإجابات عشوائياً باستخدام دالة shuffleArray
+    let options = shuffleArray([...question.a]);
 
-        startArenaTimer(15, isHost);
-    }
+    options.forEach((optText) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerText = optText;
+        btn.onclick = () => handleArenaAnswerClick(btn, optText, correctText, isHost);
+        list.appendChild(btn);
+    });
+
+    startArenaTimer(15, isHost);
+}
 
     function startArenaTimer(seconds, isHost) {
         clearInterval(battleTimerInterval);
@@ -4416,19 +4736,21 @@ function checkHallOfFameStatus() {
     }
 
     async function handleArenaAnswerTimeout(isHost) {
-        hasAnsweredCurrentArenaQ = true;
-        document.querySelectorAll('#arena-options-list .quiz-option-btn').forEach(b => b.disabled = true);
-        document.getElementById('arena-p1-status').innerText = 'انتهى الوقت ⏰';
-        document.getElementById('arena-p1-status').style.color = '#ef4444';
-        
-        const playerPath = isHost ? 'player1' : 'player2';
-        const updates = {};
-        updates[`battles/${currentBattleId}/${playerPath}/answeredCurrent`] = true;
-        updates[`battles/${currentBattleId}/${playerPath}/isCorrect`] = false;
-        updates[`battles/${currentBattleId}/${playerPath}/answerTime`] = 15;
+    if (hasAnsweredCurrentArenaQ) return;
+    hasAnsweredCurrentArenaQ = true;
+    
+    document.querySelectorAll('#arena-options-list .quiz-option-btn').forEach(b => b.disabled = true);
+    document.getElementById('arena-p1-status').innerText = 'انتهى الوقت ⏰';
+    document.getElementById('arena-p1-status').style.color = '#ef4444';
+    
+    const playerPath = isHost ? 'player1' : 'player2';
+    const updates = {};
+    updates[`battles/${currentBattleId}/${playerPath}/answeredCurrent`] = true;
+    updates[`battles/${currentBattleId}/${playerPath}/isCorrect`] = false;
+    updates[`battles/${currentBattleId}/${playerPath}/answerTime`] = 15;
 
-        await db.ref().update(updates);
-    }
+    await db.ref().update(updates);
+}
 
     async function advanceArenaNextQuestion(room) {
         const p1 = room.player1;
@@ -5003,33 +5325,63 @@ function checkHallOfFameStatus() {
     }
 
     function loadAdminTickets() {
-        const container = document.getElementById('admin-tickets-list');
-        db.ref('user_tickets').on('value', (snap) => {
-            if (!snap.exists()) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد شكاوى أو مقترحات واردة حالياً.</p>';
-                return;
-            }
-            let html = '';
-            snap.forEach(child => {
-                const t = child.val();
-                const id = child.key;
-                html += `
-                <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 6px;">
-                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                        <span class="card-badge" style="background: ${t.type === 'مشكلة' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)'}; color: ${t.type === 'مشكلة' ? '#ef4444' : 'var(--accent-gold)'}; font-size: 0.75rem;">${t.type}</span>
-                        <span style="font-size: 0.75rem; color: var(--text-sub);">${new Date(t.sentAt).toLocaleDateString('ar-EG')}</span>
-                    </div>
-                    <h4 style="color: var(--text-main); font-size: 0.95rem;">${t.title}</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5;">${t.desc}</p>
-                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px; border-top: 1px dashed var(--border-card); padding-top: 6px;">
-                        <span style="font-size: 0.75rem; color: var(--accent-gold);">من: ${t.senderName} (${t.senderPhone})</span>
-                        <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteTicket('${id}')">حذف 🗑️</button>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
+    const container = document.getElementById('admin-tickets-list');
+    db.ref('user_tickets').on('value', (snap) => {
+        if (!snap.exists()) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد شكاوى أو مقترحات واردة حالياً.</p>';
+            return;
+        }
+        let html = '';
+        snap.forEach(child => {
+            const t = child.val();
+            const id = child.key;
+            html += `
+            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <span class="card-badge" style="background: ${t.type === 'مشكلة' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)'}; color: ${t.type === 'مشكلة' ? '#ef4444' : 'var(--accent-gold)'}; font-size: 0.75rem;">${t.type}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-sub);">${new Date(t.sentAt).toLocaleDateString('ar-EG')}</span>
+                </div>
+                <h4 style="color: var(--text-main); font-size: 0.95rem;">${t.title}</h4>
+                <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5;">${t.desc}</p>
+                
+                <div style="width: 100%; margin-top: 6px; background: var(--bg-primary); padding: 10px; border-radius: 10px; border: 1px dashed var(--border-card);">
+                    ${t.reply ? `
+                        <div style="font-size: 0.8rem; color: var(--accent-emerald); font-weight: bold; margin-bottom: 4px;">✅ تم إرسال الرد:</div>
+                        <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.4;">${t.reply}</p>
+                    ` : `
+                        <input type="text" id="admin-reply-input-${id}" class="form-input" placeholder="اكتب ردك للطالب هنا..." style="padding: 8px 12px; font-size: 0.82rem; margin-bottom: 6px;">
+                        <button class="btn-action-glow btn-check-task" style="width: 100%; padding: 6px; font-size: 0.8rem;" onclick="adminSendTicketReply('${id}')">إرسال الرد للطالب 💬</button>
+                    `}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 4px; border-top: 1px dashed var(--border-card); padding-top: 6px;">
+                    <span style="font-size: 0.75rem; color: var(--accent-gold);">من: ${t.senderName} (${t.senderPhone})</span>
+                    <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteTicket('${id}')">حذف 🗑️</button>
+                </div>
+            </div>`;
         });
+        container.innerHTML = html;
+    });
+}
+
+function adminSendTicketReply(ticketId) {
+    playClickSound();
+    const input = document.getElementById(`admin-reply-input-${ticketId}`);
+    const replyText = input ? input.value.trim() : '';
+
+    if (!replyText) {
+        showTopToast('يرجى كتابة نص الرد أولاً!', 'error');
+        return;
     }
+
+    db.ref('user_tickets/' + ticketId).update({
+        reply: replyText,
+        repliedAt: new Date().toISOString(),
+        seen: false
+    }).then(() => {
+        showTopToast('تم إرسال الرد للطالب بنجاح! ✉️', 'success');
+    });
+}
 
     function deleteTicket(ticketId) {
         playErrorSound();
@@ -5220,6 +5572,258 @@ function checkHallOfFameStatus() {
         if(confirm(`هل أنت متأكد من حذف الكود ${codeName} نهائياً؟`)) {
             db.ref('promo_codes/' + codeName).remove().then(() => {
                 loadAdminData();
+            });
+        }
+    }
+// مستمع سحابي يفحص وجود ردود جديدة على شكاوى ومقترحات الطالب الحالي
+// مستمع سحابي ذكي لفحص الردود والتنبيه بالنقطة الحمراء
+function initUserTicketRepliesListener() {
+    if (!currentUser) return;
+
+    db.ref('user_tickets').on('value', (snap) => {
+        if (!snap.exists()) return;
+
+        let hasUnseenReportReply = false;
+        let hasUnseenSuggestReply = false;
+        let myReports = [];
+        let mySuggests = [];
+
+        snap.forEach(child => {
+            const t = child.val();
+            t.id = child.key;
+
+            if (t.senderPhone === currentUser.phone) {
+                if (t.type === 'مشكلة') {
+                    myReports.push(t);
+                    if (t.reply && t.seen !== true) hasUnseenReportReply = true;
+                } else if (t.type === 'اقتراح') {
+                    mySuggests.push(t);
+                    if (t.reply && t.seen !== true) hasUnseenSuggestReply = true;
+                }
+            }
+        });
+
+        // 1. التحكم في النقطة الحمراء عند زر الإعدادات
+        const settingsDot = document.getElementById('badge-settings-dot');
+        if (settingsDot) {
+            settingsDot.style.display = (hasUnseenReportReply || hasUnseenSuggestReply) ? 'inline-block' : 'none';
+        }
+
+        // 2. التحكم في النقطة الحمراء داخل الإعدادات
+        const reportDot = document.getElementById('badge-report-dot');
+        if (reportDot) reportDot.style.display = hasUnseenReportReply ? 'inline-block' : 'none';
+
+        const suggestDot = document.getElementById('badge-suggest-dot');
+        if (suggestDot) suggestDot.style.display = hasUnseenSuggestReply ? 'inline-block' : 'none';
+
+        // 3. عرض قائمة الردود للطالب
+        renderUserRepliesList('report', myReports);
+        renderUserRepliesList('suggest', mySuggests);
+    });
+}
+
+function renderUserRepliesList(type, ticketsList) {
+    const sec = document.getElementById(`my-${type}-replies-section`);
+    const list = document.getElementById(`my-${type}-replies-list`);
+    if (!sec || !list) return;
+
+    const ticketsWithReplies = ticketsList.filter(t => t.reply);
+
+    if (ticketsWithReplies.length === 0) {
+        sec.style.display = 'none';
+        return;
+    }
+
+    sec.style.display = 'block';
+    let html = '';
+
+    ticketsWithReplies.forEach(t => {
+        html += `
+        <div class="acad-glass-card" style="margin-bottom: 10px; padding: 14px; background: rgba(255, 255, 255, 0.95); border: 1.5px solid var(--accent-emerald); border-radius: 16px;">
+            <div style="font-size: 0.82rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">📌 عنوانك: ${t.title}</div>
+            <p style="font-size: 0.78rem; color: #475569; margin-bottom: 8px; font-weight: 600;">رسالتك: "${t.desc}"</p>
+            <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 12px; padding: 10px 12px;">
+                <div style="font-size: 0.78rem; font-weight: 900; color: #0369a1; margin-bottom: 3px;">رد الإدارة والمطور 👨‍💻:</div>
+                <div style="font-size: 0.86rem; color: #0f172a; font-weight: 800; line-height: 1.5;">${t.reply}</div>
+            </div>
+        </div>`;
+    });
+
+    list.innerHTML = html;
+}
+
+// دالة لتصفير النقطة الحمراء فقط عند فتح شاشة المشكلة أو الاقتراح
+function markTicketRepliesAsSeen(type) {
+    if (!currentUser) return;
+    db.ref('user_tickets').once('value', (snap) => {
+        if (!snap.exists()) return;
+        snap.forEach(child => {
+            const t = child.val();
+            if (t.senderPhone === currentUser.phone && t.type === (type === 'report' ? 'مشكلة' : 'اقتراح')) {
+                if (t.reply && t.seen !== true) {
+                    db.ref(`user_tickets/${child.key}/seen`).set(true);
+                }
+            }
+        });
+    });
+}
+// ================= منظومة المؤقتات التنازلية التفاعلية =================
+    let appCountdownsList = [];
+    let countdownTicker = null;
+
+    function listenToCountdowns() {
+        db.ref('app_countdowns').on('value', (snap) => {
+            appCountdownsList = [];
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    appCountdownsList.push({ id: c.key, ...c.val() });
+                });
+            }
+            renderHomeCountdowns();
+            renderAdminCountdowns();
+        });
+
+        db.ref('academic_tasks').on('value', (snap) => {
+            const select = document.getElementById('adm-cd-task-link');
+            if (!select) return;
+            select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    const t = c.val();
+                    select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
+                });
+            }
+        });
+    }
+
+    function renderHomeCountdowns() {
+        const wrapper = document.getElementById('home-countdowns-wrapper');
+        const container = document.getElementById('home-countdowns-container');
+        if (!wrapper || !container) return;
+
+        const myCompletedTasks = (currentUser && currentUser.completed_tasks) ? currentUser.completed_tasks : [];
+        const now = Date.now();
+
+        const visibleCountdowns = appCountdownsList.filter(cd => {
+            const isExpired = new Date(cd.targetDate).getTime() <= now;
+            if (isExpired) return false;
+            
+            if (cd.linkedTaskId && cd.linkedTaskId !== 'none') {
+                if (myCompletedTasks.includes(cd.linkedTaskId)) return false;
+            }
+            return true;
+        });
+
+        if (visibleCountdowns.length === 0) {
+            wrapper.style.display = 'none';
+            if (countdownTicker) clearInterval(countdownTicker);
+            return;
+        }
+
+        wrapper.style.display = 'block';
+        let html = '';
+
+        visibleCountdowns.forEach(cd => {
+            const tag = (cd.linkedTaskId && cd.linkedTaskId !== 'none') ? '📝 تكليف دراسي' : '🎯 حدث عام';
+            html += `
+            <div class="countdown-card" id="cd-card-${cd.id}">
+                <div class="countdown-header">
+                    <span class="countdown-title">⏳ ${cd.title}</span>
+                    <span class="countdown-tag">${tag}</span>
+                </div>
+                <div class="countdown-timer-grid" data-target="${cd.targetDate}">
+                    <div class="timer-unit-box"><div class="timer-unit-val cd-days">00</div><div class="timer-unit-label">يوم</div></div>
+                    <div class="timer-unit-box"><div class="timer-unit-val cd-hours">00</div><div class="timer-unit-label">ساعة</div></div>
+                    <div class="timer-unit-box"><div class="timer-unit-val cd-mins">00</div><div class="timer-unit-label">دقيقة</div></div>
+                    <div class="timer-unit-box"><div class="timer-unit-val cd-secs">00</div><div class="timer-unit-label">ثانية</div></div>
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+        startCountdownTicker();
+    }
+
+    function startCountdownTicker() {
+        if (countdownTicker) clearInterval(countdownTicker);
+        
+        function update() {
+            const now = Date.now();
+            document.querySelectorAll('.countdown-timer-grid').forEach(grid => {
+                const targetTime = new Date(grid.getAttribute('data-target')).getTime();
+                const diff = targetTime - now;
+
+                if (diff <= 0) {
+                    renderHomeCountdowns();
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+                grid.querySelector('.cd-days').innerText = String(days).padStart(2, '0');
+                grid.querySelector('.cd-hours').innerText = String(hours).padStart(2, '0');
+                grid.querySelector('.cd-mins').innerText = String(mins).padStart(2, '0');
+                grid.querySelector('.cd-secs').innerText = String(secs).padStart(2, '0');
+            });
+        }
+
+        update();
+        countdownTicker = setInterval(update, 1000);
+    }
+
+    function adminPublishCountdown() {
+        playClickSound();
+        const title = document.getElementById('adm-cd-title').value.trim();
+        const targetDate = document.getElementById('adm-cd-target').value;
+        const linkedTaskId = document.getElementById('adm-cd-task-link').value;
+
+        if (!title || !targetDate) {
+            showTopToast('يرجى إدخال عنوان المؤقت والموعد المحدد!', 'error');
+            return;
+        }
+
+        db.ref('app_countdowns').push({
+            title,
+            targetDate,
+            linkedTaskId,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            showTopToast('تم نشر المؤقت التنازلي بنجاح ⏱️🚀', 'success');
+            document.getElementById('adm-cd-title').value = '';
+            document.getElementById('adm-cd-target').value = '';
+        });
+    }
+
+    function renderAdminCountdowns() {
+        const list = document.getElementById('adm-countdowns-list');
+        if (!list) return;
+        
+        if (appCountdownsList.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لا توجد مؤقتات نشطة.</p>';
+            return;
+        }
+
+        let html = '';
+        appCountdownsList.forEach(cd => {
+            html += `
+            <div class="admin-item-card" style="padding: 8px 12px;">
+                <div class="admin-item-info">
+                    <div class="admin-item-name" style="font-size: 0.88rem;">⏱️ ${cd.title}</div>
+                    <div class="admin-item-sub" style="font-size: 0.72rem;">${new Date(cd.targetDate).toLocaleString('ar-EG')}</div>
+                </div>
+                <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="adminDeleteCountdown('${cd.id}')">حذف 🗑️</button>
+            </div>`;
+        });
+        list.innerHTML = html;
+    }
+
+    function adminDeleteCountdown(id) {
+        if (confirm('هل تريد حذف هذا المؤقت؟')) {
+            db.ref('app_countdowns/' + id).remove().then(() => {
+                showTopToast('تم حذف المؤقت بنجاح.', 'info');
             });
         }
     }
