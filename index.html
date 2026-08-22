@@ -911,29 +911,39 @@
             border: 1px solid #10b981;
             box-shadow: none;
         }
-/* ================= سلايدر وكروت المؤقتات التنازلية ================= */
+/* ================= سلايدر المؤقتات التنازلية المحدث بنقاط التنقل ================= */
+        .countdowns-wrapper-box {
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        /* ================= سلايدر وكارت المؤقت بالحجم الأصلي المريح ================= */
+        /* ================= سلايدر وكارت المؤقت (مقاس متوسط ومثالي) ================= */
+        .countdowns-wrapper-box {
+            margin-bottom: 14px;
+            position: relative;
+        }
+
         .countdowns-carousel {
             display: flex;
             gap: 12px;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
-            padding: 4px 2px 14px;
-            margin-bottom: 12px;
+            padding: 3px 2px 8px;
             -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
-        .countdowns-carousel::-webkit-scrollbar { height: 4px; }
-        .countdowns-carousel::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
+        .countdowns-carousel::-webkit-scrollbar { display: none; }
 
         .countdown-card {
             flex: 0 0 100%;
             scroll-snap-align: center;
             background: var(--card-gradient);
-            border: 1px solid var(--border-card);
+            border: 1.5px solid var(--border-card);
             border-radius: 18px;
-            padding: 14px 16px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            padding: 14px 16px; /* مساحة متوسطة ومريحة */
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.2);
             position: relative;
-            overflow: hidden;
         }
 
         .countdown-header {
@@ -943,42 +953,76 @@
             margin-bottom: 10px;
         }
         .countdown-title {
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 800;
             color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .countdown-tag {
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 2.5px 8px;
+            border-radius: 9px;
             background: rgba(212, 175, 55, 0.15);
             color: var(--accent-gold);
+            white-space: nowrap;
         }
 
+        /* شبكة مربعات الأرقام */
         .countdown-timer-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 7px;
             text-align: center;
         }
         .timer-unit-box {
             background: var(--bg-primary);
             border: 1px solid var(--border-card);
-            border-radius: 12px;
-            padding: 6px 2px;
+            border-radius: 11px;
+            padding: 5.5px 3px;
         }
         .timer-unit-val {
-            font-size: 1.15rem;
+            font-size: 1.12rem;
             font-weight: 900;
             color: var(--accent-emerald);
             line-height: 1.1;
         }
         .timer-unit-label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             color: var(--text-sub);
             font-weight: 700;
             margin-top: 2px;
+        }
+
+        /* شريط التلميح الذهبي المصغر الثابت والنقاط في المنتصف */
+        .countdown-pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .cd-scroll-hint {
+            font-size: 0.68rem;
+            color: var(--accent-gold) !important;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cd-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--border-card);
+            transition: all 0.3s ease;
+        }
+        .cd-dot.active {
+            background: var(--accent-gold);
+            width: 12px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -1332,8 +1376,9 @@
             </div>
 
 <!-- سلايدر المؤقتات التنازلية للأحداث والتكليفات -->
-            <div id="home-countdowns-wrapper" style="display: none;">
-                <div class="countdowns-carousel" id="home-countdowns-container"></div>
+            <div id="home-countdowns-wrapper" class="countdowns-wrapper-box" style="display: none;">
+                <div class="countdowns-carousel" id="home-countdowns-container" onscroll="updateCountdownDots()"></div>
+                <div id="countdowns-indicator-bar" class="countdown-pagination-bar"></div>
             </div>
 
             <div class="section-label">الأقسام الرئيسية</div>
@@ -3175,7 +3220,7 @@ function shuffleArray(array) {
         checkAppEntryFlow();
         checkBroadcastAlerts();
         initUserTicketRepliesListener();
-        listenToCountdowns(); // <--- إضافة هذا السطر
+        listenToCountdowns();
     });
 
     function checkAppEntryFlow() {
@@ -5696,9 +5741,10 @@ function markTicketRepliesAsSeen(type) {
         });
     }
 
-    function renderHomeCountdowns() {
+function renderHomeCountdowns() {
         const wrapper = document.getElementById('home-countdowns-wrapper');
         const container = document.getElementById('home-countdowns-container');
+        const indicatorBar = document.getElementById('countdowns-indicator-bar');
         if (!wrapper || !container) return;
 
         const myCompletedTasks = (currentUser && currentUser.completed_tasks) ? currentUser.completed_tasks : [];
@@ -5724,7 +5770,7 @@ function markTicketRepliesAsSeen(type) {
         let html = '';
 
         visibleCountdowns.forEach(cd => {
-            const tag = (cd.linkedTaskId && cd.linkedTaskId !== 'none') ? '📝 تكليف دراسي' : '🎯 حدث عام';
+            const tag = (cd.linkedTaskId && cd.linkedTaskId !== 'none') ? '📝 تكليف' : '🎯 حدث عام';
             html += `
             <div class="countdown-card" id="cd-card-${cd.id}">
                 <div class="countdown-header">
@@ -5741,9 +5787,38 @@ function markTicketRepliesAsSeen(type) {
         });
 
         container.innerHTML = html;
+
+        // إظهار سهم وتلميح التمرير والنقاط إذا وجد أكثر من مؤقت
+        if (indicatorBar) {
+            if (visibleCountdowns.length > 1) {
+                let dotsHtml = '<div class="cd-scroll-hint"><span>اسحب لرؤية المزيد</span> <span>←</span></div>';
+                dotsHtml += '<div style="display: flex; gap: 4px; align-items: center;">';
+                for (let i = 0; i < visibleCountdowns.length; i++) {
+                    dotsHtml += `<span class="cd-dot ${i === 0 ? 'active' : ''}" id="cd-dot-${i}"></span>`;
+                }
+                dotsHtml += '</div>';
+                indicatorBar.innerHTML = dotsHtml;
+                indicatorBar.style.display = 'flex';
+            } else {
+                indicatorBar.innerHTML = '';
+                indicatorBar.style.display = 'none';
+            }
+        }
+
         startCountdownTicker();
     }
 
+    function updateCountdownDots() {
+        const container = document.getElementById('home-countdowns-container');
+        if (!container) return;
+        const scrollPos = Math.abs(container.scrollLeft);
+        const cardWidth = container.offsetWidth; // الحساب على العرض الكامل 100%
+        const activeIndex = Math.round(scrollPos / cardWidth);
+
+        document.querySelectorAll('.cd-dot').forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === activeIndex);
+        });
+    }
     function startCountdownTicker() {
         if (countdownTicker) clearInterval(countdownTicker);
         
