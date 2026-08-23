@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.2";
+    const CURRENT_APP_VERSION = "1.0.3";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -363,6 +363,10 @@ function shuffleArray(array) {
         "frame_fire": { price: 200, name: "إطار ناري متوهج 🔥", category: "frames", desc: "لهب متوهج ومتحرك حول صورتك" },
         "frame_cyber": { price: 220, name: "إطار سايبر نيون ⚡", category: "frames", desc: "تأثير نيون أزرق وبنفسجي لافت" },
         "frame_cosmic": { price: 250, name: "إطار كوني متدرج 🌌", category: "frames", desc: "تدرج كوني أسطوري يعكس هيبتك" },
+"frame_ring_inferno": { price: 260, name: "إطار التنين الناري الدائري 🔥", category: "frames", desc: "حلقة لهب بركانية دوارة ثلاثية الأبعاد" },
+        "frame_ring_cyber": { price: 280, name: "إطار السايبر نيون الدوار ⚡", category: "frames", desc: "حلقة ألوان نيون RGB مستقبلية تدور حول صورتك" },
+        "frame_ring_celestial": { price: 320, name: "إطار الملاك المذهب الأسطوري 👑", category: "frames", desc: "هالة ذهبية مقدسة تشع ببريق ملكي ناصع" },
+        "frame_ring_nebula": { price: 290, name: "إطار السديم الكوني الدائري 🌌", category: "frames", desc: "تدرج بلوري من غبار المجرات يلتف حول الأفتار" },
         "hat_grad": { price: 70, name: "قبعة تخرج أكاديمية 🎓", category: "frames", desc: "إكسسوار قبعة التخرج فوق صورتك" },
         "hat_crown": { price: 70, name: "تاج ملكي مذهب 👑", category: "frames", desc: "تاج الملوك والأبطال فوق صورتك" },
         "hat_bow": { price: 70, name: "فيونكة وردية لطيفة 🎀", category: "frames", desc: "فيونكة مائلة للبنات أعلى الصورة" },
@@ -810,6 +814,20 @@ function playFlawlessVictorySound() {
         if (hatKey === 'hat_halo') return '<div class="hat-accessory hat-halo">😇</div>';
         return '';
     }
+// دالة إرجاع الإطار الرسومي الخارجي
+// دالة إرجاع الإطار الدائري المفرغ
+function getAvatarFrameOverlayHtml(frameKey) {
+        if (!frameKey || frameKey === 'none') return '';
+        
+        const key = frameKey.startsWith('frame_') ? frameKey : 'frame_' + frameKey;
+        
+        if (key === 'frame_ring_inferno' || key === 'ring_inferno') return '<div class="avatar-ring-frame ring-inferno"></div>';
+        if (key === 'frame_ring_cyber' || key === 'ring_cyber') return '<div class="avatar-ring-frame ring-cyber"></div>';
+        if (key === 'frame_ring_celestial' || key === 'ring_celestial') return '<div class="avatar-ring-frame ring-celestial"></div>';
+        if (key === 'frame_ring_nebula' || key === 'ring_nebula') return '<div class="avatar-ring-frame ring-nebula"></div>';
+        
+        return '';
+    }
 
     // ================= تهيئة المستخدم =================
     let currentUser = null; 
@@ -985,6 +1003,9 @@ function playFlawlessVictorySound() {
             coinReward += 50;
             currentStreak = 0;
         }
+
+        // تسجيل الحركة في السجل بعد حساب القيم
+        recordUserTransaction('مكافأة الدخول اليومي', xpReward, coinReward, 'reward');
 
         currentUser.xp = (currentUser.xp || 0) + xpReward;
         currentUser.points = currentUser.xp;
@@ -1291,6 +1312,10 @@ if (tab === 'badges') renderAchievementsTabUI();
             else if (itemId === 'frame_fire') previewCircleHtml = `<div class="store-preview-circle frame-fire">🔥</div>`;
             else if (itemId === 'frame_cyber') previewCircleHtml = `<div class="store-preview-circle frame-cyber">⚡</div>`;
             else if (itemId === 'frame_cosmic') previewCircleHtml = `<div class="store-preview-circle frame-cosmic">🌌</div>`;
+            else if (itemId === 'frame_ring_inferno') previewCircleHtml = `<div class="store-preview-circle" style="position:relative;"><div class="avatar-ring-frame ring-inferno"></div>🔥</div>`;
+            else if (itemId === 'frame_ring_cyber') previewCircleHtml = `<div class="store-preview-circle" style="position:relative;"><div class="avatar-ring-frame ring-cyber"></div>⚡</div>`;
+            else if (itemId === 'frame_ring_celestial') previewCircleHtml = `<div class="store-preview-circle" style="position:relative;"><div class="avatar-ring-frame ring-celestial"></div>👑</div>`;
+            else if (itemId === 'frame_ring_nebula') previewCircleHtml = `<div class="store-preview-circle" style="position:relative;"><div class="avatar-ring-frame ring-nebula"></div>🌌</div>`;
             else if (itemId === 'hat_grad') previewCircleHtml = `<div class="store-preview-circle"><div class="hat-accessory hat-grad" style="font-size:1.6rem; top:-6px;">🎓</div></div>`;
             else if (itemId === 'hat_crown') previewCircleHtml = `<div class="store-preview-circle"><div class="hat-accessory hat-crown" style="font-size:1.6rem; top:-8px;">👑</div></div>`;
             else if (itemId === 'hat_bow') previewCircleHtml = `<div class="store-preview-circle"><div class="hat-accessory hat-bow" style="font-size:1.5rem; top:-4px; right:2px;">🎀</div></div>`;
@@ -1321,18 +1346,21 @@ if (tab === 'badges') renderAchievementsTabUI();
             let btnHtml = '';
 
             if (itemId.startsWith('frame_')) {
-                const frameKey = itemId.replace('frame_', '');
-                const isEquipped = (currentUser.active_frame === frameKey);
-                const isOwned = ownedFrames.includes(frameKey);
+        // تنظيف المفتاح لمطابقته بدقة سواء تم حفظه كـ frame_ring_xxx أو ring_xxx
+        const cleanItemId = itemId.replace('frame_', '');
+        const cleanActive = (currentUser.active_frame || '').replace('frame_', '');
+        
+        const isEquipped = (cleanActive === cleanItemId || currentUser.active_frame === itemId);
+        const isOwned = ownedFrames.includes(itemId) || ownedFrames.includes(cleanItemId);
 
-                if (isEquipped) {
-                    btnHtml = `<button class="store-btn active-item">مُرتدى الآن ✅</button>`;
-                } else if (isOwned) {
-                    btnHtml = `<button class="store-btn owned-item" onclick="equipOwnedFrame('${frameKey}')">تفعيل الإطار 🔄</button>`;
-                } else {
-                    btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
-                }
-            } else if (itemId.startsWith('hat_')) {
+        if (isEquipped) {
+            btnHtml = `<button class="store-btn active-item">مُرتدى الآن ✅</button>`;
+        } else if (isOwned) {
+            btnHtml = `<button class="store-btn owned-item" onclick="equipOwnedFrame('${itemId}')">تفعيل الإطار 🔄</button>`;
+        } else {
+            btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
+        }
+    } else if (itemId.startsWith('hat_')) {
                 const isEquipped = (currentUser.active_hat === itemId);
                 const isOwned = ownedHats.includes(itemId);
 
@@ -1410,10 +1438,12 @@ if (tab === 'badges') renderAchievementsTabUI();
             return;
         }
 
+        recordUserTransaction(`شراء عنصر من المتجر: ${currentStoreConfig[itemId]?.name || itemId}`, 0, -cost, 'purchase');
+
         let updates = { coins: currentCoins - cost };
 
-        if (itemId.startsWith('frame_')) {
-            const frameKey = itemId.replace('frame_', '');
+        if (itemId.startsWith('frame_') || itemId.startsWith('ring_')) {
+            const frameKey = itemId;
             let owned = currentUser.owned_frames || [];
             if (!owned.includes(frameKey)) owned.push(frameKey);
             updates.owned_frames = owned;
@@ -1466,7 +1496,13 @@ if (tab === 'badges') renderAchievementsTabUI();
 
     function equipOwnedFrame(frameKey) {
         playClickSound();
-        db.ref('users/' + currentUser.phone + '/active_frame').set(frameKey).then(() => {
+        // ضمان حفظ المفتاح بالشكل الصحيح سواء كان دائرياً أو فريماً عادياً
+        let fullKey = frameKey;
+        if (!frameKey.startsWith('frame_') && !frameKey.startsWith('ring_')) {
+            fullKey = 'frame_' + frameKey;
+        }
+        
+        db.ref('users/' + currentUser.phone + '/active_frame').set(fullKey).then(() => {
             showTopToast('تم تفعيل وارتداء الإطار بنجاح! ✨', 'success');
             updateProfileUI();
         });
@@ -1490,16 +1526,19 @@ if (tab === 'badges') renderAchievementsTabUI();
             const progressPercent = Math.min((xp / nextXp) * 100, 100);
             
             const avatarContainer = document.getElementById('profile-avatar-container');
-            if (avatarContainer) {
-                avatarContainer.className = 'profile-avatar';
-                if (currentUser.active_frame && currentUser.active_frame !== 'none') {
-                    avatarContainer.classList.add('frame-' + currentUser.active_frame);
+        if (avatarContainer) {
+            avatarContainer.className = 'profile-avatar';
+            if (currentUser.active_frame && currentUser.active_frame !== 'none') {
+                const cleanKey = currentUser.active_frame.replace('frame_', '');
+                if (['gold', 'fire', 'cyber', 'cosmic'].includes(cleanKey)) {
+                    avatarContainer.classList.add('frame-' + cleanKey);
                 }
             }
+        }
 
             const hatContainer = document.getElementById('profile-hat-container');
             if (hatContainer) {
-                hatContainer.innerHTML = getHatHtml(currentUser.active_hat);
+                hatContainer.innerHTML = getHatHtml(currentUser.active_hat) + getAvatarFrameOverlayHtml(currentUser.active_frame);
             }
 
             const profileCard = document.getElementById('main-profile-header-card');
@@ -1730,6 +1769,95 @@ renderAchievementsTabUI();
                 }
             });
     }
+// دالة تسجيل أي معاملة في سجل الطالب
+function recordUserTransaction(title, xpChange = 0, coinsChange = 0, type = 'reward') {
+    if (!currentUser) return;
+    try {
+        db.ref('users/' + currentUser.phone + '/transactions').push({
+            title: title,
+            xp: xpChange,
+            coins: coinsChange,
+            type: type, // 'reward', 'purchase', 'penalty'
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+    } catch (e) {
+        console.error('Error logging transaction:', e);
+    }
+}
+
+// دالة فتح وعرض سجل المعاملات
+function openWalletHistory() {
+    playClickSound();
+    navigateTo('view-wallet-history', 'سجل المعاملات', 'حركة النقاط والعملات');
+    loadWalletHistoryUI();
+}
+
+function loadWalletHistoryUI() {
+    const container = document.getElementById('wallet-history-list');
+    if (!container || !currentUser) return;
+
+    db.ref('users/' + currentUser.phone + '/transactions').limitToLast(40).on('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = `
+                <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
+                    <img src="https://img.icons8.com/fluency/96/box.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
+                    <p style="color: var(--text-sub); font-size: 0.85rem;">لا توجد معاملات مسجلة حتى الآن.</p>
+                </div>`;
+            return;
+        }
+
+        let logs = [];
+        snap.forEach(c => {
+            logs.push({ id: c.key, ...c.val() });
+        });
+
+        // ترتيب من الأحدث للأقدم
+        logs.reverse();
+
+        let html = '';
+        logs.forEach(item => {
+            const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleString('ar-EG', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'الآن';
+
+            let xpBadge = '';
+            if (item.xp !== 0 && item.xp !== undefined) {
+                const isPos = item.xp > 0;
+                xpBadge = `<span style="color: ${isPos ? 'var(--accent-emerald)' : '#ef4444'}; font-weight: 800; font-size: 0.82rem;">${isPos ? '+' + item.xp : item.xp} XP</span>`;
+            }
+
+            let coinBadge = '';
+            if (item.coins !== 0 && item.coins !== undefined) {
+                const isPos = item.coins > 0;
+                coinBadge = `<span style="color: ${isPos ? 'var(--accent-gold)' : '#ef4444'}; font-weight: 800; font-size: 0.82rem;">${isPos ? '+' + item.coins : item.coins} 💸</span>`;
+            }
+
+            let icon = '🎁';
+            if (item.type === 'purchase') icon = '🛍️';
+            else if (item.type === 'penalty') icon = '⚠️';
+            else if (item.type === 'quiz') icon = '🧠';
+            else if (item.type === 'derby') icon = '⚔️';
+            else if (item.type === 'penalty_game') icon = '⚽';
+
+            html += `
+            <div class="acad-glass-card" style="margin-bottom: 0; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">${icon}</span>
+                    <div style="text-align: right;">
+                        <h4 style="font-size: 0.88rem; margin: 0; color: var(--text-main);">${item.title}</h4>
+                        <span style="font-size: 0.7rem; color: var(--text-sub);">${timeStr}</span>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                    ${xpBadge}
+                    ${coinBadge}
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    });
+}
 
     function sendResetPasswordLink() {
         playClickSound();
@@ -1819,6 +1947,7 @@ renderAchievementsTabUI();
                         user.xp = (user.xp || user.points || 0) + pointsToAdd;
                         user.points = user.xp;
                     }
+recordUserTransaction(`شحن كود مكافأة: ${code}`, pointsToAdd, 0, 'reward');
                     return user; 
                 }).then(() => { 
                     playSuccessSound(); shootStars(); input.value = ''; closeSidebar(); 
@@ -1940,7 +2069,7 @@ renderAchievementsTabUI();
                     ${bioHtml}
                     <div class="podium-pts">${u.xp} XP</div>
                     <div class="avatar-box-wrapper">
-                        ${hatHtml}
+                        ${hatHtml}${getAvatarFrameOverlayHtml(u.active_frame)}
                         <img src="${avatar}" class="profile-avatar ${frameClass}" style="${isMeBorder}" loading="lazy">
                     </div>
                     <div class="podium-step ${classes[i]}">${medals[i]}</div>
@@ -1969,7 +2098,7 @@ renderAchievementsTabUI();
             <div class="lb-item ${isMe ? 'is-me' : ''} ${animatedCardClass}">
                 <div class="lb-rank">${actualRank}</div>
                 <div class="avatar-box-wrapper">
-                    ${hatHtml}
+                    ${hatHtml}${getAvatarFrameOverlayHtml(u.active_frame)}
                     <img src="${avatar}" class="profile-avatar ${frameClass}" loading="lazy">
                 </div>
                 <div class="lb-details">
@@ -2002,6 +2131,23 @@ renderAchievementsTabUI();
         document.getElementById('detail-card-icon').src = cardIcon;
         
         navigateTo('view-subject-detail', currentActiveSubject, typeName);
+        updateBookRewardBadgeUI(); // تحديث النص فور فتح الشاشة
+    }
+function updateBookRewardBadgeUI() {
+        const badgeEl = document.getElementById('book-reward-status-badge');
+        if (!badgeEl) return;
+
+        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        const bookIdentifier = `${safeKey}_${currentActiveType}`;
+        const rewardedList = (currentUser && currentUser.rewarded_books) ? currentUser.rewarded_books : [];
+
+        if (rewardedList.includes(bookIdentifier)) {
+            badgeEl.innerText = 'تم الحصول على المكافأة ✔️';
+            badgeEl.style.color = 'var(--accent-emerald)';
+        } else {
+            badgeEl.innerText = '+15 XP 🎁';
+            badgeEl.style.color = 'var(--accent-gold)';
+        }
     }
 
     function getSafeSubjectKey(name) {
@@ -2013,73 +2159,48 @@ renderAchievementsTabUI();
         const safeKey = getSafeSubjectKey(currentActiveSubject);
         const bookIdentifier = `${safeKey}_${currentActiveType}`;
         
+        // احتساب المكافأة فوراً وتحديث النص وتسجيل المعاملة
+        rewardUserForBookSilent(bookIdentifier);
+
         db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
             if (snapshot.exists() && snapshot.val()) {
                 const rawUrl = snapshot.val();
                 downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
-                rewardUserOnReturn(bookIdentifier);
             } else {
                 if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
                     downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
-                    rewardUserOnReturn(bookIdentifier);
                 } else {
-                    showTopToast('سيتم إتاحة ملف هذا القسم قريباً من قبل المطور! ⏳', 'info');
+                    showTopToast('سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'info');
                 }
             }
         });
     }
 
-    function rewardUserOnReturn(bookIdentifier) {
+    function rewardUserForBookSilent(bookIdentifier) {
         if (!currentUser) return;
 
-        const rewardedList = currentUser.rewarded_books || [];
+        let rewardedList = currentUser.rewarded_books || [];
         if (rewardedList.includes(bookIdentifier)) return;
 
         rewardedList.push(bookIdentifier);
         const bonusXP = 15;
 
-        // تحديث قاعدة البيانات
-        db.ref('users/' + currentUser.phone).transaction(user => {
-            if (user) {
-                let currentXP = user.xp !== undefined ? user.xp : (user.points || 0);
-                user.xp = currentXP + bonusXP;
-                user.points = user.xp;
-                user.rewarded_books = rewardedList;
-            }
-            return user;
-        }).then(() => {
-            currentUser.rewarded_books = rewardedList;
-            currentUser.xp = (currentUser.xp || 0) + bonusXP;
-            currentUser.points = currentUser.xp;
+        currentUser.rewarded_books = rewardedList;
+        currentUser.xp = (currentUser.xp || 0) + bonusXP;
+        currentUser.points = currentUser.xp;
 
-            let rewarded = false;
+        // تسجيل المعاملة في السجل لمرة واحدة فقط
+        recordUserTransaction(`الاطلاع على مقرر (${currentActiveSubject} - ${currentActiveType === 'theory' ? 'نظري' : 'عملي'})`, bonusXP, 0, 'reward');
 
-            const triggerVisualReward = () => {
-                if (rewarded) return;
-                rewarded = true;
+        // تحديث النص والرصيد في الواجهة
+        updateBookRewardBadgeUI();
+        updateProfileUI();
 
-                // إزالة المستمعات لمنع التكرار
-                document.removeEventListener('visibilitychange', onVisibilityChange);
-                window.removeEventListener('focus', triggerVisualReward);
-
-                // إطلاق الإشعار بعد استقرار الشاشة تماماً
-                setTimeout(() => {
-                    playSuccessSound();
-                    shootStars();
-                    showTopToast(`عاش يا بطل! حصلت على +${bonusXP} XP للاطلاع على المقرر 📚✨`, 'success');
-                    updateProfileUI();
-                }, 600);
-            };
-
-            const onVisibilityChange = () => {
-                if (document.visibilityState === 'visible') {
-                    triggerVisualReward();
-                }
-            };
-
-            // الاستماع للحظة عودة التطبيق للواجهة الأمامية
-            document.addEventListener('visibilitychange', onVisibilityChange);
-            window.addEventListener('focus', triggerVisualReward);
+        // الحفظ في قاعدة البيانات
+        db.ref('users/' + currentUser.phone).update({
+            xp: currentUser.xp,
+            points: currentUser.xp,
+            rewarded_books: rewardedList
         });
     }
 
@@ -2102,7 +2223,6 @@ renderAchievementsTabUI();
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showTopToast('تم بدء تحميل الملف بنجاح ⬇️', 'success');
     }
 
     // ================= محرك تحدي ديربي الدفعة 1v1 =================
@@ -2131,44 +2251,50 @@ renderAchievementsTabUI();
     }
 
     async function createDerbyRoomAction() {
-        playClickSound();
-        if (!currentUser) return;
-        if ((currentUser.coins || 0) < selectedDerbyStake) {
-            showTopToast(`عفواً! رصيدك لا يكفي (تحتاج ${selectedDerbyStake} عملة) 🪙`, 'error');
-            return;
-        }
-
-        closeModal('modal-derby-setup');
-        showTopToast('جاري تجهيز غرفة الديربي...', 'info');
-
-        const randomCode = 'DERBY-' + Math.floor(100 + Math.random() * 900);
-        const battleQuestions = await fetchBattleQuestionsDeck();
-
-        const roomData = {
-            roomId: randomCode,
-            stake: selectedDerbyStake,
-            rewardXP: selectedDerbyRewardXP,
-            status: 'waiting',
-            currentQIndex: 0,
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            player1: {
-                phone: currentUser.phone,
-                name: currentUser.name,
-                avatar: currentUser.avatar || '',
-                score: 0,
-                answeredCurrent: false,
-                answerTime: 0
-            },
-            player2: null,
-            questions: battleQuestions
-        };
-
-        await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - selectedDerbyStake);
-        await db.ref('battles/' + randomCode).set(roomData);
-        currentBattleId = randomCode;
-
-        enterBattleLobbyView(randomCode);
+    playClickSound();
+    if (!currentUser) return;
+    if ((currentUser.coins || 0) < selectedDerbyStake) {
+        showTopToast(`عفواً! رصيدك لا يكفي (تحتاج ${selectedDerbyStake} عملة) 🪙`, 'error');
+        return;
     }
+
+    closeModal('modal-derby-setup');
+    showTopToast('جاري فتح غرفة الديربي فوراً ⚡', 'success'); // رسالة سريعة
+
+    const randomCode = 'DERBY-' + Math.floor(100 + Math.random() * 900);
+
+    // 1. إنشاء الغرفة فوراً بدون انتظار تجهيز الأسئلة لضمان السرعة الفائقة
+    const roomData = {
+        roomId: randomCode,
+        stake: selectedDerbyStake,
+        rewardXP: selectedDerbyRewardXP,
+        status: 'waiting',
+        currentQIndex: 0,
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        player1: {
+            phone: currentUser.phone,
+            name: currentUser.name,
+            avatar: currentUser.avatar || '',
+            score: 0,
+            answeredCurrent: false,
+            answerTime: 0
+        },
+        player2: null,
+        questions: [] // سيتم جلبها وتوليدها بذكاء فور اكتمال الانضمام
+    };
+
+    // خصم العملات وحفظ الغرفة دفعة واحدة وبسرعة خيالية
+    await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - selectedDerbyStake);
+    await db.ref('battles/' + randomCode).set(roomData);
+    currentBattleId = randomCode;
+
+    // 2. تجهيز الأسئلة في الخلفية بهدوء وبدون ما نعطل الواجهة
+    fetchBattleQuestionsDeck().then(deck => {
+        db.ref('battles/' + randomCode + '/questions').set(deck);
+    });
+
+    enterBattleLobbyView(randomCode);
+}
 
     async function joinDerbyRoomAction() {
         playClickSound();
@@ -2534,65 +2660,88 @@ function checkHallOfFameStatus() {
     }
 
     async function concludeBattle(room) {
-        if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
-        clearInterval(battleTimerInterval);
+    if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+    clearInterval(battleTimerInterval);
 
-        navigateTo('view-battle-result', 'نتيجة الديربي 1v1', 'حسم المواجهة');
+    navigateTo('view-battle-result', 'نتيجة الديربي 1v1', 'حسم المواجهة');
 
-        const isHost = room.player1.phone === currentUser.phone;
-        const myScore = isHost ? room.player1.score : room.player2.score;
-        const oppScore = isHost ? room.player2.score : room.player1.score;
+    const isHost = room.player1.phone === currentUser.phone;
+    const me = isHost ? room.player1 : room.player2;
+    const opp = isHost ? room.player2 : room.player1;
 
-        document.getElementById('battle-result-my-score').innerText = myScore;
-        document.getElementById('battle-result-opp-score').innerText = oppScore;
-if (isHost && room.player1 && room.player2) {
-    let resultText = myScore > oppScore ? `الفائز: ${room.player1.name} 🏆` : (oppScore > myScore ? `الفائز: ${room.player2.name} 🏆` : 'النتيجة: تعادل بطولي 🤝');
-    recordActivityLog('derby', `مواجهة بين [${room.player1.name}] (${room.player1.score}) و [${room.player2.name}] (${room.player2.score}) | ${resultText}`);
-}
+    // ترتيب اللاعبين بحيث يكون الفائز في الأعلى دائماً
+    let winner = me.score >= opp.score ? me : opp;
+    let loser = me.score >= opp.score ? opp : me;
+    let isDraw = me.score === opp.score;
 
-        const titleEl = document.getElementById('battle-result-title');
-        const subEl = document.getElementById('battle-result-subtitle');
-        const rewardBox = document.getElementById('battle-result-rewards-box');
-        const rewardText = document.getElementById('battle-result-reward-text');
-        const iconEl = document.getElementById('battle-result-icon');
+    // تعبئة بيانات الكارت العلوي (الفائز أو الأول في حال التعادل)
+    document.getElementById('res-p1-name').innerText = winner.name;
+    document.getElementById('res-p1-avatar').src = winner.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+    document.getElementById('res-p1-badge').innerText = `النقاط: ${winner.score}`;
+    document.getElementById('res-p1-tag').innerHTML = isDraw ? '🤝 متعادلين' : 'WINNER 👑';
+    document.getElementById('result-card-p1').style.borderColor = isDraw ? 'var(--accent-gold)' : 'var(--accent-emerald)';
+    document.getElementById('result-card-p1').style.boxShadow = isDraw ? '0 0 15px rgba(245, 158, 11, 0.3)' : '0 0 20px rgba(16, 185, 129, 0.35)';
 
-        if (myScore > oppScore) {
-            playSuccessSound();
-            shootStars();
-            triggerConfetti();
-            titleEl.innerText = 'مبروك الفوز يا بطل! 🏆';
-            subEl.innerText = 'حسمت المواجهة ببراعة وسرعة بديهة واستحققت الجائزة!';
-            iconEl.src = 'https://img.icons8.com/fluency/96/trophy.png'; // أيقونة الكأس ثلاثية الأبعاد الذهبية
-            
-            const totalCoinsWon = room.stake * 2;
-            rewardText.innerText = `+${totalCoinsWon} عملة 💸 | +${room.rewardXP} XP ⚡`;
-            rewardBox.style.display = 'block';
+    // تعبئة بيانات الكارت السفلي (الخاسر)
+    document.getElementById('res-p2-name').innerText = loser.name;
+    document.getElementById('res-p2-avatar').src = loser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+    document.getElementById('res-p2-badge').innerText = `النقاط: ${loser.score}`;
+    document.getElementById('res-p2-tag').innerHTML = isDraw ? '🤝 متعادلين' : 'DEFEATED ❌';
+    document.getElementById('result-card-p2').style.borderColor = '#ef4444';
+    document.getElementById('result-card-p2').style.opacity = '0.8';
 
-            await db.ref('users/' + currentUser.phone).update({
-                coins: (currentUser.coins || 0) + totalCoinsWon,
-                xp: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
-                points: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
-                derby_wins: (currentUser.derby_wins || 0) + 1
-            });
-        } else if (myScore < oppScore) {
-            playErrorSound();
-            titleEl.innerText = 'هاردلك، معوضة الجولة القادمة! 🛡️';
-            subEl.innerText = 'المنافس كان أسرع هذه المرة، تدرب جيداً واستعد للثأر!';
-            iconEl.src = 'https://img.icons8.com/fluency/96/shield.png'; // أيقونة الدرع الدفاعي الأنيقة بدلاً من الوجه الحزين
-            rewardBox.style.display = 'none';
-        } else {
-            playSuccessSound();
-            titleEl.innerText = 'تعادل بطولي بين العملاقين! 🤝';
-            subEl.innerText = 'تقاربت المستويات تماماً، تم استرداد رسوم التحدي بالكامل.';
-            iconEl.src = 'https://img.icons8.com/fluency/96/handshake.png'; // أيقونة المصافحة ثلاثية الأبعاد
-            rewardText.innerText = `+${room.stake} عملة (استرداد الرسوم) 🪙`;
-            rewardBox.style.display = 'block';
+    const titleEl = document.getElementById('battle-result-title');
+    const subEl = document.getElementById('battle-result-subtitle');
+    const rewardBox = document.getElementById('battle-result-rewards-box');
+    const rewardText = document.getElementById('battle-result-reward-text');
+    const iconEl = document.getElementById('battle-result-icon');
 
-            await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) + room.stake);
-        }
+    const myScore = me.score;
+    const oppScore = opp.score;
 
-        currentBattleId = null;
+    if (myScore > oppScore) {
+        playSuccessSound();
+        shootStars();
+        triggerConfetti();
+        titleEl.innerText = 'مبروك الفوز يا بطل! 🏆';
+        subEl.innerText = 'أثبت تفوقك وحسمت المعركة بامتياز!';
+        iconEl.src = 'https://img.icons8.com/fluency/96/trophy.png';
+        
+        const totalCoinsWon = room.stake * 2;
+        rewardText.innerText = `+${totalCoinsWon} عملة 💸 | +${room.rewardXP} XP ⚡`;
+        rewardBox.style.display = 'block';
+
+        recordUserTransaction(`فوز في ديربي 1v1 ضد المنافس`, room.rewardXP, totalCoinsWon, 'derby');
+
+        await db.ref('users/' + currentUser.phone).update({
+            coins: (currentUser.coins || 0) + totalCoinsWon,
+            xp: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
+            points: (currentUser.xp || currentUser.points || 0) + room.rewardXP,
+            derby_wins: (currentUser.derby_wins || 0) + 1
+        });
+    } else if (myScore < oppScore) {
+        playErrorSound();
+        titleEl.innerText = 'هاردلك، معوضة الجولة القادمة! 🛡️';
+        subEl.innerText = 'المنافس كان أسرع هذه المرة، استعد للثأر قريبًا!';
+        iconEl.src = 'https://img.icons8.com/fluency/96/shield.png';
+        rewardBox.style.display = 'none';
+
+        recordUserTransaction(`خسارة في ديربي 1v1 (رسوم التحدي)`, 0, -room.stake, 'derby');
+    } else {
+        playSuccessSound();
+        titleEl.innerText = 'تعادل بطولي بين العملاقين! 🤝';
+        subEl.innerText = 'تقاربت المستويات تماماً، تم استرداد رسوم التحدي.';
+        iconEl.src = 'https://img.icons8.com/fluency/96/handshake.png';
+        rewardText.innerText = `+${room.stake} عملة (استرداد الرسوم) 🪙`;
+        rewardBox.style.display = 'block';
+
+        recordUserTransaction(`تعادل في ديربي 1v1 (استرداد الرسوم)`, 0, 0, 'derby');
+
+        await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) + room.stake);
     }
+
+    currentBattleId = null;
+}
 // ================= منظومة حماية التحديات والخصم عند الانسحاب =================
     let isClassicQuizActive = false;
     let isPenaltyGameActive = false;
@@ -2951,6 +3100,7 @@ isClassicQuizActive = false;
             xpChange -= 10; 
             bonusMsg = "<br>😅 <b>للأسف جبتهم كلهم غلط واتخصم منك عقاب -10 XP، شد حيلك المرة الجاية!</b>"; 
         }
+recordUserTransaction(`جولة تحدي العباقرة (${quizScoreCount}/5 صح)`, xpChange, coinsChange, 'quiz');
 
         const isDoubleActive = currentUser && currentUser.double_xp_until && currentUser.double_xp_until > Date.now();
         if (isDoubleActive && xpChange > 0) {
@@ -3069,32 +3219,29 @@ if (currentUser) {
         document.getElementById('admin-store-price').value = item.price || 100;
         document.getElementById('admin-store-sale-price').value = item.salePrice !== undefined ? item.salePrice : '';
         document.getElementById('admin-store-badge-text').value = item.badgeText || '';
+document.getElementById('admin-store-name').value = item.name || '';
     }
 
     function saveStorePriceSettings() {
-        playClickSound();
-        const itemId = document.getElementById('admin-store-item-select').value;
-        const price = parseInt(document.getElementById('admin-store-price').value) || 100;
-        const salePriceVal = document.getElementById('admin-store-sale-price').value.trim();
-        const badgeText = document.getElementById('admin-store-badge-text').value.trim();
+    playClickSound();
+    const itemId = document.getElementById('admin-store-item-select').value;
+    const price = parseInt(document.getElementById('admin-store-price').value) || 100;
+    const customName = document.getElementById('admin-store-name').value.trim(); // اسم السلعة الجديد
 
-        let itemData = {
-            ...currentStoreConfig[itemId],
-            price: price
-        };
+    let itemData = {
+        ...currentStoreConfig[itemId],
+        price: price
+    };
 
-        if (salePriceVal !== '') {
-            itemData.salePrice = parseInt(salePriceVal);
-            itemData.badgeText = badgeText || 'عرض لفترة محدودة';
-        } else {
-            delete itemData.salePrice;
-            delete itemData.badgeText;
-        }
-
-        db.ref('store_config/' + itemId).set(itemData).then(() => {
-            showTopToast('تم تحديث سعر وعرض السلعة في المتجر بنجاح! 🏷️✅', 'success');
-        });
+    // تحديث الاسم إذا قام الأدمن بكتابة اسم جديد
+    if (customName !== '') {
+        itemData.name = customName;
     }
+
+    db.ref('store_config/' + itemId).update(itemData).then(() => {
+        showTopToast('تم تحديث بيانات السلعة في المتجر بنجاح! 🏷️✅', 'success');
+    });
+}
 
     function loadAdminData() {
         document.getElementById('admin-users-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
@@ -4057,6 +4204,7 @@ isPenaltyGameActive = true;
             if (isDoubleActive) {
                 xpChange = xpChange * 2;
             }
+recordUserTransaction(isGoal ? `هدف ركلة جزاء باللاعب ${selectedPenaltyStriker.name}` : `إهدار ركلة جزاء باللاعب ${selectedPenaltyStriker.name}`, xpChange, coinsChange, isGoal ? 'penalty_game' : 'penalty');
 
             if (imgEl) imgEl.src = 'https://img.icons8.com/fluency/96/goal.png';
             titleEl.innerText = 'GOOOAAAL! 🎯';
@@ -4359,12 +4507,14 @@ rewardEl.innerHTML = `
     }
 
     function claimAchievementReward(achId) {
+        const ach = activeAchievementsConfig[achId];
+        if (!ach || !currentUser) return;
+
         playSuccessSound();
         shootStars();
         triggerConfetti();
 
-        const ach = activeAchievementsConfig[achId];
-        if (!ach || !currentUser) return;
+        recordUserTransaction(`استلام جائزة لقب: ${ach.title}`, ach.xp, ach.coins, 'reward');
 
         let claimed = currentUser.claimed_achievements || [];
         if (!claimed.includes(achId)) claimed.push(achId);
