@@ -2038,6 +2038,7 @@ renderAchievementsTabUI();
         rewardedList.push(bookIdentifier);
         const bonusXP = 15;
 
+        // تحديث قاعدة البيانات
         db.ref('users/' + currentUser.phone).transaction(user => {
             if (user) {
                 let currentXP = user.xp !== undefined ? user.xp : (user.points || 0);
@@ -2050,18 +2051,35 @@ renderAchievementsTabUI();
             currentUser.rewarded_books = rewardedList;
             currentUser.xp = (currentUser.xp || 0) + bonusXP;
             currentUser.points = currentUser.xp;
-            
-            const handleAppFocus = () => {
-                window.removeEventListener('focus', handleAppFocus);
+
+            let rewarded = false;
+
+            const triggerVisualReward = () => {
+                if (rewarded) return;
+                rewarded = true;
+
+                // إزالة المستمعات لمنع التكرار
+                document.removeEventListener('visibilitychange', onVisibilityChange);
+                window.removeEventListener('focus', triggerVisualReward);
+
+                // إطلاق الإشعار بعد استقرار الشاشة تماماً
                 setTimeout(() => {
                     playSuccessSound();
                     shootStars();
                     showTopToast(`عاش يا بطل! حصلت على +${bonusXP} XP للاطلاع على المقرر 📚✨`, 'success');
                     updateProfileUI();
-                }, 300);
+                }, 600);
             };
 
-            window.addEventListener('focus', handleAppFocus);
+            const onVisibilityChange = () => {
+                if (document.visibilityState === 'visible') {
+                    triggerVisualReward();
+                }
+            };
+
+            // الاستماع للحظة عودة التطبيق للواجهة الأمامية
+            document.addEventListener('visibilitychange', onVisibilityChange);
+            window.addEventListener('focus', triggerVisualReward);
         });
     }
 
