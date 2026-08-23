@@ -2017,45 +2017,52 @@ renderAchievementsTabUI();
             if (snapshot.exists() && snapshot.val()) {
                 const rawUrl = snapshot.val();
                 downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
-                rewardUserForBookDownload(bookIdentifier);
+                rewardUserOnReturn(bookIdentifier);
             } else {
                 if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
                     downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
-                    rewardUserForBookDownload(bookIdentifier);
+                    rewardUserOnReturn(bookIdentifier);
                 } else {
-                    showTopToast('سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'info');
+                    showTopToast('سيتم إتاحة ملف هذا القسم قريباً من قبل المطور! ⏳', 'info');
                 }
             }
         });
     }
 
-    function rewardUserForBookDownload(bookIdentifier) {
+    function rewardUserOnReturn(bookIdentifier) {
         if (!currentUser) return;
 
         const rewardedList = currentUser.rewarded_books || [];
-        if (!rewardedList.includes(bookIdentifier)) {
-            rewardedList.push(bookIdentifier);
-            const bonusXP = 15;
+        if (rewardedList.includes(bookIdentifier)) return;
 
-            db.ref('users/' + currentUser.phone).transaction(user => {
-                if (user) {
-                    let currentXP = user.xp !== undefined ? user.xp : (user.points || 0);
-                    user.xp = currentXP + bonusXP;
-                    user.points = user.xp;
-                    user.rewarded_books = rewardedList;
-                }
-                return user;
-            }).then(() => {
-                currentUser.rewarded_books = rewardedList;
-                currentUser.xp = (currentUser.xp || 0) + bonusXP;
-                currentUser.points = currentUser.xp;
-                
-                playSuccessSound();
-                shootStars();
-                showTopToast(`عاش يا بطل! حصلت على +${bonusXP} XP للاطلاع على محتوى المقرر 📚✨`, 'success');
-                updateProfileUI();
-            });
-        }
+        rewardedList.push(bookIdentifier);
+        const bonusXP = 15;
+
+        db.ref('users/' + currentUser.phone).transaction(user => {
+            if (user) {
+                let currentXP = user.xp !== undefined ? user.xp : (user.points || 0);
+                user.xp = currentXP + bonusXP;
+                user.points = user.xp;
+                user.rewarded_books = rewardedList;
+            }
+            return user;
+        }).then(() => {
+            currentUser.rewarded_books = rewardedList;
+            currentUser.xp = (currentUser.xp || 0) + bonusXP;
+            currentUser.points = currentUser.xp;
+            
+            const handleAppFocus = () => {
+                window.removeEventListener('focus', handleAppFocus);
+                setTimeout(() => {
+                    playSuccessSound();
+                    shootStars();
+                    showTopToast(`عاش يا بطل! حصلت على +${bonusXP} XP للاطلاع على المقرر 📚✨`, 'success');
+                    updateProfileUI();
+                }, 300);
+            };
+
+            window.addEventListener('focus', handleAppFocus);
+        });
     }
 
     function downloadBookFromDrive(url, fileName) {
