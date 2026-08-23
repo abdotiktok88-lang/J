@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.1";
+    const CURRENT_APP_VERSION = "1.0.2";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -148,28 +148,49 @@ function shuffleArray(array) {
         document.getElementById('schedule-view-title').innerText = `جدول ${secName}`;
         const container = document.getElementById('schedule-viewer-container');
         
-        container.innerHTML = `
-            <img src="https://img.icons8.com/fluency/96/sand-timer.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
-            <p style="color: var(--text-sub); font-size: 0.85rem;">جاري فحص حالة الجدول...</p>
-        `;
-        
         navigateTo('view-schedule-detail', `جدول ${secName}`, 'الجدول الأسبوعي المعتمد');
 
+        // 1. فحص وجود نسخة مخزنة أوفلاين للجدول أولاً
+        const cachedImg = localStorage.getItem('cached_schedule_' + secKey);
+        if (cachedImg) {
+            renderScheduleImage(container, cachedImg, secName);
+        } else {
+            container.innerHTML = `
+                <img src="https://img.icons8.com/fluency/96/sand-timer.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
+                <p style="color: var(--text-sub); font-size: 0.85rem;">جاري فحص حالة الجدول...</p>
+            `;
+        }
+
+        // 2. فحص السحابة لجلب التحديث وحفظه أوفلاين
         db.ref('schedules/' + secKey).once('value').then(snap => {
             if (snap.exists() && snap.val()) {
                 const imgUrl = snap.val();
-                container.innerHTML = `
-                    <img src="${imgUrl}" style="width: 100%; border-radius: 12px; max-height: 70vh; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" alt="${secName}" onerror="this.onerror=null; this.parentElement.innerHTML='<p style=\'color:#ef4444; font-weight:bold;\'>حدث خطأ أثناء تحميل صورة الجدول</p>';">
-                    <button class="btn-action-glow btn-download-file" style="margin-top: 12px; width: 100%;" onclick="window.open('${imgUrl}', '_blank')">🔍 عرض الصورة بحجم كامل</button>
-                `;
-            } else {
+                
+                // حفظ الرابط وتحويله لكاش محلي للعمل أوفلاين
+                localStorage.setItem('cached_schedule_' + secKey, imgUrl);
+                renderScheduleImage(container, imgUrl, secName);
+            } else if (!cachedImg) {
                 container.innerHTML = `
                     <img src="https://img.icons8.com/fluency/96/calendar.png" style="width: 65px; height: 65px; margin-bottom: 10px;">
                     <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
                     <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسمياً هنا فور اعتماده ⏳</p>
                 `;
             }
+        }).catch(() => {
+            // في حال عدم وجود إنترنت تماماً، يظل الكاش معروضاً
+            if (!cachedImg) {
+                container.innerHTML = `
+                    <p style="color: #ef4444; font-weight: bold; font-size: 0.85rem;">أنت غير متصل بالإنترنت ولم يتم حفظ الجدول مسبقاً.</p>
+                `;
+            }
         });
+    }
+
+    function renderScheduleImage(container, imgUrl, secName) {
+        container.innerHTML = `
+            <img src="${imgUrl}" style="width: 100%; border-radius: 12px; max-height: 70vh; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" alt="${secName}" onerror="this.onerror=null;">
+            <button class="btn-action-glow btn-download-file" style="margin-top: 12px; width: 100%;" onclick="window.open('${imgUrl}', '_blank')">🔍 عرض الصورة بحجم كامل</button>
+        `;
     }
 
     function loadAcademicAlerts() {
@@ -429,6 +450,16 @@ function shuffleArray(array) {
     function playBackSound() { playSound('back'); } 
     function playSuccessSound() { playSound('success'); } 
     function playErrorSound() { playSound('error'); }
+function playFlawlessVictorySound() {
+        if (isMuted) return; // استخدام isMuted لمنع توقف الكود
+        try {
+            const victoryAudio = new Audio('./flawless.mp3');
+            victoryAudio.volume = 0.9;
+            victoryAudio.play().catch(e => console.log('Audio error:', e));
+        } catch (e) {
+            playSuccessSound();
+        }
+    }
 
     // ================= الإشعارات =================
     let toastTimeout;
@@ -557,6 +588,18 @@ function shuffleArray(array) {
     }
 
     function goHomeDirectly() {
+        if (isClassicQuizActive) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً وسيتم احتساب إجاباتك 0/5 وخصم 35 XP!\n\nهل أنت متأكد من الخروج؟')) {
+                forfeitClassicQuiz();
+            }
+            return;
+        }
+        if (isPenaltyGameActive) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر إهداراً لركلة الجزاء وخصم 25 XP!\n\nهل أنت متأكد من الخروج؟')) {
+                forfeitPenaltyGame();
+            }
+            return;
+        }
         playClickSound();
         navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
         showViewSection('view-home');
@@ -584,6 +627,18 @@ function shuffleArray(array) {
         if (currentBattleId) {
             if (confirm('هل تريد مغادرة غرفة التحدي الحالية؟')) {
                 cancelBattleLobby();
+            }
+            return;
+        }
+        if (isClassicQuizActive) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً وسيتم احتساب إجاباتك 0/5 بالكامل وخصم 35 XP من رصيدك!\n\nهل أنت متأكد من الانسحاب؟')) {
+                forfeitClassicQuiz();
+            }
+            return;
+        }
+        if (isPenaltyGameActive) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر إهداراً لركلة الجزاء وسيتم خصم 25 XP من رصيدك فوراً!\n\nهل أنت متأكد من الانسحاب؟')) {
+                forfeitPenaltyGame();
             }
             return;
         }
@@ -676,24 +731,40 @@ function shuffleArray(array) {
         }
 
         const todayDate = new Date().toLocaleDateString('en-CA');
-        const lastQuizDate = currentUser.last_quiz_date || '';
-        const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+        
+        // عداد الكلاسيك
+        const lastClassicDate = currentUser.last_quiz_date || '';
+        const classicCountToday = (lastClassicDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+        const classicRemaining = Math.max(0, DAILY_QUIZ_LIMIT - classicCountToday);
 
-        if (quizCountToday >= DAILY_QUIZ_LIMIT) {
-            showTopToast(`لقد استنفدت الحد اليومي (${DAILY_QUIZ_LIMIT} محاولات). عد غداً! ⏳`, 'error');
-            return;
-        }
+        // عداد ركلات الجزاء
+        const lastPenaltyDate = currentUser.last_penalty_date || '';
+        const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
+        const penaltyRemaining = Math.max(0, DAILY_QUIZ_LIMIT - penaltyCountToday);
 
-        const remaining = DAILY_QUIZ_LIMIT - quizCountToday;
         const counterEl = document.getElementById('quiz-modal-daily-counter');
         if (counterEl) {
-            counterEl.innerText = `المحاولات المتبقية لك اليوم: ${remaining} من ${DAILY_QUIZ_LIMIT} 🎯`;
+            counterEl.innerHTML = `
+                <div style="display: flex; justify-content: space-around; gap: 10px; margin-top: 5px;">
+                    <span>📚 الكلاسيك المتبقي: <b>${classicRemaining}/10</b></span>
+                    <span>⚽ الجزاء المتبقي: <b>${penaltyRemaining}/10</b></span>
+                </div>
+            `;
         }
 
         document.getElementById('quiz-rules-modal').classList.add('show');
     }
 
     function openPenaltySelectionFlow() {
+        const todayDate = new Date().toLocaleDateString('en-CA');
+        const lastPenaltyDate = currentUser ? (currentUser.last_penalty_date || '') : '';
+        const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
+
+        if (penaltyCountToday >= DAILY_QUIZ_LIMIT) {
+            showTopToast(`استنفدت محاولات ركلات الجزاء اليوم (10/10)! جرب الطور الكلاسيكي 📚`, 'error');
+            return;
+        }
+
         closeModal('quiz-rules-modal');
         navigateTo('view-penalty-select', 'ركلات الجزاء ⚽', 'اختر نجمك المفضل');
     }
@@ -750,6 +821,7 @@ function shuffleArray(array) {
         checkBroadcastAlerts();
         initUserTicketRepliesListener();
         listenToCountdowns();
+        preloadLeaderboardData();
     });
 
     function checkAppEntryFlow() {
@@ -1761,127 +1833,155 @@ renderAchievementsTabUI();
         renderLeaderboard(); 
     }
 
-    function renderLeaderboard() {
-        const container = document.getElementById('leaderboard-content'); 
-        const personalBox = document.getElementById('personal-rank-box');
-        const personalContent = document.getElementById('personal-rank-content');
-        
-        container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
-        personalBox.style.display = 'none';
-        
+    let cachedLeaderboardData = null; // تخزين مؤقت للبيانات لسرعة الفتح الفوري
+
+    function preloadLeaderboardData() {
         db.ref('users').once('value').then(snapshot => {
-            let usersArr = []; 
-            snapshot.forEach(child => { 
+            let usersArr = [];
+            snapshot.forEach(child => {
                 let u = child.val();
                 u.id = child.key;
                 u.xp = u.xp || u.points || 0;
-                usersArr.push(u); 
-            }); 
-            
-            usersArr.sort((a, b) => b.xp - a.xp);
-
-            if (usersArr.length === 0) { 
-                container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px;">لا يوجد لاعبين حتى الآن.</p>'; 
-                return; 
-            }
-
-            if (currentUser) {
-                const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone);
-                if (myIndex !== -1) {
-                    personalBox.style.display = 'block';
-                    let pHtml = '';
-                    
-                    if (myIndex > 0) {
-                        pHtml += `<div class="rank-row">
-                                    <span>#${myIndex} (مجهول)</span>
-                                    <span>${usersArr[myIndex - 1].xp} XP</span>
-                                  </div>`;
-                    }
-                    
-                    pHtml += `<div class="rank-row is-me">
-                                <span>#${myIndex + 1} (أنت) 🎯</span>
-                                <span>${usersArr[myIndex].xp} XP</span>
-                              </div>`;
-                              
-                    if (myIndex < usersArr.length - 1) {
-                        pHtml += `<div class="rank-row">
-                                    <span>#${myIndex + 2} (مجهول)</span>
-                                    <span>${usersArr[myIndex + 1].xp} XP</span>
-                                  </div>`;
-                    }
-                    personalContent.innerHTML = pHtml;
-                }
-            }
-
-            const top10Users = usersArr.slice(0, 10);
-
-            let html = '<div class="podium">'; 
-            const top3 = [top10Users[1], top10Users[0], top10Users[2]]; 
-            const classes = ['step-2', 'step-1', 'step-3']; 
-            const medals = ['🥈', '🥇', '🥉'];
-            
-            top3.forEach((u, i) => {
-                if(u) {
-                    const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'; 
-                    const isMeBorder = (currentUser && u.id === currentUser.phone) ? 'border-color: var(--accent-emerald);' : '';
-                    const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame : '';
-                    const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
-                    const hasTopCardClass = u.has_top_card ? 'podium-animated-step' : '';
-                    const vipCrown = u.is_vip ? '👑 ' : '';
-                    const bioHtml = (u.can_edit_bio && u.bio) ? `<div class="podium-bio">"${u.bio}"</div>` : '';
-                    const hatHtml = getHatHtml(u.active_hat);
-
-                    html += `
-                    <div class="podium-place ${hasTopCardClass}">
-                        <div class="podium-name ${nameGlowClass}">${vipCrown}${u.name.split(' ')[0]}</div>
-                        ${bioHtml}
-                        <div class="podium-pts">${u.xp} XP</div>
-                        <div class="avatar-box-wrapper">
-                            ${hatHtml}
-                            <img src="${avatar}" class="profile-avatar ${frameClass}" style="${isMeBorder}">
-                        </div>
-                        <div class="podium-step ${classes[i]}">${medals[i]}</div>
-                    </div>`;
-                } else { 
-                    html += `<div class="podium-place"><div class="podium-step ${classes[i]}" style="opacity: 0.1;">-</div></div>`; 
-                }
+                usersArr.push(u);
             });
-            
-            html += '</div><div class="leaderboard-list">';
-            
-            for(let i = 3; i < top10Users.length; i++) {
-                const u = top10Users[i];
-                const actualRank = i + 1;
-                const isMe = currentUser && u.id === currentUser.phone; 
-                const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png'; 
-                const rankStr = getUserRank(u.xp); 
+            usersArr.sort((a, b) => b.xp - a.xp);
+            cachedLeaderboardData = usersArr;
+        }).catch(() => {});
+    }
+
+    function renderLeaderboard() {
+        const container = document.getElementById('leaderboard-content');
+        const personalBox = document.getElementById('personal-rank-box');
+        const personalContent = document.getElementById('personal-rank-content');
+
+        // إذا كانت البيانات محملة مسبقاً في الخلفية، اعرضها فوراً بدون انتظار ثانية واحدة
+        if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
+            buildLeaderboardDOM(cachedLeaderboardData, container, personalBox, personalContent);
+        } else {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
+            personalBox.style.display = 'none';
+        }
+
+        // جلب أحدث البيانات لتحديث القائمة
+        db.ref('users').once('value').then(snapshot => {
+            let usersArr = [];
+            snapshot.forEach(child => {
+                let u = child.val();
+                u.id = child.key;
+                u.xp = u.xp || u.points || 0;
+                usersArr.push(u);
+            });
+
+            usersArr.sort((a, b) => b.xp - a.xp);
+            cachedLeaderboardData = usersArr;
+            buildLeaderboardDOM(usersArr, container, personalBox, personalContent);
+        }).catch(err => {
+            if (!cachedLeaderboardData) {
+                container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
+            }
+        });
+    }
+
+    function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) {
+        if (usersArr.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px;">لا يوجد لاعبين حتى الآن.</p>';
+            return;
+        }
+
+        if (currentUser) {
+            const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone);
+            if (myIndex !== -1) {
+                personalBox.style.display = 'block';
+                let pHtml = '';
+
+                if (myIndex > 0) {
+                    pHtml += `<div class="rank-row">
+                                <span>#${myIndex} (مجهول)</span>
+                                <span>${usersArr[myIndex - 1].xp} XP</span>
+                              </div>`;
+                }
+
+                pHtml += `<div class="rank-row is-me">
+                            <span>#${myIndex + 1} (أنت) 🎯</span>
+                            <span>${usersArr[myIndex].xp} XP</span>
+                          </div>`;
+
+                if (myIndex < usersArr.length - 1) {
+                    pHtml += `<div class="rank-row">
+                                <span>#${myIndex + 2} (مجهول)</span>
+                                <span>${usersArr[myIndex + 1].xp} XP</span>
+                              </div>`;
+                }
+                personalContent.innerHTML = pHtml;
+            }
+        }
+
+        const top10Users = usersArr.slice(0, 10);
+
+        let html = '<div class="podium">';
+        const top3 = [top10Users[1], top10Users[0], top10Users[2]];
+        const classes = ['step-2', 'step-1', 'step-3'];
+        const medals = ['🥈', '🥇', '🥉'];
+
+        top3.forEach((u, i) => {
+            if(u) {
+                const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                const isMeBorder = (currentUser && u.id === currentUser.phone) ? 'border-color: var(--accent-emerald);' : '';
                 const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame : '';
-                const animatedCardClass = u.has_top_card ? 'animated-top-card' : '';
                 const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
+                const hasTopCardClass = u.has_top_card ? 'podium-animated-step' : '';
                 const vipCrown = u.is_vip ? '👑 ' : '';
-                const bioText = (u.can_edit_bio && u.bio) ? `<span style="font-size: 0.72rem; color: var(--accent-gold); display: block; font-style: italic;">"${u.bio}"</span>` : '';
+                const bioHtml = (u.can_edit_bio && u.bio) ? `<div class="podium-bio">"${u.bio}"</div>` : '';
                 const hatHtml = getHatHtml(u.active_hat);
-                
+
                 html += `
-                <div class="lb-item ${isMe ? 'is-me' : ''} ${animatedCardClass}">
-                    <div class="lb-rank">${actualRank}</div>
+                <div class="podium-place ${hasTopCardClass}">
+                    <div class="podium-name ${nameGlowClass}">${vipCrown}${u.name.split(' ')[0]}</div>
+                    ${bioHtml}
+                    <div class="podium-pts">${u.xp} XP</div>
                     <div class="avatar-box-wrapper">
                         ${hatHtml}
-                        <img src="${avatar}" class="profile-avatar ${frameClass}">
+                        <img src="${avatar}" class="profile-avatar ${frameClass}" style="${isMeBorder}" loading="lazy">
                     </div>
-                    <div class="lb-details">
-                        <div class="lb-name ${nameGlowClass}">${vipCrown}${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div>
-                        <div class="lb-badge">${rankStr}</div>
-                        ${bioText}
-                    </div>
-                    <div class="lb-points">${u.xp}</div>
+                    <div class="podium-step ${classes[i]}">${medals[i]}</div>
                 </div>`;
+            } else {
+                html += `<div class="podium-place"><div class="podium-step ${classes[i]}" style="opacity: 0.1;">-</div></div>`;
             }
-            html += '</div>'; 
-            container.innerHTML = html;
-        }).catch(err => { 
-            container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>'; 
         });
+
+        html += '</div><div class="leaderboard-list">';
+
+        for(let i = 3; i < top10Users.length; i++) {
+            const u = top10Users[i];
+            const actualRank = i + 1;
+            const isMe = currentUser && u.id === currentUser.phone;
+            const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+            const rankStr = getUserRank(u.xp);
+            const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame : '';
+            const animatedCardClass = u.has_top_card ? 'animated-top-card' : '';
+            const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
+            const vipCrown = u.is_vip ? '👑 ' : '';
+            const bioText = (u.can_edit_bio && u.bio) ? `<span style="font-size: 0.72rem; color: var(--accent-gold); display: block; font-style: italic;">"${u.bio}"</span>` : '';
+            const hatHtml = getHatHtml(u.active_hat);
+
+            html += `
+            <div class="lb-item ${isMe ? 'is-me' : ''} ${animatedCardClass}">
+                <div class="lb-rank">${actualRank}</div>
+                <div class="avatar-box-wrapper">
+                    ${hatHtml}
+                    <img src="${avatar}" class="profile-avatar ${frameClass}" loading="lazy">
+                </div>
+                <div class="lb-details">
+                    <div class="lb-name ${nameGlowClass}">${vipCrown}${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div>
+                    <div class="lb-badge">${rankStr}</div>
+                    ${bioText}
+                </div>
+                <div class="lb-points">${u.xp}</div>
+            </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
     }
 
     function openSubject(subjectName) {
@@ -1911,19 +2011,51 @@ renderAchievementsTabUI();
     function handleBookDownloadClick() {
         playClickSound();
         const safeKey = getSafeSubjectKey(currentActiveSubject);
+        const bookIdentifier = `${safeKey}_${currentActiveType}`;
         
         db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
             if (snapshot.exists() && snapshot.val()) {
                 const rawUrl = snapshot.val();
                 downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
+                rewardUserForBookDownload(bookIdentifier);
             } else {
                 if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
                     downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
+                    rewardUserForBookDownload(bookIdentifier);
                 } else {
                     showTopToast('سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'info');
                 }
             }
         });
+    }
+
+    function rewardUserForBookDownload(bookIdentifier) {
+        if (!currentUser) return;
+
+        const rewardedList = currentUser.rewarded_books || [];
+        if (!rewardedList.includes(bookIdentifier)) {
+            rewardedList.push(bookIdentifier);
+            const bonusXP = 15;
+
+            db.ref('users/' + currentUser.phone).transaction(user => {
+                if (user) {
+                    let currentXP = user.xp !== undefined ? user.xp : (user.points || 0);
+                    user.xp = currentXP + bonusXP;
+                    user.points = user.xp;
+                    user.rewarded_books = rewardedList;
+                }
+                return user;
+            }).then(() => {
+                currentUser.rewarded_books = rewardedList;
+                currentUser.xp = (currentUser.xp || 0) + bonusXP;
+                currentUser.points = currentUser.xp;
+                
+                playSuccessSound();
+                shootStars();
+                showTopToast(`عاش يا بطل! حصلت على +${bonusXP} XP للاطلاع على محتوى المقرر 📚✨`, 'success');
+                updateProfileUI();
+            });
+        }
     }
 
     function downloadBookFromDrive(url, fileName) {
@@ -2404,8 +2536,8 @@ if (isHost && room.player1 && room.player2) {
             shootStars();
             triggerConfetti();
             titleEl.innerText = 'مبروك الفوز يا بطل! 🏆';
-            subEl.innerText = 'حسمت المواجهة ببراعة وسرعة بديهة واستحقت الجائزة!';
-            iconEl.src = 'https://img.icons8.com/fluency/96/trophy.png';
+            subEl.innerText = 'حسمت المواجهة ببراعة وسرعة بديهة واستحققت الجائزة!';
+            iconEl.src = 'https://img.icons8.com/fluency/96/trophy.png'; // أيقونة الكأس ثلاثية الأبعاد الذهبية
             
             const totalCoinsWon = room.stake * 2;
             rewardText.innerText = `+${totalCoinsWon} عملة 💸 | +${room.rewardXP} XP ⚡`;
@@ -2421,13 +2553,13 @@ if (isHost && room.player1 && room.player2) {
             playErrorSound();
             titleEl.innerText = 'هاردلك، معوضة الجولة القادمة! 🛡️';
             subEl.innerText = 'المنافس كان أسرع هذه المرة، تدرب جيداً واستعد للثأر!';
-            iconEl.src = 'https://img.icons8.com/fluency/96/sad.png';
+            iconEl.src = 'https://img.icons8.com/fluency/96/shield.png'; // أيقونة الدرع الدفاعي الأنيقة بدلاً من الوجه الحزين
             rewardBox.style.display = 'none';
         } else {
             playSuccessSound();
             titleEl.innerText = 'تعادل بطولي بين العملاقين! 🤝';
             subEl.innerText = 'تقاربت المستويات تماماً، تم استرداد رسوم التحدي بالكامل.';
-            iconEl.src = 'https://img.icons8.com/fluency/96/handshake.png';
+            iconEl.src = 'https://img.icons8.com/fluency/96/handshake.png'; // أيقونة المصافحة ثلاثية الأبعاد
             rewardText.innerText = `+${room.stake} عملة (استرداد الرسوم) 🪙`;
             rewardBox.style.display = 'block';
 
@@ -2436,6 +2568,91 @@ if (isHost && room.player1 && room.player2) {
 
         currentBattleId = null;
     }
+// ================= منظومة حماية التحديات والخصم عند الانسحاب =================
+    let isClassicQuizActive = false;
+    let isPenaltyGameActive = false;
+
+    // دالة الانسحاب من التحدي الكلاسيكي
+    function forfeitClassicQuiz() {
+        clearInterval(timerInterval);
+        isClassicQuizActive = false;
+        const xpLoss = 35;
+
+        if (currentUser) {
+            const todayDate = new Date().toLocaleDateString('en-CA');
+            db.ref('users/' + currentUser.phone).transaction(user => {
+                if (user) {
+                    let newXp = (user.xp !== undefined ? user.xp : (user.points || 0)) - xpLoss;
+                    user.xp = newXp < 0 ? 0 : newXp;
+                    user.points = user.xp;
+                    user.quizPlayed = (user.quizPlayed || 0) + 1;
+
+                    if (user.last_quiz_date === todayDate) {
+                        user.daily_quiz_count = (user.daily_quiz_count || 0) + 1;
+                    } else {
+                        user.last_quiz_date = todayDate;
+                        user.daily_quiz_count = 1;
+                    }
+                }
+                return user;
+            }).then(() => {
+                updateProfileUI();
+                updateStatsUI();
+            });
+
+            recordActivityLog('classic', `انسحب [${currentUser.name}] من تحدي العباقرة وتم خصم (${xpLoss} XP) كعقوبة ⚠️`);
+        }
+
+        playErrorSound();
+        showTopToast(`انسحبت من التحدي! تم احتساب النتيجة 0/5 وخصم ${xpLoss} XP ❌`, 'error');
+        
+        navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+        showViewSection('view-home');
+        updateHeader();
+        updateNavState('nav-home');
+    }
+
+    // دالة الانسحاب من ركلات الجزاء
+    function forfeitPenaltyGame() {
+        clearInterval(penaltyTimer);
+        stopStadiumCrowdAudio();
+        isPenaltyGameActive = false;
+        const xpLoss = 25;
+
+        if (currentUser) {
+            const todayDate = new Date().toLocaleDateString('en-CA');
+            db.ref('users/' + currentUser.phone).transaction(user => {
+                if (user) {
+                    let newXp = (user.xp !== undefined ? user.xp : (user.points || 0)) - xpLoss;
+                    user.xp = newXp < 0 ? 0 : newXp;
+                    user.points = user.xp;
+                    user.quizPlayed = (user.quizPlayed || 0) + 1;
+
+                    if (user.last_penalty_date === todayDate) {
+                        user.daily_penalty_count = (user.daily_penalty_count || 0) + 1;
+                    } else {
+                        user.last_penalty_date = todayDate;
+                        user.daily_penalty_count = 1;
+                    }
+                }
+                return user;
+            }).then(() => {
+                updateProfileUI();
+                updateStatsUI();
+            });
+
+            recordActivityLog('penalty', `انسحب [${currentUser.name}] من ركلة الجزاء وتم خصم (${xpLoss} XP) ⚠️`);
+        }
+
+        playErrorSound();
+        showTopToast(`انسحبت من ركلة الجزاء! تم اعتبارها إهدار وخصم ${xpLoss} XP ❌`, 'error');
+        
+        navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+        showViewSection('view-home');
+        updateHeader();
+        updateNavState('nav-home');
+    }
+
 
     // ================= بنك الأسئلة للمسابقات الفردية =================
     const masterQuestionsBank = {
@@ -2525,6 +2742,7 @@ if (isHost && room.player1 && room.player2) {
 
         currentQuizIndex = 0; 
         quizScoreCount = 0;
+isClassicQuizActive = true;
         navigateTo('view-quiz-game', 'تحدي المعلومات', 'جولة تحدي العباقرة');
         renderQuizQuestion();
     }
@@ -2693,6 +2911,7 @@ if (isHost && room.player1 && room.player2) {
     }
 
     function finishQuizGame() {
+isClassicQuizActive = false;
         let wrongCount = 5 - quizScoreCount; 
         
         let xpChange = (quizScoreCount * 5) - (wrongCount * 5); 
@@ -2746,13 +2965,21 @@ if (isHost && room.player1 && room.player2) {
         const titleEl = document.getElementById('result-title'); 
         const descEl = document.getElementById('result-desc');
         
-        if (quizScoreCount >= 4) { 
+        if (quizScoreCount === 5) { 
+            playFlawlessVictorySound();
+            shootStars();
             imgEl.src = "https://img.icons8.com/fluency/96/trophy.png"; 
-            titleEl.innerText = "أنت عبقري الدفعة يا باشا!"; 
+            titleEl.innerText = "أنت عبقري الدفعة يا باشا! 🏆"; 
+        } else if (quizScoreCount >= 4) { 
+            playSuccessSound();
+            imgEl.src = "https://img.icons8.com/fluency/96/trophy.png"; 
+            titleEl.innerText = "أداء ممتاز جداً وشغل عالي!"; 
         } else if (quizScoreCount >= 2) { 
+            playSuccessSound();
             imgEl.src = "https://img.icons8.com/fluency/96/medal.png"; 
-            titleEl.innerText = "مستوى ممتاز وشغل عالي!"; 
+            titleEl.innerText = "مستوى جيد وقريب من القمة!"; 
         } else { 
+            playErrorSound();
             imgEl.src = "https://img.icons8.com/fluency/96/flash-on.png"; 
             titleEl.innerText = "محتاج تركز أكتر يا هندسة!"; 
         }
@@ -3577,6 +3804,7 @@ function renderHomeCountdowns() {
         localStorage.setItem('penalty_quiz_deck', JSON.stringify(penaltyDeck));
 
         currentPenaltyQIndex = 0;
+isPenaltyGameActive = true;
         penaltyCorrectAnswersCount = 0;
 
         document.getElementById('penalty-striker-img').src = strikerImg;
@@ -3732,8 +3960,7 @@ function renderHomeCountdowns() {
         // 1. إخفاء كارت الأسئلة فوراً لكشف زاوية الرؤية
         if (qCard) qCard.classList.add('hidden-for-kick');
 
-        // 👈 الشرط الصارم الجديد: الهدف يسجل فقط لو جاوب الـ 5 كاملين صح (5/5)
-        const isGoalScored = (penaltyCorrectAnswersCount === 5);
+        const isGoalScored = (penaltyCorrectAnswersCount >= 4);
 
         // تشغيل صوت المعلق المخصص للاعب المختار في حال التسجيل
         if (isGoalScored) {
@@ -3777,16 +4004,19 @@ function renderHomeCountdowns() {
             }
         }, 850);
 
-        // 4. إيقاف صوت الجمهور وإظهار شاشة النتيجة
+        // 4. إيقاف صوت الجمهور وإظهار شاشة النتيجة مع مهلة إضافية 3 ثوانٍ عند تسجيل الهدف للاستمتاع بالمشهد والاحتفال
+        const resultDelay = isGoalScored ? 5500 : 2500;
+
         setTimeout(() => {
             stopStadiumCrowdAudio();
             concludePenaltyGame(isGoalScored);
-        }, 2500);
+        }, resultDelay);
     }
 
     function concludePenaltyGame(isGoal) {
+        isPenaltyGameActive = false;
         const cinemaModal = document.getElementById('penalty-cinema-modal');
-        const emojiEl = document.getElementById('penalty-result-emoji');
+        const imgEl = document.getElementById('penalty-result-img');
         const titleEl = document.getElementById('penalty-result-title');
         const subEl = document.getElementById('penalty-result-subtitle');
         const rewardEl = document.getElementById('penalty-rewards-badge');
@@ -3795,36 +4025,39 @@ function renderHomeCountdowns() {
         let coinsChange = 0;
 
         if (isGoal) {
-            // تسجيل الهدف (5 من 5 صح): +50 XP و +15 عملة
             xpChange = 50;
             coinsChange = 15;
 
-            // مضاعف النقاط 2X إن كان مفعلاً
             const isDoubleActive = currentUser && currentUser.double_xp_until && currentUser.double_xp_until > Date.now();
             if (isDoubleActive) {
                 xpChange = xpChange * 2;
             }
 
-            emojiEl.innerText = '⚽🔥';
+            if (imgEl) imgEl.src = 'https://img.icons8.com/fluency/96/goal.png';
             titleEl.innerText = 'GOOOAAAL! 🎯';
             titleEl.style.color = '#ffd700';
-            subEl.innerHTML = `سددها <b>${selectedPenaltyStriker.name}</b> صاروخ في المقص!<br>جاوبت 5 من 5 أسئلة صح وحققت العلامة الكاملة! 🏆`;
-            rewardEl.innerHTML = `🏆 الجائزة: <span style="color:#10b981;">+${xpChange} XP</span> | <span style="color:#ffd700;">+${coinsChange} عملة 💸</span> | +1 هدف ركلة جزاء ⚽`;
-        } else {
-            // إهدار الهدف (أقل من 5 صح): عقوبة -25 XP و 0 عملات
+            subEl.innerHTML = `سددها <b>${selectedPenaltyStriker.name}</b> صاروخ في المقص!<br>جاوبت ${penaltyCorrectAnswersCount} من 5 أسئلة صح وحققت الفوز! 🏆`;
+rewardEl.innerHTML = `
+    <div style="font-weight: 800; margin-bottom: 6px; color: var(--accent-gold);">🏆 المكافآت المستحقة:</div>
+    <div style="display: flex; flex-direction: column; gap: 4px; font-weight: 700;">
+        <span style="color: #10b981; font-size: 1.05rem;">+${xpChange} XP ⚡</span>
+        <span style="color: #ffd700; font-size: 1.05rem;">+${coinsChange} عملة 💸</span>
+        <span style="color: var(--text-sub); font-size: 0.85rem;">+1 هدف ركلة جزاء ⚽</span>
+    </div>
+`;        } else {
             xpChange = -25;
             coinsChange = 0;
 
-            emojiEl.innerText = '🧤❌';
+            if (imgEl) imgEl.src = 'https://img.icons8.com/fluency/96/cancel.png';
             titleEl.innerText = 'أهدرت ركلة الجزاء!';
             titleEl.style.color = '#ef4444';
-            subEl.innerHTML = `أجبت ${penaltyCorrectAnswersCount} فقط من 5 أسئلة.<br><b>القاعدة:</b> لتسجيل الهدف يجب حل الـ 5 كاملين صح بدون أي خطأ!`;
+            subEl.innerHTML = `أجبت ${penaltyCorrectAnswersCount} فقط من 5 أسئلة.<br><b>القاعدة:</b> لتسجيل الهدف يجب حل 4 أسئلة على الأقل بشكل صحيح!`;
             rewardEl.innerHTML = `⚠️ العقوبة: <span style="color:#ef4444;">-25 XP</span> | 0 عملات`;
         }
 
-if (currentUser) {
-    recordActivityLog('penalty', `سدد [${currentUser.name}] باللاعب (${selectedPenaltyStriker.name}) | النتيجة: (${penaltyCorrectAnswersCount}/5) - ${isGoal ? 'سجل هدفاً رائعاً ⚽🔥' : 'أهدر التسديدة 🧤❌'}`);
-}
+        if (currentUser) {
+            recordActivityLog('penalty', `سدد [${currentUser.name}] باللاعب (${selectedPenaltyStriker.name}) | النتيجة: (${penaltyCorrectAnswersCount}/5) - ${isGoal ? 'سجل هدفاً رائعاً ⚽🔥' : 'أهدر التسديدة 🧤❌'}`);
+        }
         cinemaModal.classList.add('show');
 
         if (currentUser) {
@@ -3846,11 +4079,11 @@ if (currentUser) {
                         user.penalties_scored = (user.penalties_scored || 0) + 1;
                     }
 
-                    if (user.last_quiz_date === todayDate) {
-                        user.daily_quiz_count = (user.daily_quiz_count || 0) + 1;
+                    if (user.last_penalty_date === todayDate) {
+                        user.daily_penalty_count = (user.daily_penalty_count || 0) + 1;
                     } else {
-                        user.last_quiz_date = todayDate;
-                        user.daily_quiz_count = 1;
+                        user.last_penalty_date = todayDate;
+                        user.daily_penalty_count = 1;
                     }
                 }
                 return user;
