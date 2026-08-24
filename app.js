@@ -208,13 +208,14 @@ function shuffleArray(array) {
             snap.forEach(c => {
                 const a = c.val();
                 const alertId = c.key;
+                const safeDate = a.date ? new Date(a.date).toLocaleDateString('ar-EG') : 'حديث';
                 html += `
                 <div class="acad-glass-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span class="pill-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
                             <img src="https://img.icons8.com/fluency/48/high-priority.png" style="width: 14px;"> تنبيه رسمي
                         </span>
-                        <span style="font-size: 0.72rem; color: var(--text-sub); font-weight: 700;">${new Date(a.date).toLocaleDateString('ar-EG')}</span>
+                        <span style="font-size: 0.72rem; color: var(--text-sub); font-weight: 700;">${safeDate}</span>
                     </div>
                     <h4 style="color: var(--accent-gold) !important; font-size: 0.98rem; margin-bottom: 6px;">${a.title}</h4>
                     <p style="font-size: 0.86rem; color: var(--text-main) !important; line-height: 1.6; margin-bottom: 10px;">${a.body}</p>
@@ -326,23 +327,23 @@ function shuffleArray(array) {
             if (users.length === 0) return;
 
             let topXp = [...users].sort((a, b) => b.xp - a.xp)[0];
-            setFameCard(1, topXp, `${topXp.xp} XP`);
+            if (topXp) setFameCard(1, topXp, `${topXp.xp} XP`);
 
             let topStreak = [...users].sort((a, b) => b.streak - a.streak)[0];
-            setFameCard(2, topStreak, `${topStreak.streak} يوم متتالي 🔥`);
+            if (topStreak) setFameCard(2, topStreak, `${topStreak.streak} يوم متتالي 🔥`);
 
             let topQuiz = [...users].sort((a, b) => b.correct - a.correct)[0];
-            setFameCard(3, topQuiz, `${topQuiz.correct} إجابة صحيحة`);
+            if (topQuiz) setFameCard(3, topQuiz, `${topQuiz.correct} إجابة صحيحة`);
 
             let qualifiedForAccuracy = users.filter(u => (u.played || 0) >= 3);
             let topAcc = qualifiedForAccuracy.length > 0 ? qualifiedForAccuracy.sort((a, b) => b.accuracy - a.accuracy)[0] : users[0];
-            setFameCard(4, topAcc, `دقة ${topAcc.accuracy}% 🎯`);
+            if (topAcc) setFameCard(4, topAcc, `دقة ${topAcc.accuracy}% 🎯`);
 
             let topDerby = [...users].sort((a, b) => (b.derbyWins || 0) - (a.derbyWins || 0))[0];
-            setFameCard(5, topDerby, `${topDerby.derbyWins || 0} فوز ديربي ⚔️`);
+            if (topDerby && (topDerby.derbyWins > 0)) setFameCard(5, topDerby, `${topDerby.derbyWins} فوز ديربي ⚔️`);
 
             let topCoins = [...users].sort((a, b) => (b.coins || 0) - (a.coins || 0))[0];
-            setFameCard(6, topCoins, `${topCoins.coins || 0} عملة 💸`);
+            if (topCoins) setFameCard(6, topCoins, `${topCoins.coins || 0} عملة 💸`);
         });
     }
 
@@ -592,6 +593,13 @@ function playFlawlessVictorySound() {
     }
 
     function goHomeDirectly() {
+        // حماية الديربي من الهروب
+        if (currentBattleId) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً من التحدي (وقد تخسر عملاتك ونقاطك)!\n\nهل أنت متأكد من الخروج؟')) {
+                cancelBattleLobby();
+            }
+            return;
+        }
         if (isClassicQuizActive) {
             if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً وسيتم احتساب إجاباتك 0/5 وخصم 35 XP!\n\nهل أنت متأكد من الخروج؟')) {
                 forfeitClassicQuiz();
@@ -1099,10 +1107,18 @@ function getAvatarFrameOverlayHtml(frameKey) {
         const pass = document.getElementById('reg-password').value;
         const confirmPass = document.getElementById('reg-confirm-password').value;
 
+        // 1. التحقق من أن الحقول غير فارغة
         if (!name || !phone || !email || !pass || !confirmPass) { 
             showTopToast('يرجى ملء جميع الحقول بما فيها البريد الإلكتروني!', 'error'); 
             return; 
+        } // ✅ تم إغلاق القوس هنا بنجاح
+
+        // 2. التحقق من صيغة البريد الإلكتروني
+        if (!email.includes('@') || !email.includes('.')) {
+            showTopToast('يرجى كتابة بريد إلكتروني صالح (يحتوي على @ و .)!', 'error');
+            return;
         }
+
         if (pass !== confirmPass) { 
             showTopToast('كلمة المرور غير متطابقة، تأكد منها وحاول مرة أخرى!', 'error'); 
             return; 
@@ -1641,17 +1657,40 @@ renderAchievementsTabUI();
     function handleCustomPhotoUpload(event) {
         const file = event.target.files[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                showTopToast('يرجى اختيار صورة بحجم أقل من 2 ميجابايت!', 'error');
+            if (file.size > 5 * 1024 * 1024) {
+                showTopToast('يرجى اختيار صورة بحجم أقل من 5 ميجابايت!', 'error');
                 return;
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Img = e.target.result;
-                editSelectedAvatar = base64Img;
-                document.getElementById('edit-avatar-preview').src = base64Img;
-                document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
-                playSuccessSound();
+                const img = new Image();
+                img.onload = function() {
+                    // تصغير وضغط الصورة برمجياً قبل الحفظ
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 250;
+                    const MAX_HEIGHT = 250;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // تحويل الصورة المضغوطة لتأخذ مساحة خفيفة جداً (أقل من 20kb)
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+                    editSelectedAvatar = compressedBase64;
+                    document.getElementById('edit-avatar-preview').src = compressedBase64;
+                    document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                    playSuccessSound();
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -2008,160 +2047,175 @@ function loadWalletHistoryUI() {
 }
 
     function openLeaderboard() { 
-        navigateTo('view-leaderboard', 'لوحة المتصدرين', 'أبطال ورتب الدفعة'); 
-        renderLeaderboard(); 
+    navigateTo('view-leaderboard', 'لوحة المتصدرين', 'أبطال ورتب الدفعة'); 
+    renderLeaderboard(); 
+}
+
+let cachedLeaderboardData = null;
+
+function preloadLeaderboardData() {
+    db.ref('users').once('value').then(snapshot => {
+        let usersArr = [];
+        snapshot.forEach(child => {
+            let u = child.val();
+            u.id = child.key;
+            u.xp = u.xp || u.points || 0;
+            usersArr.push(u);
+        });
+        usersArr.sort((a, b) => b.xp - a.xp);
+        cachedLeaderboardData = usersArr;
+    }).catch(() => {});
+}
+
+function renderLeaderboard() {
+    const container = document.getElementById('leaderboard-content');
+    const personalBox = document.getElementById('personal-rank-box');
+    const personalContent = document.getElementById('personal-rank-content');
+
+    if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
+        buildLeaderboardDOM(cachedLeaderboardData, container, personalBox, personalContent);
+    } else {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
+        if (personalBox) personalBox.style.display = 'none';
     }
 
-    let cachedLeaderboardData = null; // تخزين مؤقت للبيانات لسرعة الفتح الفوري
+    db.ref('users').once('value').then(snapshot => {
+        let usersArr = [];
+        snapshot.forEach(child => {
+            let u = child.val();
+            u.id = child.key;
+            u.xp = u.xp || u.points || 0;
+            usersArr.push(u);
+        });
 
-    function preloadLeaderboardData() {
-        db.ref('users').once('value').then(snapshot => {
-            let usersArr = [];
-            snapshot.forEach(child => {
-                let u = child.val();
-                u.id = child.key;
-                u.xp = u.xp || u.points || 0;
-                usersArr.push(u);
-            });
-            usersArr.sort((a, b) => b.xp - a.xp);
-            cachedLeaderboardData = usersArr;
-        }).catch(() => {});
+        usersArr.sort((a, b) => b.xp - a.xp);
+        cachedLeaderboardData = usersArr;
+        buildLeaderboardDOM(usersArr, container, personalBox, personalContent);
+    }).catch(err => {
+        if (!cachedLeaderboardData) {
+            container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
+        }
+    });
+}
+
+function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) {
+    if (!usersArr || usersArr.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: bold;">لا يوجد لاعبين مسجلين حتى الآن. كن أول المنضمين! 🚀</p>';
+        if (personalBox) personalBox.style.display = 'none';
+        return;
     }
 
-    function renderLeaderboard() {
-        const container = document.getElementById('leaderboard-content');
-        const personalBox = document.getElementById('personal-rank-box');
-        const personalContent = document.getElementById('personal-rank-content');
+    // عرض كارت الترتيب الشخصي
+    if (currentUser && personalBox && personalContent) {
+        const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone || u.id === currentUser.phone);
+        if (myIndex !== -1) {
+            personalBox.style.display = 'block';
+            let pHtml = '';
 
-        // إذا كانت البيانات محملة مسبقاً في الخلفية، اعرضها فوراً بدون انتظار ثانية واحدة
-        if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
-            buildLeaderboardDOM(cachedLeaderboardData, container, personalBox, personalContent);
+            if (myIndex > 0 && usersArr[myIndex - 1]) {
+                pHtml += `<div class="rank-row">
+                            <span>#${myIndex} (${usersArr[myIndex - 1].name.split(' ')[0]})</span>
+                            <span>${usersArr[myIndex - 1].xp} XP</span>
+                          </div>`;
+            }
+
+            pHtml += `<div class="rank-row is-me">
+                        <span>#${myIndex + 1} (أنت) 🎯</span>
+                        <span>${usersArr[myIndex].xp} XP</span>
+                      </div>`;
+
+            if (myIndex < usersArr.length - 1 && usersArr[myIndex + 1]) {
+                pHtml += `<div class="rank-row">
+                            <span>#${myIndex + 2} (${usersArr[myIndex + 1].name.split(' ')[0]})</span>
+                            <span>${usersArr[myIndex + 1].xp} XP</span>
+                          </div>`;
+            }
+            personalContent.innerHTML = pHtml;
         } else {
-            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
             personalBox.style.display = 'none';
         }
-
-        // جلب أحدث البيانات لتحديث القائمة
-        db.ref('users').once('value').then(snapshot => {
-            let usersArr = [];
-            snapshot.forEach(child => {
-                let u = child.val();
-                u.id = child.key;
-                u.xp = u.xp || u.points || 0;
-                usersArr.push(u);
-            });
-
-            usersArr.sort((a, b) => b.xp - a.xp);
-            cachedLeaderboardData = usersArr;
-            buildLeaderboardDOM(usersArr, container, personalBox, personalContent);
-        }).catch(err => {
-            if (!cachedLeaderboardData) {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
-            }
-        });
     }
 
-    function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) {
-        if (usersArr.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px;">لا يوجد لاعبين حتى الآن.</p>';
-            return;
-        }
+    const top10Users = usersArr.slice(0, 10);
 
-        if (currentUser) {
-            const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone);
-            if (myIndex !== -1) {
-                personalBox.style.display = 'block';
-                let pHtml = '';
+    // بناء منصة التتويج للثلاثة الأوائل بأمان تام
+    let html = '<div class="podium">';
+    const top3 = [top10Users[1] || null, top10Users[0] || null, top10Users[2] || null];
+    const classes = ['step-2', 'step-1', 'step-3'];
+    const medals = ['🥈', '🥇', '🥉'];
 
-                if (myIndex > 0) {
-                    pHtml += `<div class="rank-row">
-                                <span>#${myIndex} (مجهول)</span>
-                                <span>${usersArr[myIndex - 1].xp} XP</span>
-                              </div>`;
-                }
-
-                pHtml += `<div class="rank-row is-me">
-                            <span>#${myIndex + 1} (أنت) 🎯</span>
-                            <span>${usersArr[myIndex].xp} XP</span>
-                          </div>`;
-
-                if (myIndex < usersArr.length - 1) {
-                    pHtml += `<div class="rank-row">
-                                <span>#${myIndex + 2} (مجهول)</span>
-                                <span>${usersArr[myIndex + 1].xp} XP</span>
-                              </div>`;
-                }
-                personalContent.innerHTML = pHtml;
-            }
-        }
-
-        const top10Users = usersArr.slice(0, 10);
-
-        let html = '<div class="podium">';
-        const top3 = [top10Users[1], top10Users[0], top10Users[2]];
-        const classes = ['step-2', 'step-1', 'step-3'];
-        const medals = ['🥈', '🥇', '🥉'];
-
-        top3.forEach((u, i) => {
-            if(u) {
-                const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
-                const isMeBorder = (currentUser && u.id === currentUser.phone) ? 'border-color: var(--accent-emerald);' : '';
-                const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame : '';
-                const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
-                const hasTopCardClass = u.has_top_card ? 'podium-animated-step' : '';
-                const vipCrown = u.is_vip ? '👑 ' : '';
-                const bioHtml = (u.can_edit_bio && u.bio) ? `<div class="podium-bio">"${u.bio}"</div>` : '';
-                const hatHtml = getHatHtml(u.active_hat);
-
-                html += `
-                <div class="podium-place ${hasTopCardClass}">
-                    <div class="podium-name ${nameGlowClass}">${vipCrown}${u.name.split(' ')[0]}</div>
-                    ${bioHtml}
-                    <div class="podium-pts">${u.xp} XP</div>
-                    <div class="avatar-box-wrapper">
-                        ${hatHtml}${getAvatarFrameOverlayHtml(u.active_frame)}
-                        <img src="${avatar}" class="profile-avatar ${frameClass}" style="${isMeBorder}" loading="lazy">
-                    </div>
-                    <div class="podium-step ${classes[i]}">${medals[i]}</div>
-                </div>`;
-            } else {
-                html += `<div class="podium-place"><div class="podium-step ${classes[i]}" style="opacity: 0.1;">-</div></div>`;
-            }
-        });
-
-        html += '</div><div class="leaderboard-list">';
-
-        for(let i = 3; i < top10Users.length; i++) {
-            const u = top10Users[i];
-            const actualRank = i + 1;
-            const isMe = currentUser && u.id === currentUser.phone;
+    top3.forEach((u, i) => {
+        if (u) {
             const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
-            const rankStr = getUserRank(u.xp);
-            const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame : '';
-            const animatedCardClass = u.has_top_card ? 'animated-top-card' : '';
+            const isMeBorder = (currentUser && (u.id === currentUser.phone || u.phone === currentUser.phone)) ? 'border-color: var(--accent-emerald);' : '';
+            const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame.replace('frame_', '') : '';
             const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
+            const hasTopCardClass = u.has_top_card ? 'podium-animated-step' : '';
             const vipCrown = u.is_vip ? '👑 ' : '';
-            const bioText = (u.can_edit_bio && u.bio) ? `<span style="font-size: 0.72rem; color: var(--accent-gold); display: block; font-style: italic;">"${u.bio}"</span>` : '';
-            const hatHtml = getHatHtml(u.active_hat);
+            const bioHtml = (u.can_edit_bio && u.bio) ? `<div class="podium-bio">"${u.bio}"</div>` : '';
+            const hatHtml = typeof getHatHtml === 'function' ? getHatHtml(u.active_hat) : '';
+            const frameOverlay = typeof getAvatarFrameOverlayHtml === 'function' ? getAvatarFrameOverlayHtml(u.active_frame) : '';
 
             html += `
-            <div class="lb-item ${isMe ? 'is-me' : ''} ${animatedCardClass}">
-                <div class="lb-rank">${actualRank}</div>
+            <div class="podium-place ${hasTopCardClass}">
+                <div class="podium-name ${nameGlowClass}">${vipCrown}${u.name ? u.name.split(' ')[0] : 'طالب'}</div>
+                ${bioHtml}
+                <div class="podium-pts">${u.xp || 0} XP</div>
                 <div class="avatar-box-wrapper">
-                    ${hatHtml}${getAvatarFrameOverlayHtml(u.active_frame)}
-                    <img src="${avatar}" class="profile-avatar ${frameClass}" loading="lazy">
+                    ${hatHtml}${frameOverlay}
+                    <img src="${avatar}" class="profile-avatar ${frameClass}" style="${isMeBorder}" loading="lazy">
                 </div>
-                <div class="lb-details">
-                    <div class="lb-name ${nameGlowClass}">${vipCrown}${u.name.split(' ').slice(0, 2).join(' ')} ${isMe ? '(أنت)' : ''}</div>
-                    <div class="lb-badge">${rankStr}</div>
-                    ${bioText}
+                <div class="podium-step ${classes[i]}">${medals[i]}</div>
+            </div>`;
+        } else {
+            html += `
+            <div class="podium-place">
+                <div class="podium-name" style="opacity: 0.3;">-</div>
+                <div class="podium-pts" style="opacity: 0.3;">0 XP</div>
+                <div class="avatar-box-wrapper" style="opacity: 0.2;">
+                    <img src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar">
                 </div>
-                <div class="lb-points">${u.xp}</div>
+                <div class="podium-step ${classes[i]}" style="opacity: 0.2;">${medals[i]}</div>
             </div>`;
         }
-        html += '</div>';
-        container.innerHTML = html;
+    });
+
+    html += '</div><div class="leaderboard-list">';
+
+    // عرض باقي قائمة المتصدرين (من المركز الرابع فما فوق)
+    for (let i = 3; i < top10Users.length; i++) {
+        const u = top10Users[i];
+        if (!u) continue;
+        const actualRank = i + 1;
+        const isMe = currentUser && (u.id === currentUser.phone || u.phone === currentUser.phone);
+        const avatar = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        const rankStr = typeof getUserRank === 'function' ? getUserRank(u.xp) : 'طالب';
+        const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame.replace('frame_', '') : '';
+        const animatedCardClass = u.has_top_card ? 'animated-top-card' : '';
+        const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
+        const vipCrown = u.is_vip ? '👑 ' : '';
+        const bioText = (u.can_edit_bio && u.bio) ? `<span style="font-size: 0.72rem; color: var(--accent-gold); display: block; font-style: italic;">"${u.bio}"</span>` : '';
+        const hatHtml = typeof getHatHtml === 'function' ? getHatHtml(u.active_hat) : '';
+        const frameOverlay = typeof getAvatarFrameOverlayHtml === 'function' ? getAvatarFrameOverlayHtml(u.active_frame) : '';
+
+        html += `
+        <div class="lb-item ${isMe ? 'is-me' : ''} ${animatedCardClass}">
+            <div class="lb-rank">${actualRank}</div>
+            <div class="avatar-box-wrapper">
+                ${hatHtml}${frameOverlay}
+                <img src="${avatar}" class="profile-avatar ${frameClass}" loading="lazy">
+            </div>
+            <div class="lb-details">
+                <div class="lb-name ${nameGlowClass}">${vipCrown}${u.name ? u.name.split(' ').slice(0, 2).join(' ') : 'طالب'} ${isMe ? '(أنت)' : ''}</div>
+                <div class="lb-badge">${rankStr}</div>
+                ${bioText}
+            </div>
+            <div class="lb-points">${u.xp || 0}</div>
+        </div>`;
     }
+    html += '</div>';
+    container.innerHTML = html;
+}
 
     function openSubject(subjectName) {
         playClickSound(); currentActiveSubject = subjectName;
@@ -2282,6 +2336,7 @@ function updateBookRewardBadgeUI() {
     let battleListener = null;
     let battleTimerInterval = null;
     let hasAnsweredCurrentArenaQ = false;
+    let isAdvancingQ = false; // 
 
     function openDerbySetupModal() {
         playClickSound();
@@ -2334,7 +2389,10 @@ function updateBookRewardBadgeUI() {
     };
 
     // خصم العملات وحفظ الغرفة دفعة واحدة وبسرعة خيالية
-    await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - selectedDerbyStake);
+    await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins => {
+        return (currentCoins || 0) - selectedDerbyStake;
+    });
+    
     await db.ref('battles/' + randomCode).set(roomData);
     currentBattleId = randomCode;
 
@@ -2384,8 +2442,9 @@ function updateBookRewardBadgeUI() {
     }
 
     // خصم الرسوم
-    await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - room.stake);
-
+await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins => {
+    return (currentCoins || 0) - room.stake;
+});
     const player2Data = {
         phone: currentUser.phone,
         name: currentUser.name,
@@ -2499,13 +2558,36 @@ function startDerbyBattleByHost() {
         if (!currentBattleId) return;
         const roomRef = db.ref('battles/' + currentBattleId);
         const snap = await roomRef.once('value');
+        
         if (snap.exists()) {
             const room = snap.val();
+            
+            // 1. إرجاع الفلوس لو الغرفة في الانتظار (المنشئ فقط)
             if (room.status === 'waiting') {
-                await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) + room.stake);
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                await roomRef.remove();
+            } 
+            // 2. إرجاع الفلوس للطرفين لو المنافس دخل بس التحدي مبدأش
+            else if (room.status === 'ready') {
+                if (room.player1 && room.player1.phone) {
+                    await db.ref('users/' + room.player1.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                }
+                if (room.player2 && room.player2.phone) {
+                    await db.ref('users/' + room.player2.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                }
                 await roomRef.remove();
             }
+            // 3. 🚨 معالجة الهروب أثناء المواجهة الحية (حماية المنافس) 🚨
+            else if (room.status === 'playing') {
+                const isPlayer1 = (room.player1.phone === currentUser.phone);
+                const playerPath = isPlayer1 ? 'player1' : 'player2';
+                
+                // إعطاء المنسحب سكور سالب لضمان خسارته فوراً وإنهاء التحدي للطرفين
+                await db.ref(`battles/${currentBattleId}/${playerPath}/score`).set(-999);
+                await db.ref(`battles/${currentBattleId}/status`).set('finished');
+            }
         }
+        
         if (battleListener) roomRef.off('value', battleListener);
         currentBattleId = null;
         goHomeDirectly();
@@ -2565,17 +2647,21 @@ function startDerbyBattleByHost() {
         renderArenaChoices(currentQ, qIndex, isHost);
     }
 
-    // الانتقال للسؤال التالي بمجرد إجابة الطرفين (مع مهلة أمان)
-    if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
-        if (isHost) {
-            setTimeout(() => {
-                advanceArenaNextQuestion(room);
-            }, 1200);
+    // الانتقال للسؤال التالي بمجرد إجابة الطرفين (مع حماية القفل)
+        if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
+            if (isHost && !isAdvancingQ) {
+                isAdvancingQ = true; // 👈 قفل الباب عشان الأمر ميتكررش
+                setTimeout(() => {
+                    advanceArenaNextQuestion(room).then(() => {
+                        isAdvancingQ = false; // 👈 نفتح القفل تاني بعد ما السؤال يتغير فعلياً
+                    });
+                }, 1200);
+            }
         }
-    }
-}
-// دالة لتغيير حالة القفل من لوحة الأدمن وحفظها في فايربيز
-function setHallOfFameLockStatus(lockState) {
+    } // 👈👈👈 ضيف القوس ده هنا عشان تقفل دالة syncArenaState 
+
+    // دالة لتغيير حالة القفل من لوحة الأدمن وحفظها في فايربيز
+    function setHallOfFameLockStatus(lockState) {
     playClickSound();
     db.ref('settings/hall_of_fame_locked').set(lockState).then(() => {
         showTopToast(lockState ? 'تم قفل قاعة المشاهير بنجاح 🔒' : 'تم فتح قاعة المشاهير للطلاب 🔓', 'success');
@@ -3309,25 +3395,31 @@ document.getElementById('admin-store-name').value = item.name || '';
     }
 
     function saveStorePriceSettings() {
-    playClickSound();
-    const itemId = document.getElementById('admin-store-item-select').value;
-    const price = parseInt(document.getElementById('admin-store-price').value) || 100;
-    const customName = document.getElementById('admin-store-name').value.trim(); // اسم السلعة الجديد
+        playClickSound();
+        const itemId = document.getElementById('admin-store-item-select').value;
+        const price = parseInt(document.getElementById('admin-store-price').value) || 100;
+        const customName = document.getElementById('admin-store-name').value.trim();
+        const salePrice = document.getElementById('admin-store-sale-price').value.trim();
+        const badgeText = document.getElementById('admin-store-badge-text').value.trim();
 
-    let itemData = {
-        ...currentStoreConfig[itemId],
-        price: price
-    };
+        let itemData = {
+            ...currentStoreConfig[itemId],
+            price: price
+        };
 
-    // تحديث الاسم إذا قام الأدمن بكتابة اسم جديد
-    if (customName !== '') {
-        itemData.name = customName;
+        if (customName !== '') itemData.name = customName;
+        
+        // حفظ سعر العرض والشارة
+        if (salePrice !== '') itemData.salePrice = parseInt(salePrice);
+        else itemData.salePrice = ''; // لإلغاء العرض القديم
+        
+        if (badgeText !== '') itemData.badgeText = badgeText;
+        else itemData.badgeText = '';
+
+        db.ref('store_config/' + itemId).update(itemData).then(() => {
+            showTopToast('تم تحديث بيانات السلعة وعروض المتجر بنجاح! 🏷️✅', 'success');
+        });
     }
-
-    db.ref('store_config/' + itemId).update(itemData).then(() => {
-        showTopToast('تم تحديث بيانات السلعة في المتجر بنجاح! 🏷️✅', 'success');
-    });
-}
 
     function loadAdminData() {
         document.getElementById('admin-users-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
