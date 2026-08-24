@@ -2347,60 +2347,67 @@ function updateBookRewardBadgeUI() {
 }
 
     async function joinDerbyRoomAction() {
-        playClickSound();
-        const inputCode = document.getElementById('derby-join-code-input').value.trim().toUpperCase();
-        if (!inputCode) {
-            showTopToast('يرجى كتابة كود الغرفة أولاً!', 'error');
-            return;
-        }
+    playClickSound();
+    if (!currentUser) return;
 
-        const roomRef = db.ref('battles/' + inputCode);
-        const snap = await roomRef.once('value');
+    const input = document.getElementById('derby-room-code-input');
+    const roomId = input.value.trim().toUpperCase();
 
-        if (!snap.exists()) {
-            showTopToast('كود الغرفة غير صحيح أو تم إغلاقها!', 'error');
-            return;
-        }
-
-        const room = snap.val();
-        if (room.status !== 'waiting' || room.player2) {
-            showTopToast('عذراً، هذه الغرفة مكتملة أو بدأت بالفعل!', 'error');
-            return;
-        }
-
-        if (room.player1.phone === currentUser.phone) {
-            showTopToast('أنت منشئ هذه الغرفة بالفعل!', 'error');
-            return;
-        }
-
-        if ((currentUser.coins || 0) < room.stake) {
-            showTopToast(`عفواً! رصيدك لا يكفي رسوم هذه الغرفة (${room.stake} عملة)`, 'error');
-            return;
-        }
-
-        closeModal('modal-derby-setup');
-        showTopToast('تم الانضمام بنجاح! جاري التجهيز...', 'success');
-
-        await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - room.stake);
-
-        const player2Data = {
-            phone: currentUser.phone,
-            name: currentUser.name,
-            avatar: currentUser.avatar || '',
-            score: 0,
-            answeredCurrent: false,
-            answerTime: 0
-        };
-
-        // استبدل السطر الذي يغير الحالة داخل joinDerbyRoomAction بالتالي:
-await roomRef.update({
-    player2: player2Data,
-    status: 'ready' // جاهزون وفي انتظار إشارة منشئ الغرفة
-});
-
-        currentBattleId = inputCode;
-        enterBattleArenaView(inputCode);
+    if (!roomId) {
+        showTopToast('يرجى إدخال كود الغرفة أولاً!', 'error');
+        return;
     }
+
+    const roomRef = db.ref('battles/' + roomId);
+    const snap = await roomRef.once('value');
+
+    if (!snap.exists()) {
+        showTopToast('عذراً، هذه الغرفة غير موجودة!', 'error');
+        return;
+    }
+
+    const room = snap.val();
+
+    if (room.status !== 'waiting') {
+        showTopToast('عذراً، الغرفة ممتلئة أو بدأت بالفعل!', 'error');
+        return;
+    }
+
+    if (room.player1.phone === currentUser.phone) {
+        showTopToast('لا يمكنك الانضمام لغرفتك الخاصة كمنافس!', 'error');
+        return;
+    }
+
+    if ((currentUser.coins || 0) < room.stake) {
+        showTopToast(`عفواً! رصيدك لا يكفي (تحتاج ${room.stake} عملة) 🪙`, 'error');
+        return;
+    }
+
+    // خصم الرسوم
+    await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) - room.stake);
+
+    const player2Data = {
+        phone: currentUser.phone,
+        name: currentUser.name,
+        avatar: currentUser.avatar || '',
+        score: 0,
+        answeredCurrent: false,
+        answerTime: 0
+    };
+
+    // تحديث بيانات الغرفة وحالتها إلى ready
+    await roomRef.update({
+        player2: player2Data,
+        status: 'ready'
+    });
+
+    currentBattleId = roomId;
+    closeModal('modal-derby-join');
+    input.value = '';
+
+    // الدخول إلى شاشة الانتظار وليس ساحة اللعب مباشرة
+    enterBattleLobbyView(roomId);
+}
 
     async function fetchBattleQuestionsDeck() {
         let pool = [];
