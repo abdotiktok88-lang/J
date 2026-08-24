@@ -2350,7 +2350,6 @@ function updateBookRewardBadgeUI() {
     playClickSound();
     if (!currentUser) return;
 
-    // تم تصحيح الـ ID ليطابق الموجود في ملف index.html
     const input = document.getElementById('derby-join-code-input');
     const roomId = input ? input.value.trim().toUpperCase() : '';
 
@@ -2403,7 +2402,7 @@ function updateBookRewardBadgeUI() {
     });
 
     currentBattleId = roomId;
-    closeModal('modal-derby-setup');
+    closeModal('modal-derby-setup'); // تم تصحيح اسم المودال هنا
     if (input) input.value = '';
 
     // الدخول لشاشة الانتظار
