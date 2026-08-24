@@ -1928,34 +1928,84 @@ function loadWalletHistoryUI() {
     }
 
     function redeemPromoCodeSidebar() {
-        playClickSound();
-        if (!currentUser) { showTopToast('يجب تسجيل الدخول أولاً لشحن الأكواد!', 'error'); return; }
-        const input = document.getElementById('sidebar-promo-input'); const code = input.value.trim().toUpperCase();
-        if (!code) { showTopToast('يرجى كتابة الكود أولاً!', 'error'); return; }
-
-        const codeRef = db.ref('promo_codes/' + code);
-        codeRef.transaction((codeData) => {
-            if (codeData === null) return null; if (codeData.used) return; 
-            codeData.used = true; codeData.usedBy = currentUser.phone; codeData.usedByName = currentUser.name; codeData.usedAt = new Date().toISOString(); return codeData;
-        }, (error, committed, snapshot) => {
-            if (error || !committed) {
-                showTopToast('عذراً، هذا الكود غير صالح أو تم استخدامه بالفعل!', 'error');
-            } else {
-                const pointsToAdd = snapshot.val().points || 50;
-                db.ref('users/' + currentUser.phone).transaction((user) => { 
-                    if(user) {
-                        user.xp = (user.xp || user.points || 0) + pointsToAdd;
-                        user.points = user.xp;
-                    }
-recordUserTransaction(`شحن كود مكافأة: ${code}`, pointsToAdd, 0, 'reward');
-                    return user; 
-                }).then(() => { 
-                    playSuccessSound(); shootStars(); input.value = ''; closeSidebar(); 
-                    showTopToast(`تم شحن ${pointsToAdd}+ نقطة خبرة بنجاح 🎉`, 'success'); 
-                });
-            }
-        });
+    playClickSound();
+    if (!currentUser) {
+        showTopToast('يجب تسجيل الدخول أولاً لشحن الأكواد!', 'error');
+        return;
     }
+    const input = document.getElementById('sidebar-promo-input');
+    const code = input.value.trim().toUpperCase();
+    if (!code) {
+        showTopToast('يرجى كتابة الكود أولاً!', 'error');
+        return;
+    }
+
+    const codeRef = db.ref('promo_codes/' + code);
+    codeRef.once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+            showTopToast('عذراً، هذا الكود غير موجود!', 'error');
+            return;
+        }
+
+        const codeData = snapshot.val();
+        const isGlobal = codeData.scope === 'global';
+        const isXp = codeData.type !== 'coins';
+        const rewardAmount = codeData.amount || codeData.points || 50;
+
+        // التحقق من صلاحية الكود الفردي
+        if (!isGlobal && codeData.used) {
+            showTopToast('عذراً، تم استخدام هذا الكود من قبل!', 'error');
+            return;
+        }
+
+        // التحقق من استخدام الطالب للكود الجماعي مسبقاً
+        if (isGlobal && codeData.usedByList && codeData.usedByList[currentUser.phone]) {
+            showTopToast('لقد قمت بشحن هذا الكود مسبقًا!', 'error');
+            return;
+        }
+
+        // ⚡ 1. إظهار الإشعار والاحتفال فوراً وتفريغ الحقل بدون انتظار السيرفر
+        input.value = '';
+        closeSidebar();
+        playSuccessSound();
+        shootStars();
+        triggerConfetti();
+        showTopToast(`تم شحن +${rewardAmount} ${isXp ? 'XP ⚡' : 'عملة 💸'} بنجاح 🎉`, 'success');
+
+        // تحديث الرصيد محلياً في الواجهة فوراً
+        if (isXp) {
+            currentUser.xp = (currentUser.xp || currentUser.points || 0) + rewardAmount;
+            currentUser.points = currentUser.xp;
+        } else {
+            currentUser.coins = (currentUser.coins || 0) + rewardAmount;
+        }
+        if (typeof updateHeaderCoinsDisplay === 'function') updateHeaderCoinsDisplay();
+
+        // ⚡ 2. إرسال التحديثات للسحابة في الخلفية بهدوء
+        const updates = {};
+        if (isGlobal) {
+            updates[`promo_codes/${code}/usedByList/${currentUser.phone}`] = {
+                name: currentUser.name,
+                claimedAt: new Date().toISOString()
+            };
+        } else {
+            updates[`promo_codes/${code}/used`] = true;
+            updates[`promo_codes/${code}/usedBy`] = currentUser.phone;
+            updates[`promo_codes/${code}/usedByName`] = currentUser.name;
+            updates[`promo_codes/${code}/usedAt`] = new Date().toISOString();
+        }
+
+        if (isXp) {
+            updates[`users/${currentUser.phone}/xp`] = currentUser.xp;
+            updates[`users/${currentUser.phone}/points`] = currentUser.points;
+        } else {
+            updates[`users/${currentUser.phone}/coins`] = currentUser.coins;
+        }
+
+        db.ref().update(updates);
+        recordUserTransaction(`شحن كود مكافأة: ${code}`, isXp ? rewardAmount : 0, !isXp ? rewardAmount : 0, 'reward');
+    });
+}
 
     function openLeaderboard() { 
         navigateTo('view-leaderboard', 'لوحة المتصدرين', 'أبطال ورتب الدفعة'); 
@@ -2342,10 +2392,11 @@ function updateBookRewardBadgeUI() {
             answerTime: 0
         };
 
-        await roomRef.update({
-            player2: player2Data,
-            status: 'playing'
-        });
+        // استبدل السطر الذي يغير الحالة داخل joinDerbyRoomAction بالتالي:
+await roomRef.update({
+    player2: player2Data,
+    status: 'ready' // جاهزون وفي انتظار إشارة منشئ الغرفة
+});
 
         currentBattleId = inputCode;
         enterBattleArenaView(inputCode);
@@ -2374,32 +2425,46 @@ function updateBookRewardBadgeUI() {
     }
 
     function enterBattleLobbyView(roomId) {
-        navigateTo('view-battle-lobby', 'غرفة الانتظار', 'في انتظار انضمام المنافس...');
-        document.getElementById('lobby-room-code').innerText = roomId;
-        document.getElementById('lobby-stake-badge').innerText = `🪙 الرسوم: ${selectedDerbyStake} عملة`;
-        document.getElementById('lobby-reward-badge').innerText = `🏆 الجائزة: ${selectedDerbyStake * 2} عملة + ${selectedDerbyRewardXP} XP`;
+    navigateTo('view-battle-lobby', 'غرفة الانتظار', 'في انتظار انضمام المنافس...');
+    document.getElementById('lobby-room-code').innerText = roomId;
+    document.getElementById('lobby-stake-badge').innerText = `🪙 الرسوم: ${selectedDerbyStake} عملة`;
+    document.getElementById('lobby-reward-badge').innerText = `🏆 الجائزة: ${selectedDerbyStake * 2} عملة + ${selectedDerbyRewardXP} XP`;
 
-        document.getElementById('lobby-p1-name').innerText = currentUser.name.split(' ')[0];
-        document.getElementById('lobby-p1-avatar').src = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+    document.getElementById('lobby-p1-name').innerText = currentUser.name.split(' ')[0];
+    document.getElementById('lobby-p1-avatar').src = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
 
-        if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+    const startBtn = document.getElementById('btn-start-derby-battle');
+    if (startBtn) startBtn.style.display = 'none';
 
-        battleListener = db.ref('battles/' + roomId).on('value', snap => {
-            if (!snap.exists()) return;
-            const room = snap.val();
+    if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
 
-            if (room.status === 'playing' && room.player2) {
-                document.getElementById('lobby-p2-name').innerText = room.player2.name.split(' ')[0];
-                document.getElementById('lobby-p2-avatar').src = room.player2.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
-                document.getElementById('lobby-p2-avatar').style.opacity = '1';
-                document.getElementById('lobby-p2-status').innerText = 'تم الانضمام! 🔥';
+    battleListener = db.ref('battles/' + roomId).on('value', snap => {
+        if (!snap.exists()) return;
+        const room = snap.val();
+        const isHost = room.player1.phone === currentUser.phone;
 
-                setTimeout(() => {
-                    enterBattleArenaView(roomId);
-                }, 1200);
+        // عند انضمام المنافس
+        if (room.player2) {
+            document.getElementById('lobby-p2-name').innerText = room.player2.name.split(' ')[0];
+            document.getElementById('lobby-p2-avatar').src = room.player2.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+            document.getElementById('lobby-p2-avatar').style.opacity = '1';
+            
+            if (room.status === 'ready') {
+                document.getElementById('lobby-p2-status').innerText = 'جاهز للتحدي 🔥';
+                if (isHost && startBtn) {
+                    startBtn.style.display = 'block'; // يظهر زر البدء للمنشئ فقط
+                } else if (!isHost) {
+                    document.getElementById('lobby-p2-status').innerText = 'في انتظار بدء المنشئ ⏳';
+                }
             }
-        });
-    }
+        }
+
+        // عند ضغط المنشئ على زر البدء وتحول الحالة إلى playing
+        if (room.status === 'playing') {
+            enterBattleArenaView(roomId);
+        }
+    });
+}
 
     function copyBattleRoomCode() {
         if (!currentBattleId) return;
@@ -2413,6 +2478,15 @@ function updateBookRewardBadgeUI() {
         const text = `تحديتك في ديربي الدفعة 1v1 على تطبيق علوم الأغذية! ⚔️🔥%0Aادخل بالكود: *${currentBattleId}* واقبل التحدي!`;
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
+function startDerbyBattleByHost() {
+    playClickSound();
+    if (!currentBattleId) return;
+    
+    // تحويل حالة الغرفة إلى اللعب ليدخل الطرفان معاً في نفس اللحظة
+    db.ref('battles/' + currentBattleId).update({
+        status: 'playing'
+    });
+}
 
     async function cancelBattleLobby() {
         if (!currentBattleId) return;
@@ -3509,58 +3583,87 @@ function adminSendTicketReply(ticketId) {
         });
     }
 
-    function createNewPromoCode() {
-        playClickSound();
-        let codeName = document.getElementById('admin-new-code').value.trim().toUpperCase();
-        let codePts = parseInt(document.getElementById('admin-new-code-pts').value);
+    // 1. إنشاء الكود بمواصفاته الجديدة
+function createNewPromoCode() {
+    playClickSound();
+    let codeName = document.getElementById('admin-new-code').value.trim().toUpperCase();
+    let codeVal = parseInt(document.getElementById('admin-new-code-pts').value);
+    let rewardType = document.getElementById('admin-code-type').value; // 'xp' أو 'coins'
+    let scopeType = document.getElementById('admin-code-scope').value; // 'single' أو 'global'
 
-        if(!codeName || !codePts || codePts <= 0) {
-            showTopToast('يرجى كتابة اسم الكود وعدد النقاط بشكل صحيح!', 'error'); return;
+    if (!codeName || !codeVal || codeVal <= 0) {
+        showTopToast('يرجى كتابة اسم الكود والقيمة بشكل صحيح!', 'error');
+        return;
+    }
+
+    db.ref('promo_codes/' + codeName).once('value').then(snap => {
+        if (snap.exists()) {
+            showTopToast('هذا الكود موجود بالفعل في النظام!', 'error');
+        } else {
+            const newCodeData = {
+                amount: codeVal,
+                type: rewardType,
+                scope: scopeType,
+                used: false, // للكود الفردي
+                usedByList: {}, // للكود الجماعي: يسجل هواتف كل من شحن الكود
+                createdAt: new Date().toISOString()
+            };
+
+            db.ref('promo_codes/' + codeName).set(newCodeData).then(() => {
+                document.getElementById('admin-new-code').value = '';
+                document.getElementById('admin-new-code-pts').value = '';
+                showTopToast(`تم إنشاء الكود [${codeName}] بنجاح! 🎁✨`, 'success');
+                loadAdminData();
+            });
+        }
+    });
+}
+
+// 2. عرض الأكواد في لوحة التحكم مع توضيح نوع المكافأة وطبيعتها
+function renderAdminCodes(codesArray) {
+    const container = document.getElementById('admin-codes-list');
+    if (codesArray.length === 0) {
+        container.innerHTML = '<p style="text-align: center;">لا توجد أكواد.</p>';
+        return;
+    }
+    
+    let html = '';
+    codesArray.forEach(c => {
+        const isGlobal = c.scope === 'global';
+        const isXp = c.type !== 'coins';
+        const valText = `${c.amount || c.points || 50} ${isXp ? 'XP ⚡' : 'عملة 💸'}`;
+
+        let statusClass = 'admin-status-active';
+        let statusText = isGlobal ? '👥 جماعي متاح' : '👤 فردي متاح';
+
+        if (!isGlobal && c.used) {
+            statusClass = 'admin-status-used';
+            statusText = 'مُستخدم (منتهي)';
         }
 
-        db.ref('promo_codes/' + codeName).once('value').then(snap => {
-            if(snap.exists()) {
-                showTopToast('هذا الكود موجود بالفعل في النظام!', 'error');
-            } else {
-                db.ref('promo_codes/' + codeName).set({
-                    points: codePts,
-                    used: false,
-                    createdAt: new Date().toISOString()
-                }).then(() => {
-                    document.getElementById('admin-new-code').value = '';
-                    document.getElementById('admin-new-code-pts').value = '';
-                    showTopToast(`تم إنشاء الكود ${codeName} بقيمة ${codePts} نقطة بنجاح!`, 'success');
-                    loadAdminData();
-                });
-            }
-        });
-    }
-
-    function renderAdminCodes(codesArray) {
-        const container = document.getElementById('admin-codes-list');
-        if(codesArray.length === 0) { container.innerHTML = '<p style="text-align: center;">لا يوجد أكواد.</p>'; return; }
+        let usageDetails = '';
+        if (isGlobal) {
+            const count = c.usedByList ? Object.keys(c.usedByList).length : 0;
+            usageDetails = `<span style="font-size: 0.72rem; color: var(--accent-gold); display:block;">عدد المستفيدين: ${count} طالب</span>`;
+        } else if (c.used) {
+            usageDetails = `<span style="font-size: 0.7rem; color: var(--text-sub); display:block;">استخدمه: ${c.usedByName || c.usedBy}</span>`;
+        }
         
-        let html = '';
-        codesArray.forEach(c => {
-            const statusClass = c.used ? 'admin-status-used' : 'admin-status-active';
-            const statusText = c.used ? 'مُستخدم' : 'فعال متاح';
-            const usedByText = c.used ? `<span style="font-size: 0.7rem; color: var(--text-sub); display:block;">استخدمه: ${c.usedByName}</span>` : '';
-            
-            html += `
-            <div class="admin-item-card">
-                <div class="admin-item-info">
-                    <div class="admin-item-name" style="color: var(--accent-gold); letter-spacing: 1px;">${c.code}</div>
-                    <div class="admin-item-sub" style="direction: rtl;">${c.points} نقطة 🎁</div>
-                    ${usedByText}
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-                    <span class="admin-status-badge ${statusClass}">${statusText}</span>
-                    <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deletePromoCode('${c.code}')">حذف 🗑️</button>
-                </div>
-            </div>`;
-        });
-        container.innerHTML = html;
-    }
+        html += `
+        <div class="admin-item-card">
+            <div class="admin-item-info">
+                <div class="admin-item-name" style="color: var(--accent-gold); letter-spacing: 1px;">${c.code}</div>
+                <div class="admin-item-sub" style="direction: rtl;">المكافأة: ${valText}</div>
+                ${usageDetails}
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <span class="admin-status-badge ${statusClass}">${statusText}</span>
+                <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deletePromoCode('${c.code}')">حذف 🗑️</button>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
 
     function deletePromoCode(codeName) {
         playErrorSound();
