@@ -2350,8 +2350,9 @@ function updateBookRewardBadgeUI() {
     playClickSound();
     if (!currentUser) return;
 
-    const input = document.getElementById('derby-room-code-input');
-    const roomId = input.value.trim().toUpperCase();
+    // تم تصحيح الـ ID ليطابق الموجود في ملف index.html
+    const input = document.getElementById('derby-join-code-input');
+    const roomId = input ? input.value.trim().toUpperCase() : '';
 
     if (!roomId) {
         showTopToast('يرجى إدخال كود الغرفة أولاً!', 'error');
@@ -2402,10 +2403,10 @@ function updateBookRewardBadgeUI() {
     });
 
     currentBattleId = roomId;
-    closeModal('modal-derby-join');
-    input.value = '';
+    closeModal('modal-derby-setup');
+    if (input) input.value = '';
 
-    // الدخول إلى شاشة الانتظار وليس ساحة اللعب مباشرة
+    // الدخول لشاشة الانتظار
     enterBattleLobbyView(roomId);
 }
 
@@ -2524,9 +2525,14 @@ function startDerbyBattleByHost() {
 
     function syncArenaState(room) {
     if (room.status === 'finished') {
+        if (battleListener && currentBattleId) {
+            db.ref('battles/' + currentBattleId).off('value', battleListener);
+            battleListener = null;
+        }
         concludeBattle(room);
         return;
     }
+    // باقي الكود كما هو تماماً...
 
     const isHost = room.player1.phone === currentUser.phone;
     const me = isHost ? room.player1 : room.player2;
