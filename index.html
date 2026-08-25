@@ -1389,6 +1389,27 @@
             gap: 10px;
             margin-bottom: 16px;
         }
+/* كلاس بادج قريباً المتفاعل مع الثيم */
+        .badge-soon-feature {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        /* تعديل البادج تلقائياً في الوضع الفاتح */
+        [data-theme="light"] .badge-soon-feature {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -1809,6 +1830,20 @@
                     <div class="card-arrow">←</div>
                 </div>
             </div>
+
+<!-- كارت مفاجآت بداية الدراسة -->
+                <div class="app-card" style="border-color: var(--accent-highlight); margin-top: 12px;" onclick="showTopToast('مفاجآت ضخمة وأدوات مذهلة هتتفتح مع بداية الدراسة.. خليك جاهز! 🔥', 'info')">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); border-color: var(--accent-highlight);">
+                            <img src="https://img.icons8.com/fluency/96/rocket.png" alt="Upcoming">
+                        </div>
+                        <div class="card-text">
+                            <h3 style="color: var(--accent-highlight);">مفاجآت بداية الدراسة</h3>
+                            <p>حلويات هتنزل قريب جداً</p>
+                        </div>
+                    </div>
+                    <span class="badge-soon-feature">قريباً 🔥</span>
+                </div>
 
             <div class="inspirational-quote">
                 إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ <span class="highlight-word">التَّيْسِيرَ</span> عَلَى النَّاسِ، <span class="highlight-word">فَيَسِّرْ</span> عَلَيْهِمْ، فَإِنَّكَ وَاللَّهِ لَا تَدْرِي مَا تَفْعَلُ بِكَ <span class="highlight-word">دَعْوَةٌ صَادِقَةٌ</span> مِنْ أَحَدِهِمْ، فَرُبَّمَا كَانَ مِنْ بَيْنِهِمْ مَنْ لَوْ أَقْسَمَ عَلَى اللَّهِ <span class="highlight-word">لَأَبَرَّهُ</span>!
