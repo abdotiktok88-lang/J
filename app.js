@@ -786,26 +786,26 @@ function playFlawlessVictorySound() {
     // ================= الرتب والإكسسوارات =================
     function getUserRank(points) {
         const pts = points || 0;
-        if (pts >= 17000) return "🌌 أسطورة";
-        if (pts >= 12000) return "👑 النخبة";
-        if (pts >= 8000)  return "💎 أستاذ";
-        if (pts >= 5000)  return "🏆 خبير";
-        if (pts >= 3000)  return "⚙️ محترف";
-        if (pts >= 1500)  return "🔬 واعد";
-        if (pts >= 500)   return "⚡ متقدم";
+        if (pts >= 100000) return "🌌 أسطورة";
+        if (pts >= 70000)  return "👑 النخبة";
+        if (pts >= 45000)  return "💎 أستاذ";
+        if (pts >= 25000)  return "🏆 خبير";
+        if (pts >= 12000)  return "⚙️ محترف";
+        if (pts >= 5000)   return "🔬 واعد";
+        if (pts >= 1000)   return "⚡ متقدم";
         return "🌱 مبتدئ";
     }
     
     function getNextLevelXP(currentXp) {
         const xp = currentXp || 0;
-        if (xp < 500) return 500;
-        if (xp < 1500) return 1500;
-        if (xp < 3000) return 3000;
-        if (xp < 5000) return 5000;
-        if (xp < 8000) return 8000;
-        if (xp < 12000) return 12000;
-        if (xp < 17000) return 17000;
-        return 17000;
+        if (xp < 1000)   return 1000;
+        if (xp < 5000)   return 5000;
+        if (xp < 12000)  return 12000;
+        if (xp < 25000)  return 25000;
+        if (xp < 45000)  return 45000;
+        if (xp < 70000)  return 70000;
+        if (xp < 100000) return 100000;
+        return 100000; // الحد الأقصى
     }
 
     function getHatHtml(hatKey) {
@@ -840,6 +840,7 @@ function getAvatarFrameOverlayHtml(frameKey) {
     // ================= تهيئة المستخدم =================
     let currentUser = null; 
     let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
+let hasCheckedDailyLoginSession = false;
 
     window.addEventListener('DOMContentLoaded', () => {
         updateSoundUI();
@@ -901,7 +902,10 @@ function getAvatarFrameOverlayHtml(frameKey) {
                         goHomeDirectly();
                     }
 
-                    checkDailyLoginCloudSync();
+                    if (!hasCheckedDailyLoginSession) {
+                        checkDailyLoginCloudSync();
+                        hasCheckedDailyLoginSession = true;
+                    }
                 } else {
                     logoutUserLocally();
                     showAuthGateDirectly();
@@ -1236,6 +1240,7 @@ function getAvatarFrameOverlayHtml(frameKey) {
         localStorage.removeItem('active_user_phone');
         localStorage.removeItem('cached_user_data');
         currentUser = null; 
+        hasCheckedDailyLoginSession = false; // 👈 ضيف السطر ده هنا
         document.getElementById('sidebar-avatar').src = 'https://img.icons8.com/fluency/96/user-male.png'; 
         document.getElementById('sidebar-name').innerText = 'غير مسجل';
         document.getElementById('sidebar-stats-box').style.display = 'none'; 
@@ -2491,46 +2496,61 @@ await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins =
     }
 
     function enterBattleLobbyView(roomId) {
-    navigateTo('view-battle-lobby', 'غرفة الانتظار', 'في انتظار انضمام المنافس...');
-    document.getElementById('lobby-room-code').innerText = roomId;
-    document.getElementById('lobby-stake-badge').innerText = `🪙 الرسوم: ${selectedDerbyStake} عملة`;
-    document.getElementById('lobby-reward-badge').innerText = `🏆 الجائزة: ${selectedDerbyStake * 2} عملة + ${selectedDerbyRewardXP} XP`;
+        navigateTo('view-battle-lobby', 'غرفة الانتظار', 'في انتظار انضمام المنافس...');
+        document.getElementById('lobby-room-code').innerText = roomId;
+        document.getElementById('lobby-stake-badge').innerText = `🪙 الرسوم: ${selectedDerbyStake} عملة`;
+        document.getElementById('lobby-reward-badge').innerText = `🏆 الجائزة: ${selectedDerbyStake * 2} عملة + ${selectedDerbyRewardXP} XP`;
 
-    document.getElementById('lobby-p1-name').innerText = currentUser.name.split(' ')[0];
-    document.getElementById('lobby-p1-avatar').src = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        // تصفير بيانات المنافس القديم تماماً لتجنب الجليتش
+        document.getElementById('lobby-p2-name').innerText = 'في الانتظار...';
+        document.getElementById('lobby-p2-name').style.color = 'var(--text-sub)';
+        document.getElementById('lobby-p2-avatar').src = 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('lobby-p2-avatar').style.opacity = '0.35';
+        document.getElementById('lobby-p2-status').innerText = 'جاري البحث ⏳';
 
-    const startBtn = document.getElementById('btn-start-derby-battle');
-    if (startBtn) startBtn.style.display = 'none';
+        const startBtn = document.getElementById('btn-start-derby-battle');
+        if (startBtn) startBtn.style.display = 'none';
 
-    if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+        if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
 
-    battleListener = db.ref('battles/' + roomId).on('value', snap => {
-        if (!snap.exists()) return;
-        const room = snap.val();
-        const isHost = room.player1.phone === currentUser.phone;
+        battleListener = db.ref('battles/' + roomId).on('value', snap => {
+            if (!snap.exists()) return;
+            const room = snap.val();
+            const isHost = room.player1.phone === currentUser.phone;
 
-        // عند انضمام المنافس
-        if (room.player2) {
-            document.getElementById('lobby-p2-name').innerText = room.player2.name.split(' ')[0];
-            document.getElementById('lobby-p2-avatar').src = room.player2.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
-            document.getElementById('lobby-p2-avatar').style.opacity = '1';
-            
-            if (room.status === 'ready') {
-                document.getElementById('lobby-p2-status').innerText = 'جاهز للتحدي 🔥';
-                if (isHost && startBtn) {
-                    startBtn.style.display = 'block'; // يظهر زر البدء للمنشئ فقط
-                } else if (!isHost) {
-                    document.getElementById('lobby-p2-status').innerText = 'في انتظار بدء المنشئ ⏳';
+            // تحديد مين أنا ومين المنافس ديناميكياً (نفس نظام الـ Arena)
+            const me = isHost ? room.player1 : room.player2;
+            const opponent = isHost ? room.player2 : room.player1;
+
+            // أنا دايماً بظهر في الجانب الأول
+            if (me) {
+                document.getElementById('lobby-p1-name').innerText = me.name.split(' ')[0] + ' (أنت)';
+                document.getElementById('lobby-p1-avatar').src = me.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+            }
+
+            // لو في منافس في الغرفة (أو لو أنا اللي دخلت على غرفة المنشئ)
+            if (opponent) {
+                document.getElementById('lobby-p2-name').innerText = opponent.name.split(' ')[0];
+                document.getElementById('lobby-p2-name').style.color = 'var(--text-main)';
+                document.getElementById('lobby-p2-avatar').src = opponent.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                document.getElementById('lobby-p2-avatar').style.opacity = '1';
+                
+                if (room.status === 'ready') {
+                    if (isHost && startBtn) {
+                        startBtn.style.display = 'block'; // يظهر زر البدء للمنشئ فقط
+                        document.getElementById('lobby-p2-status').innerText = 'جاهز للتحدي 🔥';
+                    } else if (!isHost) {
+                        document.getElementById('lobby-p2-status').innerText = 'في انتظار بدء المنشئ ⏳';
+                    }
                 }
             }
-        }
 
-        // عند ضغط المنشئ على زر البدء وتحول الحالة إلى playing
-        if (room.status === 'playing') {
-            enterBattleArenaView(roomId);
-        }
-    });
-}
+            // عند ضغط المنشئ على زر البدء وتحول الحالة إلى playing
+            if (room.status === 'playing') {
+                enterBattleArenaView(roomId);
+            }
+        });
+    }
 
     function copyBattleRoomCode() {
         if (!currentBattleId) return;
@@ -3380,6 +3400,7 @@ if (currentUser) {
         if (tabName === 'analytics') loadAdminAnalyticsAndLogs();
         if (tabName === 'tickets') loadAdminTickets();
         if (tabName === 'achievements') renderAdminAchievementsList();
+        if (tabName === 'quiz') loadAdminCustomQuestions(); // 👈 أضف السطر ده هنا عشان يتحمل تلقائياً
     }
 
     function populateAdminStoreInputs() {
@@ -3420,6 +3441,53 @@ document.getElementById('admin-store-name').value = item.name || '';
             showTopToast('تم تحديث بيانات السلعة وعروض المتجر بنجاح! 🏷️✅', 'success');
         });
     }
+// دالة جلب وعرض الأسئلة السحابية في لوحة التحكم
+function loadAdminCustomQuestions() {
+    const container = document.getElementById('admin-custom-questions-list');
+    if (!container) return;
+
+    db.ref('custom_questions').on('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أسئلة سحابية مضافة حتى الآن.</p>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(child => {
+            const qData = child.val();
+            const qId = child.key;
+            
+            // تعديل قوي لجلب الإجابة الصحيحة سواء كانت في مصفوفة أو كنص مباشر
+            let correctAns = 'غير متوفر';
+            if (qData.a && Array.isArray(qData.a) && qData.a.length > 0) {
+                correctAns = qData.a[qData.correct || 0];
+            } else if (qData.correct_answer) { // في حال تم حفظها كقيمة مباشرة مستقبلاً
+                correctAns = qData.correct_answer;
+            }
+
+            html += `
+            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <span class="card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold);">${qData.category || 'عام'}</span>
+                    <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="deleteCustomQuestion('${qId}')">حذف السؤال 🗑️</button>
+                </div>
+                <div style="font-size: 0.9rem; font-weight: 800; color: var(--text-main);">❓ ${qData.q}</div>
+                <div style="font-size: 0.8rem; color: var(--accent-emerald); font-weight: 700;">✅ الإجابة الصحيحة: ${correctAns}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    });
+}
+
+// دالة حذف سؤال سحابي محدد
+function deleteCustomQuestion(qId) {
+    playErrorSound();
+    if (confirm('هل أنت متأكد من رغبتك في حذف هذا السؤال نهائياً من بنك الأسئلة؟')) {
+        db.ref('custom_questions/' + qId).remove().then(() => {
+            showTopToast('تم حذف السؤال بنجاح 🗑️', 'info');
+        });
+    }
+}
 
     function loadAdminData() {
         document.getElementById('admin-users-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';

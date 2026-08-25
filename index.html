@@ -2853,8 +2853,20 @@
                     </div>
                     <button class="btn-submit" onclick="saveNewCloudQuestion()">إضافة السؤال للعبة 🚀</button>
                 </div>
+
+                <!-- 📋 قسم استعراض وإدارة الأسئلة السحابية المضافة -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 10px; text-align: center;">الأسئلة السحابية المضافة مسبقاً 📋</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; text-align: center;">
+                        هنا يمكنك استعراض جميع الأسئلة التي قمت بإضافتها وحذف أي سؤال عند الحاجة.
+                    </p>
+                    <div id="admin-custom-questions-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+                        <p style="text-align: center; color: var(--text-sub);">جاري تحميل الأسئلة...</p>
+                    </div>
+                </div>
+
                 <!-- قسم الرفع الجماعي للأسئلة -->
-                <div class="auth-card" style="padding: 18px; margin-top: 20px;">
+                <div class="auth-card" style="padding: 18px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 10px; text-align: center;">إضافة أسئلة جماعية دفعة واحدة 🚀</h3>
                     <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.6;">
                         اكتب كل سؤال في سطر منفصل بالصيغة التالية (افصل بين العناصر بعلامة <b>#</b>):<br>
@@ -2867,7 +2879,7 @@
                     <button class="btn-submit" onclick="uploadBulkQuestions()">رفع جميع الأسئلة للسحابة 📤</button>
                 </div>
             </div>
-
+                
             <!-- تبويب الأكواد المحدث -->
             <div id="admin-section-codes" style="display: none;">
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
@@ -3021,21 +3033,21 @@
                     <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #00f0ff;" onclick="launchPenaltyMode('messi', 'ليونيل ميسي', 'https://images.fotmob.com/image_resources/playerimages/30981.png')">
                         <img src="https://images.fotmob.com/image_resources/playerimages/30981.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(0,240,255,0.1); margin-bottom: 6px;">
                         <h4 style="font-size: 0.85rem;">ميسي 🇦🇷</h4>
-                        <p style="font-size: 0.68rem; color: #00f0ff !important;">تسديدة مقصية</p>
+                        <p style="font-size: 0.68rem; color: #00f0ff !important;">الـ GOAT</p>
                     </div>
 
                     <!-- رونالدو -->
                     <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #ef4444;" onclick="launchPenaltyMode('ronaldo', 'كريستيانو رونالدو', 'https://images.fotmob.com/image_resources/playerimages/30893.png')">
                         <img src="https://images.fotmob.com/image_resources/playerimages/30893.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(239,68,68,0.1); margin-bottom: 6px;">
                         <h4 style="font-size: 0.85rem;">رونالدو 🇵🇹</h4>
-                        <p style="font-size: 0.68rem; color: #ef4444 !important;">صاروخ لا يُصد</p>
+                        <p style="font-size: 0.68rem; color: #ef4444 !important;">الدون</p>
                     </div>
 
                     <!-- صلاح -->
                     <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #10b981;" onclick="launchPenaltyMode('salah', 'محمد صلاح', 'https://images.fotmob.com/image_resources/playerimages/292462.png')">
                         <img src="https://images.fotmob.com/image_resources/playerimages/292462.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(16,185,129,0.1); margin-bottom: 6px;">
                         <h4 style="font-size: 0.85rem;">صلاح 🇪🇬</h4>
-                        <p style="font-size: 0.68rem; color: #10b981 !important;">قناص الزاوية</p>
+                        <p style="font-size: 0.68rem; color: #10b981 !important;">فخر العرب</p>
                     </div>
                 </div>
 
