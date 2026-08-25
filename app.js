@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.3";
+    const CURRENT_APP_VERSION = "1.0.4";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -3280,8 +3280,7 @@ isClassicQuizActive = true;
 isClassicQuizActive = false;
         let wrongCount = 5 - quizScoreCount; 
         
-        let xpChange = (quizScoreCount * 5) - (wrongCount * 5); 
-        let coinsChange = (quizScoreCount * 2);
+let xpChange = (quizScoreCount * 5) - (wrongCount * 2); // الخصم أصبح نقطتين بدل خمسة لكل إجابة خطأ        let coinsChange = (quizScoreCount * 2);
         let bonusMsg = "";
         
         if (quizScoreCount === 5) { 
@@ -4493,7 +4492,7 @@ rewardEl.innerHTML = `
         <span style="color: var(--text-sub); font-size: 0.85rem;">+1 هدف ركلة جزاء ⚽</span>
     </div>
 `;        } else {
-            xpChange = -25;
+            xpChange = -15;
             coinsChange = 0;
 
             if (imgEl) imgEl.src = 'https://img.icons8.com/fluency/96/cancel.png';
