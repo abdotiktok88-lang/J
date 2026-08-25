@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.4";
+    const CURRENT_APP_VERSION = "1.0.5";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -382,6 +382,8 @@ function shuffleArray(array) {
         "top_card": { price: 180, name: "بطاقة متصدرين متحركة 🃏", category: "profile", desc: "تمييز بطاقتك في قائمة المتصدرين بأنيميشن نيون" },
         "glow_name": { price: 120, name: "اسم بلون متوهج ولامع 🌈", category: "profile", desc: "تدرج ضوئي متحرك لاسمك بالتطبيق" },
         "user_bio": { price: 80, name: "تفعيل كتابة بايو شخصي ✍️", category: "profile", desc: "اكتب جملتك في البروفايل والمتصدرين" },
+"extra_classic_5": { price: 70, name: "حزمة +5 محاولات كلاسيك 📚", category: "boosters", desc: "تمنحك 5 محاولات إضافية لتحدي العباقرة" },
+        "extra_penalty_5": { price: 70, name: "حزمة +5 محاولات جزاء ⚽", category: "boosters", desc: "تمنحك 5 محاولات إضافية لركلات الجزاء" },
         "double_xp": { price: 100, name: "مضاعف نقاط 24 ساعة (2x XP) 🚀", category: "boosters", desc: "ضاعف نقاط كل تحدي لمدة 24 ساعة" },
         "hint_5050": { price: 40, name: "تلميح التحدي (حذف إجابتين) 💡", category: "boosters", desc: "يحذف إجابتين خطأ أثناء السؤال" },
         "hint_time": { price: 35, name: "تجميد الوقت بالتحدي (+15 ثانية) ⏱️", category: "boosters", desc: "إضافة 15 ثانية إضافية للتفكير" },
@@ -756,10 +758,13 @@ function playFlawlessVictorySound() {
 
         const counterEl = document.getElementById('quiz-modal-daily-counter');
         if (counterEl) {
+            let extraClassicText = (currentUser.extraClassicCount || 0) > 0 ? ` <span style="color:#10b981; font-size:0.7rem;">(+${currentUser.extraClassicCount} إضافي)</span>` : '';
+            let extraPenaltyText = (currentUser.extraPenaltyCount || 0) > 0 ? ` <span style="color:#10b981; font-size:0.7rem;">(+${currentUser.extraPenaltyCount} إضافي)</span>` : '';
+            
             counterEl.innerHTML = `
                 <div style="display: flex; justify-content: space-around; gap: 10px; margin-top: 5px;">
-                    <span>📚 الكلاسيك المتبقي: <b>${classicRemaining}/10</b></span>
-                    <span>⚽ الجزاء المتبقي: <b>${penaltyRemaining}/10</b></span>
+                    <span>📚 كلاسيك: <b>${classicRemaining}/10</b>${extraClassicText}</span>
+                    <span>⚽ جزاء: <b>${penaltyRemaining}/10</b>${extraPenaltyText}</span>
                 </div>
             `;
         }
@@ -773,8 +778,14 @@ function playFlawlessVictorySound() {
         const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
 
         if (penaltyCountToday >= DAILY_QUIZ_LIMIT) {
-            showTopToast(`استنفدت محاولات ركلات الجزاء اليوم (10/10)! جرب الطور الكلاسيكي 📚`, 'error');
-            return;
+            if ((currentUser.extraPenaltyCount || 0) > 0) {
+                currentUser.extraPenaltyCount -= 1;
+                db.ref('users/' + currentUser.phone + '/extraPenaltyCount').set(currentUser.extraPenaltyCount);
+                showTopToast('تم خصم محاولة جزاء من رصيدك الإضافي 🎟️', 'info');
+            } else {
+                showTopToast(`استنفدت محاولات ركلات الجزاء اليوم! اشتري محاولات إضافية من المتجر 🎟️`, 'error');
+                return;
+            }
         }
 
         closeModal('quiz-rules-modal');
@@ -1355,10 +1366,14 @@ if (tab === 'badges') renderAchievementsTabUI();
             else if (itemId === 'hint_5050') previewCircleHtml = `<div class="store-preview-circle">💡</div>`;
             else if (itemId === 'hint_time') previewCircleHtml = `<div class="store-preview-circle">⏱️</div>`;
             else if (itemId === 'freeze') previewCircleHtml = `<div class="store-preview-circle">🛡️</div>`;
+else if (itemId === 'extra_classic_5') previewCircleHtml = `<div class="store-preview-circle">📚</div>`;
+            else if (itemId === 'extra_penalty_5') previewCircleHtml = `<div class="store-preview-circle">⚽</div>`;
 
             let countBadge = '';
             if (itemId === 'hint_5050') countBadge = ` (لديك: ${currentUser.hintsCount || 0})`;
             if (itemId === 'hint_time') countBadge = ` (لديك: ${currentUser.hintTimeCount || 0})`;
+if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraClassicCount || 0})`;
+            if (itemId === 'extra_penalty_5') countBadge = ` (لديك: ${currentUser.extraPenaltyCount || 0})`;
 
             const priceDisplay = isSale ? 
                 `<div class="store-price-tag"><span class="store-old-price">${item.price}</span> <span>${activePrice} عملة 💸</span> <span class="store-limited-badge">${item.badgeText || 'عرض خاص'}</span></div>` : 
@@ -1494,6 +1509,10 @@ if (tab === 'badges') renderAchievementsTabUI();
             updates.hintTimeCount = (currentUser.hintTimeCount || 0) + 1;
         } else if (itemId === 'freeze') {
             updates.has_streak_freeze = true;
+} else if (itemId === 'extra_classic_5') {
+            updates.extraClassicCount = (currentUser.extraClassicCount || 0) + 5;
+        } else if (itemId === 'extra_penalty_5') {
+            updates.extraPenaltyCount = (currentUser.extraPenaltyCount || 0) + 5;
         }
 
         db.ref('users/' + currentUser.phone).update(updates).then(() => {
@@ -3055,8 +3074,14 @@ function checkHallOfFameStatus() {
         const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
 
         if (quizCountToday >= DAILY_QUIZ_LIMIT) {
-            showTopToast(`تم استهلاك جميع محاولات اليوم (${DAILY_QUIZ_LIMIT}/${DAILY_QUIZ_LIMIT})!`, 'error');
-            return;
+            if ((currentUser.extraClassicCount || 0) > 0) {
+                currentUser.extraClassicCount -= 1;
+                db.ref('users/' + currentUser.phone + '/extraClassicCount').set(currentUser.extraClassicCount);
+                showTopToast('تم خصم محاولة كلاسيك من رصيدك الإضافي 🎟️', 'info');
+            } else {
+                showTopToast(`تم استهلاك جميع محاولات اليوم! اشتري محاولات إضافية من المتجر 🎟️`, 'error');
+                return;
+            }
         }
 
         let allAvailableQuestions = [];
