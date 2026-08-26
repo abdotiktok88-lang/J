@@ -22,9 +22,28 @@ function shuffleArray(array) {
     }
     const db = firebase.database();
     const auth = firebase.auth();
+// ================= محرك مزامنة وقت السيرفر (لمنع الغش) =================
+    let serverTimeOffset = 0;
+    db.ref('.info/serverTimeOffset').on('value', function(snap) {
+        serverTimeOffset = snap.val() || 0;
+    });
+
+    // دالة تجلب الوقت الحقيقي بالملي ثانية من سيرفر جوجل
+    function getRealTimeMs() {
+        return Date.now() + serverTimeOffset;
+    }
+
+    // دالة تجلب تاريخ اليوم الحقيقي الموحد (YYYY-MM-DD)
+    function getRealDateString() {
+        const d = new Date(getRealTimeMs());
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.7";
+    const CURRENT_APP_VERSION = "1.0.8";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -744,7 +763,7 @@ function playFlawlessVictorySound() {
             return;
         }
 
-        const todayDate = new Date().toLocaleDateString('en-CA');
+        const todayDate = getRealDateString();
         
         // عداد الكلاسيك
         const lastClassicDate = currentUser.last_quiz_date || '';
@@ -773,7 +792,7 @@ function playFlawlessVictorySound() {
     }
 
     function openPenaltySelectionFlow() {
-        const todayDate = new Date().toLocaleDateString('en-CA');
+        const todayDate = getRealDateString();
         const lastPenaltyDate = currentUser ? (currentUser.last_penalty_date || '') : '';
         const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
 
@@ -961,7 +980,7 @@ let hasCheckedDailyLoginSession = false;
     function checkDailyLoginCloudSync() {
         if (!currentUser) return;
         
-        const todayDate = new Date().toLocaleDateString('en-CA');
+        const todayDate = getRealDateString();
         const lastLoginDate = currentUser.last_login_date || '';
         let currentStreak = currentUser.daily_streak || 0;
 
@@ -1002,7 +1021,7 @@ let hasCheckedDailyLoginSession = false;
     function claimDailyRewardFast() {
         if (!currentUser) return;
         
-        const todayDate = new Date().toLocaleDateString('en-CA');
+        const todayDate = getRealDateString();
         const lastLoginDate = currentUser.last_login_date || '';
         
         if (lastLoginDate === todayDate) {
@@ -1473,7 +1492,7 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
             showTopToast(`عذراً، رصيدك غير كافٍ. تحتاج إلى ${cost} عملة!`, 'error');
             return;
         }
-const todayStr = new Date().toLocaleDateString('en-CA');
+const todayStr = getRealDateString();
         if (itemId === 'extra_classic_5' || itemId === 'extra_penalty_5') {
             const currentBuys = (currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0;
             if (currentBuys >= 2) {
@@ -2981,7 +3000,7 @@ function checkHallOfFameStatus() {
         const xpLoss = 35;
 
         if (currentUser) {
-            const todayDate = new Date().toLocaleDateString('en-CA');
+            const todayDate = getRealDateString();
             db.ref('users/' + currentUser.phone).transaction(user => {
                 if (user) {
                     let newXp = (user.xp !== undefined ? user.xp : (user.points || 0)) - xpLoss;
@@ -3022,7 +3041,7 @@ function checkHallOfFameStatus() {
         const xpLoss = 25;
 
         if (currentUser) {
-            const todayDate = new Date().toLocaleDateString('en-CA');
+            const todayDate = getRealDateString();
             db.ref('users/' + currentUser.phone).transaction(user => {
                 if (user) {
                     let newXp = (user.xp !== undefined ? user.xp : (user.points || 0)) - xpLoss;
@@ -3086,7 +3105,7 @@ function checkHallOfFameStatus() {
         closeModal('quiz-rules-modal'); 
         playClickSound();
 
-        const todayDate = new Date().toLocaleDateString('en-CA');
+        const todayDate = getRealDateString();
         const lastQuizDate = currentUser.last_quiz_date || '';
         const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
 
@@ -3342,7 +3361,7 @@ recordUserTransaction(`جولة تحدي العباقرة (${quizScoreCount}/5 �
         }
 
         if (currentUser) { 
-            const todayDate = new Date().toLocaleDateString('en-CA');
+            const todayDate = getRealDateString();
 
             db.ref('users/' + currentUser.phone).transaction((user) => { 
                 if (user) {
@@ -4550,7 +4569,7 @@ rewardEl.innerHTML = `
         cinemaModal.classList.add('show');
 
         if (currentUser) {
-            const todayDate = new Date().toLocaleDateString('en-CA');
+            const todayDate = getRealDateString();
 
             db.ref('users/' + currentUser.phone).transaction(user => {
                 if (user) {
