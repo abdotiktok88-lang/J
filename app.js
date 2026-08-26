@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.6";
+    const CURRENT_APP_VERSION = "1.0.7";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -1473,6 +1473,14 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
             showTopToast(`عذراً، رصيدك غير كافٍ. تحتاج إلى ${cost} عملة!`, 'error');
             return;
         }
+const todayStr = new Date().toLocaleDateString('en-CA');
+        if (itemId === 'extra_classic_5' || itemId === 'extra_penalty_5') {
+            const currentBuys = (currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0;
+            if (currentBuys >= 2) {
+                showTopToast('وصلت للحد الأقصى لشراء هذه الحزمة اليوم (مرتين فقط)! 🛑', 'error');
+                return; // بيوقف الكود هنا وميخصمش عملات
+            }
+        }
 
         recordUserTransaction(`شراء عنصر من المتجر: ${currentStoreConfig[itemId]?.name || itemId}`, 0, -cost, 'purchase');
 
@@ -1509,10 +1517,17 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
             updates.hintTimeCount = (currentUser.hintTimeCount || 0) + 1;
         } else if (itemId === 'freeze') {
             updates.has_streak_freeze = true;
-} else if (itemId === 'extra_classic_5') {
+}
+  else if (itemId === 'extra_classic_5') {
             updates.extraClassicCount = (currentUser.extraClassicCount || 0) + 5;
+            // تسجيل عدد مرات الشراء اليومية
+            updates['last_buy_' + itemId] = todayStr;
+            updates['count_buy_' + itemId] = ((currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0) + 1;
         } else if (itemId === 'extra_penalty_5') {
             updates.extraPenaltyCount = (currentUser.extraPenaltyCount || 0) + 5;
+            // تسجيل عدد مرات الشراء اليومية
+            updates['last_buy_' + itemId] = todayStr;
+            updates['count_buy_' + itemId] = ((currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0) + 1;
         }
 
         db.ref('users/' + currentUser.phone).update(updates).then(() => {
@@ -2161,6 +2176,8 @@ function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) 
     }
 
     const top10Users = usersArr.slice(0, 10);
+// كود علامة التوثيق الذهبية (شبه ميتا)
+    const verifiedGoldSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; margin-bottom: 2px; margin-right: 4px; filter: drop-shadow(0 2px 4px rgba(212,175,55,0.6));"><defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffe55c" /><stop offset="50%" stop-color="#f59e0b" /><stop offset="100%" stop-color="#b38600" /></linearGradient></defs><path fill="url(#goldGrad)" d="M22.5 12l-2.09-2.38.31-3.15-3.09-.76-1.55-2.8-3.08 1.05L12 2 10.99 3.96l-3.08-1.05-1.55 2.8-3.09.76.31 3.15L1.5 12l2.09 2.38-.31 3.15 3.09.76 1.55 2.8 3.08-1.05L12 22l1.01-1.96 3.08 1.05 1.55-2.8 3.09-.76-.31-3.15L22.5 12z"/><path fill="#ffffff" d="M10 15.5l-4-4 1.5-1.5 2.5 2.5 7-7 1.5 1.5-8.5 8.5z"/></svg>`;
 
     // بناء منصة التتويج للثلاثة الأوائل بأمان تام
     let html = '<div class="podium">';
@@ -2175,14 +2192,14 @@ function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) 
             const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame.replace('frame_', '') : '';
             const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
             const hasTopCardClass = u.has_top_card ? 'podium-animated-step' : '';
-            const vipCrown = u.is_vip ? '👑 ' : '';
+            const vipBadgePodium = u.is_vip ? verifiedGoldSvg : '';
             const bioHtml = (u.can_edit_bio && u.bio) ? `<div class="podium-bio">"${u.bio}"</div>` : '';
             const hatHtml = typeof getHatHtml === 'function' ? getHatHtml(u.active_hat) : '';
             const frameOverlay = typeof getAvatarFrameOverlayHtml === 'function' ? getAvatarFrameOverlayHtml(u.active_frame) : '';
 
             html += `
             <div class="podium-place ${hasTopCardClass}">
-                <div class="podium-name ${nameGlowClass}">${vipCrown}${u.name ? u.name.split(' ')[0] : 'طالب'}</div>
+                <div class="podium-name ${nameGlowClass}">${u.name ? u.name.split(' ')[0] : 'طالب'}${vipBadgePodium}</div>
                 ${bioHtml}
                 <div class="podium-pts">${u.xp || 0} XP</div>
                 <div class="avatar-box-wrapper">
@@ -2217,7 +2234,7 @@ function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) 
         const frameClass = u.active_frame && u.active_frame !== 'none' ? 'frame-' + u.active_frame.replace('frame_', '') : '';
         const animatedCardClass = u.has_top_card ? 'animated-top-card' : '';
         const nameGlowClass = u.has_glow_name ? 'glow-name-effect' : '';
-        const vipCrown = u.is_vip ? '👑 ' : '';
+        const vipBadgeList = u.is_vip ? verifiedGoldSvg : '';
         const bioText = (u.can_edit_bio && u.bio) ? `<span style="font-size: 0.72rem; color: var(--accent-gold); display: block; font-style: italic;">"${u.bio}"</span>` : '';
         const hatHtml = typeof getHatHtml === 'function' ? getHatHtml(u.active_hat) : '';
         const frameOverlay = typeof getAvatarFrameOverlayHtml === 'function' ? getAvatarFrameOverlayHtml(u.active_frame) : '';
@@ -2230,7 +2247,7 @@ function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) 
                 <img src="${avatar}" class="profile-avatar ${frameClass}" loading="lazy">
             </div>
             <div class="lb-details">
-                <div class="lb-name ${nameGlowClass}">${vipCrown}${u.name ? u.name.split(' ').slice(0, 2).join(' ') : 'طالب'} ${isMe ? '(أنت)' : ''}</div>
+                <div class="lb-name ${nameGlowClass}">${u.name ? u.name.split(' ').slice(0, 2).join(' ') : 'طالب'} ${isMe ? '(أنت)' : ''}${vipBadgeList}</div>
                 <div class="lb-badge">${rankStr}</div>
                 ${bioText}
             </div>
