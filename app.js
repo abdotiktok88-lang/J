@@ -24,7 +24,7 @@ function shuffleArray(array) {
     const auth = firebase.auth();
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.5";
+    const CURRENT_APP_VERSION = "1.0.6";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -3305,8 +3305,8 @@ isClassicQuizActive = true;
 isClassicQuizActive = false;
         let wrongCount = 5 - quizScoreCount; 
         
-let xpChange = (quizScoreCount * 5) - (wrongCount * 2); // الخصم أصبح نقطتين بدل خمسة لكل إجابة خطأ        let coinsChange = (quizScoreCount * 2);
-        let bonusMsg = "";
+let xpChange = (quizScoreCount * 5) - (wrongCount * 2); // الخصم أصبح نقطتين بدل خمسة
+let coinsChange = (quizScoreCount * 2);        let bonusMsg = "";
         
         if (quizScoreCount === 5) { 
             xpChange += 10; 
