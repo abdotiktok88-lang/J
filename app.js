@@ -43,7 +43,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.8";
+    const CURRENT_APP_VERSION = "1.0.9";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -3105,7 +3105,8 @@ function checkHallOfFameStatus() {
         closeModal('quiz-rules-modal'); 
         playClickSound();
 
-        const todayDate = getRealDateString();
+        // استخدام وقت السيرفر الآمن لو كنت طبقته، أو الوقت العادي
+        const todayDate = typeof getRealDateString !== 'undefined' ? getRealDateString() : new Date().toLocaleDateString('en-CA');
         const lastQuizDate = currentUser.last_quiz_date || '';
         const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
 
@@ -3124,7 +3125,7 @@ function checkHallOfFameStatus() {
         Object.keys(masterQuestionsBank).forEach(cat => {
             masterQuestionsBank[cat].forEach((q, idx) => {
                 allAvailableQuestions.push({ 
-                    id: `${cat}_${idx}`,
+                    id: `master_${cat}_${idx}`, 
                     q: q.q, 
                     a: [...q.a], 
                     correct: q.correct, 
@@ -3139,7 +3140,7 @@ function checkHallOfFameStatus() {
                     let customQ = child.val();
                     if (customQ && customQ.q && customQ.a) {
                         allAvailableQuestions.push({
-                            id: child.key,
+                            id: `custom_${child.key}`,
                             q: customQ.q,
                             a: [...customQ.a],
                             correct: customQ.correct || 0,
@@ -3148,28 +3149,34 @@ function checkHallOfFameStatus() {
                     }
                 });
             }
-            processDeckAndLaunch(allAvailableQuestions);
+            processSmartQuizDeck(allAvailableQuestions);
         }).catch(() => {
-            processDeckAndLaunch(allAvailableQuestions);
+            processSmartQuizDeck(allAvailableQuestions);
         });
     }
 
-    function processDeckAndLaunch(allQuestions) {
-        let userDeck = JSON.parse(localStorage.getItem('user_quiz_deck') || '[]');
+    // الذاكرة الذكية لمنع التكرار
+    function processSmartQuizDeck(allQuestions) {
+        let seenIds = JSON.parse(localStorage.getItem('user_seen_classic_' + currentUser.phone) || '[]');
+        let pool = allQuestions.filter(q => !seenIds.includes(q.id));
 
-        if (!userDeck || userDeck.length < 5) {
-            userDeck = shuffleArray(allQuestions);
-            if (localStorage.getItem('user_quiz_deck') && localStorage.getItem('user_quiz_deck') !== '[]') {
-                showTopToast('أحسنت! أتممت بنك الأسئلة بالكامل وتم تجديده بنجاح 🔄✨', 'info');
-            }
+        if (pool.length < 5) {
+            seenIds = [];
+            pool = [...allQuestions];
+            showTopToast('أحسنت! أتممت بنك الأسئلة بالكامل وتم تجديده بنجاح 🔄✨', 'info');
         }
 
-        activeQuizQuestions = userDeck.splice(0, 5);
-        localStorage.setItem('user_quiz_deck', JSON.stringify(userDeck));
+        pool = shuffleArray(pool);
+        activeQuizQuestions = pool.slice(0, 5);
+
+        activeQuizQuestions.forEach(q => {
+            if (!seenIds.includes(q.id)) seenIds.push(q.id);
+        });
+        localStorage.setItem('user_seen_classic_' + currentUser.phone, JSON.stringify(seenIds));
 
         currentQuizIndex = 0; 
         quizScoreCount = 0;
-isClassicQuizActive = true;
+        isClassicQuizActive = true;
         navigateTo('view-quiz-game', 'تحدي المعلومات', 'جولة تحدي العباقرة');
         renderQuizQuestion();
     }
@@ -4280,38 +4287,56 @@ function renderHomeCountdowns() {
 
         selectedPenaltyStriker = { id: strikerId, name: strikerName, img: strikerImg };
 
-        // 1. نظام الكوتشينة (عدم تكرار الأسئلة حتى نفاد البنك بالكامل)
-        let penaltyDeck = JSON.parse(localStorage.getItem('penalty_quiz_deck') || '[]');
-
-        if (!penaltyDeck || penaltyDeck.length < 5) {
-            let fullPool = [];
-            Object.keys(masterQuestionsBank).forEach(cat => {
-                masterQuestionsBank[cat].forEach((q, idx) => {
-                    fullPool.push({ q: q.q, a: [...q.a], correct: q.correct, category: cat });
+        let allAvailableQuestions = [];
+        Object.keys(masterQuestionsBank).forEach(cat => {
+            masterQuestionsBank[cat].forEach((q, idx) => {
+                allAvailableQuestions.push({ 
+                    id: `master_pen_${cat}_${idx}`,
+                    q: q.q, 
+                    a: [...q.a], 
+                    correct: q.correct, 
+                    category: cat 
                 });
             });
+        });
 
-            try {
-                const snap = await db.ref('custom_questions').once('value');
-                if (snap.exists()) {
-                    snap.forEach(c => {
-                        const val = c.val();
-                        if (val && val.q && val.a) fullPool.push(val);
-                    });
-                }
-            } catch (e) {}
-
-            penaltyDeck = shuffleArray(fullPool);
-            if (localStorage.getItem('penalty_quiz_deck') && localStorage.getItem('penalty_quiz_deck') !== '[]') {
-                showTopToast('تم تجديد بنك أسئلة ركلات الجزاء بالكامل! 🔄✨', 'info');
+        try {
+            const snap = await db.ref('custom_questions').once('value');
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    const val = c.val();
+                    if (val && val.q && val.a) {
+                        allAvailableQuestions.push({
+                            id: `custom_pen_${c.key}`,
+                            q: val.q,
+                            a: [...val.a],
+                            correct: val.correct || 0,
+                            category: val.category || "أسئلة إضافية"
+                        });
+                    }
+                });
             }
+        } catch (e) {}
+
+        let seenIds = JSON.parse(localStorage.getItem('user_seen_penalty_' + currentUser.phone) || '[]');
+        let pool = allAvailableQuestions.filter(q => !seenIds.includes(q.id));
+
+        if (pool.length < 5) {
+            seenIds = [];
+            pool = [...allAvailableQuestions];
+            showTopToast('تم تجديد بنك أسئلة ركلات الجزاء بالكامل! 🔄✨', 'info');
         }
 
-        penaltyQuestionsDeck = penaltyDeck.splice(0, 5);
-        localStorage.setItem('penalty_quiz_deck', JSON.stringify(penaltyDeck));
+        pool = shuffleArray(pool);
+        penaltyQuestionsDeck = pool.slice(0, 5);
+
+        penaltyQuestionsDeck.forEach(q => {
+            if (!seenIds.includes(q.id)) seenIds.push(q.id);
+        });
+        localStorage.setItem('user_seen_penalty_' + currentUser.phone, JSON.stringify(seenIds));
 
         currentPenaltyQIndex = 0;
-isPenaltyGameActive = true;
+        isPenaltyGameActive = true;
         penaltyCorrectAnswersCount = 0;
 
         document.getElementById('penalty-striker-img').src = strikerImg;
