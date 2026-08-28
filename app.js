@@ -43,7 +43,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.0";
+    const CURRENT_APP_VERSION = "1.1.1";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -5094,45 +5094,63 @@ rewardEl.innerHTML = `
     }
 
     async function joinEhbedRoomAction() {
-        playClickSound();
-        const input = document.getElementById('ehbed-join-code-input');
-        const roomId = input ? input.value.trim().toUpperCase() : '';
-        if (!roomId) { showTopToast('يرجى إدخال كود الغرفة!', 'error'); return; }
+    playClickSound();
+    const input = document.getElementById('ehbed-join-code-input');
+    const roomId = input ? input.value.trim().toUpperCase() : '';
+    if (!roomId) { showTopToast('يرجى إدخال كود الغرفة!', 'error'); return; }
 
-        const roomRef = db.ref('ehbed_battles/' + roomId);
-        
-        const { snapshot, committed } = await roomRef.transaction((room) => {
-            if (room && room.status === 'waiting') {
-                room.status = 'ready';
-                room.player2 = { phone: currentUser.phone, name: currentUser.name, avatar: currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png', score: 0, guess: null, answeredCurrent: false };
-                return room;
-            }
-            return;
-        });
+    const roomRef = db.ref('ehbed_battles/' + roomId);
+    
+    // 1. جلب بيانات الغرفة من السيرفر مباشرة وليس من الكاش
+    const snap = await roomRef.once('value');
 
-        if (!committed || !snapshot.exists()) {
-            showTopToast('عذراً، الغرفة ممتلئة أو غير موجودة!', 'error');
-            return;
-        }
-
-        const roomData = snapshot.val();
-        if (roomData.player1.phone === currentUser.phone) {
-            await roomRef.update({ status: 'waiting', player2: null });
-            showTopToast('لا يمكنك تحدي نفسك!', 'error'); return;
-        }
-
-        if ((currentUser.coins || 0) < roomData.stake) {
-            await roomRef.update({ status: 'waiting', player2: null });
-            showTopToast('رصيدك غير كافٍ!', 'error'); return;
-        }
-
-        await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - roomData.stake);
-        
-        currentEhbedRoomId = roomId;
-        closeModal('modal-ehbed-setup');
-        if (input) input.value = '';
-        enterEhbedLobby(roomId);
+    // 2. التحقق من وجود الغرفة
+    if (!snap.exists()) {
+        showTopToast('عذراً، هذه الغرفة غير موجودة!', 'error');
+        return;
     }
+
+    const roomData = snap.val();
+
+    // 3. التحقق من حالة الغرفة
+    if (roomData.status !== 'waiting') {
+        showTopToast('عذراً، الغرفة ممتلئة أو بدأت بالفعل!', 'error');
+        return;
+    }
+
+    // 4. منع اللاعب من دخول غرفته الخاصة كمنافس
+    if (roomData.player1.phone === currentUser.phone) {
+        showTopToast('لا يمكنك تحدي نفسك!', 'error'); 
+        return;
+    }
+
+    // 5. التحقق من الرصيد
+    if ((currentUser.coins || 0) < roomData.stake) {
+        showTopToast('رصيدك غير كافٍ!', 'error'); 
+        return;
+    }
+
+    // 6. خصم العملات وتحديث حالة الغرفة
+    await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - roomData.stake);
+    
+    await roomRef.update({ 
+        status: 'ready', 
+        player2: { 
+            phone: currentUser.phone, 
+            name: currentUser.name, 
+            avatar: currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png', 
+            score: 0, 
+            guess: null, 
+            answeredCurrent: false 
+        } 
+    });
+
+    currentEhbedRoomId = roomId;
+    closeModal('modal-ehbed-setup');
+    if (input) input.value = '';
+    
+    enterEhbedLobby(roomId);
+}
 
     // دالة سحب الأسئلة الذكية لمنع التكرار لكل لاعب
     async function fetchEhbedSmartQuestionsDeck() {
