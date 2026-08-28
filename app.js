@@ -43,7 +43,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.0.9";
+    const CURRENT_APP_VERSION = "1.1.0";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -473,18 +473,27 @@ function shuffleArray(array) {
         } catch (e) {}
     }
     function playClickSound() { playSound('click'); } 
+function playExactMatchSound() {
+        if (isMuted) return;
+        try {
+            // اسم ملف الصوت اللي هيشتغل (تقدر تغيره براحتك)
+            const exactAudio = new Audio('exact-match.mp3'); 
+            exactAudio.volume = 1.0;
+            exactAudio.play().catch(e => {
+                // لو الملف مش موجود في الفولدر، هيشغل الصوت العادي كبديل عشان اللعبة ماتعلقش
+                playSound('success');
+                setTimeout(() => playSound('success'), 150);
+            });
+        } catch (e) {
+            playSound('success');
+        }
+    }
     function playBackSound() { playSound('back'); } 
     function playSuccessSound() { playSound('success'); } 
     function playErrorSound() { playSound('error'); }
-function playFlawlessVictorySound() {
-        if (isMuted) return; // استخدام isMuted لمنع توقف الكود
-        try {
-            const victoryAudio = new Audio('./flawless.mp3');
-            victoryAudio.volume = 0.9;
-            victoryAudio.play().catch(e => console.log('Audio error:', e));
-        } catch (e) {
-            playSuccessSound();
-        }
+    function playFlawlessVictorySound() {
+        playSound('success');
+        setTimeout(() => playSound('success'), 150); // بيعمل نغمتين ورا بعض للانتصار
     }
 
     // ================= الإشعارات =================
@@ -615,9 +624,10 @@ function playFlawlessVictorySound() {
 
     function goHomeDirectly() {
         // حماية الديربي من الهروب
-        if (currentBattleId) {
+        if (currentBattleId || currentEhbedRoomId) {
             if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً من التحدي (وقد تخسر عملاتك ونقاطك)!\n\nهل أنت متأكد من الخروج؟')) {
-                cancelBattleLobby();
+                if (currentBattleId) cancelBattleLobby();
+                if (currentEhbedRoomId) cancelEhbedLobby();
             }
             return;
         }
@@ -657,9 +667,10 @@ function playFlawlessVictorySound() {
     }
 
     function navigateBack() {
-        if (currentBattleId) {
-            if (confirm('هل تريد مغادرة غرفة التحدي الحالية؟')) {
-                cancelBattleLobby();
+        if (currentBattleId || currentEhbedRoomId) {
+            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً من التحدي (وقد تخسر عملاتك ونقاطك)!\n\nهل أنت متأكد من الخروج؟')) {
+                if (currentBattleId) cancelBattleLobby();
+                if (currentEhbedRoomId) cancelEhbedLobby();
             }
             return;
         }
@@ -2636,33 +2647,28 @@ function startDerbyBattleByHost() {
         
         if (snap.exists()) {
             const room = snap.val();
-            
-            // 1. إرجاع الفلوس لو الغرفة في الانتظار (المنشئ فقط)
-            if (room.status === 'waiting') {
+            const isHost = room.player1 && room.player1.phone === currentUser.phone;
+
+            if (!isHost && room.status === 'ready') {
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                await roomRef.update({ status: 'waiting', player2: null });
+            } 
+            else if (room.status === 'waiting') {
                 await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
                 await roomRef.remove();
             } 
-            // 2. إرجاع الفلوس للطرفين لو المنافس دخل بس التحدي مبدأش
-            else if (room.status === 'ready') {
-                if (room.player1 && room.player1.phone) {
-                    await db.ref('users/' + room.player1.phone + '/coins').transaction(c => (c || 0) + room.stake);
-                }
-                if (room.player2 && room.player2.phone) {
-                    await db.ref('users/' + room.player2.phone + '/coins').transaction(c => (c || 0) + room.stake);
-                }
+            else if (room.status === 'ready' && isHost) {
+                if (room.player1 && room.player1.phone) await db.ref('users/' + room.player1.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                if (room.player2 && room.player2.phone) await db.ref('users/' + room.player2.phone + '/coins').transaction(c => (c || 0) + room.stake);
                 await roomRef.remove();
             }
-            // 3. 🚨 معالجة الهروب أثناء المواجهة الحية (حماية المنافس) 🚨
             else if (room.status === 'playing') {
-                const isPlayer1 = (room.player1.phone === currentUser.phone);
-                const playerPath = isPlayer1 ? 'player1' : 'player2';
-                
-                // إعطاء المنسحب سكور سالب لضمان خسارته فوراً وإنهاء التحدي للطرفين
+                const playerPath = isHost ? 'player1' : 'player2';
                 await db.ref(`battles/${currentBattleId}/${playerPath}/score`).set(-999);
                 await db.ref(`battles/${currentBattleId}/status`).set('finished');
             }
         }
-        
+
         if (battleListener) roomRef.off('value', battleListener);
         currentBattleId = null;
         goHomeDirectly();
@@ -2986,6 +2992,13 @@ function checkHallOfFameStatus() {
 
         await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) + room.stake);
     }
+
+// إرسال الإحصائية للوحة تحكم الإدمن (بواسطة الهوست فقط لمنع التكرار)
+        if (isHost) {
+            recordActivityLog('derby', `انتهت مواجهة ديربي 1v1: [${me.name.split(' ')[0]}] (${me.score}) ضد [${opp.name.split(' ')[0]}] (${opp.score}) ⚔️`);
+        }
+
+        currentBattleId = null;
 
     currentBattleId = null;
 }
@@ -3453,21 +3466,24 @@ if (currentUser) {
 
     function switchAdminTab(tabName) {
         playClickSound();
-        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements'].forEach(t => {
+        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz'].forEach(t => {
             const tabBtn = document.getElementById('tab-admin-' + t);
             const tabSec = document.getElementById('admin-section-' + t);
             if (tabBtn) tabBtn.classList.remove('active');
             if (tabSec) tabSec.style.display = 'none';
         });
+        
         const currentBtn = document.getElementById('tab-admin-' + tabName);
         const currentSec = document.getElementById('admin-section-' + tabName);
+        
         if (currentBtn) currentBtn.classList.add('active');
         if (currentSec) currentSec.style.display = 'block';
 
         if (tabName === 'analytics') loadAdminAnalyticsAndLogs();
         if (tabName === 'tickets') loadAdminTickets();
         if (tabName === 'achievements') renderAdminAchievementsList();
-        if (tabName === 'quiz') loadAdminCustomQuestions(); // 👈 أضف السطر ده هنا عشان يتحمل تلقائياً
+        if (tabName === 'quiz') loadAdminCustomQuestions();
+        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions(); // 👈 السطر ده المسؤول عن عرض محتوى اهبد صح
     }
 
     function populateAdminStoreInputs() {
@@ -3592,12 +3608,43 @@ function deleteCustomQuestion(qId) {
                     <div class="admin-item-name">${u.name} ${u.is_vip ? '👑' : ''}</div>
                     <div class="admin-item-sub">${u.phone} | ${u.coins || 0} 💸</div>
                 </div>
-                <button class="admin-action-btn" onclick="openEditPointsModal('${u.id}', '${u.name}', ${u.xp || u.points || 0}, ${u.coins || 0})">
-                    ${u.xp || u.points || 0} XP
-                </button>
+                <div style="display: flex; gap: 6px; flex-direction: column;">
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem; border-color: var(--accent-highlight); color: var(--accent-highlight);" onclick="openAdminUserDetails('${u.id}')">التفاصيل 👁️</button>
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="openEditPointsModal('${u.id}', '${u.name}', ${u.xp || u.points || 0}, ${u.coins || 0})">
+                        تعديل ✏️
+                    </button>
+                </div>
             </div>`;
         });
         container.innerHTML = html;
+    }
+
+function openAdminUserDetails(userId) {
+        playClickSound();
+        const u = adminAllUsersData.find(user => user.id === userId);
+        if(!u) return;
+
+        document.getElementById('admin-det-avatar').src = u.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('admin-det-name').innerText = u.name;
+        document.getElementById('admin-det-phone').innerText = u.phone;
+        document.getElementById('admin-det-email').innerText = u.email || 'غير مسجل';
+        document.getElementById('admin-det-password').innerText = u.password || 'غير معروف';
+        document.getElementById('admin-det-xp').innerText = (u.xp || u.points || 0) + ' XP';
+        document.getElementById('admin-det-coins').innerText = (u.coins || 0);
+        
+        // استدعاء دالة الرتبة
+        const rnk = typeof getUserRank === 'function' ? getUserRank(u.xp || u.points || 0) : 'طالب';
+        document.getElementById('admin-det-rank').innerText = rnk;
+        
+        document.getElementById('admin-det-title').innerText = (u.active_title && u.active_title !== 'none') ? u.active_title : 'لا يوجد';
+        
+        document.getElementById('admin-det-logins').innerText = (u.total_login_days || 0) + ' يوم';
+        document.getElementById('admin-det-streak').innerText = (u.daily_streak || 0) + ' 🔥';
+        document.getElementById('admin-det-quiz').innerText = `${u.quizCorrect || 0} إجابة صح من ${(u.quizPlayed || 0) * 5}`;
+        document.getElementById('admin-det-derby').innerText = (u.derby_wins || 0) + ' ⚔️';
+        document.getElementById('admin-det-penalty').innerText = (u.penalties_scored || 0) + ' ⚽';
+
+        openModal('modal-admin-user-details');
     }
 
     function filterAdminUsers() {
@@ -4694,7 +4741,8 @@ rewardEl.innerHTML = `
             document.getElementById('stat-classic-quizzes').innerText = classicCount;
 
             // ترتيب السجلات من الأحدث للأقدم
-            logsArr.reverse();
+            // ترتيب السجلات من الأحدث للأقدم بناءً على الوقت الفعلي (Timestamp)
+            logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             let html = '';
             logsArr.slice(0, 50).forEach(log => {
@@ -4993,5 +5041,760 @@ rewardEl.innerHTML = `
             db.ref('achievements_config/' + id).remove().then(() => {
                 showTopToast('تم حذف الإنجاز بنجاح 🗑️', 'info');
             });
+        }
+    }
+// ================= محرك لعبة اهبد صح (الزوجي 1v1 - أسئلة سحابية كاملة) =================
+    let currentEhbedRoomId = null;
+    let ehbedStake = 25;
+    let ehbedRewardXP = 25;
+    let ehbedListener = null;
+    let ehbedTimerInt = null;
+    let currentEhbedRoom = null;
+    let ehbedHasAnswered = false;
+    let isAdvancingEhbed = false;
+    let ehbedQIndex = -1;
+
+    function openEhbedSetupModal() {
+        playClickSound();
+        if (!currentUser) { showTopToast('سجل دخولك الأول يا بطل!', 'error'); return; }
+        openModal('modal-ehbed-setup');
+    }
+
+    function selectEhbedTier(coins, xp, el) {
+        playClickSound();
+        ehbedStake = coins; ehbedRewardXP = xp;
+        document.querySelectorAll('.derby-tier-slide').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    async function createEhbedRoomAction() {
+        playClickSound();
+        if ((currentUser.coins || 0) < ehbedStake) { showTopToast('رصيدك غير كافٍ!', 'error'); return; }
+        
+        closeModal('modal-ehbed-setup');
+        showTopToast('جاري تجهيز أسئلة التحدي وفتح الغرفة ⚡', 'success');
+
+        const roomId = 'NUM-' + Math.floor(100 + Math.random() * 900);
+        
+        // جلب الأسئلة الذكية من السحابة وتطبيق منع التكرار
+        const questionsDeck = await fetchEhbedSmartQuestionsDeck();
+
+        const roomData = {
+            status: 'waiting', stake: ehbedStake, rewardXP: ehbedRewardXP, currentQIndex: 0,
+            player1: { phone: currentUser.phone, name: currentUser.name, avatar: currentUser.avatar, score: 0, guess: null, answeredCurrent: false },
+            player2: null,
+            questions: questionsDeck
+        };
+
+        await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - ehbedStake);
+        await db.ref('ehbed_battles/' + roomId).set(roomData);
+        
+        currentEhbedRoomId = roomId;
+        enterEhbedLobby(roomId);
+    }
+
+    async function joinEhbedRoomAction() {
+        playClickSound();
+        const input = document.getElementById('ehbed-join-code-input');
+        const roomId = input ? input.value.trim().toUpperCase() : '';
+        if (!roomId) { showTopToast('يرجى إدخال كود الغرفة!', 'error'); return; }
+
+        const roomRef = db.ref('ehbed_battles/' + roomId);
+        
+        const { snapshot, committed } = await roomRef.transaction((room) => {
+            if (room && room.status === 'waiting') {
+                room.status = 'ready';
+                room.player2 = { phone: currentUser.phone, name: currentUser.name, avatar: currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png', score: 0, guess: null, answeredCurrent: false };
+                return room;
+            }
+            return;
+        });
+
+        if (!committed || !snapshot.exists()) {
+            showTopToast('عذراً، الغرفة ممتلئة أو غير موجودة!', 'error');
+            return;
+        }
+
+        const roomData = snapshot.val();
+        if (roomData.player1.phone === currentUser.phone) {
+            await roomRef.update({ status: 'waiting', player2: null });
+            showTopToast('لا يمكنك تحدي نفسك!', 'error'); return;
+        }
+
+        if ((currentUser.coins || 0) < roomData.stake) {
+            await roomRef.update({ status: 'waiting', player2: null });
+            showTopToast('رصيدك غير كافٍ!', 'error'); return;
+        }
+
+        await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - roomData.stake);
+        
+        currentEhbedRoomId = roomId;
+        closeModal('modal-ehbed-setup');
+        if (input) input.value = '';
+        enterEhbedLobby(roomId);
+    }
+
+    // دالة سحب الأسئلة الذكية لمنع التكرار لكل لاعب
+    async function fetchEhbedSmartQuestionsDeck() {
+        let allPool = [];
+        try {
+            const snap = await db.ref('ehbed_custom_questions').once('value');
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    const val = c.val();
+                    if (val && val.q && val.answer !== undefined) {
+                        allPool.push({ id: c.key, q: val.q, a: parseInt(val.answer) });
+                    }
+                });
+            }
+        } catch (e) {}
+
+        if (allPool.length === 0) {
+            // أسئلة احتياطية لو السحابة فاضية
+            allPool = [
+                { id: 'def_1', q: "في أي عام تم افتتاح قناة السويس رسمياً؟", a: 1869 },
+                { id: 'def_2', q: "كم عدد عظام جسم الإنسان البالغ؟", a: 206 },
+                { id: 'def_3', q: "في أي عام بدأت الحرب العالمية الثانية؟", a: 1939 },
+                { id: 'def_4', q: "كم عدد آيات سورة البقرة؟", a: 286 },
+                { id: 'def_5', q: "كم عدد القلوب لدى الأخطبوط؟", a: 3 }
+            ];
+        }
+
+        let seenIds = JSON.parse(localStorage.getItem('user_seen_ehbed_' + currentUser.phone) || '[]');
+        let pool = allPool.filter(q => !seenIds.includes(q.id));
+
+        if (pool.length < 5) {
+            seenIds = [];
+            pool = [...allPool];
+            showTopToast('أحسنت! أتممت بنك أسئلة اهبد صح بالكامل وتم تجديده 🔄✨', 'info');
+        }
+
+        pool = shuffleArray(pool);
+        let selectedDeck = pool.slice(0, 5);
+
+        selectedDeck.forEach(q => {
+            if (!seenIds.includes(q.id)) seenIds.push(q.id);
+        });
+        localStorage.setItem('user_seen_ehbed_' + currentUser.phone, JSON.stringify(seenIds));
+
+        return selectedDeck;
+    }
+
+    // باقي دوال اللعب (Lobby و Arena و Feedback زي ما هي بدون تغيير)
+    function enterEhbedLobby(roomId) {
+        navigateTo('view-ehbed-lobby', 'غرفة اهبد صح', 'في انتظار المنافس...');
+        document.getElementById('ehbed-lobby-code').innerText = roomId;
+        
+        const startBtn = document.getElementById('btn-start-ehbed-battle');
+        if (startBtn) startBtn.style.display = 'none';
+        
+        if (ehbedListener) db.ref('ehbed_battles/' + currentEhbedRoomId).off('value', ehbedListener);
+        
+        ehbedListener = db.ref('ehbed_battles/' + roomId).on('value', snap => {
+            if (!snap.exists()) return;
+            const room = snap.val();
+            const isHost = room.player1.phone === currentUser.phone;
+            
+            // تحديد دقيق جداً: مين أنا ومين اللي ضدي (المنافس)
+            const me = isHost ? room.player1 : room.player2;
+            const opp = isHost ? room.player2 : room.player1;
+
+            // 1. عرض بياناتك أنت في الخانة الأولى (يمين)
+            if (me) {
+                document.getElementById('ehbed-lobby-p1-name').innerText = me.name.split(' ')[0] + ' (أنت)';
+                document.getElementById('ehbed-lobby-p1-avatar').src = me.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+            }
+
+            // 2. عرض بيانات المنافس في الخانة الثانية (شمال) فور وجوده
+            if (opp) {
+                document.getElementById('ehbed-lobby-p2-name').innerText = opp.name.split(' ')[0];
+                document.getElementById('ehbed-lobby-p2-name').style.color = 'var(--text-main)';
+                document.getElementById('ehbed-lobby-p2-avatar').src = opp.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+                document.getElementById('ehbed-lobby-p2-avatar').style.opacity = '1';
+
+                if (room.status === 'ready' && isHost) {
+                    startBtn.style.display = 'block';
+                }
+            } else {
+                document.getElementById('ehbed-lobby-p2-name').innerText = 'في الانتظار...';
+                document.getElementById('ehbed-lobby-p2-avatar').src = 'https://img.icons8.com/fluency/96/user-male.png';
+                document.getElementById('ehbed-lobby-p2-avatar').style.opacity = '0.35';
+            }
+
+            if (room.status === 'playing') enterEhbedArena();
+        });
+    }
+
+    function startEhbedBattleByHost() {
+        playClickSound();
+        if (currentEhbedRoomId) db.ref('ehbed_battles/' + currentEhbedRoomId + '/status').set('playing');
+    }
+
+    function copyEhbedRoomCode() {
+        if (!currentEhbedRoomId) return;
+        navigator.clipboard.writeText(currentEhbedRoomId).then(() => showTopToast('تم نسخ الكود! 📋', 'success'));
+    }
+    function shareEhbedRoomWhatsApp() {
+        if (!currentEhbedRoomId) return;
+        window.open(`https://api.whatsapp.com/send?text=تحديتك في اهبد صح! 🔢%0Aادخل بالكود: *${currentEhbedRoomId}*`, '_blank');
+    }
+
+    function enterEhbedArena() {
+        navigateTo('view-ehbed-game', 'اهبد صح 1v1', 'مواجهة التخمين');
+        ehbedQIndex = -1;
+        
+        if (ehbedListener) db.ref('ehbed_battles/' + currentEhbedRoomId).off('value', ehbedListener);
+        ehbedListener = db.ref('ehbed_battles/' + currentEhbedRoomId).on('value', snap => {
+            if (!snap.exists()) return;
+            currentEhbedRoom = snap.val();
+            syncEhbedArena();
+        });
+    }
+
+    function syncEhbedArena() {
+        const room = currentEhbedRoom;
+        if (room.status === 'finished') { 
+            setTimeout(() => { concludeEhbedBattle(); }, 4500); 
+            return; 
+        }
+
+        const isHost = room.player1.phone === currentUser.phone;
+        const me = isHost ? room.player1 : room.player2;
+        const opp = isHost ? room.player2 : room.player1;
+
+        document.getElementById('ehbed-p1-avatar').src = me.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('ehbed-p1-name').innerText = me.name.split(' ')[0] + ' (أنت)';
+        document.getElementById('ehbed-p1-score').innerText = me.score || 0;
+        
+        document.getElementById('ehbed-p2-avatar').src = opp.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('ehbed-p2-name').innerText = opp.name.split(' ')[0];
+        document.getElementById('ehbed-p2-score').innerText = opp.score || 0;
+
+        const qIdx = room.currentQIndex || 0;
+        document.getElementById('ehbed-q-counter-multi').innerText = `السؤال ${qIdx + 1} / 5`;
+        document.getElementById('ehbed-q-text').innerText = room.questions[qIdx].q;
+
+        if (ehbedQIndex !== qIdx) {
+            ehbedQIndex = qIdx;
+            ehbedHasAnswered = false;
+            document.getElementById('ehbed-feedback-toast').style.display = 'none';
+            document.getElementById('btn-submit-ehbed').style.display = 'block';
+            document.getElementById('ehbed-p1-status').innerText = 'يفكر... ⏳';
+            document.getElementById('ehbed-p1-status').style.color = 'var(--accent-gold)';
+            
+            const input = document.getElementById('ehbed-answer-input');
+            input.value = ''; input.disabled = false; input.focus();
+            
+            clearInterval(ehbedTimerInt);
+            let timeLeft = 15;
+            document.getElementById('ehbed-timer').innerText = timeLeft;
+            
+            ehbedTimerInt = setInterval(() => {
+                timeLeft--;
+                document.getElementById('ehbed-timer').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(ehbedTimerInt);
+                    if (!ehbedHasAnswered) submitEhbedAnswer(true);
+                }
+            }, 1000);
+        }
+
+        if (room.player1.answeredCurrent && room.player2.answeredCurrent) {
+            if (!isAdvancingEhbed) {
+                isAdvancingEhbed = true;
+                clearInterval(ehbedTimerInt);
+                showEhbedMultiplayerFeedback(room, isHost);
+                
+                if (isHost) {
+                    setTimeout(() => {
+                        advanceEhbedArenaNextQ(room).then(() => { isAdvancingEhbed = false; });
+                    }, 6000); 
+                } else {
+                    setTimeout(() => { isAdvancingEhbed = false; }, 6000);
+                }
+            }
+        }
+    }
+
+    function submitEhbedAnswer(isTimeout = false) {
+        if (ehbedHasAnswered) return;
+        ehbedHasAnswered = true;
+        clearInterval(ehbedTimerInt);
+        playClickSound();
+
+        const inputEl = document.getElementById('ehbed-answer-input');
+        inputEl.disabled = true;
+        document.getElementById('btn-submit-ehbed').style.display = 'none';
+        
+        document.getElementById('ehbed-p1-status').innerText = 'تمت الإجابة ✅';
+        document.getElementById('ehbed-p1-status').style.color = 'var(--accent-emerald)';
+
+        const userGuess = isTimeout ? -999 : parseInt(inputEl.value);
+        const finalGuess = isNaN(userGuess) ? -999 : userGuess;
+
+        const playerPath = (currentEhbedRoom.player1.phone === currentUser.phone) ? 'player1' : 'player2';
+        db.ref(`ehbed_battles/${currentEhbedRoomId}/${playerPath}`).update({
+            guess: finalGuess,
+            answeredCurrent: true
+        });
+    }
+
+    function showEhbedMultiplayerFeedback(room, isHost) {
+        const correct = room.questions[room.currentQIndex].a;
+        const myGuess = isHost ? room.player1.guess : room.player2.guess;
+        const oppGuess = isHost ? room.player2.guess : room.player1.guess;
+        
+        const myAvatar = isHost ? room.player1.avatar : room.player2.avatar;
+        const oppAvatar = isHost ? room.player2.avatar : room.player1.avatar;
+
+        const myDiff = Math.abs(myGuess - correct);
+        const oppDiff = Math.abs(oppGuess - correct);
+
+        let msg = ''; let iconSrc = ''; let borderColor = '';
+        
+        if (myGuess === -999 && oppGuess === -999) { 
+            msg = 'الوقت خلص عليكم! ⏰'; iconSrc = 'https://img.icons8.com/fluency/96/clock--v1.png'; borderColor = '#ef4444'; playErrorSound(); 
+        } else if (myGuess === -999) { 
+            msg = 'الوقت خلص! المنافس فاز 🔴'; iconSrc = 'https://img.icons8.com/fluency/96/cancel.png'; borderColor = '#ef4444'; playErrorSound(); 
+        } else if (oppGuess === -999) { 
+            msg = 'المنافس مالحقش.. كسبت الجولة! 🏆'; iconSrc = 'https://img.icons8.com/fluency/96/trophy.png'; borderColor = '#10b981'; playSuccessSound(); 
+        } else if (myDiff === 0 && oppDiff === 0) { 
+            msg = 'تعادل أسطوري! انتوا الاتنين بالمللي 🎯'; iconSrc = 'https://img.icons8.com/fluency/96/goal.png'; borderColor = '#ffd700'; playExactMatchSound(); shootStars(); 
+        } else if (myDiff === 0) { 
+            msg = 'قنااااص! جبتها بالمللي وكسبت 🎯'; iconSrc = 'https://img.icons8.com/fluency/96/goal.png'; borderColor = '#ffd700'; playExactMatchSound(); shootStars(); 
+        } else if (oppDiff === 0) { 
+            msg = 'المنافس جابها بالمللي! 😱'; iconSrc = 'https://img.icons8.com/fluency/96/astonished.png'; borderColor = '#ef4444'; playErrorSound(); 
+        } else if (myDiff < oppDiff) { 
+            msg = 'عاش! تخمينك الأقرب 👏'; iconSrc = 'https://img.icons8.com/fluency/96/medal.png'; borderColor = '#10b981'; playSuccessSound(); 
+        } else if (oppDiff < myDiff) { 
+            msg = 'المنافس كان أقرب المرة دي! 🔴'; iconSrc = 'https://img.icons8.com/fluency/96/crying--v1.png'; borderColor = '#ef4444'; playErrorSound(); 
+        } else { 
+            msg = 'تعادل! نفس نسبة القرب 🤝'; iconSrc = 'https://img.icons8.com/fluency/96/handshake.png'; borderColor = '#00f0ff'; playClickSound(); 
+        }
+
+        const toast = document.getElementById('ehbed-feedback-toast');
+        toast.style.borderColor = borderColor;
+        toast.style.boxShadow = `0 10px 30px ${borderColor}40`;
+        
+        toast.innerHTML = `
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="text-align: center; margin-top: 5px; margin-bottom: 4px; position: relative;">
+                    <img src="${iconSrc}" style="width: 55px; height: 55px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));">
+                </div>
+                
+                <div style="font-size:0.85rem; color:var(--text-sub); text-align:center; font-weight:800;">الرقم الصحيح هو</div>
+                <div style="font-size:2.2rem; font-weight:900; color:#fff; text-align:center; margin-bottom:10px; text-shadow: 0 0 15px ${borderColor}; letter-spacing: 2px;">
+                    ${correct}
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); width: 100%;">
+                    <div style="text-align: center; width: 45%;">
+                        <img src="${myAvatar || 'https://img.icons8.com/fluency/96/user-male.png'}" class="ehbed-avatar-small" style="width: 40px; height: 40px; border-color: ${myDiff <= oppDiff && myGuess !== -999 ? '#10b981' : '#ef4444'};">
+                        <div style="font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; font-weight: bold;">تخمينك</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: ${myGuess === -999 ? '#ef4444' : '#fff'};">${myGuess === -999 ? '⏳' : myGuess}</div>
+                    </div>
+                    
+                    <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.1);"></div>
+                    
+                    <div style="text-align: center; width: 45%;">
+                        <img src="${oppAvatar || 'https://img.icons8.com/fluency/96/user-male.png'}" class="ehbed-avatar-small" style="width: 40px; height: 40px; border-color: ${oppDiff <= myDiff && oppGuess !== -999 ? '#10b981' : '#ef4444'};">
+                        <div style="font-size: 0.75rem; color: var(--text-sub); margin-top: 4px; font-weight: bold;">المنافس</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: ${oppGuess === -999 ? '#ef4444' : '#fff'};">${oppGuess === -999 ? '⏳' : oppGuess}</div>
+                    </div>
+                </div>
+                
+                <div style="font-size:0.95rem; font-weight:900; text-align:center; margin-top: 12px; color: ${borderColor}; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${msg}</div>
+            </div>
+        `;
+        
+        toast.style.display = 'flex';
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 6000);
+    }
+
+    async function advanceEhbedArenaNextQ(room) {
+        const correct = room.questions[room.currentQIndex].a;
+        let p1Guess = room.player1.guess;
+        let p2Guess = room.player2.guess;
+        let p1Score = room.player1.score || 0;
+        let p2Score = room.player2.score || 0;
+
+        let p1Diff = Math.abs(p1Guess - correct);
+        let p2Diff = Math.abs(p2Guess - correct);
+
+        if (p1Guess === -999 && p2Guess === -999) {
+        } else if (p1Guess === -999) {
+            p2Score += 1;
+        } else if (p2Guess === -999) {
+            p1Score += 1;
+        } else if (p1Diff === 0 && p2Diff === 0) {
+            p1Score += 2; p2Score += 2;
+        } else if (p1Diff === 0) {
+            p1Score += 2;
+        } else if (p2Diff === 0) {
+            p2Score += 2;
+        } else if (p1Diff < p2Diff) {
+            p1Score += 1;
+        } else if (p2Diff < p1Diff) {
+            p2Score += 1;
+        } else {
+            p1Score += 1; p2Score += 1;
+        }
+
+        const nextIdx = room.currentQIndex + 1;
+        await db.ref('ehbed_battles/' + currentEhbedRoomId).update({
+            'player1/score': p1Score, 'player2/score': p2Score,
+            'player1/answeredCurrent': false, 'player2/answeredCurrent': false,
+            'player1/guess': null, 'player2/guess': null,
+            currentQIndex: nextIdx,
+            status: nextIdx >= 5 ? 'finished' : 'playing'
+        });
+    }
+
+    function concludeEhbedBattle() {
+        if (ehbedListener) db.ref('ehbed_battles/' + currentEhbedRoomId).off('value', ehbedListener);
+        clearInterval(ehbedTimerInt);
+
+        document.getElementById('ehbed-feedback-toast').style.display = 'none';
+        
+        const room = currentEhbedRoom;
+        const isHost = room.player1.phone === currentUser.phone;
+        const me = isHost ? room.player1 : room.player2;
+        const opp = isHost ? room.player2 : room.player1;
+
+        navigateTo('view-battle-result', 'نتيجة اهبد صح 1v1', 'حسم التخمين والمواجهة');
+
+        let winner = me.score >= opp.score ? me : opp;
+        let loser = me.score >= opp.score ? opp : me;
+        let isDraw = me.score === opp.score;
+
+        document.getElementById('res-p1-name').innerText = winner.name;
+        document.getElementById('res-p1-avatar').src = winner.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('res-p1-badge').innerText = `النقاط: ${winner.score}`;
+        document.getElementById('res-p1-tag').innerHTML = isDraw ? '🤝 متعادلين' : 'WINNER 👑';
+        document.getElementById('result-card-p1').style.borderColor = isDraw ? 'var(--accent-gold)' : '#a855f7';
+        document.getElementById('result-card-p1').style.boxShadow = isDraw ? '0 0 15px rgba(245, 158, 11, 0.3)' : '0 0 20px rgba(168, 85, 247, 0.35)';
+
+        document.getElementById('res-p2-name').innerText = loser.name;
+        document.getElementById('res-p2-avatar').src = loser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        document.getElementById('res-p2-badge').innerText = `النقاط: ${loser.score}`;
+        document.getElementById('res-p2-tag').innerHTML = isDraw ? '🤝 متعادلين' : 'DEFEATED ❌';
+        document.getElementById('result-card-p2').style.borderColor = '#ef4444';
+        document.getElementById('result-card-p2').style.opacity = '0.8';
+
+        const titleEl = document.getElementById('battle-result-title');
+        const subEl = document.getElementById('battle-result-subtitle');
+        const rewardBox = document.getElementById('battle-result-rewards-box');
+        const rewardText = document.getElementById('battle-result-reward-text');
+        const iconEl = document.getElementById('battle-result-icon');
+
+        let xp = 0, coins = 0;
+
+        if (me.score > opp.score) {
+            playFlawlessVictorySound(); shootStars(); triggerConfetti();
+            titleEl.innerText = 'ملك الهبد والتخمين! 🏆';
+            subEl.innerText = 'أرقامك كانت أدق واكتسحت المنافس بامتياز!';
+            iconEl.src = 'https://img.icons8.com/fluency/96/trophy.png';
+            
+            xp = room.rewardXP; coins = room.stake * 2;
+            rewardText.innerText = `+${coins} عملة 💸 | +${xp} XP ⚡`;
+            rewardBox.style.display = 'block';
+
+            recordUserTransaction(`فوز في اهبد صح 1v1 ضد المنافس`, xp, coins, 'derby');
+        } else if (me.score < opp.score) {
+            playErrorSound();
+            titleEl.innerText = 'هاردلك يا بطل! 🔴';
+            subEl.innerText = 'المنافس كان أقرب للرقم الصحيح المرة دي، معوضة!';
+            iconEl.src = 'https://img.icons8.com/fluency/96/shield.png';
+            rewardBox.style.display = 'none';
+            
+            recordUserTransaction(`خسارة في اهبد صح 1v1`, 0, -room.stake, 'derby');
+        } else {
+            playSuccessSound();
+            titleEl.innerText = 'تعادل في التخمين! 🤝';
+            subEl.innerText = 'مستواكم متقارب جداً، تم استرداد رسوم التحدي.';
+            iconEl.src = 'https://img.icons8.com/fluency/96/handshake.png';
+            coins = room.stake;
+            rewardText.innerText = `+${coins} عملة (استرداد الرسوم) 🪙`;
+            rewardBox.style.display = 'block';
+            
+            recordUserTransaction(`تعادل في اهبد صح 1v1 (استرداد)`, 0, 0, 'derby');
+        }
+
+        if (coins > 0 || xp > 0) {
+            db.ref('users/' + currentUser.phone).transaction(user => {
+                if(user) { user.xp = (user.xp||user.points||0) + xp; user.points = user.xp; user.coins = (user.coins||0) + coins; }
+                return user;
+            }).then(() => updateProfileUI());
+        }
+
+// إرسال الإحصائية للوحة تحكم الإدمن
+        if (isHost) {
+            recordActivityLog('derby', `انتهت مواجهة اهبد صح: [${me.name.split(' ')[0]}] (${me.score}) ضد [${opp.name.split(' ')[0]}] (${opp.score}) 🔢`);
+        }
+
+        currentEhbedRoomId = null;
+
+        currentEhbedRoomId = null;
+    }
+
+    async function cancelEhbedLobby() {
+        if (!currentEhbedRoomId) return;
+        document.getElementById('ehbed-feedback-toast').style.display = 'none';
+        const roomRef = db.ref('ehbed_battles/' + currentEhbedRoomId);
+        const snap = await roomRef.once('value');
+        
+        if (snap.exists()) {
+            const room = snap.val();
+            const isHost = room.player1 && room.player1.phone === currentUser.phone;
+
+            // لو الضيف (مش الهوست) هو اللي خرج وهو في اللوبي قبل ما تبدأ
+            if (!isHost && room.status === 'ready') {
+                // رجّع الفلوس للضيف
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                // احذف بيانات player2 ورجع الغرفة لحالة waiting عشان الهوست ما يعلقش ويقدر يستنى ضيف تاني
+                await roomRef.update({
+                    status: 'waiting',
+                    player2: null
+                });
+            } 
+            // لو الهوست هو اللي خرج أو الغرفة لسه في الانتظار
+            else if (room.status === 'waiting') {
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                await roomRef.remove();
+            } 
+            else if (room.status === 'ready') {
+                // كل لاعب يرجع فلوسه لنفسه فقط
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) + room.stake);
+                
+                if (isHost) {
+                    await roomRef.remove();
+                } else {
+                    await roomRef.update({ status: 'waiting', player2: null });
+                }
+            }
+            // لو اللعبة بدأت أصلاً وحصل انسحاب
+            else if (room.status === 'playing') {
+                const playerPath = isHost ? 'player1' : 'player2';
+                await db.ref(`ehbed_battles/${currentEhbedRoomId}/${playerPath}/score`).set(-999);
+                await db.ref(`ehbed_battles/${currentEhbedRoomId}/status`).set('finished');
+            }
+        }
+
+        if (ehbedListener) roomRef.off('value', ehbedListener);
+        currentEhbedRoomId = null;
+        goHomeDirectly();
+    }
+// تفعيل تبويب اهبد صح في لوحة التحكم
+    // (تأكد إنك ضفت اسم التبويب في مصفوفة switchAdminTab لو مش شغالة، بس ارفع الدوال دي في الآخر عادي)
+    function switchAdminTab(tabName) {
+        playClickSound();
+        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz'].forEach(t => {
+            const tabBtn = document.getElementById('tab-admin-' + t);
+            const tabSec = document.getElementById('admin-section-' + t);
+            if (tabBtn) tabBtn.classList.remove('active');
+            if (tabSec) tabSec.style.display = 'none';
+        });
+        const currentBtn = document.getElementById('tab-admin-' + tabName);
+        const currentSec = document.getElementById('admin-section-' + tabName);
+        if (currentBtn) currentBtn.classList.add('active');
+        if (currentSec) currentSec.style.display = 'block';
+
+        if (tabName === 'analytics') loadAdminAnalyticsAndLogs();
+        if (tabName === 'tickets') loadAdminTickets();
+        if (tabName === 'achievements') renderAdminAchievementsList();
+        if (tabName === 'quiz') loadAdminCustomQuestions();
+        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions();
+    }
+
+    function saveNewEhbedQuestion() {
+        playClickSound();
+        const qText = document.getElementById('admin-ehbed-q-text').value.trim();
+        const ansVal = parseInt(document.getElementById('admin-ehbed-q-ans').value);
+
+        if (!qText || isNaN(ansVal)) {
+            showTopToast('يرجى كتابة نص السؤال والإجابة الرقمية بشكل صحيح!', 'error');
+            return;
+        }
+
+        db.ref('ehbed_custom_questions').push({
+            q: qText,
+            answer: ansVal,
+            createdAt: new Date().toISOString()
+        }).then(() => {
+            document.getElementById('admin-ehbed-q-text').value = '';
+            document.getElementById('admin-ehbed-q-ans').value = '';
+            showTopToast('تمت إضافة سؤال التخمين بنجاح! 🔢✨', 'success');
+        });
+    }
+
+    function loadAdminEhbedQuestions() {
+        const container = document.getElementById('admin-ehbed-questions-list');
+        if (!container) return;
+
+        db.ref('ehbed_custom_questions').on('value', snap => {
+            if (!snap.exists()) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أسئلة تخمين مضافة حتى الآن.</p>';
+                return;
+            }
+
+            let html = '';
+            snap.forEach(child => {
+                const q = child.val();
+                const id = child.key;
+                html += `
+                <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <span style="color: #c084fc; font-weight: 900;">🔢 إجابة صحيحة: ${q.answer}</span>
+                        <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteEhbedQuestion('${id}')">حذف 🗑️</button>
+                    </div>
+                    <div style="font-size: 0.88rem; color: var(--text-main); font-weight: 700;">${q.q}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        });
+    }
+
+    function deleteEhbedQuestion(id) {
+        playErrorSound();
+        if (confirm('هل تريد حذف هذا السؤال نهائياً؟')) {
+            db.ref('ehbed_custom_questions/' + id).remove().then(() => showTopToast('تم الحذف بنجاح'));
+        }
+    }
+
+    function uploadBulkEhbedQuestions() {
+        playClickSound();
+        const rawText = document.getElementById('admin-ehbed-bulk-input').value.trim();
+        if (!rawText) { showTopToast('يرجى لصق الأسئلة أولاً!', 'error'); return; }
+
+        const lines = rawText.split('\n');
+        let addedCount = 0;
+        const updates = {};
+
+        lines.forEach(line => {
+            const parts = line.split('#').map(p => p.trim());
+            if (parts.length === 2) {
+                const [qText, ansStr] = parts;
+                const ansNum = parseInt(ansStr);
+                if (qText && !isNaN(ansNum)) {
+                    const newKey = db.ref('ehbed_custom_questions').push().key;
+                    updates[newKey] = { q: qText, answer: ansNum, createdAt: new Date().toISOString() };
+                    addedCount++;
+                }
+            }
+        });
+
+        if (addedCount === 0) {
+            showTopToast('تأكد من كتابة الصيغة الصحيحة (السؤال # الرقم)', 'error');
+            return;
+        }
+
+        db.ref('ehbed_custom_questions').update(updates).then(() => {
+            document.getElementById('admin-ehbed-bulk-input').value = '';
+            playSuccessSound();
+            showTopToast(`تم رفع (${addedCount}) سؤال تخمين بنجاح للسحابة! 🚀`, 'success');
+        });
+    }
+function openTransferModal() {
+        playClickSound();
+        if(!currentUser) return;
+        document.getElementById('transfer-phone-input').value = '';
+        document.getElementById('transfer-amount-input').value = '';
+        document.getElementById('transfer-type-input').value = 'coins'; // الافتراضي عملات
+        openModal('modal-transfer-coins');
+    }
+
+    async function executeCoinTransfer() {
+        playClickSound();
+        const targetPhone = document.getElementById('transfer-phone-input').value.trim();
+        const amount = parseInt(document.getElementById('transfer-amount-input').value);
+        const transferType = document.getElementById('transfer-type-input').value; // 'coins' أو 'xp'
+
+        if (!targetPhone || targetPhone.length < 11 || isNaN(amount) || amount <= 0) {
+            showTopToast('يرجى إدخال رقم هاتف صحيح ومبلغ أكبر من الصفر!', 'error');
+            return;
+        }
+
+        if (targetPhone === currentUser.phone) {
+            showTopToast('لا يمكنك التحويل لنفسك يا هندسة!', 'error');
+            return;
+        }
+
+        // تحديد الرصيد الحالي بناءً على نوع التحويل
+        const userBalance = transferType === 'coins' ? (currentUser.coins || 0) : (currentUser.xp || currentUser.points || 0);
+        
+        if (userBalance < amount) {
+            const typeName = transferType === 'coins' ? 'العملات' : 'النقاط (XP)';
+            showTopToast(`رصيدك من ${typeName} غير كافٍ لإتمام التحويل!`, 'error');
+            return;
+        }
+
+        const btn = document.querySelector('#modal-transfer-coins .btn-submit');
+        btn.disabled = true;
+        btn.innerText = 'جاري التحقق والتحويل... ⏳';
+
+        try {
+            // التأكد من أن المستلم مسجل فعلاً في النظام
+            const receiverSnap = await db.ref('users/' + targetPhone).once('value');
+            if (!receiverSnap.exists()) {
+                showTopToast('هذا الرقم غير مسجل في التطبيق!', 'error');
+                btn.disabled = false; btn.innerText = 'إرسال الدعم 🚀';
+                return;
+            }
+
+            const receiverData = receiverSnap.val();
+            const receiverName = receiverData.name.split(' ')[0] || 'زميلك';
+
+            // مسار العملات
+            if (transferType === 'coins') {
+                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - amount);
+                await db.ref('users/' + targetPhone + '/coins').transaction(c => (c || 0) + amount);
+                
+                recordUserTransaction(`تحويل عملات لـ ${receiverName}`, 0, -amount, 'purchase');
+                db.ref('users/' + targetPhone + '/transactions').push({
+                    title: `دعم عملات من ${currentUser.name.split(' ')[0]}`,
+                    xp: 0, coins: amount, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                showTopToast(`تم تحويل ${amount} عملة لـ ${receiverName} بنجاح! 🎉`, 'success');
+            } 
+            // مسار نقاط الخبرة (XP)
+            else {
+                await db.ref('users/' + currentUser.phone).transaction(user => {
+                    if(user) {
+                        let newXp = (user.xp || user.points || 0) - amount;
+                        user.xp = newXp < 0 ? 0 : newXp;
+                        user.points = user.xp;
+                    }
+                    return user;
+                });
+                
+                await db.ref('users/' + targetPhone).transaction(user => {
+                    if(user) {
+                        let newXp = (user.xp || user.points || 0) + amount;
+                        user.xp = newXp; user.points = newXp;
+                    }
+                    return user;
+                });
+
+                recordUserTransaction(`تحويل نقاط لـ ${receiverName}`, -amount, 0, 'purchase');
+                db.ref('users/' + targetPhone + '/transactions').push({
+                    title: `دعم نقاط (XP) من ${currentUser.name.split(' ')[0]}`,
+                    xp: amount, coins: 0, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                showTopToast(`تم تحويل ${amount} XP لـ ${receiverName} بنجاح! ⚡`, 'success');
+            }
+
+            closeModal('modal-transfer-coins');
+            updateProfileUI(); // تحديث شاشة المرسل لتسميع الخصم فوراً
+            
+        } catch (e) {
+            showTopToast('حدث خطأ بالشبكة، يرجى المحاولة لاحقاً.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'إرسال الدعم 🚀';
         }
     }

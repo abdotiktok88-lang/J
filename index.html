@@ -822,6 +822,46 @@
             filter: none !important; border: 2.5px solid #FFD700 !important;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important; transform: scale(1.03);
         }
+/* ================= ستايل مستويات شخصيات اهبد صح ================= */
+        .derby-tier-slide.tier-sherlock {
+            background-color: #1e293b !important;
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(30,41,59,0.15) 40%, rgba(30,41,59,0.58) 60%, rgba(30,41,59,0.96) 85%), url('sherlock.png') !important;
+            border-color: #334155 !important;
+        }
+        .tier-sherlock .derby-tier-badge-cost { background: #334155 !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-sherlock .derby-tier-badge-reward { color: #cbd5e1 !important; }
+
+        .derby-tier-slide.tier-scofield {
+            background-color: #0f172a !important; 
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(15,23,42,0.15) 40%, rgba(15,23,42,0.58) 60%, rgba(15,23,42,0.96) 85%), url('scofield.png') !important;
+            border-color: #1e293b !important;
+        }
+        .tier-scofield .derby-tier-badge-cost { background: #1e293b !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-scofield .derby-tier-badge-reward { color: #94a3b8 !important; }
+
+        .derby-tier-slide.tier-professor {
+            background-color: #7f1d1d !important; 
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(127,29,29,0.15) 40%, rgba(127,29,29,0.58) 60%, rgba(127,29,29,0.96) 85%), url('professor.png') !important;
+            border-color: #b91c1c !important;
+        }
+        .tier-professor .derby-tier-badge-cost { background: #b91c1c !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-professor .derby-tier-badge-reward { color: #fca5a5 !important; }
+
+        .derby-tier-slide.tier-tyrion {
+            background-color: #713f12 !important; 
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(113,63,18,0.15) 40%, rgba(113,63,18,0.58) 60%, rgba(113,63,18,0.96) 85%), url('tyrion.png') !important;
+            border-color: #a16207 !important;
+        }
+        .tier-tyrion .derby-tier-badge-cost { background: #a16207 !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-tyrion .derby-tier-badge-reward { color: #fde047 !important; }
+
+        .derby-tier-slide.tier-walter {
+            background-color: #14532d !important; 
+            background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(20,83,45,0.15) 40%, rgba(20,83,45,0.58) 60%, rgba(20,83,45,0.96) 85%), url('walter.png') !important;
+            border-color: #166534 !important;
+        }
+        .tier-walter .derby-tier-badge-cost { background: #166534 !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.25) !important; }
+        .tier-walter .derby-tier-badge-reward { color: #86efac !important; }
 
         /* ================= تبويبات المنظم الأكاديمي العلوية المحدثة ================= */
         .auth-tabs {
@@ -1410,6 +1450,65 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
             box-shadow: none;
         }
+/* ================= أنظمة لعبة اهبد صح 1v1 ================= */
+.ehbed-card-glow {
+    background: linear-gradient(145deg, rgba(45, 20, 60, 0.95), rgba(20, 10, 30, 0.95)) !important;
+    border: 1.5px solid #a855f7 !important;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.25) !important;
+}
+.ehbed-input-box {
+    text-align: center; margin: 20px 0;
+}
+.ehbed-num-input {
+    width: 80%; max-width: 250px; font-size: 2.5rem; font-weight: 900; text-align: center;
+    background: var(--bg-primary); border: 2px solid var(--accent-gold); color: var(--text-main);
+    border-radius: 20px; padding: 10px; outline: none; box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+    letter-spacing: 2px; transition: all 0.3s ease;
+}
+.ehbed-num-input:focus { border-color: #a855f7; box-shadow: inset 0 4px 10px rgba(0,0,0,0.5), 0 0 15px rgba(168, 85, 247, 0.4); transform: scale(1.05); }
+.ehbed-num-input::-webkit-outer-spin-button, .ehbed-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ================= تصميم نتيجة اهبد صح الاحترافية ================= */
+        .ehbed-result-toast {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    box-sizing: border-box;
+    z-index: 100;
+    background: linear-gradient(145deg, rgba(20, 10, 30, 0.98), rgba(10, 5, 15, 0.98));
+    border: 2px solid;
+    border-radius: 20px;
+    padding: 10px 14px !important; /* 👈 قللنا الـ padding من فوق وتحت عشان نكسب مساحة */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: none;
+    flex-direction: column;
+    justify-content: space-evenly !important; /* 👈 التوزيع هنا بيوزع العناصر بمسافات متساوية بدل ما يزنقهم في النص */
+    align-items: center;
+    overflow-y: auto !important; /* 👈 لو الشاشة صغيرة جداً، يخلي الكارت يسكورل براحته ومفيش حرف يطير */
+    animation: popInBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+        @keyframes popInBounce {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .ehbed-avatar-small { 
+            width: 50px; height: 50px; border-radius: 50%; border: 2.5px solid; 
+            object-fit: cover; background: rgba(255,255,255,0.05); padding: 2px;
+        }
+        .ehbed-arena-header {
+            background: linear-gradient(135deg, #4c1d95 0%, #2e1065 100%);
+            border: 2px solid #a855f7; border-radius: 20px;
+            padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+        }
+        .ehbed-score-badge { font-size: 1.1rem; font-weight: 900; background: rgba(255,255,255,0.1); padding: 4px 14px; border-radius: 12px; margin-top: 4px; }
+.ehbed-vs-badge { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 4px; 
+    width: 30%; 
+}
     </style>
 </head>
 <body>
@@ -1453,6 +1552,42 @@
             <p id="daily-popup-streak" style="font-size: 0.9rem; color: var(--text-sub); font-weight: 700; margin-bottom: 8px;">سلسلة الأيام: 0/7 أيام</p>
             <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 20px;">استمر في تسجيل الدخول يومياً لتضاعف نقاطك وعملاتك وتتصدر الترتيب العام!</p>
             <button id="btn-claim-daily-popup" class="btn-modal-primary" style="width: 100%;" onclick="claimDailyRewardFast()">استلم الهدية الآن 🚀</button>
+        </div>
+    </div>
+
+<!-- نافذة تفاصيل الطالب للأدمن -->
+    <div id="modal-admin-user-details" class="modal-overlay">
+        <div class="modal-box" style="max-width: 450px; text-align: right;">
+            <button class="btn-close-modal" onclick="closeModal('modal-admin-user-details')">×</button>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div class="avatar-box-wrapper" style="width: 65px; height: 65px; margin: 0;">
+                    <img id="admin-det-avatar" src="" class="profile-avatar">
+                </div>
+                <div>
+                    <h3 id="admin-det-name" style="color: var(--accent-gold); margin: 0;">الاسم</h3>
+                    <div id="admin-det-phone" style="font-size: 0.85rem; color: var(--text-sub); direction: ltr; text-align: right;">010...</div>
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                <div class="rank-row"><span>البريد الإلكتروني:</span> <span id="admin-det-email" style="font-weight: bold; color: var(--text-main);"></span></div>
+                <div class="rank-row"><span>كلمة المرور:</span> <span id="admin-det-password" style="font-weight: bold; color: var(--text-main);"></span></div>
+                <div class="rank-row"><span>نقاط الخبرة (XP):</span> <span id="admin-det-xp" style="font-weight: bold; color: var(--accent-emerald);"></span></div>
+                <div class="rank-row"><span>العملات (Coins):</span> <span id="admin-det-coins" style="font-weight: bold; color: var(--accent-gold);"></span></div>
+                <div class="rank-row"><span>الرتبة الحالية:</span> <span id="admin-det-rank" style="font-weight: bold; color: var(--accent-highlight);"></span></div>
+                <div class="rank-row"><span>اللقب المجهز:</span> <span id="admin-det-title" style="font-weight: bold; color: var(--text-main);"></span></div>
+            </div>
+
+            <h4 style="font-size: 0.9rem; color: var(--accent-gold); margin-bottom: 8px;">📊 إحصائيات النشاط</h4>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                <div class="rank-row"><span>أيام الدخول الإجمالية:</span> <span id="admin-det-logins"></span></div>
+                <div class="rank-row"><span>أطول سلسلة متتالية:</span> <span id="admin-det-streak"></span></div>
+                <div class="rank-row"><span>إجابات التحدي الكلاسيكي:</span> <span id="admin-det-quiz"></span></div>
+                <div class="rank-row"><span>انتصارات الديربي (1v1):</span> <span id="admin-det-derby"></span></div>
+                <div class="rank-row"><span>أهداف ركلات الجزاء:</span> <span id="admin-det-penalty"></span></div>
+            </div>
+
+            <button class="btn-submit" onclick="closeModal('modal-admin-user-details')">إغلاق</button>
         </div>
     </div>
 
@@ -1517,6 +1652,56 @@
         </div>
     </div>
 
+<!-- نافذة إعداد لعبة اهبد صح 1v1 -->
+    <div id="modal-ehbed-setup" class="modal-overlay">
+        <div class="modal-box" style="max-width: 420px; text-align: right;">
+            <button class="btn-close-modal" onclick="closeModal('modal-ehbed-setup')">×</button>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="font-size: 1.8rem;">🔢</span>
+                <h3 style="color: #c084fc; margin: 0;">لعبة اهبد صح 1v1</h3>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 12px; font-weight: 700;">
+                خمن الرقم الأقرب للإجابة الصحيحة.. الأقرب يفوز بنقطة الجولة! 🎯
+            </p>
+
+            <div class="derby-carousel-container" style="margin-bottom: 15px;">
+                <div class="derby-tier-slide tier-sherlock active" onclick="selectEhbedTier(25, 25, this)">
+                    <div class="derby-tier-title-text">Sherlock Holmes</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 25 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 50 💸 + 25 XP</div>
+                </div>
+                <div class="derby-tier-slide tier-scofield" onclick="selectEhbedTier(50, 45, this)">
+                    <div class="derby-tier-title-text">Michael Scofield</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 50 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 100 💸 + 45 XP</div>
+                </div>
+                <div class="derby-tier-slide tier-professor" onclick="selectEhbedTier(100, 80, this)">
+                    <div class="derby-tier-title-text">The Professor</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 100 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 200 💸 + 80 XP</div>
+                </div>
+                <div class="derby-tier-slide tier-tyrion" onclick="selectEhbedTier(200, 120, this)">
+                    <div class="derby-tier-title-text">Tyrion Lannister</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 200 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 400 💸 + 120 XP</div>
+                </div>
+                <div class="derby-tier-slide tier-walter" onclick="selectEhbedTier(350, 200, this)">
+                    <div class="derby-tier-title-text">Walter White</div>
+                    <div class="derby-tier-badge-cost">الرسوم: 350 عملة</div>
+                    <div class="derby-tier-badge-reward">🏆 الجائزة: 700 💸 + 200 XP</div>
+                </div>
+            </div>
+
+            <button class="btn-submit" style="margin-bottom: 10px; background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="createEhbedRoomAction()">إنشاء غرفة وتحدي زميل ⚔️</button>
+            <div style="border-top: 1px dashed var(--border-card); padding-top: 12px; margin-top: 8px;">
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <input type="text" id="ehbed-join-code-input" class="form-input" placeholder="أدخل كود الغرفة (مثال: NUM-123)" style="text-align: center; text-transform: uppercase; font-weight: 800;">
+                </div>
+                <button class="btn-submit" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff;" onclick="joinEhbedRoomAction()">الانضمام للمواجهة 🚪</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- شاشة الترحيب -->
     <div id="full-splash-screen" class="intro-screen-overlay" style="display: none;">
         <div class="intro-card">
@@ -1560,6 +1745,9 @@
         <div class="sidebar-links">
             <div class="sidebar-link" onclick="handleProfileClick()">
                 <img src="https://img.icons8.com/fluency/96/user-shield.png" alt="Profile"> ملفي الشخصي
+            </div>
+<div class="sidebar-link" onclick="openTransferModal(); closeSidebar();">
+                <img src="https://img.icons8.com/fluency/96/money-transfer.png" alt="Transfer"> ادعم صاحبك
             </div>
             <div class="sidebar-link" onclick="navigateTo('view-settings', 'الإعدادات', 'خيارات التطبيق والحساب'); closeSidebar();" style="position: relative;">
     <img src="https://img.icons8.com/fluency/96/settings.png" alt="Settings"> الإعدادات
@@ -1820,6 +2008,18 @@
                         </div>
                     </div>
                     <div class="card-arrow" style="color: #ef4444;">⚔️</div>
+                </div>
+
+<div class="app-card ehbed-card-glow" onclick="openEhbedSetupModal()">
+                    <div class="derby-live-tag" style="background: linear-gradient(135deg, #a855f7, #7e22ce);">مباشر 1v1 🔢</div>
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7;"><span style="font-size: 1.6rem;">🔢</span></div>
+                        <div class="card-text">
+                            <h3 style="color: #c084fc;">اهبد صح</h3>
+                            <p style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">تحدَّ زميلك بالتخمين الأقرب للرقم الصحيح</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #c084fc;">⚔️</div>
                 </div>
 
                 <div class="app-card" onclick="showTopToast('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'info')">
@@ -2566,6 +2766,7 @@
                 <button class="auth-tab-btn" id="tab-admin-books" onclick="switchAdminTab('books')">روابط الكتب</button>
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
                 <button class="auth-tab-btn" id="tab-admin-codes" onclick="switchAdminTab('codes')">الأكواد</button>
+<button class="auth-tab-btn" id="tab-admin-ehbed-quiz" onclick="switchAdminTab('ehbed-quiz')">أسئلة اهبد صح 🔢</button>
             </div>
 
             <!-- تبويب الطلاب -->
@@ -2956,6 +3157,43 @@
                 <div id="admin-codes-list" style="margin-top: 15px;"></div>
             </div>
         </div> <!-- إغلاق view-admin-panel بشكل صحيح -->
+<!-- تبويب إضافة وإدارة أسئلة اهبد صح -->
+    <div id="admin-section-ehbed-quiz" style="display: none;">
+        <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+            <h3 style="color: #c084fc; margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إضافة سؤال جديد للعبة اهبد صح 🔢</h3>
+            <div class="form-group">
+                <label>نص السؤال (تخمين رقم)</label>
+                <input type="text" id="admin-ehbed-q-text" class="form-input" placeholder="مثال: في أي عام تم افتتاح قناة السويس؟">
+            </div>
+            <div class="form-group">
+                <label style="color: var(--accent-gold);">الإجابة الصحيحة (رقم فقط)</label>
+                <input type="number" id="admin-ehbed-q-ans" class="form-input" placeholder="1869" style="text-align: center; font-size: 1.2rem; font-weight: 900;">
+            </div>
+            <button class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="saveNewEhbedQuestion()">إضافة السؤال للسحابة 🚀</button>
+        </div>
+
+        <!-- استعراض الأسئلة المضافة -->
+        <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+            <h3 style="color: #c084fc; margin-bottom: 10px; text-align: center;">الأسئلة المضافة للعبة اهبد صح 📋</h3>
+            <div id="admin-ehbed-questions-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>
+            </div>
+        </div>
+
+        <!-- الرفع الجماعي -->
+        <div class="auth-card" style="padding: 18px;">
+            <h3 style="color: #c084fc; margin-bottom: 10px; text-align: center;">رفع أسئلة اهبد صح جماعية دفعة واحدة 📤</h3>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.6;">
+                الصيغة في كل سطر (افصل بينهم بعلامة <b>#</b>):<br>
+                <span style="color: var(--accent-gold);" dir="ltr">نص السؤال # الرقم الصحيح</span>
+            </p>
+            <div class="form-group">
+                <textarea id="admin-ehbed-bulk-input" class="form-input" rows="6" style="resize: vertical; font-size: 0.85rem;" placeholder="في أي عام تم افتتاح قناة السويس؟ # 1869
+كم عدد عظام جسم الإنسان البالغ؟ # 206"></textarea>
+            </div>
+            <button class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="uploadBulkEhbedQuestions()">رفع الأسئلة الجماعية للسحابة 🚀</button>
+        </div>
+    </div>
 
         <!-- لوحة المتصدرين المحسنة مع زر قاعة المشاهير -->
         <div id="view-leaderboard" class="view-section">
@@ -3133,6 +3371,72 @@
                 </div>
             </div>
         </div>
+<!-- غرفة انتظار اهبد صح -->
+    <div id="view-ehbed-lobby" class="view-section">
+        <div class="auth-card" style="text-align: center; padding: 25px 20px;">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">🔢</div>
+            <h3 style="color: #c084fc; margin-bottom: 6px;">غرفة انتظار التخمين</h3>
+            <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 16px;">شارك الكود مع زميلك للانضمام فوراً</p>
+
+            <div style="background: var(--bg-primary); border: 2px dashed #a855f7; border-radius: 16px; padding: 12px 20px; display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <span id="ehbed-lobby-code" style="font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; color: #a855f7;">NUM-000</span>
+                <button class="admin-action-btn" style="color:#a855f7; border-color:#a855f7;" onclick="copyEhbedRoomCode()">نسخ 📋</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-around; align-items: center; background: var(--bg-secondary); border-radius: 16px; padding: 14px; margin-bottom: 20px;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <img id="ehbed-lobby-p1-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar" style="width:50px; height:50px;">
+                    <span id="ehbed-lobby-p1-name" style="font-size: 0.85rem; font-weight: 800;">اللاعب 1</span>
+                </div>
+                <div style="font-size: 1.3rem; font-weight: 900; color: #a855f7;">VS</div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <img id="ehbed-lobby-p2-avatar" src="https://img.icons8.com/fluency/96/user-male.png" class="profile-avatar" style="width:50px; height:50px; opacity: 0.35;">
+                    <span id="ehbed-lobby-p2-name" style="font-size: 0.85rem; font-weight: 800; color: var(--text-sub);">في الانتظار...</span>
+                </div>
+            </div>
+
+            <button id="btn-start-ehbed-battle" class="btn-submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; margin-bottom: 10px; display: none;" onclick="startEhbedBattleByHost()">بدء المواجهة الآن 🚀</button>
+            <button class="btn-submit" style="background: #25D366; color: #fff; margin-bottom: 10px;" onclick="shareEhbedRoomWhatsApp()">دعوة عبر واتساب 💬</button>
+            <button class="admin-action-btn danger" style="width: 100%; padding: 12px; font-size: 0.9rem;" onclick="cancelEhbedLobby()">إلغاء الغرفة للخروج 🚪</button>
+        </div>
+    </div>
+
+    <!-- ساحة اهبد صح (اللعب المباشر) -->
+    <div id="view-ehbed-game" class="view-section">
+        <div class="ehbed-arena-header">
+            <div class="battle-player-box">
+                <img id="ehbed-p1-avatar" src="" class="profile-avatar" style="width: 46px; height: 46px; border-color: #a855f7;">
+                <span id="ehbed-p1-name" class="battle-player-name" style="color: #fff; font-size: 0.8rem;">أنت</span>
+                <span id="ehbed-p1-score" class="ehbed-score-badge" style="color: #a855f7;">0</span>
+            </div>
+            <div class="ehbed-vs-badge">
+                <div id="ehbed-timer" class="battle-timer-circle" style="color: #fff; border-color: #fff; width: 40px; height: 40px; font-size: 1rem;">15</div>
+                <span id="ehbed-q-counter-multi" style="font-size: 0.7rem; color: #fff; text-shadow: none;">السؤال 1 / 5</span>
+            </div>
+            <div class="battle-player-box">
+                <img id="ehbed-p2-avatar" src="" class="profile-avatar" style="width: 46px; height: 46px; border-color: #ef4444;">
+                <span id="ehbed-p2-name" class="battle-player-name" style="color: #fff; font-size: 0.8rem;">المنافس</span>
+                <span id="ehbed-p2-score" class="ehbed-score-badge" style="color: #ef4444;">0</span>
+            </div>
+        </div>
+
+        <div class="quiz-card" style="position: relative; overflow: hidden; min-height: 420px; border-color: #a855f7; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="color: #a855f7; font-size: 0.78rem; font-weight: 800;">تخمين الأرقام</span>
+                <span id="ehbed-p1-status" style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 800;">يفكر... ⏳</span>
+            </div>
+            <h3 id="ehbed-q-text" style="font-size: 1.15rem; margin-bottom: 10px; line-height: 1.6; color: var(--text-main);">جاري التحميل...</h3>
+            
+            <div class="ehbed-input-box">
+                <input type="number" id="ehbed-answer-input" class="ehbed-num-input" placeholder="000" inputmode="numeric">
+            </div>
+            
+            <button id="btn-submit-ehbed" class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff; font-size: 1.1rem; padding: 16px;" onclick="submitEhbedAnswer()">إرسال التخمين 🚀</button>
+
+            <!-- صندوق ظهور النتيجة والمقارنة اللي كان ناقص -->
+            <div id="ehbed-feedback-toast" class="ehbed-result-toast"></div>
+        </div>
+    </div>
 
     </div>
     
@@ -3155,6 +3459,39 @@
             <span>البروفايل</span>
         </a>
     </nav>
+
+<!-- نافذة تحويل العملات والنقاط (الدعم) -->
+    <div id="modal-transfer-coins" class="modal-overlay">
+        <div class="modal-box" style="max-width: 400px; text-align: right;">
+            <button class="btn-close-modal" onclick="closeModal('modal-transfer-coins')">×</button>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 1.8rem;">🤝</span>
+                <h3 style="color: var(--accent-gold); margin: 0;">دعم زميل (تحويل رصيد)</h3>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل رقم هاتف زميلك المسجل لتحويل العملات أو نقاط الخبرة (XP) من رصيدك إليه فوراً.</p>
+            
+            <div class="form-group">
+                <label>رقم هاتف المستلم</label>
+                <input type="tel" id="transfer-phone-input" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>نوع التحويل</label>
+                    <select id="transfer-type-input" class="form-input" style="background: var(--bg-primary);">
+                        <option value="coins">💸 عملات (Coins)</option>
+                        <option value="xp">⚡ نقاط (XP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المبلغ / العدد</label>
+                    <input type="number" id="transfer-amount-input" class="form-input" placeholder="مثال: 50" style="text-align: center; font-weight: 900; font-size: 1.1rem; color: var(--accent-gold);">
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="executeCoinTransfer()">إرسال الدعم 🚀</button>
+        </div>
+    </div>
 
 <script src="app.js"></script>
 </body>
