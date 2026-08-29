@@ -3210,10 +3210,6 @@
             </div>
 
             <div class="section-label">أبطال الدفعة (Top Rankings)</div>
-            
-            <div id="personal-rank-box" class="personal-rank-card" style="display: none;">
-                <div id="personal-rank-content"></div>
-            </div>
 
             <div id="leaderboard-content"><p style="text-align: center; color: var(--text-sub); margin-top: 20px;">جاري تحميل البيانات...</p></div>
         </div>
@@ -3492,6 +3488,26 @@
             <button class="btn-submit" onclick="executeCoinTransfer()">إرسال الدعم 🚀</button>
         </div>
     </div>
+<!-- شاشة الصيانة المؤقتة الذكية -->
+<div id="maintenance-lock-screen" class="intro-screen-overlay" style="display: none; z-index: 999999; background: var(--bg-primary);">
+    <div class="intro-card" style="text-align: center;">
+        <div style="font-size: 4.5rem; margin-bottom: 15px; animation: bounceEmoji 2s infinite alternate;">🛠️</div>
+        <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 12px;">تحديثات وصيانة ⚙️</h1>
+        <p style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.8; margin-bottom: 15px;">
+            معلش هنغيب عنك يومين بس بسبب بعض أعمال الصيانة الشاملة للسيرفرات.
+        </p>
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 12px; padding: 10px; color: #ef4444; font-weight: 900; font-size: 0.95rem;">
+            سنعود يوم 1 سبتمبر 🚀
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes bounceEmoji {
+    from { transform: translateY(0) scale(1); }
+    to { transform: translateY(-10px) scale(1.1); }
+}
+</style>
 
 <script src="app.js"></script>
 </body>

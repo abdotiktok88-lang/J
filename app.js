@@ -1,3 +1,28 @@
+// نظام قفل الصيانة الذكي مع استثناء المطور
+document.addEventListener("DOMContentLoaded", () => {
+    const maintenanceScreen = document.getElementById('maintenance-lock-screen');
+    const adminPhone = "01061032507"; // رقم المطور المستثنى من القفل
+    const currentPhone = localStorage.getItem('active_user_phone'); // قراءة رقم الطالب من الذاكرة
+    
+    // موعد فك القفل (1 سبتمبر 2026 الساعة 12 منتصف الليل)
+    const unlockDate = new Date("2026-09-01T00:00:00"); 
+    const now = new Date();
+
+    // الشرط: لو الموعد لسه مجاش، واللي فاتح التطبيق *مش المطور* -> اقفل التطبيق
+    if (now < unlockDate && currentPhone !== adminPhone) {
+        if (maintenanceScreen) {
+            maintenanceScreen.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+    } else {
+        // فك القفل فوراً لو الموعد عدى، أو لو اللي فاتح هو المطور
+        if (maintenanceScreen) {
+            maintenanceScreen.remove();
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
 function shuffleArray(array) {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -327,44 +352,47 @@ function shuffleArray(array) {
         loadHallOfFameData();
     }
 
-    function loadHallOfFameData() {
-        db.ref('users').once('value').then(snapshot => {
-            let users = [];
-            snapshot.forEach(c => {
-                const u = c.val();
-                u.phone = c.key;
-                u.xp = u.xp || u.points || 0;
-                u.streak = u.daily_streak || 0;
-                u.correct = u.quizCorrect || 0;
-                u.played = u.quizPlayed || 0;
-                u.coins = u.coins || 0;
-                u.derbyWins = u.derby_wins || 0;
-                u.accuracy = (u.played * 5 > 0) ? Math.round((u.correct / (u.played * 5)) * 100) : 0;
-                users.push(u);
-            });
+    async function loadHallOfFameData() {
+    try {
+        // 1. إمبراطور النقاط
+        const xpSnap = await db.ref('users').orderByChild('xp').limitToLast(1).once('value');
+        xpSnap.forEach(c => setFameCard(1, c.val(), `${c.val().xp || 0} XP`));
 
-            if (users.length === 0) return;
+        // 2. بطل الاستمرارية
+        const streakSnap = await db.ref('users').orderByChild('daily_streak').limitToLast(1).once('value');
+        streakSnap.forEach(c => setFameCard(2, c.val(), `${c.val().daily_streak || 0} يوم متتالي 🔥`));
 
-            let topXp = [...users].sort((a, b) => b.xp - a.xp)[0];
-            if (topXp) setFameCard(1, topXp, `${topXp.xp} XP`);
+        // 3. فارس التحديات (أعلى إجابات صحيحة)
+        const quizSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(1).once('value');
+        quizSnap.forEach(c => setFameCard(3, c.val(), `${c.val().quizCorrect || 0} إجابة صحيحة`));
 
-            let topStreak = [...users].sort((a, b) => b.streak - a.streak)[0];
-            if (topStreak) setFameCard(2, topStreak, `${topStreak.streak} يوم متتالي 🔥`);
-
-            let topQuiz = [...users].sort((a, b) => b.correct - a.correct)[0];
-            if (topQuiz) setFameCard(3, topQuiz, `${topQuiz.correct} إجابة صحيحة`);
-
-            let qualifiedForAccuracy = users.filter(u => (u.played || 0) >= 3);
-            let topAcc = qualifiedForAccuracy.length > 0 ? qualifiedForAccuracy.sort((a, b) => b.accuracy - a.accuracy)[0] : users[0];
-            if (topAcc) setFameCard(4, topAcc, `دقة ${topAcc.accuracy}% 🎯`);
-
-            let topDerby = [...users].sort((a, b) => (b.derbyWins || 0) - (a.derbyWins || 0))[0];
-            if (topDerby && (topDerby.derbyWins > 0)) setFameCard(5, topDerby, `${topDerby.derbyWins} فوز ديربي ⚔️`);
-
-            let topCoins = [...users].sort((a, b) => (b.coins || 0) - (a.coins || 0))[0];
-            if (topCoins) setFameCard(6, topCoins, `${topCoins.coins || 0} عملة 💸`);
+        // 4. القناص الخارق (نسحب أعلى 15 بس في الإجابات ونحسب الدقة بينهم بدل الدفعة كلها)
+        const accSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(15).once('value');
+        let topAccUser = null;
+        let maxAcc = -1;
+        accSnap.forEach(c => {
+            const u = c.val();
+            if ((u.quizPlayed || 0) >= 3) {
+                const acc = Math.round((u.quizCorrect / (u.quizPlayed * 5)) * 100);
+                if (acc > maxAcc) { maxAcc = acc; topAccUser = u; }
+            }
         });
+        if (topAccUser) setFameCard(4, topAccUser, `دقة ${maxAcc}% 🎯`);
+
+        // 5. جلاد الديربي
+        const derbySnap = await db.ref('users').orderByChild('derby_wins').limitToLast(1).once('value');
+        derbySnap.forEach(c => {
+            if((c.val().derby_wins || 0) > 0) setFameCard(5, c.val(), `${c.val().derby_wins || 0} فوز ديربي ⚔️`);
+        });
+
+        // 6. مليونير الدفعة
+        const coinsSnap = await db.ref('users').orderByChild('coins').limitToLast(1).once('value');
+        coinsSnap.forEach(c => setFameCard(6, c.val(), `${c.val().coins || 0} عملة 💸`));
+
+    } catch (e) {
+        console.log("Error loading Hall of Fame:", e);
     }
+}
 
     function setFameCard(index, user, statText) {
         if (!user) return;
@@ -2120,10 +2148,11 @@ function loadWalletHistoryUI() {
     renderLeaderboard(); 
 }
 
-let cachedLeaderboardData = null;
+// 1. تحميل البيانات مسبقاً وتخزينها محلياً
+let cachedLeaderboardData = JSON.parse(localStorage.getItem('local_top_10') || 'null');
 
 function preloadLeaderboardData() {
-    db.ref('users').once('value').then(snapshot => {
+    db.ref('users').orderByChild('xp').limitToLast(10).once('value').then(snapshot => {
         let usersArr = [];
         snapshot.forEach(child => {
             let u = child.val();
@@ -2131,24 +2160,25 @@ function preloadLeaderboardData() {
             u.xp = u.xp || u.points || 0;
             usersArr.push(u);
         });
-        usersArr.sort((a, b) => b.xp - a.xp);
+        usersArr.reverse();
         cachedLeaderboardData = usersArr;
+        localStorage.setItem('local_top_10', JSON.stringify(usersArr)); // حفظ في تليفون الطالب
     }).catch(() => {});
 }
 
+// 2. عرض الليدربورد الذكي
 function renderLeaderboard() {
     const container = document.getElementById('leaderboard-content');
-    const personalBox = document.getElementById('personal-rank-box');
-    const personalContent = document.getElementById('personal-rank-content');
 
+    // عرض البيانات من ذاكرة التليفون فوراً (صفر استهلاك انترنت وصفر وقت تحميل)
     if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
-        buildLeaderboardDOM(cachedLeaderboardData, container, personalBox, personalContent);
+        buildLeaderboardDOM(cachedLeaderboardData, container);
     } else {
         container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
-        if (personalBox) personalBox.style.display = 'none';
     }
 
-    db.ref('users').once('value').then(snapshot => {
+    // فحص سريع في الخلفية لأول 10 لتحديث الواجهة إذا حدث تغيير
+    db.ref('users').orderByChild('xp').limitToLast(10).once('value').then(snapshot => {
         let usersArr = [];
         snapshot.forEach(child => {
             let u = child.val();
@@ -2157,9 +2187,14 @@ function renderLeaderboard() {
             usersArr.push(u);
         });
 
-        usersArr.sort((a, b) => b.xp - a.xp);
-        cachedLeaderboardData = usersArr;
-        buildLeaderboardDOM(usersArr, container, personalBox, personalContent);
+        usersArr.reverse();
+        
+        // لو حصل تغيير فعلي، نحدث الشاشة والذاكرة
+        if (JSON.stringify(usersArr) !== JSON.stringify(cachedLeaderboardData)) {
+            cachedLeaderboardData = usersArr;
+            localStorage.setItem('local_top_10', JSON.stringify(usersArr));
+            buildLeaderboardDOM(usersArr, container);
+        }
     }).catch(err => {
         if (!cachedLeaderboardData) {
             container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
@@ -2167,49 +2202,16 @@ function renderLeaderboard() {
     });
 }
 
-function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) {
+// 3. بناء الواجهة (بعد حذف الترتيب الشخصي)
+function buildLeaderboardDOM(usersArr, container) {
     if (!usersArr || usersArr.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: bold;">لا يوجد لاعبين مسجلين حتى الآن. كن أول المنضمين! 🚀</p>';
-        if (personalBox) personalBox.style.display = 'none';
         return;
     }
 
-    // عرض كارت الترتيب الشخصي
-    if (currentUser && personalBox && personalContent) {
-        const myIndex = usersArr.findIndex(u => u.phone === currentUser.phone || u.id === currentUser.phone);
-        if (myIndex !== -1) {
-            personalBox.style.display = 'block';
-            let pHtml = '';
-
-            if (myIndex > 0 && usersArr[myIndex - 1]) {
-                pHtml += `<div class="rank-row">
-                            <span>#${myIndex} (${usersArr[myIndex - 1].name.split(' ')[0]})</span>
-                            <span>${usersArr[myIndex - 1].xp} XP</span>
-                          </div>`;
-            }
-
-            pHtml += `<div class="rank-row is-me">
-                        <span>#${myIndex + 1} (أنت) 🎯</span>
-                        <span>${usersArr[myIndex].xp} XP</span>
-                      </div>`;
-
-            if (myIndex < usersArr.length - 1 && usersArr[myIndex + 1]) {
-                pHtml += `<div class="rank-row">
-                            <span>#${myIndex + 2} (${usersArr[myIndex + 1].name.split(' ')[0]})</span>
-                            <span>${usersArr[myIndex + 1].xp} XP</span>
-                          </div>`;
-            }
-            personalContent.innerHTML = pHtml;
-        } else {
-            personalBox.style.display = 'none';
-        }
-    }
-
     const top10Users = usersArr.slice(0, 10);
-// كود علامة التوثيق الذهبية (شبه ميتا)
     const verifiedGoldSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; margin-bottom: 2px; margin-right: 4px; filter: drop-shadow(0 2px 4px rgba(212,175,55,0.6));"><defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffe55c" /><stop offset="50%" stop-color="#f59e0b" /><stop offset="100%" stop-color="#b38600" /></linearGradient></defs><path fill="url(#goldGrad)" d="M22.5 12l-2.09-2.38.31-3.15-3.09-.76-1.55-2.8-3.08 1.05L12 2 10.99 3.96l-3.08-1.05-1.55 2.8-3.09.76.31 3.15L1.5 12l2.09 2.38-.31 3.15 3.09.76 1.55 2.8 3.08-1.05L12 22l1.01-1.96 3.08 1.05 1.55-2.8 3.09-.76-.31-3.15L22.5 12z"/><path fill="#ffffff" d="M10 15.5l-4-4 1.5-1.5 2.5 2.5 7-7 1.5 1.5-8.5 8.5z"/></svg>`;
 
-    // بناء منصة التتويج للثلاثة الأوائل بأمان تام
     let html = '<div class="podium">';
     const top3 = [top10Users[1] || null, top10Users[0] || null, top10Users[2] || null];
     const classes = ['step-2', 'step-1', 'step-3'];
@@ -2253,7 +2255,6 @@ function buildLeaderboardDOM(usersArr, container, personalBox, personalContent) 
 
     html += '</div><div class="leaderboard-list">';
 
-    // عرض باقي قائمة المتصدرين (من المركز الرابع فما فوق)
     for (let i = 3; i < top10Users.length; i++) {
         const u = top10Users[i];
         if (!u) continue;
@@ -3964,7 +3965,8 @@ function renderAdminCodes(codesArray) {
 function initUserTicketRepliesListener() {
     if (!currentUser) return;
 
-    db.ref('user_tickets').on('value', (snap) => {
+    // السر هنا: جلب الشكاوى الخاصة برقم الطالب الحالي فقط بدل الدفعة كلها!
+    db.ref('user_tickets').orderByChild('senderPhone').equalTo(currentUser.phone).on('value', (snap) => {
         if (!snap.exists()) return;
 
         let hasUnseenReportReply = false;
@@ -3976,22 +3978,18 @@ function initUserTicketRepliesListener() {
             const t = child.val();
             t.id = child.key;
 
-            if (t.senderPhone === currentUser.phone) {
-                if (t.type === 'مشكلة') {
-                    myReports.push(t);
-                    if (t.reply && t.seen !== true) hasUnseenReportReply = true;
-                } else if (t.type === 'اقتراح') {
-                    mySuggests.push(t);
-                    if (t.reply && t.seen !== true) hasUnseenSuggestReply = true;
-                }
+            if (t.type === 'مشكلة') {
+                myReports.push(t);
+                if (t.reply && t.seen !== true) hasUnseenReportReply = true;
+            } else if (t.type === 'اقتراح') {
+                mySuggests.push(t);
+                if (t.reply && t.seen !== true) hasUnseenSuggestReply = true;
             }
         });
 
         // 1. التحكم في النقطة الحمراء عند زر الإعدادات
         const settingsDot = document.getElementById('badge-settings-dot');
-        if (settingsDot) {
-            settingsDot.style.display = (hasUnseenReportReply || hasUnseenSuggestReply) ? 'inline-block' : 'none';
-        }
+        if (settingsDot) settingsDot.style.display = (hasUnseenReportReply || hasUnseenSuggestReply) ? 'inline-block' : 'none';
 
         // 2. التحكم في النقطة الحمراء داخل الإعدادات
         const reportDot = document.getElementById('badge-report-dot');
