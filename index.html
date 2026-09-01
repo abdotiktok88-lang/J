@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -16,6 +17,43 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <style>
+/* ================= ستايل مسارات ودروس أكاديمية المهندس ================= */
+.eng-path-card {
+    background: var(--bg-secondary); border: 1px solid var(--border-card);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px; cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.eng-path-card:active { transform: scale(0.97); border-color: var(--accent-gold); }
+.eng-path-icon {
+    width: 45px; height: 45px; background: rgba(255,255,255,0.05); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;
+}
+.eng-path-text h4 { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+.eng-path-text p { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; line-height: 1.4; }
+
+/* ستايل الدرس من الداخل */
+.lesson-content-box { background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 16px; padding: 18px; margin-bottom: 16px; line-height: 1.8; font-size: 0.9rem; color: var(--text-main); }
+.lesson-content-box h4 { color: var(--accent-gold); font-size: 1.05rem; font-weight: 900; margin-bottom: 10px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;}
+.lesson-highlight { background: rgba(16, 185, 129, 0.1); border-right: 4px solid var(--accent-emerald); padding: 10px 14px; border-radius: 8px; margin: 12px 0; color: var(--text-main); font-weight: 700; }
+.lesson-danger { background: rgba(239, 68, 68, 0.1); border-right: 4px solid #ef4444; padding: 10px 14px; border-radius: 8px; margin: 12px 0; color: var(--text-main); font-weight: 700; }
+
+/* التايم لاين للمصنع */
+.factory-timeline { position: relative; margin: 20px 10px 20px 20px; padding-right: 20px; border-right: 3px solid var(--accent-highlight); }
+.timeline-step { position: relative; margin-bottom: 25px; }
+.timeline-step::before {
+    content: ''; position: absolute; right: -28px; top: 0; width: 14px; height: 14px;
+    background: var(--bg-primary); border: 3px solid var(--accent-highlight); border-radius: 50%;
+}
+.timeline-title { font-weight: 900; color: var(--accent-emerald); font-size: 1rem; margin-bottom: 6px; }
+.timeline-desc { font-size: 0.82rem; color: var(--text-sub); font-weight: 600; background: var(--bg-secondary); padding: 10px; border-radius: 10px; border: 1px solid var(--border-card); }
+
+/* كروت السيناريوهات */
+.scenario-card { background: var(--card-gradient); border: 1px solid var(--accent-gold); border-radius: 16px; padding: 16px; margin-bottom: 15px; }
+.scenario-q { font-weight: 800; color: var(--text-main); margin-bottom: 12px; font-size: 0.95rem; }
+.scenario-btn { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); border-radius: 10px; color: var(--accent-gold); font-weight: 800; cursor: pointer; transition: 0.3s; }
+.scenario-btn:hover { background: rgba(212, 175, 55, 0.15); border-color: var(--accent-gold); }
+.scenario-ans { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-card); color: var(--accent-emerald); font-weight: 800; font-size: 0.85rem; }
 /* تأثير الاسم المتوهج واللامع */
         .glow-name-effect {
             background: linear-gradient(90deg, #ffd700, #ff8c00, #ff007f, #00f0ff, #ffd700) !important;
@@ -1510,6 +1548,71 @@
     width: 30%; 
 }
     </style>
+<style>
+/* ================= ستايل أكاديمية المهندس الشامل (Bento & Modules) ================= */
+.eng-premium-banner {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+    border: 1px solid var(--border-card); border-radius: 24px; padding: 20px;
+    display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden;
+}
+.eng-banner-icon { width: 60px; height: 60px; filter: drop-shadow(0 4px 10px rgba(212,175,55,0.4)); z-index: 1; }
+.eng-banner-text { z-index: 1; text-align: right; }
+.eng-banner-text h2 { font-size: 1.25rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 4px; }
+.eng-banner-text p { font-size: 0.85rem; color: var(--text-sub); font-weight: 700; line-height: 1.4; }
+
+.eng-bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;}
+.eng-bento-card {
+    background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px;
+    padding: 16px; display: flex; flex-direction: column; justify-content: flex-start;
+    cursor: pointer; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+}
+.eng-bento-card:active { transform: scale(0.96); }
+.eng-bento-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: var(--theme-color); opacity: 0.8; }
+.eng-bento-card:hover { border-color: var(--theme-color); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+
+.bento-tall { grid-row: span 2; align-items: center; justify-content: center; text-align: center; }
+.bento-large { grid-column: span 2; flex-direction: row; align-items: center; gap: 15px; }
+.eng-card-icon { font-size: 2rem; background: rgba(255, 255, 255, 0.05); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 14px; margin-bottom: 10px; flex-shrink: 0; }
+.bento-large .eng-card-icon { margin-bottom: 0; width: 60px; height: 60px; font-size: 2.5rem; }
+.eng-bento-card h3 { font-size: 1.05rem; font-weight: 900; color: var(--text-main); margin-bottom: 4px; }
+.eng-bento-card p { font-size: 0.78rem; color: var(--text-sub); font-weight: 600; line-height: 1.5; }
+
+/* ستايلات المحتوى الديناميكي (دروس، قاموس، مقارنات) */
+.eng-chapter-card {
+    background: var(--bg-secondary); border: 1px solid var(--border-card); border-radius: 16px;
+    padding: 16px; margin-bottom: 12px; transition: 0.3s;
+}
+.eng-chapter-title { font-size: 0.95rem; font-weight: 900; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;}
+.eng-chapter-content { font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; font-weight: 600; display: none; padding-top: 10px; border-top: 1px dashed var(--border-card); }
+.eng-chapter-content b { color: var(--text-main); }
+
+.eng-search-bar {
+    width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid var(--border-card);
+    background: var(--bg-primary); color: var(--text-main); font-size: 0.95rem; font-weight: 800;
+    margin-bottom: 15px; outline: none; transition: border-color 0.3s;
+}
+.eng-search-bar:focus { border-color: var(--accent-emerald); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+
+.eng-dict-item {
+    background: var(--card-gradient); border-right: 4px solid var(--accent-emerald); border-radius: 12px;
+    padding: 14px; margin-bottom: 10px; text-align: left; direction: ltr; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.eng-dict-term { font-size: 1.1rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 4px; }
+.eng-dict-ar { font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; text-align: right; direction: rtl; }
+.eng-dict-def { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; text-align: right; direction: rtl; }
+
+.eng-compare-card {
+    display: flex; flex-direction: column; background: var(--bg-primary); border: 1px solid var(--border-card);
+    border-radius: 16px; margin-bottom: 15px; overflow: hidden;
+}
+.eng-compare-header { background: rgba(99, 102, 241, 0.15); padding: 12px; text-align: center; font-weight: 900; color: var(--accent-highlight); border-bottom: 1px solid var(--border-card); }
+.eng-compare-body { display: flex; text-align: center; }
+.eng-compare-side { flex: 1; padding: 15px 10px; font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; font-weight: 600; }
+.eng-compare-side.right { border-left: 1px dashed var(--border-card); }
+
+</style>
 </head>
 <body>
 
@@ -1966,84 +2069,85 @@
             </div>
 
             <div class="section-label">الأقسام الرئيسية</div>
-            <div class="grid-cards">
-                <!-- كارت المنظم الأكاديمي والمنصة -->
-                <div class="app-card card-primary-glow" onclick="openAcademicHub()">
-                    <div class="card-info">
-                        <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-emerald);">
-                            <img src="https://img.icons8.com/fluency/96/diploma.png" alt="Academic">
-                        </div>
-                        <div class="card-text">
-                            <h3 style="color: var(--accent-emerald);">المنظم الأكاديمي والمنصة</h3>
-                            <p>التكليفات، الجداول، ومواعيد الامتحانات</p>
-                        </div>
+            <div class="eng-bento-grid">
+                
+                <!-- 1. المنظم الأكاديمي (يمين) -->
+                <div class="eng-bento-card" style="--theme-color: #10b981;" onclick="openAcademicHub()">
+                    <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-emerald); margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/diploma.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow">←</div>
+                    <h3 style="color: var(--accent-emerald);">المنظم الأكاديمي</h3>
+                    <p>التكليفات والجداول والتنبيهات</p>
                 </div>
 
-                <div class="app-card card-primary-glow" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
-                    <div class="card-info">
-                        <div class="card-icon"><img src="https://img.icons8.com/fluency/96/books.png" alt="Subjects"></div>
-                        <div class="card-text"><h3>مواد الترم الأول</h3><p>الكتب، المحاضرات والسكاشن</p></div>
+                <!-- 2. مواد الترم (شمال) -->
+                <div class="eng-bento-card" style="--theme-color: #3b82f6;" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
+                    <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/books.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow">←</div>
+                    <h3 style="color: #3b82f6;">مواد الترم الأول</h3>
+                    <p>الكتب والمحاضرات والسكاشن</p>
                 </div>
 
-                <div class="app-card card-primary-glow" onclick="openQuizRulesModal()">
-                    <div class="card-info">
-                        <div class="card-icon"><img src="https://img.icons8.com/fluency/96/brain.png" alt="Quiz"></div>
-                        <div class="card-text"><h3>تحدي المعلومات (فردي)</h3><p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اختبر معلوماتك العامة وزود نقاطك</p></div>
+                <!-- 3. تحدي المعلومات (عريض كامل) -->
+                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b;" onclick="openQuizRulesModal()">
+                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0;">
+                        <img src="https://img.icons8.com/fluency/96/brain.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow">←</div>
+                    <div>
+                        <h3 style="color: #f59e0b;">تحدي المعلومات (فردي)</h3>
+                        <p>اختبر معلوماتك العامة وزود نقاطك</p>
+                    </div>
                 </div>
 
-                <!-- 1v1 Derby Battle Card -->
-                <div class="app-card card-derby-glow" onclick="openDerbySetupModal()">
-                    <div class="derby-live-tag">مباشر 1v1 🔥</div>
-                    <div class="card-info">
-                        <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444;"><span style="font-size: 1.6rem;">⚔️</span></div>
-                        <div class="card-text">
-                            <h3 style="color: #ffd700;">ديربي الدفعة 1v1</h3>
-                            <p style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">تحدَّ زميلك برمز الغرفة واربح جوائز قيّمة</p>
-                        </div>
+                <!-- 4. ديربي الدفعة (يمين) -->
+                <div class="eng-bento-card" style="--theme-color: #ef4444; background: linear-gradient(145deg, rgba(35, 20, 45, 0.95), rgba(15, 10, 20, 0.95)); border: 1.5px solid #ef4444;" onclick="openDerbySetupModal()">
+                    <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/battle.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow" style="color: #ef4444;">⚔️</div>
+                    <h3 style="color: #ffd700;">ديربي 1v1</h3>
+                    <p>المواجهة المباشرة</p>
                 </div>
 
-<div class="app-card ehbed-card-glow" onclick="openEhbedSetupModal()">
-                    <div class="derby-live-tag" style="background: linear-gradient(135deg, #a855f7, #7e22ce);">مباشر 1v1 🔢</div>
-                    <div class="card-info">
-                        <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7;"><span style="font-size: 1.6rem;">🔢</span></div>
-                        <div class="card-text">
-                            <h3 style="color: #c084fc;">اهبد صح</h3>
-                            <p style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">تحدَّ زميلك بالتخمين الأقرب للرقم الصحيح</p>
-                        </div>
+                <!-- 5. اهبد صح (شمال) -->
+                <div class="eng-bento-card" style="--theme-color: #c084fc; background: linear-gradient(145deg, rgba(45, 20, 60, 0.95), rgba(20, 10, 30, 0.95)); border: 1.5px solid #a855f7;" onclick="openEhbedSetupModal()">
+                    <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/question.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow" style="color: #c084fc;">⚔️</div>
+                    <h3 style="color: #c084fc;">اهبد صح</h3>
+                    <p>التخمين الأقرب يفوز</p>
                 </div>
 
-                <div class="app-card" onclick="showTopToast('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'info')">
-                    <div class="card-info">
-                        <div class="card-icon"><img src="https://img.icons8.com/fluency/96/test-passed.png" alt="Exams"></div>
-                        <div class="card-text"><h3>إختبارات</h3><p>تدريبات شاملة ونماذج امتحانات</p></div>
+                <!-- 6. الاختبارات (يمين فوق) -->
+                <div class="eng-bento-card" style="--theme-color: #06b6d4;" onclick="showTopToast('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'info')">
+                    <div class="card-icon" style="background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/test-passed.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <div class="card-arrow">←</div>
+                    <h3 style="color: #06b6d4;">إختبارات</h3>
+                    <p>نماذج وتدريبات</p>
                 </div>
+
+                <!-- 7. مهندس جودة (طويل شمال يمتد لأسفل) -->
+                <div class="eng-bento-card bento-tall" style="--theme-color: #f59e0b; background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); border: 1.5px solid #f59e0b;" onclick="openEngineerHub()">
+                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; margin-bottom: 15px; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/briefcase.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    </div>
+                    <h3 style="color: #f59e0b; font-size: 1.15rem; margin-bottom: 6px;">مهندس جودة؟</h3>
+                    <p style="font-size: 0.8rem; line-height: 1.6;">دليلك لتعلم الجودة ومحاكاة المصانع</p>
+                    <span class="badge-soon-feature" style="position: relative; left: auto; top: auto; display: inline-block; margin-top: 15px;">قريباً 🔥</span>
+                </div>
+
+                <!-- 8. المفاجآت (يمين تحت الاختبارات) -->
+                <div class="eng-bento-card" style="--theme-color: #818cf8; border-color: var(--accent-highlight);" onclick="showTopToast('مفاجآت ضخمة وأدوات مذهلة هتتفتح مع بداية الدراسة.. خليك جاهز! 🔥', 'info')">
+                    <span class="badge-soon-feature" style="left: 10px; top: 10px; padding: 2px 6px; font-size: 0.6rem;">قريباً</span>
+                    <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); border-color: var(--accent-highlight); margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
+                        <img src="https://img.icons8.com/fluency/96/rocket.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    </div>
+                    <h3 style="color: var(--accent-highlight);">المفاجآت</h3>
+                    <p>حلويات هتنزل</p>
+                </div>
+
             </div>
-
-<!-- كارت مفاجآت بداية الدراسة -->
-                <div class="app-card" style="border-color: var(--accent-highlight); margin-top: 12px;" onclick="showTopToast('مفاجآت ضخمة وأدوات مذهلة هتتفتح مع بداية الدراسة.. خليك جاهز! 🔥', 'info')">
-                    <div class="card-info">
-                        <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); border-color: var(--accent-highlight);">
-                            <img src="https://img.icons8.com/fluency/96/rocket.png" alt="Upcoming">
-                        </div>
-                        <div class="card-text">
-                            <h3 style="color: var(--accent-highlight);">مفاجآت بداية الدراسة</h3>
-                            <p>حلويات هتنزل قريب جداً</p>
-                        </div>
-                    </div>
-                    <span class="badge-soon-feature">قريباً 🔥</span>
-                </div>
 
             <div class="inspirational-quote">
                 إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ <span class="highlight-word">التَّيْسِيرَ</span> عَلَى النَّاسِ، <span class="highlight-word">فَيَسِّرْ</span> عَلَيْهِمْ، فَإِنَّكَ وَاللَّهِ لَا تَدْرِي مَا تَفْعَلُ بِكَ <span class="highlight-word">دَعْوَةٌ صَادِقَةٌ</span> مِنْ أَحَدِهِمْ، فَرُبَّمَا كَانَ مِنْ بَيْنِهِمْ مَنْ لَوْ أَقْسَمَ عَلَى اللَّهِ <span class="highlight-word">لَأَبَرَّهُ</span>!
@@ -2767,6 +2871,7 @@
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
                 <button class="auth-tab-btn" id="tab-admin-codes" onclick="switchAdminTab('codes')">الأكواد</button>
 <button class="auth-tab-btn" id="tab-admin-ehbed-quiz" onclick="switchAdminTab('ehbed-quiz')">أسئلة اهبد صح 🔢</button>
+<button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">إدارة الأكاديمية 💼</button>
             </div>
 
             <!-- تبويب الطلاب -->
@@ -3156,7 +3261,6 @@
                 <div class="section-label">الأكواد المتاحة والسابقة</div>
                 <div id="admin-codes-list" style="margin-top: 15px;"></div>
             </div>
-        </div> <!-- إغلاق view-admin-panel بشكل صحيح -->
 <!-- تبويب إضافة وإدارة أسئلة اهبد صح -->
     <div id="admin-section-ehbed-quiz" style="display: none;">
         <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
@@ -3192,8 +3296,54 @@
 كم عدد عظام جسم الإنسان البالغ؟ # 206"></textarea>
             </div>
             <button class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="uploadBulkEhbedQuestions()">رفع الأسئلة الجماعية للسحابة 🚀</button>
+
         </div>
     </div>
+
+<div id="admin-section-academy" style="display: none;">
+        <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+            <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة / تعديل درس بالأكاديمية 💼</h3>
+            
+            <input type="hidden" id="adm-acad-id">
+
+            <div class="form-group">
+                <label>عنوان الدرس</label>
+                <input type="text" id="adm-acad-title" class="form-input" placeholder="مثال: 01. افهم الأساسيات بقوة">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 10px;">
+                <div class="form-group">
+                    <label>الأيقونة</label>
+                    <input type="text" id="adm-acad-icon" class="form-input" placeholder="🌱" style="text-align: center;">
+                </div>
+                <div class="form-group">
+                    <label>وصف قصير</label>
+                    <input type="text" id="adm-acad-desc" class="form-input" placeholder="وصف للدرس يظهر بالخارج">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--accent-emerald);">محتوى الدرس (المُحرر الذكي)</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+                    <button class="admin-action-btn" onclick="insertAcademyBlock('box')">إدراج فقرة عادية 📄</button>
+                    <button class="admin-action-btn" onclick="insertAcademyBlock('highlight')">إدراج ملاحظة ذهبية 💡</button>
+                    <button class="admin-action-btn" onclick="insertAcademyBlock('danger')">إدراج تحذير أحمر ⚠️</button>
+                    <button class="admin-action-btn" onclick="insertAcademyBlock('timeline')">إدراج خطوة تايم لاين 🏭</button>
+                    <button class="admin-action-btn" style="border-color: #3b82f6; color: #3b82f6;" onclick="insertAcademyBlock('scenario')">إدراج سؤال وسيناريو تفاعلي ❓</button>
+                </div>
+                <textarea id="adm-acad-content" class="form-input" rows="12" style="resize: vertical; font-family: monospace; font-size: 0.85rem; direction: ltr;" placeholder="محتوى الـ HTML الخاص بالدرس..."></textarea>
+            </div>
+
+            <button class="btn-submit" onclick="adminSaveAcademyLesson()">حفظ ونشر الدرس فوراً 💾</button>
+            <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="resetAcademyAdminForm()">إلغاء / إفراغ الخانات 🔄</button>
+        </div>
+
+        <div class="section-label">الدروس المتاحة حالياً بالسيرفر</div>
+        <div id="admin-academy-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>
+        </div>
+    </div>
+</div> <!-- 👈 الإغلاق السليم للوحة التحكم بالكامل -->
 
         <!-- لوحة المتصدرين المحسنة مع زر قاعة المشاهير -->
         <div id="view-leaderboard" class="view-section">
@@ -3436,6 +3586,89 @@
 
     </div>
     
+<!-- الواجهة الرئيسية: أكاديمية مهندس الجودة -->
+<div id="view-engineer-hub" class="view-section">
+    <div class="eng-premium-banner">
+        <i class="ti ti-certificate eng-banner-icon" style="font-size: 3rem; color: var(--accent-gold);"></i>
+        <div class="eng-banner-text">
+            <h2>مكتبة مهندس الجودة</h2>
+            <p>دليلك الشامل من مدرجات الكلية إلى قلب مصانع الأغذية</p>
+        </div>
+    </div>
+
+    <div class="section-label">📚 مسار التعلم والأساسيات</div>
+    <div class="eng-bento-grid">
+        <div class="eng-bento-card bento-large" style="--theme-color: #3b82f6;" onclick="openEngModule('basics')">
+            <span class="eng-card-icon">📘</span>
+            <div><h3>أساسيات الجودة وسلامة الغذاء</h3><p>مفاهيم QA, QC, وأنواع المخاطر.</p></div>
+        </div>
+        <div class="eng-bento-card" style="--theme-color: #ef4444;" onclick="openEngModule('haccp')">
+            <span class="eng-card-icon">🛡️</span><h3>نظام HACCP</h3><p>المبادئ، الخطوات، والـ CCPs.</p>
+        </div>
+        <div class="eng-bento-card" style="--theme-color: #10b981;" onclick="openEngModule('iso')">
+            <span class="eng-card-icon">📋</span><h3>أكاديمية ISO</h3><p>مواصفات 22000 و 9001.</p>
+        </div>
+    </div>
+
+    <div class="section-label">🧠 طوّر مهاراتك</div>
+    <div class="eng-bento-grid">
+        <div class="eng-bento-card bento-large" style="--theme-color: #a855f7;" onclick="openEngModule('dictionary')">
+            <span class="eng-card-icon">🔍</span>
+            <div><h3>قاموس المصطلحات الفنية</h3><p>محرك بحث فوري لأي مصطلح أو اختصار للمقابلات.</p></div>
+        </div>
+        <div class="eng-bento-card" style="--theme-color: #f59e0b;" onclick="openEngModule('comparisons')">
+            <span class="eng-card-icon">⚔️</span><h3>المقارنات</h3><p>فروقات جوهرية (مثال: Validation vs Verification).</p>
+        </div>
+        <div class="eng-bento-card" style="--theme-color: #ec4899;" onclick="openEngModule('interviews')">
+            <span class="eng-card-icon">🎤</span><h3>الإنترفيو</h3><p>أسئلة المقابلات الشخصية.</p>
+        </div>
+    </div>
+
+    <div class="section-label">🔬 طبّق (المعامل المصغرة)</div>
+    <div class="eng-bento-grid">
+        <div class="eng-bento-card bento-large" style="--theme-color: #06b6d4;" onclick="openEngModule('lab')">
+            <span class="eng-card-icon">🧮</span>
+            <div><h3>المعمل المصغر المتكامل</h3><p>حاسبات لتقدير الحموضة، الرماد، ونسبة الدهن.</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- الشاشة الفرعية الموحدة (Dynamic Router) -->
+<div id="view-eng-sub-section" class="view-section">
+    <div class="auth-card" style="margin-bottom: 18px; text-align: center; border-color: var(--border-card);">
+        <span id="eng-module-icon" style="font-size: 2.8rem; display: block; margin-bottom: 8px;"></span>
+        <h3 id="eng-module-title" style="color: var(--accent-gold); margin-bottom: 6px;">العنوان</h3>
+        <p id="eng-module-desc" style="font-size: 0.85rem; color: var(--text-sub); font-weight: 700;">الوصف</p>
+    </div>
+    
+    <!-- الكونتينر اللي هيتحقن فيه المحتوى بالـ JS -->
+    <div id="eng-module-content-area" style="margin-bottom: 20px;"></div>
+</div>
+
+<!-- واجهة قائمة دروس أساسيات الجودة -->
+<div id="view-eng-basics-hub" class="view-section">
+    <div class="auth-card" style="margin-bottom: 18px; text-align: center; border-color: #3b82f6;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📘</span>
+        <h3 style="color: #3b82f6; margin-bottom: 8px;">أساسيات الجودة وسلامة الغذاء</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub); font-weight: 700;">اختر الدرس للبدء في رحلة التعلم</p>
+    </div>
+    
+    <div id="eng-basics-lessons-list">
+        <!-- سيتم حقن الكروت هنا بواسطة الجافاسكريبت -->
+    </div>
+</div>
+
+<!-- واجهة عرض الدرس المفصل -->
+<div id="view-eng-lesson-detail" class="view-section">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h3 id="lesson-detail-title" style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 900;">عنوان الدرس</h3>
+        <button class="admin-action-btn" style="padding: 4px 12px;" onclick="navigateBack()">رجوع ↩</button>
+    </div>
+    <div id="lesson-detail-content">
+        <!-- سيتم حقن الشرح هنا -->
+    </div>
+</div>
+
     <!-- شريط التنقل السفلي الثابت -->
     <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
         <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">

@@ -108,7 +108,7 @@ function shuffleArray(array) {
 
     function loadAcademicTasks() {
         const list = document.getElementById('acad-tasks-list');
-        db.ref('academic_tasks').on('value', (snap) => {
+        db.ref('academic_tasks').once('value', (snap) => {
             if (!snap.exists()) {
                 list.innerHTML = `
                 <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
@@ -239,7 +239,7 @@ function shuffleArray(array) {
 
     function loadAcademicAlerts() {
         const list = document.getElementById('acad-alerts-list');
-        db.ref('college_alerts').on('value', snap => {
+        db.ref('college_alerts').once('value', snap => {
             if (!snap.exists()) {
                 list.innerHTML = `
                 <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
@@ -439,7 +439,7 @@ function shuffleArray(array) {
 
     let currentStoreConfig = { ...defaultStorePrices };
 
-    db.ref('store_config').on('value', (snap) => {
+    db.ref('store_config').once('value', (snap) => {
         if (snap.exists()) {
             currentStoreConfig = { ...defaultStorePrices, ...snap.val() };
         } else {
@@ -937,6 +937,11 @@ let hasCheckedDailyLoginSession = false;
             db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     currentUser = snapshot.val();
+// كود تنظيف آلي لمرة واحدة لتخفيف وزن الحساب القديم
+                    if (currentUser.transactions) {
+                        db.ref('users/' + loggedInPhone + '/transactions').remove();
+                        delete currentUser.transactions;
+                    }
                     if (currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
                     if (currentUser.coins === undefined) currentUser.coins = 0;
                     if (currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
@@ -1909,7 +1914,8 @@ renderAchievementsTabUI();
 function recordUserTransaction(title, xpChange = 0, coinsChange = 0, type = 'reward') {
     if (!currentUser) return;
     try {
-        db.ref('users/' + currentUser.phone + '/transactions').push({
+        // تم تغيير المسار ليكون مستقلاً تماماً
+        db.ref('user_transactions/' + currentUser.phone).push({
             title: title,
             xp: xpChange,
             coins: coinsChange,
@@ -1932,7 +1938,10 @@ function loadWalletHistoryUI() {
     const container = document.getElementById('wallet-history-list');
     if (!container || !currentUser) return;
 
-    db.ref('users/' + currentUser.phone + '/transactions').limitToLast(40).on('value', snap => {
+    container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">جاري تحميل السجل... ⏳</p>';
+
+    // تم تغيير المسار واستخدام once بدلاً من on
+    db.ref('user_transactions/' + currentUser.phone).limitToLast(40).once('value', snap => {
         if (!snap.exists()) {
             container.innerHTML = `
                 <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
@@ -3467,7 +3476,8 @@ if (currentUser) {
 
     function switchAdminTab(tabName) {
         playClickSound();
-        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz'].forEach(t => {
+        // 👈 تم إضافة 'academy' داخل المصفوفة هنا
+        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'academy'].forEach(t => {
             const tabBtn = document.getElementById('tab-admin-' + t);
             const tabSec = document.getElementById('admin-section-' + t);
             if (tabBtn) tabBtn.classList.remove('active');
@@ -3484,7 +3494,8 @@ if (currentUser) {
         if (tabName === 'tickets') loadAdminTickets();
         if (tabName === 'achievements') renderAdminAchievementsList();
         if (tabName === 'quiz') loadAdminCustomQuestions();
-        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions(); // 👈 السطر ده المسؤول عن عرض محتوى اهبد صح
+        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions();
+        if (tabName === 'academy') loadAdminAcademyLessons(); // 👈 السطر ده اللي بيحمل الدروس
     }
 
     function populateAdminStoreInputs() {
@@ -3966,7 +3977,7 @@ function initUserTicketRepliesListener() {
     if (!currentUser) return;
 
     // السر هنا: جلب الشكاوى الخاصة برقم الطالب الحالي فقط بدل الدفعة كلها!
-    db.ref('user_tickets').orderByChild('senderPhone').equalTo(currentUser.phone).on('value', (snap) => {
+    db.ref('user_tickets').orderByChild('senderPhone').equalTo(currentUser.phone).once('value', (snap) => {
         if (!snap.exists()) return;
 
         let hasUnseenReportReply = false;
@@ -4054,7 +4065,7 @@ function markTicketRepliesAsSeen(type) {
     let countdownTicker = null;
 
     function listenToCountdowns() {
-        db.ref('app_countdowns').on('value', (snap) => {
+        db.ref('app_countdowns').once('value', (snap) => {
             appCountdownsList = [];
             if (snap.exists()) {
                 snap.forEach(c => {
@@ -4709,7 +4720,7 @@ rewardEl.innerHTML = `
         });
 
         // 2. قراءة عدد مباريات الديربي وركلات الجزاء من السجلات
-        db.ref('app_activity_logs').on('value', snap => {
+        db.ref('app_activity_logs').limitToLast(100).on('value', snap => {
             const container = document.getElementById('admin-live-logs-list');
             if (!snap.exists()) {
                 container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أنشطة مسجلة حتى الآن.</p>';
@@ -4800,7 +4811,7 @@ rewardEl.innerHTML = `
 
     let activeAchievementsConfig = { ...defaultAchievementsConfig };
 
-    db.ref('achievements_config').on('value', snap => {
+    db.ref('achievements_config').once('value', snap => {
         if (snap.exists()) {
             activeAchievementsConfig = { ...defaultAchievementsConfig, ...snap.val() };
         } else {
@@ -5769,7 +5780,7 @@ function openTransferModal() {
                 await db.ref('users/' + targetPhone + '/coins').transaction(c => (c || 0) + amount);
                 
                 recordUserTransaction(`تحويل عملات لـ ${receiverName}`, 0, -amount, 'purchase');
-                db.ref('users/' + targetPhone + '/transactions').push({
+                db.ref('user_transactions/' + targetPhone).push({
                     title: `دعم عملات من ${currentUser.name.split(' ')[0]}`,
                     xp: 0, coins: amount, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
@@ -5796,7 +5807,7 @@ function openTransferModal() {
                 });
 
                 recordUserTransaction(`تحويل نقاط لـ ${receiverName}`, -amount, 0, 'purchase');
-                db.ref('users/' + targetPhone + '/transactions').push({
+                db.ref('user_transactions/' + targetPhone).push({
                     title: `دعم نقاط (XP) من ${currentUser.name.split(' ')[0]}`,
                     xp: amount, coins: 0, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
@@ -5814,3 +5825,479 @@ function openTransferModal() {
             btn.innerText = 'إرسال الدعم 🚀';
         }
     }
+// ================= المحرك الشامل لمكتبة مهندس الجودة =================
+
+const engAcademyDB = {
+    basics: {
+        title: "أساسيات الجودة", desc: "مفاهيم ومبادئ الجودة وسلامة الغذاء المبسطة.", icon: "📘", type: "chapters",
+        content: [
+            { title: "يعني إيه Quality (الجودة)؟", text: "الجودة هي تلبية أو تجاوز توقعات ومتطلبات العميل بشكل مستمر.<br><b>مثال من المصنع:</b> إنتاج عصير نسبة السكر (Brix) فيه مطابقة تماماً للمواصفة المكتوبة على العبوة." },
+            { title: "الفرق بين QA و QC", text: "<b>QA (توكيد الجودة):</b> نظام استباقي (Proactive) يركز على العملية نفسها لمنع حدوث الخطأ (مثل تدريب العمال ووضع خطة الهاسب).<br><br><b>QC (مراقبة الجودة):</b> نظام تفاعلي (Reactive) يركز على المنتج لاكتشاف الخطأ (مثل سحب عينة من خط الإنتاج وتحليلها في المعمل)." },
+            { title: "أنواع المخاطر (Hazards)", text: "<b>1. بيولوجية:</b> بكتيريا، فيروسات، فطريات (مثل السالمونيلا).<br><b>2. كيميائية:</b> بقايا مبيدات، منظفات، سموم فطرية.<br><b>3. فيزيائية:</b> زجاج، معادن، خشب، شعر." }
+        ]
+    },
+    dictionary: {
+        title: "قاموس الجودة", desc: "اكتب أي اختصار أو مصطلح للبحث عنه فوراً.", icon: "🔍", type: "dictionary",
+        content: [
+            { term: "Calibration", ar: "المعايرة", def: "عملية مقارنة جهاز القياس (مثل ميزان أو ترمومتر) بمعيار مرجعي دقيق وموثق للتأكد من صحة قراءاته." },
+            { term: "Traceability", ar: "التتبع / التتبعية", def: "القدرة على تتبع مسار الغذاء خطوة بخطوة، من استلام المواد الخام (Backwards) حتى وصول المنتج النهائي للمستهلك (Forwards)." },
+            { term: "CAPA", ar: "الإجراء التصحيحي والوقائي", def: "اختصار لـ Corrective Action / Preventive Action. وهو الإجراء المتخذ للقضاء على سبب حالة عدم مطابقة لمنع تكرارها." },
+            { term: "CCP", ar: "نقطة التحكم الحرجة", def: "خطوة في العملية التصنيعية يمكن عندها تطبيق تحكم لمنع أو تقليل الخطر المتعلق بسلامة الغذاء لمستوى مقبول (مثل البسترة)." }
+        ]
+    },
+    comparisons: {
+        title: "المقارنات الفنية", desc: "أهم الفروقات التي تُسأل عنها في المقابلات والمصانع.", icon: "⚔️", type: "comparisons",
+        content: [
+            { title: "HACCP 🆚 ISO 22000", sideA: "<b>HACCP:</b> نظام تحليلي يركز بشكل كامل وحصري على سلامة الغذاء (Food Safety) والمخاطر.", sideB: "<b>ISO 22000:</b> نظام إدارة متكامل أوسع وأشمل، ويحتوي على الـ HACCP كجزء أو بند أساسي داخله." },
+            { title: "Validation 🆚 Verification", sideA: "<b>التحقق (Verification):</b> هل نقوم بالعمل بشكل صحيح؟ (مثل مراجعة سجلات درجات الحرارة للتأكد من أن العامل سجلها).", sideB: "<b>الصلاحية/التصديق (Validation):</b> هل العمل الذي نقوم به هو الصحيح أصلاً؟ (مثل تحليل معملي يثبت أن حرارة البسترة قتلت البكتيريا فعلاً)." }
+        ]
+    },
+    lab: {
+        title: "المعمل المصغر", desc: "أدوات وحاسبات كيميائية سريعة لمهندس المعمل.", icon: "🧮", type: "lab"
+    }
+};
+
+// الدالة المعدلة للدخول (حماية المطور مؤقتاً)
+function openEngineerHub() {
+    playClickSound();
+    if (!currentUser || currentUser.phone !== "01061032507") {
+        showTopToast('الأكاديمية قيد التجهيز والبناء حالياً.. ترقبوا العظمة قريباً! ⏳🔥', 'info');
+        return;
+    }
+    navigateTo('view-engineer-hub', 'مكتبة مهندس الجودة', 'المهارات وسوق العمل');
+}
+
+// ================= محتوى مسار أساسيات الجودة وسلامة الغذاء =================
+const engBasicsLessons = {
+    part1: {
+        title: "01. افهم الأساسيات بقوة",
+        icon: "🌱",
+        desc: "Quality vs Food Safety, QA vs QC, Hazard vs Risk",
+        content: `
+        <div class="lesson-content-box">
+            <h4>يعني إيه جودة (Quality)؟</h4>
+            <p>الجودة ببساطة هي <b>تلبية متطلبات العميل باستمرار</b> وخلو المنتج من العيوب المظهرية والوظيفية. ليس بالضرورة أن يكون المنتج الأغلى، بل الأطابق للمواصفة المحددة.</p>
+            <div class="lesson-highlight">💡 <b>مثال من المصنع:</b> إنتاج عصير مانجو بلون برتقالي زاهٍ ونسبة سكر (Brix) مطابقة تماماً للمكتوب على العبوة. إذا كان اللون باهتاً، فهذا عيب جودة (Quality Defect).</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>يعني إيه سلامة غذاء (Food Safety)؟</h4>
+            <p>هي الضمان واليقين بأن الغذاء لن يسبب أي ضرر (مرض أو إصابة) للمستهلك عند إعداده أو تناوله.</p>
+            <div class="lesson-danger">⚠️ <b>الفرق الجوهري:</b> الجودة تؤثر على (مبيعات وسمعة الشركة)، بينما سلامة الغذاء تؤثر على (حياة الإنسان). العصير ذو اللون الباهت (مشكلة جودة)، لكن العصير الملوث ببكتيريا السالمونيلا (مشكلة سلامة غذاء مميتة).</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>QA vs QC (توكيد الجودة ومراقبتها)</h4>
+            <p><b>توكيد الجودة (QA):</b> هو نظام <b>إداري استباقي (Proactive)</b>. هدفه "منع" الخطأ قبل وقوعه. يشمل تدريب العمال، تصميم خطة الهاسب، ومعايرة الأجهزة.<br>
+            <b>مراقبة الجودة (QC):</b> هو نظام <b>تنفيذي تفاعلي (Reactive)</b>. هدفه "اكتشاف" الخطأ. يشمل سحب عينات من خط الإنتاج وتحليلها في المعمل.</p>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>Hazard vs Risk (الخطر والمخاطرة)</h4>
+            <p><b>الخطر (Hazard):</b> هو أي عامل (بيولوجي، كيميائي، فيزيائي) لديه "القدرة" على إحداث ضرر صحي. (مثال: وجود بكتيريا في اللبن الخام).<br>
+            <b>المخاطرة (Risk):</b> هي "احتمالية" حدوث هذا الضرر مضروبة في مدى شدته (Likelihood × Severity). (مثال: شرب اللبن الخام دون بسترته يمثل Risk عالٍ جداً).</p>
+        </div>`
+    },
+    part2: {
+        title: "02. ما هي مخاطر الغذاء؟",
+        icon: "🛡️",
+        desc: "Biological, Chemical, Physical, Allergens",
+        content: `
+        <div class="lesson-content-box">
+            <h4>1. المخاطر البيولوجية (Biological Hazards) 🦠</h4>
+            <p>أخطر أنواع الملوثات على الإطلاق لأنها لا تُرى بالعين المجردة وتتكاثر بسرعة.</p>
+            <div class="lesson-danger"><b>تشمل:</b> البكتيريا الممرضة (مثل E.coli، Salmonella، Listeria)، الفيروسات، الفطريات والطفيليات.<br><b>مثال من المصنع:</b> تلوث اللبن المبستر بالبكتيريا بسبب عدم غسل خطوط الإنتاج (CIP) بشكل صحيح.</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>2. المخاطر الكيميائية (Chemical Hazards) 🧪</h4>
+            <p>سموم ومواد كيميائية قد تلوث المنتج أثناء الزراعة أو التصنيع.</p>
+            <div class="lesson-danger"><b>تشمل:</b> متبقيات المبيدات، المضادات الحيوية في الألبان، السموم الفطرية (الأفلاتوكسين)، وبقايا منظفات الـ CIP.<br><b>مثال من المصنع:</b> عدم شطف التنكات جيداً بالماء بعد دورة التعقيم بالصودا الكاوية.</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>3. المخاطر الفيزيائية (Physical Hazards) 🪨</h4>
+            <p>أجسام غريبة ملموسة قد تسبب جروحاً أو اختناقاً للمستهلك.</p>
+            <div class="lesson-danger"><b>تشمل:</b> شظايا الزجاج، قطع المعادن، المسامير، الخشب، البلاستيك الصلب.<br><b>مثال من المصنع:</b> سقوط صامولة من ماكينة التعبئة داخل العبوة.</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>4. مسببات الحساسية (Allergens) 🥜</h4>
+            <p>بروتينات طبيعية في بعض الأغذية تسبب رد فعل مناعي مميت لبعض الأشخاص.</p>
+            <div class="lesson-highlight"><b>أشهرها (The Big 8):</b> الفول السوداني، المكسرات، الألبان، البيض، الأسماك، القشريات، الصويا، القمح.<br><b>الإجراء المطلوب:</b> فصل خطوط الإنتاج، غسيل مكثف، وكتابة تحذير واضح على البطاقة الإرشادية.</div>
+        </div>`
+    },
+    part3: {
+        title: "03. الممارسات الصحية والـ GMP",
+        icon: "🧼",
+        desc: "Personal Hygiene, Cleaning vs Sanitizing",
+        content: `
+        <div class="lesson-content-box">
+            <h4>النظافة الشخصية (Personal Hygiene)</h4>
+            <p>العامل البشري هو الملوث رقم 1 في المصنع. لذا يشترط:<br>
+            - <b>غسيل اليدين:</b> بالماء والصابون لمدة 20 ثانية قبل دخول صالة الإنتاج وبعد استخدام الحمام.<br>
+            - <b>الزي الواقي:</b> ارتداء البالطو/الأفرول النظيف، غطاء الرأس (Hairnet) يغطي الأذن والشعر بالكامل، وغطاء اللحية.<br>
+            - <b>الممنوعات:</b> يمنع تماماً ارتداء المجوهرات والساعات، الأظافر الطويلة، وتناول الطعام أو التدخين داخل صالة الإنتاج.</p>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>Cleaning 🆚 Sanitizing</h4>
+            <p><b>التنظيف (Cleaning):</b> هو الإزالة الفيزيائية للأوساخ، الدهون، وبقايا الطعام باستخدام المنظفات (مثل إزالة بقعة دهن من على سطح الماكينة).<br>
+            <b>التطهير (Sanitizing):</b> هي الخطوة التي تلي التنظيف، وتهدف إلى خفض عدد الميكروبات غير المرئية إلى مستوى آمن باستخدام الحرارة أو المواد الكيميائية (مثل الكلور).</p>
+            <div class="lesson-highlight">💡 <b>قاعدة ذهبية:</b> لا يمكن تطهير سطح متسخ! يجب التنظيف أولاً ثم التطهير.</div>
+        </div>
+
+        <div class="lesson-content-box">
+            <h4>GMP & GHP</h4>
+            <p><b>GMP (ممارسات التصنيع الجيد):</b> اشتراطات شاملة تغطي تصميم المبنى، صيانة المعدات، التحكم في المياه، وتدريب العمال لضمان بيئة تصنيع آمنة.<br>
+            <b>GHP (الممارسات الصحية الجيدة):</b> جزء من الـ GMP يركز بشكل خاص وحصري على النظافة والتطهير.</p>
+        </div>`
+    },
+    part4: {
+        title: "04. افهم دورة المصنع",
+        icon: "🏭",
+        desc: "من استلام الخامة حتى التوزيع",
+        content: `
+        <div class="lesson-content-box">
+            <h4>دورة حياة المنتج والمخاطر المحتملة</h4>
+            <p>لا تقتصر جودة المصنع على المعمل فقط، إليك رحلة المنتج من البداية للنهاية:</p>
+            
+            <div class="factory-timeline">
+                <div class="timeline-step">
+                    <div class="timeline-title">1. استلام المواد الخام (Receiving)</div>
+                    <div class="timeline-desc"><b>التفتيش على:</b> حرارة سيارة النقل، سلامة العبوات، الصلاحية، والمواصفات الميكروبيولوجية.<br><b>المخاطر:</b> استلام لبن به مضادات حيوية أو حرارته مرتفعة.</div>
+                </div>
+                
+                <div class="timeline-step">
+                    <div class="timeline-title">2. التخزين (Storage)</div>
+                    <div class="timeline-desc"><b>التفتيش على:</b> تطبيق نظام الوارد أولاً يصرف أولاً (FIFO)، والوارد ينتهي أولاً يصرف أولاً (FEFO).<br><b>المخاطر:</b> تلوث تبادلي لعدم الفصل، أو فساد لارتفاع حرارة الثلاجات.</div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="timeline-title">3. التصنيع والمعاملة (Processing)</div>
+                    <div class="timeline-desc"><b>التفتيش على:</b> النقاط الحرجة كالحرارة والوقت (مثل البسترة 72م لمدة 15ث).<br><b>المخاطر:</b> بقاء الميكروبات الممرضة بسبب انخفاض حرارة البسترة.</div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="timeline-title">4. التعبئة والتغليف (Packaging)</div>
+                    <div class="timeline-desc"><b>التفتيش على:</b> جودة لحام العبوة، طباعة تاريخ الإنتاج، والوزن.<br><b>المخاطر:</b> تسريب العبوة مما يؤدي لتلوث المنتج بعد البسترة.</div>
+                </div>
+
+                <div class="timeline-step" style="margin-bottom:0;">
+                    <div class="timeline-title">5. التوزيع (Distribution)</div>
+                    <div class="timeline-desc"><b>التفتيش على:</b> سلسلة التبريد السليمة (Cold Chain).</div>
+                </div>
+            </div>
+        </div>`
+    },
+    part5: {
+        title: "05. مصطلحات لازم تعرفها",
+        icon: "🧠",
+        desc: "أهم المفردات الأساسية",
+        content: `
+        <div class="lesson-content-box" style="text-align: center;">
+            <p style="margin-bottom: 15px; font-weight: 700;">إليك قائمة سريعة لأهم المصطلحات المتداولة يومياً في المصانع:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: right; direction: ltr; margin-bottom: 20px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Conformity:</b> مطابقة</div>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Defect:</b> عيب جودة</div>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Contamination:</b> تلوث</div>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Monitoring:</b> مراقبة/رصد</div>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Control Measure:</b> إجراء تحكم</div>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);"><b>Specification:</b> مواصفة</div>
+            </div>
+            <button class="btn-submit" onclick="openEngModule('dictionary')">🔍 فتح قاموس الجودة الشامل</button>
+        </div>`
+    },
+    part6: {
+        title: "06. التلوث التبادلي",
+        icon: "⚠️",
+        desc: "Cross Contamination",
+        content: `
+        <div class="lesson-content-box">
+            <h4>ما هو التلوث التبادلي (Cross Contamination)؟</h4>
+            <p>هو انتقال البكتيريا أو مسببات الحساسية من مادة ملوثة (عادة مادة خام) إلى طعام آمن (منتج نهائي) عبر وسط ناقل.</p>
+            <div class="lesson-danger"><b>الوسط الناقل قد يكون:</b><br>- الأيدي العاملة غير المغسولة.<br>- الأسطح والمعدات (استخدام نفس السكين لتقطيع لحم نيء ثم جبن).<br>- الهواء وتيارات التكييف داخل المصنع.</div>
+        </div>
+        
+        <div class="scenario-card" style="border-color: #3b82f6;">
+            <div class="scenario-q">❓ سؤال تفاعلي:<br>عامل لمس لحوماً نيئة، ثم قام بتعبئة منتج مطبوخ ونهائي بدون غسل يديه أو تغيير القفازات. ما هو نوع المشكلة؟</div>
+            <button class="scenario-btn" onclick="revealScenarioAns('ans-cross')">اظهار الإجابة الصحيحة</button>
+            <div id="ans-cross" class="scenario-ans" style="color: #3b82f6;">✅ الإجابة: تلوث تبادلي (Cross-Contamination). الأيدي كانت الوسط الذي نقل البكتيريا من الخام للنهائي.</div>
+        </div>`
+    },
+    part7: {
+        title: "07. فكر كمهندس جودة",
+        icon: "🎯",
+        desc: "محاكاة لسيناريوهات من قلب المصنع",
+        content: `
+        <div class="lesson-content-box">
+            <p>الواقع في المصانع ليس أسود وأبيض فقط. اختبر مهاراتك في اتخاذ القرار:</p>
+            
+            <div class="scenario-card">
+                <div class="scenario-q">🏭 الحالة الأولى:<br>أثناء جولتك التفقدية في صالة الإنتاج، وجدت عاملاً يقوم بالتعبئة وهو لا يرتدي غطاء الرأس (Hairnet). ماذا تفعل وما نوع المخالفة؟</div>
+                <button class="scenario-btn" onclick="revealScenarioAns('scen1')">تحليل الموقف</button>
+                <div id="scen1" class="scenario-ans">
+                    <b>الإجراء:</b> إيقاف العامل فوراً وإلزامه بارتداء غطاء الرأس.<br>
+                    <b>المشكلة:</b> مخالفة لمتطلبات الـ Personal Hygiene وممارسات (GMP). الشعر يعتبر خطر فيزيائي (Physical Hazard) وقد يحمل ميكروبات تمثل خطراً بيولوجياً.
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-q">🏭 الحالة الثانية:<br>وجدت كرتونة تحتوي على عبوات لبن معقم (UHT) تسرب منتجاً على الأرضية. هل هذه مشكلة Quality (جودة) أم Food Safety (سلامة غذاء)؟</div>
+                <button class="scenario-btn" onclick="revealScenarioAns('scen2')">تحليل الموقف</button>
+                <div id="scen2" class="scenario-ans">
+                    قد تكون <b>مشكلة جودة (Quality)</b> في البداية (عيب في ماكينة اللحام أدى لسوء شكل العبوة).<br>
+                    ولكنها <b>تتحول فوراً لمشكلة سلامة غذاء (Food Safety)</b> لأن التسريب يعني فتح مسار لدخول البكتيريا للمنتج المعقم وإفساده، مما يضر بالمستهلك.
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-q">🏭 الحالة الثالثة:<br>جهاز كشف المعادن (Metal Detector) أطلق إنذاراً واستبعد عبوة لحوم أثناء الإنتاج. هل تقوم بتمرير العبوة مرة أخرى لتتأكد؟</div>
+                <button class="scenario-btn" onclick="revealScenarioAns('scen3')">تحليل الموقف</button>
+                <div id="scen3" class="scenario-ans">
+                    <b>ممنوع تماماً!</b> العبوة المستبعدة توضع فوراً في صندوق المرفوضات المغلق (Hold).<br>يتم إيقاف الخط، والبحث عن مصدر القطعة المعدنية وإجراء تحقيق كامل (Root Cause Analysis). تمريرها مرة أخرى قد يؤدي لعدم استشعارها وتمرير الخطر للمستهلك.
+                </div>
+            </div>
+        </div>`
+    }
+};
+
+// دالة توجيه المحرك الشامل
+// دالة توجيه المحرك الشامل
+function openEngModule(moduleId) {
+    playClickSound();
+    
+    // سحب الداتا من فايربيز بدل الكود الثابت
+    if (moduleId === 'basics') {
+        const listDiv = document.getElementById('eng-basics-lessons-list');
+        listDiv.innerHTML = '<p style="text-align:center;">جاري تحميل الدروس...</p>';
+        
+        db.ref('eng_academy/basics').once('value', snap => {
+            listDiv.innerHTML = '';
+            if(!snap.exists()) {
+                // الهجرة التلقائية لأول مرة (رفع الداتا القديمة لفايربيز)
+                if(typeof engBasicsLessons !== 'undefined') {
+                    db.ref('eng_academy/basics').set(engBasicsLessons);
+                    showTopToast('تم ربط قاعدة بيانات الأكاديمية، افتح القسم مرة أخرى.', 'info');
+                }
+                return;
+            }
+
+            snap.forEach(child => {
+                const lessonKey = child.key;
+                const lesson = child.val();
+                listDiv.innerHTML += `
+                <div class="eng-path-card" onclick="openEngLessonCloud('${lessonKey}')">
+                    <div class="eng-path-icon">${lesson.icon}</div>
+                    <div class="eng-path-text">
+                        <h4>${lesson.title}</h4>
+                        <p>${lesson.desc}</p>
+                    </div>
+                </div>`;
+            });
+        });
+
+        navigateTo('view-eng-basics-hub', 'أساسيات الجودة', 'المسار التعليمي');
+        return;
+    }
+
+    // باقي الأقسام كما هي
+    const data = engAcademyDB[moduleId];
+    if (!data) { showTopToast('جاري التجهيز! ⏳', 'info'); return; }
+
+    document.getElementById('eng-module-title').innerText = data.title;
+    document.getElementById('eng-module-desc').innerText = data.desc;
+    document.getElementById('eng-module-icon').innerText = data.icon;
+    const contentArea = document.getElementById('eng-module-content-area');
+    contentArea.innerHTML = '';
+
+    if (data.type === "dictionary") {
+        contentArea.innerHTML = `<input type="text" id="eng-dict-search" class="eng-search-bar" placeholder="ابحث بالمصطلح أو الاختصار..." onkeyup="filterEngDictionary()"><div id="eng-dict-results"></div>`;
+        window.currentDictData = data.content; filterEngDictionary();
+    }
+    else if (data.type === "comparisons") {
+        let html = '';
+        data.content.forEach(comp => {
+            html += `<div class="eng-compare-card"><div class="eng-compare-header">${comp.title}</div><div class="eng-compare-body"><div class="eng-compare-side right">${comp.sideA}</div><div class="eng-compare-side">${comp.sideB}</div></div></div>`;
+        });
+        contentArea.innerHTML = html;
+    }
+    else if (data.type === "lab") { contentArea.innerHTML = renderEngLabHTML(); }
+
+    navigateTo('view-eng-sub-section', data.title, 'أكاديمية المهندس');
+}
+
+// فتح الدرس من الكلاود
+function openEngLessonCloud(lessonKey) {
+    playClickSound();
+    db.ref('eng_academy/basics/' + lessonKey).once('value', snap => {
+        if(!snap.exists()) return;
+        const lesson = snap.val();
+        document.getElementById('lesson-detail-title').innerText = lesson.title;
+        document.getElementById('lesson-detail-content').innerHTML = lesson.content;
+        navigateTo('view-eng-lesson-detail', 'أساسيات الجودة', lesson.title);
+    });
+}
+
+// محرك بحث القاموس اللحظي
+function filterEngDictionary() {
+    const query = document.getElementById('eng-dict-search').value.toLowerCase().trim();
+    const resultsBox = document.getElementById('eng-dict-results');
+    let html = '';
+    
+    window.currentDictData.forEach(item => {
+        if (item.term.toLowerCase().includes(query) || item.ar.includes(query)) {
+            html += `
+            <div class="eng-dict-item">
+                <div class="eng-dict-term">${item.term}</div>
+                <div class="eng-dict-ar">${item.ar}</div>
+                <div class="eng-dict-def">${item.def}</div>
+            </div>`;
+        }
+    });
+    
+    if(html === '') html = '<p style="text-align:center; color:var(--text-sub);">لم يتم العثور على مصطلح مطابق.</p>';
+    resultsBox.innerHTML = html;
+}
+
+// واجهة المعمل المصغر
+function renderEngLabHTML() {
+    return `
+    <div class="auth-card" style="margin-bottom:15px; text-align:right;">
+        <h4 style="color:var(--accent-emerald); margin-bottom:10px;">⚖️ مربع بيرسون (توحيد نسبة الدهن)</h4>
+        <div class="form-group"><label>نسبة الدهن في اللبن (الضعيف) %</label><input type="number" id="pearson-milk" class="form-input" placeholder="مثال: 3"></div>
+        <div class="form-group"><label>نسبة الدهن في القشدة (القوي) %</label><input type="number" id="pearson-cream" class="form-input" placeholder="مثال: 40"></div>
+        <div class="form-group"><label>النسبة المطلوبة في المخلوط %</label><input type="number" id="pearson-target" class="form-input" placeholder="مثال: 5"></div>
+        <button class="btn-submit" onclick="calcPearson()">احسب النسب 🧮</button>
+        <div id="pearson-res" style="margin-top:15px; font-weight:800; color:var(--accent-gold); line-height: 1.6;"></div>
+    </div>
+    
+    <div class="auth-card" style="text-align:right;">
+        <h4 style="color:var(--accent-emerald); margin-bottom:10px;">🧪 حساب الحموضة (اللاكتيك)</h4>
+        <div class="form-group"><label>حجم المستهلك من السحاحة (ملي)</label><input type="number" id="acid-v" class="form-input" placeholder="مثال: 2.5"></div>
+        <div class="form-group"><label>وزن/حجم العينة</label><input type="number" id="acid-w" class="form-input" placeholder="مثال: 10"></div>
+        <button class="btn-submit" onclick="calcAcidity()">احسب الحموضة 🧮</button>
+        <div id="acid-res" style="margin-top:15px; font-weight:900; color:var(--accent-gold); font-size: 1.1rem;"></div>
+    </div>
+    `;
+}
+
+// دوال حسابات المعمل
+function calcPearson() {
+    playClickSound();
+    const m = parseFloat(document.getElementById('pearson-milk').value);
+    const c = parseFloat(document.getElementById('pearson-cream').value);
+    const t = parseFloat(document.getElementById('pearson-target').value);
+    if (isNaN(m) || isNaN(c) || isNaN(t)) return showTopToast('أدخل جميع النسب!', 'error');
+    if (t <= m || t >= c) return showTopToast('النسبة المطلوبة بين اللبن والقشدة!', 'error');
+    const mP = Math.abs(c - t), cP = Math.abs(t - m), tot = mP + cP;
+    document.getElementById('pearson-res').innerHTML = `
+    أجزاء اللبن: ${mP.toFixed(2)} | أجزاء القشدة: ${cP.toFixed(2)}<br>
+    <span style="color:#fff;">لعمل 100 كجم:</span> ${(mP/tot*100).toFixed(1)} كجم لبن، و ${(cP/tot*100).toFixed(1)} كجم قشدة.`;
+}
+
+function calcAcidity() {
+    playClickSound();
+    const v = parseFloat(document.getElementById('acid-v').value);
+    const w = parseFloat(document.getElementById('acid-w').value);
+    if (isNaN(v) || isNaN(w) || w === 0) return showTopToast('أدخل البيانات صحيحة!', 'error');
+    document.getElementById('acid-res').innerHTML = `نسبة الحموضة: ${((v * 0.1 * 0.090 / w) * 100).toFixed(3)} %`;
+}
+// ================= دوال إدارة الأكاديمية (أدمن) =================
+
+function loadAdminAcademyLessons() {
+    const list = document.getElementById('admin-academy-list');
+    db.ref('eng_academy/basics').on('value', snap => {
+        list.innerHTML = '';
+        if(!snap.exists()) { list.innerHTML = '<p style="text-align:center;">لا توجد دروس.</p>'; return; }
+        
+        snap.forEach(child => {
+            const id = child.key;
+            const data = child.val();
+            list.innerHTML += `
+            <div class="admin-item-card">
+                <div class="admin-item-info">
+                    <div class="admin-item-name">${data.icon} ${data.title}</div>
+                    <div class="admin-item-sub">${data.desc}</div>
+                </div>
+                <div style="display: flex; gap: 6px; flex-direction: column;">
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editAdminAcademyLesson('${id}')">تعديل ✏️</button>
+                    <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.7rem;" onclick="deleteAdminAcademyLesson('${id}')">حذف 🗑️</button>
+                </div>
+            </div>`;
+        });
+    });
+}
+
+// الإدراج السريع للقوالب (Magic Builder)
+function insertAcademyBlock(type) {
+    const textarea = document.getElementById('adm-acad-content');
+    let snippet = '';
+    const uniqueId = 'ans_' + Math.floor(Math.random() * 100000); // توليد ID عشوائي للسيناريوهات
+
+    if(type === 'box') {
+        snippet = `\n<div class="lesson-content-box">\n    <h4>عنوان الفقرة</h4>\n    <p>اكتب الشرح هنا...</p>\n</div>\n`;
+    } else if (type === 'highlight') {
+        snippet = `\n<div class="lesson-highlight">💡 <b>معلومة هامة:</b> اكتب الملاحظة هنا...</div>\n`;
+    } else if (type === 'danger') {
+        snippet = `\n<div class="lesson-danger">⚠️ <b>تحذير:</b> اكتب التحذير هنا...</div>\n`;
+    } else if (type === 'scenario') {
+        snippet = `\n<div class="scenario-card" style="border-color: #3b82f6;">\n    <div class="scenario-q">❓ سؤال تفاعلي:<br>اكتب الموقف هنا...</div>\n    <button class="scenario-btn" onclick="revealScenarioAns('${uniqueId}')">إظهار الإجابة الصحيحة</button>\n    <div id="${uniqueId}" class="scenario-ans" style="color: #3b82f6;">✅ الإجابة: اكتب الحل هنا...</div>\n</div>\n`;
+    } else if (type === 'timeline') {
+        snippet = `\n<div class="factory-timeline">\n    <div class="timeline-step">\n        <div class="timeline-title">اسم المرحلة</div>\n        <div class="timeline-desc"><b>التفتيش على:</b> ...<br><b>المخاطر:</b> ...</div>\n    </div>\n</div>\n`;
+    }
+
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    textarea.value = textarea.value.substring(0, startPos) + snippet + textarea.value.substring(endPos, textarea.value.length);
+    textarea.focus();
+}
+
+function editAdminAcademyLesson(id) {
+    playClickSound();
+    db.ref('eng_academy/basics/' + id).once('value', snap => {
+        if(!snap.exists()) return;
+        const data = snap.val();
+        document.getElementById('adm-acad-id').value = id;
+        document.getElementById('adm-acad-title').value = data.title;
+        document.getElementById('adm-acad-icon').value = data.icon;
+        document.getElementById('adm-acad-desc').value = data.desc;
+        document.getElementById('adm-acad-content').value = data.content;
+        
+        document.getElementById('adm-acad-title').focus();
+        showTopToast('تم جلب بيانات الدرس، يمكنك التعديل الآن.', 'info');
+    });
+}
+
+function adminSaveAcademyLesson() {
+    playClickSound();
+    const idField = document.getElementById('adm-acad-id').value.trim();
+    // لو مفيش ID، نعمل واحد جديد (درس جديد)
+    const finalId = idField !== '' ? idField : 'lesson_' + Date.now();
+    
+    const title = document.getElementById('adm-acad-title').value.trim();
+    const icon = document.getElementById('adm-acad-icon').value.trim() || '📘';
+    const desc = document.getElementById('adm-acad-desc').value.trim();
+    const content = document.getElementById('adm-acad-content').value.trim();
+
+    if(!title || !content) { showTopToast('يرجى كتابة العنوان والمحتوى على الأقل!', 'error'); return; }
+
+    db.ref('eng_academy/basics/' + finalId).update({ title, icon, desc, content }).then(() => {
+        showTopToast('تم حفظ ونشر الدرس بنجاح! ✅', 'success');
+        resetAcademyAdminForm();
+    });
+}
+
+function deleteAdminAcademyLesson(id) {
+    if(confirm('هل أنت متأكد من حذف هذا الدرس نهائياً؟')) {
+        db.ref('eng_academy/basics/' + id).remove().then(() => showTopToast('تم الحذف بنجاح.', 'info'));
+    }
+}
+
+function resetAcademyAdminForm() {
+    document.getElementById('adm-acad-id').value = '';
+    document.getElementById('adm-acad-title').value = '';
+    document.getElementById('adm-acad-icon').value = '';
+    document.getElementById('adm-acad-desc').value = '';
+    document.getElementById('adm-acad-content').value = '';
+}
