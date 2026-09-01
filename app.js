@@ -68,7 +68,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.1";
+    const CURRENT_APP_VERSION = "1.1.2";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
