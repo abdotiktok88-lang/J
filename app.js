@@ -68,7 +68,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.2";
+    const CURRENT_APP_VERSION = "1.1.3";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -3474,9 +3474,11 @@ if (currentUser) {
         }
     }
 
+    let loadedAdminTabs = {}; // ذاكرة ذكية لمنع التحميل المتكرر
+    let isAdminDataLoaded = false;
+
     function switchAdminTab(tabName) {
         playClickSound();
-        // 👈 تم إضافة 'academy' داخل المصفوفة هنا
         ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'academy'].forEach(t => {
             const tabBtn = document.getElementById('tab-admin-' + t);
             const tabSec = document.getElementById('admin-section-' + t);
@@ -3490,12 +3492,13 @@ if (currentUser) {
         if (currentBtn) currentBtn.classList.add('active');
         if (currentSec) currentSec.style.display = 'block';
 
-        if (tabName === 'analytics') loadAdminAnalyticsAndLogs();
-        if (tabName === 'tickets') loadAdminTickets();
-        if (tabName === 'achievements') renderAdminAchievementsList();
-        if (tabName === 'quiz') loadAdminCustomQuestions();
-        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions();
-        if (tabName === 'academy') loadAdminAcademyLessons(); // 👈 السطر ده اللي بيحمل الدروس
+        // التحميل يتم مرة واحدة فقط لكل قسم!
+        if (tabName === 'analytics' && !loadedAdminTabs.analytics) { loadAdminAnalyticsAndLogs(); loadedAdminTabs.analytics = true; }
+        if (tabName === 'tickets' && !loadedAdminTabs.tickets) { loadAdminTickets(); loadedAdminTabs.tickets = true; }
+        if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
+        if (tabName === 'quiz' && !loadedAdminTabs.quiz) { loadAdminCustomQuestions(); loadedAdminTabs.quiz = true; }
+        if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
+        if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
     }
 
     function populateAdminStoreInputs() {
@@ -3585,6 +3588,8 @@ function deleteCustomQuestion(qId) {
 }
 
     function loadAdminData() {
+        if (isAdminDataLoaded) { filterAdminUsers(); return; } // لو الداتا محملة، متسحبش حاجة من النت!
+        
         document.getElementById('admin-users-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
         document.getElementById('admin-codes-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
         
@@ -3593,6 +3598,7 @@ function deleteCustomQuestion(qId) {
             snap.forEach(child => { adminAllUsersData.push({ id: child.key, ...child.val() }); });
             adminAllUsersData.sort((a, b) => ((b.xp || b.points || 0) - (a.xp || a.points || 0)));
             renderAdminUsers(adminAllUsersData);
+            isAdminDataLoaded = true; // تم الحفظ في الذاكرة
         });
 
         db.ref('promo_codes').once('value').then((snap) => {
@@ -4694,52 +4700,42 @@ rewardEl.innerHTML = `
     }
 
     function loadAdminAnalyticsAndLogs() {
-        // 1. حساب الإحصائيات العامة من بيانات المستخدمين
-        db.ref('users').once('value').then(snapshot => {
-            let totalUsers = 0;
-            let totalCorrect = 0;
-            let totalPlayed = 0;
-            let totalDerbyWins = 0;
-            let totalPenalties = 0;
+        // 1. استخدام البيانات الجاهزة في الذاكرة بدلاً من استهلاك النت!
+        let totalUsers = adminAllUsersData.length;
+        let totalCorrect = 0;
+        let totalPlayed = 0;
+        let totalDerbyWins = 0;
+        let totalPenalties = 0;
 
-            snapshot.forEach(child => {
-                totalUsers++;
-                const u = child.val();
-                totalCorrect += (u.quizCorrect || 0);
-                totalPlayed += (u.quizPlayed || 0);
-                totalDerbyWins += (u.derby_wins || 0);
-                totalPenalties += (u.penalties_scored || 0);
-            });
-
-            const totalQuestionsAnswered = totalPlayed * 5;
-            const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
-
-            document.getElementById('stat-total-users').innerText = totalUsers;
-            document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
-            document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
+        adminAllUsersData.forEach(u => {
+            totalCorrect += (u.quizCorrect || 0);
+            totalPlayed += (u.quizPlayed || 0);
+            totalDerbyWins += (u.derby_wins || 0);
+            totalPenalties += (u.penalties_scored || 0);
         });
 
-        // 2. قراءة عدد مباريات الديربي وركلات الجزاء من السجلات
-        db.ref('app_activity_logs').limitToLast(100).on('value', snap => {
+        const totalQuestionsAnswered = totalPlayed * 5;
+        const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
+
+        document.getElementById('stat-total-users').innerText = totalUsers;
+        document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
+        document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
+
+        // 2. قراءة السجلات مرة واحدة (once) بدل (on) لمنع التحديث المزعج
+        db.ref('app_activity_logs').limitToLast(100).once('value', snap => {
             const container = document.getElementById('admin-live-logs-list');
             if (!snap.exists()) {
                 container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أنشطة مسجلة حتى الآن.</p>';
-                document.getElementById('stat-derby-battles').innerText = '0';
-                document.getElementById('stat-penalty-played').innerText = '0';
-                document.getElementById('stat-classic-quizzes').innerText = '0';
                 return;
             }
 
             let logsArr = [];
-            let derbyCount = 0;
-            let penaltyCount = 0;
-            let classicCount = 0;
+            let derbyCount = 0, penaltyCount = 0, classicCount = 0;
 
             snap.forEach(child => {
                 const log = child.val();
                 log.id = child.key;
                 logsArr.push(log);
-
                 if (log.type === 'derby') derbyCount++;
                 else if (log.type === 'penalty') penaltyCount++;
                 else if (log.type === 'classic') classicCount++;
@@ -4749,24 +4745,15 @@ rewardEl.innerHTML = `
             document.getElementById('stat-penalty-played').innerText = penaltyCount;
             document.getElementById('stat-classic-quizzes').innerText = classicCount;
 
-            // ترتيب السجلات من الأحدث للأقدم
-            // ترتيب السجلات من الأحدث للأقدم بناءً على الوقت الفعلي (Timestamp)
             logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             let html = '';
             logsArr.slice(0, 50).forEach(log => {
-                let badgeStyle = 'background: rgba(99, 102, 241, 0.2); color: var(--accent-highlight);';
-                let typeText = '🧠 تحدي كلاسيكي';
-
-                if (log.type === 'derby') {
-                    badgeStyle = 'background: rgba(239, 68, 68, 0.2); color: #ef4444;';
-                    typeText = '⚔️ ديربي 1v1';
-                } else if (log.type === 'penalty') {
-                    badgeStyle = 'background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);';
-                    typeText = '⚽ ركلات جزاء';
-                }
-
-                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }) : 'الآن';
+                let badgeStyle = log.type === 'derby' ? 'background: rgba(239, 68, 68, 0.2); color: #ef4444;' : 
+                                 log.type === 'penalty' ? 'background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);' : 
+                                 'background: rgba(99, 102, 241, 0.2); color: var(--accent-highlight);';
+                let typeText = log.type === 'derby' ? '⚔️ ديربي 1v1' : log.type === 'penalty' ? '⚽ ركلات جزاء' : '🧠 تحدي كلاسيكي';
+                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن';
 
                 html += `
                 <div class="live-log-item">
@@ -4774,10 +4761,9 @@ rewardEl.innerHTML = `
                         <span class="card-badge" style="${badgeStyle}">${typeText}</span>
                         <span style="font-size: 0.7rem; color: var(--text-sub);">${timeStr}</span>
                     </div>
-                    <p style="font-size: 0.84rem; color: var(--text-main); font-weight: 700; line-height: 1.5; margin: 0;">${log.details}</p>
+                    <p style="font-size: 0.84rem; color: var(--text-main); font-weight: 700; margin: 0;">${log.details}</p>
                 </div>`;
             });
-
             container.innerHTML = html;
         });
     }
