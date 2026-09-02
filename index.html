@@ -1611,6 +1611,52 @@
 .eng-compare-body { display: flex; text-align: center; }
 .eng-compare-side { flex: 1; padding: 15px 10px; font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; font-weight: 600; }
 .eng-compare-side.right { border-left: 1px dashed var(--border-card); }
+/* ================= شاشة بيئة الهاسب الاحترافية ================= */
+.haccp-top-nav-wrapper {
+    position: sticky; top: 0; background: var(--bg-primary);
+    padding: 10px 0; z-index: 50; border-bottom: 1px solid var(--border-card);
+    margin: -18px -16px 15px -16px; /* لإلغاء الـ padding بتاع الـ container */
+}
+.haccp-top-nav {
+    display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 0 16px 5px; -webkit-overflow-scrolling: touch;
+}
+.haccp-top-nav::-webkit-scrollbar { display: none; }
+
+.haccp-tab-btn {
+    flex: 0 0 auto; scroll-snap-align: start;
+    background: var(--bg-secondary); border: 1px solid var(--border-card);
+    color: var(--text-sub); padding: 10px 18px; border-radius: 12px;
+    font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.3s;
+}
+.haccp-tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%);
+    color: #000; border-color: var(--accent-gold); box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.haccp-content-pane { display: none; animation: fadeIn 0.4s ease; }
+.haccp-content-pane.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* جدول الهاسب الاحترافي (نمط المصانع) */
+.haccp-table-container {
+    overflow-x: auto; background: var(--bg-secondary);
+    border: 1px solid var(--border-card); border-radius: 14px;
+    direction: rtl; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+.haccp-professional-table {
+    width: 100%; min-width: 800px; border-collapse: collapse; font-size: 0.8rem;
+}
+.haccp-professional-table th {
+    background: rgba(99, 102, 241, 0.15); color: var(--accent-highlight);
+    font-weight: 900; padding: 12px; border: 1px solid var(--border-card); text-align: center;
+}
+.haccp-professional-table td {
+    padding: 10px; border: 1px solid var(--border-card);
+    color: var(--text-main); text-align: center; font-weight: 600; line-height: 1.5;
+}
+.haccp-professional-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.ccp-badge { background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 6px; font-weight: 900; font-size: 0.7rem;}
 
 </style>
 </head>
@@ -2543,18 +2589,7 @@
                         <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit"></div><div class="card-text"><h3>تعديل الملف الشخصي</h3><p>تغيير الاسم، البايو والصورة الرمزية</p></div></div>
                         <div class="card-arrow">←</div>
                     </div>
-<div class="app-card" onclick="openWalletHistory()">
-    <div class="card-info">
-        <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-gold);">
-            <img src="https://img.icons8.com/fluency/96/bill.png" alt="History">
-        </div>
-        <div class="card-text">
-                        <h3>سجل المعاملات والعملات</h3>
-                        <p>تفاصيل حركة النقاط والمشتريات والمكافآت</p>
-                    </div>
-    </div>
-    <div class="card-arrow">←</div>
-</div>
+
                     <div class="app-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="logoutUser()">
                         <div class="card-info"><div class="card-icon" style="background: rgba(239, 68, 68, 0.1);"><img src="https://img.icons8.com/fluency/96/exit.png" alt="Logout"></div><div class="card-text"><h3 style="color: #ef4444;">تسجيل الخروج</h3><p>تسجيل الخروج من هذا الجهاز</p></div></div>
                         <div class="card-arrow" style="color: #ef4444;">←</div>
@@ -2915,6 +2950,7 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div class="section-label" style="margin: 0;">⚡ سجل الألعاب والنشاط المباشر</div>
+<button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminAnalyticsAndLogs()">تحديث 🔄</button>
                     <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="clearActivityLogs()">مسح السجل 🗑️</button>
                 </div>
                 
@@ -3584,8 +3620,124 @@
         </div>
     </div>
 
-    </div>
     
+<!-- ================= واجهة الهاسب الاحترافية ================= -->
+<div id="view-eng-haccp-master" class="view-section">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h3 style="color: var(--accent-gold); font-size: 1.15rem; font-weight: 900;">نظام الهاسب (HACCP) 🛡️</h3>
+        <button class="admin-action-btn" style="padding: 4px 12px;" onclick="navigateBack()">رجوع ↩</button>
+    </div>
+
+    <!-- الشريط الأفقي العلوي -->
+    <div class="haccp-top-nav-wrapper">
+        <div class="haccp-top-nav">
+            <button class="haccp-tab-btn active" onclick="switchHaccpTab('intro', this)">المقدمة</button>
+            <button class="haccp-tab-btn" onclick="switchHaccpTab('steps', this)">الخطوات التمهيدية (5)</button>
+            <button class="haccp-tab-btn" onclick="switchHaccpTab('principles', this)">المبادئ الأساسية (7)</button>
+            <button class="haccp-tab-btn" onclick="switchHaccpTab('plan', this)">خطة مصنع جاهزة</button>
+            <button class="haccp-tab-btn" onclick="switchHaccpTab('tree', this)">شجرة اتخاذ القرار</button>
+        </div>
+    </div>
+
+    <!-- 1. شاشة المقدمة -->
+    <div id="haccp-pane-intro" class="haccp-content-pane active">
+        <div class="lesson-content-box">
+            <h4>ما هو الـ HACCP؟</h4>
+            <p>نظام تحليل المخاطر ونقاط التحكم الحرجة (Hazard Analysis and Critical Control Points). هو نظام وقائي يعنى بضمان سلامة الغذاء من خلال تحديد المخاطر (البيولوجية، الكيميائية، الفيزيائية) والسيطرة عليها بدلاً من الاعتماد فقط على فحص المنتج النهائي.</p>
+        </div>
+        <div class="lesson-danger">⚠️ <b>تذكر دائماً:</b> الهاسب لا يمكن أن يبنى في الهواء! يجب أن يسبقه تطبيق صارم للبرامج التمهيدية (PRPs) مثل ممارسات التصنيع الجيد (GMP) والممارسات الصحية (GHP) وبرامج مكافحة الآفات والصيانة.</div>
+    </div>
+
+    <!-- 2. شاشة الخطوات التمهيدية -->
+    <div id="haccp-pane-steps" class="haccp-content-pane">
+        <div class="section-label">الخطوات التمهيدية الخمسة</div>
+        <div class="factory-timeline">
+            <div class="timeline-step">
+                <div class="timeline-title">1. تشكيل فريق الهاسب</div>
+                <div class="timeline-desc">فريق متعدد التخصصات (جودة، إنتاج، صيانة، مخازن) لضمان تغطية كل جوانب التصنيع.</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-title">2. وصف المنتج</div>
+                <div class="timeline-desc">المكونات، التركيب (pH, Aw)، التعبئة، ومدة الصلاحية ظروف التخزين.</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-title">3. تحديد الاستخدام المقصود</div>
+                <div class="timeline-desc">من هو المستهلك؟ (عوام الناس، أطفال، حوامل، مرضى نقص المناعة).</div>
+            </div>
+            <div class="timeline-step">
+                <div class="timeline-title">4. إنشاء خريطة التدفق (Flow Diagram)</div>
+                <div class="timeline-desc">رسم توضيحي لكل خطوة من استلام الخامة حتى خروج المنتج للتوزيع.</div>
+            </div>
+            <div class="timeline-step" style="margin-bottom:0;">
+                <div class="timeline-title">5. التحقق الميداني من خريطة التدفق</div>
+                <div class="timeline-desc">نزول الفريق لصالة الإنتاج للتأكد من مطابقة الرسم للواقع الفعلي وإجراء التعديلات.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. شاشة المبادئ (مكان فارغ سيتم تعبئته لاحقاً بالشرح) -->
+    <div id="haccp-pane-principles" class="haccp-content-pane">
+        <div class="lesson-content-box" style="text-align: center;">
+            <p style="color: var(--text-sub);">سيتم تفصيل المبادئ السبعة هنا بنظام بطاقات مدمجة تفاعلية.</p>
+        </div>
+    </div>
+
+    <!-- 4. شاشة خطة الهاسب الجاهزة (نموذج عملي لخط بسترة اللبن/العصير) -->
+    <div id="haccp-pane-plan" class="haccp-content-pane">
+        <div class="section-label">نموذج سجل خطة هاسب (بسترة)</div>
+        <div class="haccp-table-container">
+            <table class="haccp-professional-table">
+                <thead>
+                    <tr>
+                        <th>الخطوة</th>
+                        <th>الخطر (Hazard)</th>
+                        <th>إجراء التحكم</th>
+                        <th>الحد الحرج (Critical Limit)</th>
+                        <th>المراقبة (ماذا وكيف ومتى ومن)</th>
+                        <th>الإجراء التصحيحي (CAPA)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>البسترة الحرارية</b><br><span class="ccp-badge">CCP 1</span></td>
+                        <td><span style="color:#ef4444;">بيولوجي:</span> بقاء البكتيريا الممرضة (مثل السالمونيلا)</td>
+                        <td>المعاملة الحرارية الكافية لقتل الميكروبات الممرضة.</td>
+                        <td>درجة الحرارة لا تقل عن <b>72°C</b> لمدة لا تقل عن <b>15 ثانية</b>.</td>
+                        <td>
+                            <b>ماذا:</b> حرارة اللبن/العصير والوقت.<br>
+                            <b>كيف:</b> حساسات الحرارة والصمام المرتجع (Flow Diversion Valve).<br>
+                            <b>متى:</b> مستمر (Continuous).<br>
+                            <b>من:</b> مشغل ماكينة البسترة.
+                        </td>
+                        <td>إذا انخفضت الحرارة عن 72°C، يفتح صمام الـ FDV تلقائياً لإرجاع اللبن لخزان التوازن. عزل وتصرف في المنتج غير المطابق وإبلاغ الجودة.</td>
+                    </tr>
+                    <tr>
+                        <td><b>جهاز كشف المعادن</b><br><span class="ccp-badge">CCP 2</span></td>
+                        <td><span style="color:#f59e0b;">فيزيائي:</span> وجود شظايا معدنية داخل العبوات</td>
+                        <td>تمرير العبوات على Metal Detector معاير.</td>
+                        <td>صفر % معادن (حديد 1.5 مم، لاحديد 2 مم، ستانلس 2.5 مم).</td>
+                        <td>
+                            <b>ماذا:</b> وجود معادن.<br>
+                            <b>كيف:</b> عبر كاشف المعادن.<br>
+                            <b>متى:</b> كل عبوة (مستمر)، واختبار الجهاز بعينات قياسية كل ساعة.<br>
+                            <b>من:</b> فني الجودة / مشغل الخط.
+                        </td>
+                        <td>استبعاد العبوة آلياً في صندوق المرفوضات. إيقاف الخط فوراً وإبلاغ الصيانة للبحث عن مصدر القطعة المعدنية.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 10px; text-align: center;">اسحب الجدول يميناً ويساراً لرؤية كافة الخانات ↔️</p>
+    </div>
+
+    <!-- 5. شجرة القرار (مكان فارغ مؤقتاً) -->
+    <div id="haccp-pane-tree" class="haccp-content-pane">
+        <div class="lesson-content-box" style="text-align: center;">
+            <p style="color: var(--text-sub);">سيتم تصميم Decision Tree تفاعلية هنا لاحقاً.</p>
+        </div>
+    </div>
+</div>
+
 <!-- الواجهة الرئيسية: أكاديمية مهندس الجودة -->
 <div id="view-engineer-hub" class="view-section">
     <div class="eng-premium-banner">
@@ -3669,6 +3821,7 @@
     </div>
 </div>
 
+</div> 
     <!-- شريط التنقل السفلي الثابت -->
     <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
         <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">

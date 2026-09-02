@@ -1,3 +1,6 @@
+let cloudQuestionsCache = null;
+let ehbedQuestionsCache = null;
+
 // نظام قفل الصيانة الذكي مع استثناء المطور
 document.addEventListener("DOMContentLoaded", () => {
     const maintenanceScreen = document.getElementById('maintenance-lock-screen');
@@ -68,7 +71,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.3";
+    const CURRENT_APP_VERSION = "1.1.4";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -353,46 +356,51 @@ function shuffleArray(array) {
     }
 
     async function loadHallOfFameData() {
-    try {
-        // 1. إمبراطور النقاط
-        const xpSnap = await db.ref('users').orderByChild('xp').limitToLast(1).once('value');
-        xpSnap.forEach(c => setFameCard(1, c.val(), `${c.val().xp || 0} XP`));
+        // لو الداتا مسحوبة قبل كده في نفس الجلسة، اعرضها فوراً ووفر النت
+        if (cachedFameData) {
+            setFameCard(1, cachedFameData.xp, `${cachedFameData.xp.xp || 0} XP`);
+            setFameCard(2, cachedFameData.streak, `${cachedFameData.streak.daily_streak || 0} يوم متتالي 🔥`);
+            setFameCard(3, cachedFameData.quiz, `${cachedFameData.quiz.quizCorrect || 0} إجابة صحيحة`);
+            setFameCard(4, cachedFameData.acc, `دقة ${cachedFameData.accValue}% 🎯`);
+            setFameCard(5, cachedFameData.derby, `${cachedFameData.derby.derby_wins || 0} فوز ديربي ⚔️`);
+            setFameCard(6, cachedFameData.coins, `${cachedFameData.coins.coins || 0} عملة 💸`);
+            return;
+        }
 
-        // 2. بطل الاستمرارية
-        const streakSnap = await db.ref('users').orderByChild('daily_streak').limitToLast(1).once('value');
-        streakSnap.forEach(c => setFameCard(2, c.val(), `${c.val().daily_streak || 0} يوم متتالي 🔥`));
+        try {
+            cachedFameData = {};
+            const xpSnap = await db.ref('users').orderByChild('xp').limitToLast(1).once('value');
+            xpSnap.forEach(c => cachedFameData.xp = c.val());
 
-        // 3. فارس التحديات (أعلى إجابات صحيحة)
-        const quizSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(1).once('value');
-        quizSnap.forEach(c => setFameCard(3, c.val(), `${c.val().quizCorrect || 0} إجابة صحيحة`));
+            const streakSnap = await db.ref('users').orderByChild('daily_streak').limitToLast(1).once('value');
+            streakSnap.forEach(c => cachedFameData.streak = c.val());
 
-        // 4. القناص الخارق (نسحب أعلى 15 بس في الإجابات ونحسب الدقة بينهم بدل الدفعة كلها)
-        const accSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(15).once('value');
-        let topAccUser = null;
-        let maxAcc = -1;
-        accSnap.forEach(c => {
-            const u = c.val();
-            if ((u.quizPlayed || 0) >= 3) {
-                const acc = Math.round((u.quizCorrect / (u.quizPlayed * 5)) * 100);
-                if (acc > maxAcc) { maxAcc = acc; topAccUser = u; }
-            }
-        });
-        if (topAccUser) setFameCard(4, topAccUser, `دقة ${maxAcc}% 🎯`);
+            const quizSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(1).once('value');
+            quizSnap.forEach(c => cachedFameData.quiz = c.val());
 
-        // 5. جلاد الديربي
-        const derbySnap = await db.ref('users').orderByChild('derby_wins').limitToLast(1).once('value');
-        derbySnap.forEach(c => {
-            if((c.val().derby_wins || 0) > 0) setFameCard(5, c.val(), `${c.val().derby_wins || 0} فوز ديربي ⚔️`);
-        });
+            const accSnap = await db.ref('users').orderByChild('quizCorrect').limitToLast(15).once('value');
+            let topAccUser = null; let maxAcc = -1;
+            accSnap.forEach(c => {
+                const u = c.val();
+                if ((u.quizPlayed || 0) >= 3) {
+                    const acc = Math.round((u.quizCorrect / (u.quizPlayed * 5)) * 100);
+                    if (acc > maxAcc) { maxAcc = acc; topAccUser = u; }
+                }
+            });
+            cachedFameData.acc = topAccUser;
+            cachedFameData.accValue = maxAcc;
 
-        // 6. مليونير الدفعة
-        const coinsSnap = await db.ref('users').orderByChild('coins').limitToLast(1).once('value');
-        coinsSnap.forEach(c => setFameCard(6, c.val(), `${c.val().coins || 0} عملة 💸`));
+            const derbySnap = await db.ref('users').orderByChild('derby_wins').limitToLast(1).once('value');
+            derbySnap.forEach(c => cachedFameData.derby = c.val());
 
-    } catch (e) {
-        console.log("Error loading Hall of Fame:", e);
+            const coinsSnap = await db.ref('users').orderByChild('coins').limitToLast(1).once('value');
+            coinsSnap.forEach(c => cachedFameData.coins = c.val());
+
+            // استدعاء الدالة نفسها مرة أخرى لعرض الداتا بعد حفظها في الكاش
+            loadHallOfFameData();
+
+        } catch (e) { console.log("Error loading Hall of Fame:", e); }
     }
-}
 
     function setFameCard(index, user, statText) {
         if (!user) return;
@@ -742,6 +750,10 @@ function playExactMatchSound() {
             const nextSection = document.getElementById(viewId);
             if (nextSection) {
                 nextSection.style.display = 'block';
+                
+                // 🚀 السطر السحري عشان الشاشة تفتح من فوق دايماً
+                window.scrollTo(0, 0); 
+                
                 setTimeout(() => nextSection.classList.add('active'), 20);
             }
         }, 100);
@@ -908,6 +920,7 @@ function getAvatarFrameOverlayHtml(frameKey) {
 
     // ================= تهيئة المستخدم =================
     let currentUser = null; 
+let cachedFameData = null;
     let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
 let hasCheckedDailyLoginSession = false;
 
@@ -1910,21 +1923,9 @@ renderAchievementsTabUI();
                 }
             });
     }
-// دالة تسجيل أي معاملة في سجل الطالب
 function recordUserTransaction(title, xpChange = 0, coinsChange = 0, type = 'reward') {
-    if (!currentUser) return;
-    try {
-        // تم تغيير المسار ليكون مستقلاً تماماً
-        db.ref('user_transactions/' + currentUser.phone).push({
-            title: title,
-            xp: xpChange,
-            coins: coinsChange,
-            type: type, // 'reward', 'purchase', 'penalty'
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-    } catch (e) {
-        console.error('Error logging transaction:', e);
-    }
+    // تم إيقاف تسجيل المعاملات نهائياً لتوفير الاستهلاك 🚀
+    return;
 }
 
 // دالة فتح وعرض سجل المعاملات
@@ -2557,15 +2558,23 @@ await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins =
             });
         });
 
-        try {
-            const snap = await db.ref('custom_questions').once('value');
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    const val = c.val();
-                    if (val && val.q && val.a) pool.push(val);
-                });
-            }
-        } catch (e) {}
+        if (cloudQuestionsCache) {
+            cloudQuestionsCache.forEach(val => pool.push(val));
+        } else {
+            try {
+                const snap = await db.ref('custom_questions').once('value');
+                cloudQuestionsCache = [];
+                if (snap.exists()) {
+                    snap.forEach(c => {
+                        const val = c.val();
+                        if (val && val.q && val.a) {
+                            cloudQuestionsCache.push(val);
+                            pool.push(val);
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
 
         pool = shuffleArray(pool);
         return pool.slice(0, 10);
@@ -3157,26 +3166,26 @@ function checkHallOfFameStatus() {
             });
         });
 
-        db.ref('custom_questions').once('value').then((snapshot) => {
-            if (snapshot.exists()) {
-                snapshot.forEach(child => {
-                    let customQ = child.val();
-                    if (customQ && customQ.q && customQ.a) {
-                        allAvailableQuestions.push({
-                            id: `custom_${child.key}`,
-                            q: customQ.q,
-                            a: [...customQ.a],
-                            correct: customQ.correct || 0,
-                            categoryName: customQ.category || "أسئلة إضافية"
-                        });
-                    }
-                });
-            }
-            processSmartQuizDeck(allAvailableQuestions);
-        }).catch(() => {
-            processSmartQuizDeck(allAvailableQuestions);
-        });
-    }
+        if (cloudQuestionsCache) {
+            processSmartQuizDeck(allAvailableQuestions.concat(cloudQuestionsCache));
+        } else {
+            db.ref('custom_questions').once('value').then((snapshot) => {
+                cloudQuestionsCache = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        let customQ = child.val();
+                        if (customQ && customQ.q && customQ.a) {
+                            cloudQuestionsCache.push({
+                                id: `custom_${child.key}`, q: customQ.q, a: [...customQ.a],
+                                correct: customQ.correct || 0, categoryName: customQ.category || "أسئلة إضافية"
+                            });
+                        }
+                    });
+                }
+                processSmartQuizDeck(allAvailableQuestions.concat(cloudQuestionsCache));
+            }).catch(() => processSmartQuizDeck(allAvailableQuestions));
+        }
+}
 
     // الذاكرة الذكية لمنع التكرار
     function processSmartQuizDeck(allQuestions) {
@@ -4051,14 +4060,14 @@ function renderUserRepliesList(type, ticketsList) {
     list.innerHTML = html;
 }
 
-// دالة لتصفير النقطة الحمراء فقط عند فتح شاشة المشكلة أو الاقتراح
 function markTicketRepliesAsSeen(type) {
     if (!currentUser) return;
-    db.ref('user_tickets').once('value', (snap) => {
+    // تم التعديل: سحب شكاوى الطالب فقط بدلاً من سحب الداتا بالكامل
+    db.ref('user_tickets').orderByChild('senderPhone').equalTo(currentUser.phone).once('value', (snap) => {
         if (!snap.exists()) return;
         snap.forEach(child => {
             const t = child.val();
-            if (t.senderPhone === currentUser.phone && t.type === (type === 'report' ? 'مشكلة' : 'اقتراح')) {
+            if (t.type === (type === 'report' ? 'مشكلة' : 'اقتراح')) {
                 if (t.reply && t.seen !== true) {
                     db.ref(`user_tickets/${child.key}/seen`).set(true);
                 }
@@ -4362,23 +4371,37 @@ function renderHomeCountdowns() {
             });
         });
 
-        try {
-            const snap = await db.ref('custom_questions').once('value');
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    const val = c.val();
-                    if (val && val.q && val.a) {
-                        allAvailableQuestions.push({
-                            id: `custom_pen_${c.key}`,
-                            q: val.q,
-                            a: [...val.a],
-                            correct: val.correct || 0,
-                            category: val.category || "أسئلة إضافية"
-                        });
-                    }
+        if (cloudQuestionsCache) {
+            cloudQuestionsCache.forEach((val, index) => {
+                allAvailableQuestions.push({
+                    id: `custom_pen_cached_${index}`,
+                    q: val.q,
+                    a: [...val.a],
+                    correct: val.correct || 0,
+                    category: val.category || "أسئلة إضافية"
                 });
-            }
-        } catch (e) {}
+            });
+        } else {
+            try {
+                const snap = await db.ref('custom_questions').once('value');
+                cloudQuestionsCache = [];
+                if (snap.exists()) {
+                    snap.forEach(c => {
+                        const val = c.val();
+                        if (val && val.q && val.a) {
+                            cloudQuestionsCache.push(val);
+                            allAvailableQuestions.push({
+                                id: `custom_pen_${c.key}`,
+                                q: val.q,
+                                a: [...val.a],
+                                correct: val.correct || 0,
+                                category: val.category || "أسئلة إضافية"
+                            });
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
 
         let seenIds = JSON.parse(localStorage.getItem('user_seen_penalty_' + currentUser.phone) || '[]');
         let pool = allAvailableQuestions.filter(q => !seenIds.includes(q.id));
@@ -5150,17 +5173,24 @@ rewardEl.innerHTML = `
     // دالة سحب الأسئلة الذكية لمنع التكرار لكل لاعب
     async function fetchEhbedSmartQuestionsDeck() {
         let allPool = [];
-        try {
-            const snap = await db.ref('ehbed_custom_questions').once('value');
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    const val = c.val();
-                    if (val && val.q && val.answer !== undefined) {
-                        allPool.push({ id: c.key, q: val.q, a: parseInt(val.answer) });
-                    }
-                });
-            }
-        } catch (e) {}
+        if (ehbedQuestionsCache) {
+            allPool = [...ehbedQuestionsCache];
+        } else {
+            try {
+                const snap = await db.ref('ehbed_custom_questions').once('value');
+                ehbedQuestionsCache = [];
+                if (snap.exists()) {
+                    snap.forEach(c => {
+                        const val = c.val();
+                        if (val && val.q && val.answer !== undefined) {
+                            const qObj = { id: c.key, q: val.q, a: parseInt(val.answer) };
+                            ehbedQuestionsCache.push(qObj);
+                            allPool.push(qObj);
+                        }
+                    });
+                }
+            } catch (e) {}
+        }
 
         if (allPool.length === 0) {
             // أسئلة احتياطية لو السحابة فاضية
@@ -5599,27 +5629,6 @@ rewardEl.innerHTML = `
         if (ehbedListener) roomRef.off('value', ehbedListener);
         currentEhbedRoomId = null;
         goHomeDirectly();
-    }
-// تفعيل تبويب اهبد صح في لوحة التحكم
-    // (تأكد إنك ضفت اسم التبويب في مصفوفة switchAdminTab لو مش شغالة، بس ارفع الدوال دي في الآخر عادي)
-    function switchAdminTab(tabName) {
-        playClickSound();
-        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz'].forEach(t => {
-            const tabBtn = document.getElementById('tab-admin-' + t);
-            const tabSec = document.getElementById('admin-section-' + t);
-            if (tabBtn) tabBtn.classList.remove('active');
-            if (tabSec) tabSec.style.display = 'none';
-        });
-        const currentBtn = document.getElementById('tab-admin-' + tabName);
-        const currentSec = document.getElementById('admin-section-' + tabName);
-        if (currentBtn) currentBtn.classList.add('active');
-        if (currentSec) currentSec.style.display = 'block';
-
-        if (tabName === 'analytics') loadAdminAnalyticsAndLogs();
-        if (tabName === 'tickets') loadAdminTickets();
-        if (tabName === 'achievements') renderAdminAchievementsList();
-        if (tabName === 'quiz') loadAdminCustomQuestions();
-        if (tabName === 'ehbed-quiz') loadAdminEhbedQuestions();
     }
 
     function saveNewEhbedQuestion() {
@@ -6087,6 +6096,12 @@ function openEngModule(moduleId) {
         return;
     }
 
+// (ضع هذا الشرط أسفل شرط 'basics' مباشرة في دالة openEngModule)
+    if (moduleId === 'haccp') {
+        navigateTo('view-eng-haccp-master', 'نظام HACCP', 'أقسام وتطبيقات الهاسب');
+        return;
+    }
+
     // باقي الأقسام كما هي
     const data = engAcademyDB[moduleId];
     if (!data) { showTopToast('جاري التجهيز! ⏳', 'info'); return; }
@@ -6123,6 +6138,20 @@ function openEngLessonCloud(lessonKey) {
         document.getElementById('lesson-detail-content').innerHTML = lesson.content;
         navigateTo('view-eng-lesson-detail', 'أساسيات الجودة', lesson.title);
     });
+}
+
+// دالة إظهار إجابات السيناريوهات التفاعلية
+function revealScenarioAns(id) {
+    playClickSound();
+    const ansDiv = document.getElementById(id);
+    if (ansDiv) {
+        if (ansDiv.style.display === 'block') {
+            ansDiv.style.display = 'none';
+        } else {
+            ansDiv.style.display = 'block';
+            ansDiv.style.animation = 'popInBounce 0.4s ease'; // تأثير ظهرو ناعم
+        }
+    }
 }
 
 // محرك بحث القاموس اللحظي
@@ -6191,20 +6220,29 @@ function calcAcidity() {
 }
 // ================= دوال إدارة الأكاديمية (أدمن) =================
 
+// دالة عرض دروس الأكاديمية في لوحة التحكم بشكل آمن وسريع
 function loadAdminAcademyLessons() {
     const list = document.getElementById('admin-academy-list');
-    db.ref('eng_academy/basics').on('value', snap => {
+    if (!list) return;
+    
+    list.innerHTML = '<p style="text-align:center; color: var(--text-sub);">جاري التحميل...</p>';
+    
+    db.ref('eng_academy/basics').once('value').then(snap => {
         list.innerHTML = '';
-        if(!snap.exists()) { list.innerHTML = '<p style="text-align:center;">لا توجد دروس.</p>'; return; }
+        if(!snap.exists()) { 
+            list.innerHTML = '<p style="text-align:center; color: var(--text-sub);">لا توجد دروس مسجلة بالسيرفر حتى الآن.</p>'; 
+            return; 
+        }
         
+        let html = '';
         snap.forEach(child => {
             const id = child.key;
             const data = child.val();
-            list.innerHTML += `
+            html += `
             <div class="admin-item-card">
                 <div class="admin-item-info">
-                    <div class="admin-item-name">${data.icon} ${data.title}</div>
-                    <div class="admin-item-sub">${data.desc}</div>
+                    <div class="admin-item-name">${data.icon || '📘'} ${data.title || 'بدون عنوان'}</div>
+                    <div class="admin-item-sub">${data.desc || ''}</div>
                 </div>
                 <div style="display: flex; gap: 6px; flex-direction: column;">
                     <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editAdminAcademyLesson('${id}')">تعديل ✏️</button>
@@ -6212,6 +6250,9 @@ function loadAdminAcademyLessons() {
                 </div>
             </div>`;
         });
+        list.innerHTML = html;
+    }).catch(err => {
+        list.innerHTML = '<p style="text-align:center; color: #ef4444;">حدث خطأ في الاتصال بالسيرفر.</p>';
     });
 }
 
@@ -6286,4 +6327,20 @@ function resetAcademyAdminForm() {
     document.getElementById('adm-acad-icon').value = '';
     document.getElementById('adm-acad-desc').value = '';
     document.getElementById('adm-acad-content').value = '';
+}
+// دالة التنقل داخل بيئة الهاسب
+function switchHaccpTab(tabId, clickedBtn) {
+    playClickSound();
+    
+    // إزالة التفعيل من كل الأزرار
+    document.querySelectorAll('.haccp-tab-btn').forEach(btn => btn.classList.remove('active'));
+    // إخفاء كل المحتوى
+    document.querySelectorAll('.haccp-content-pane').forEach(pane => pane.classList.remove('active'));
+    
+    // تفعيل الزر المضغوط والمحتوى المطلوب
+    clickedBtn.classList.add('active');
+    document.getElementById('haccp-pane-' + tabId).classList.add('active');
+    
+    // عمل Scroll ناعم للزر ليكون في المنتصف عند الضغط (للهواتف)
+    clickedBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
