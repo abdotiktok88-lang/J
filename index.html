@@ -2914,7 +2914,10 @@
                 <div class="form-group">
                     <input type="text" id="admin-search-user" class="form-input" placeholder="بحث بالاسم أو رقم الهاتف..." onkeyup="filterAdminUsers()">
                 </div>
-                <div class="section-label">قائمة الطلاب المسجلين</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div class="section-label" style="margin: 0;">قائمة الطلاب المسجلين</div>
+    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminData(true)">تحديث</button>
+</div>
                 <div id="admin-users-list" style="margin-top: 15px;"></div>
             </div>
 <!-- تبويب الإحصائيات الشاملة وسجل النشاط المباشر -->
@@ -2950,7 +2953,7 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div class="section-label" style="margin: 0;">⚡ سجل الألعاب والنشاط المباشر</div>
-<button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminAnalyticsAndLogs()">تحديث 🔄</button>
+<button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminAnalyticsAndLogs(true)">تحديث</button>
                     <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="clearActivityLogs()">مسح السجل 🗑️</button>
                 </div>
                 
@@ -3151,7 +3154,10 @@
 
             <!-- تبويب الشكاوى والمقترحات -->
             <div id="admin-section-tickets" style="display: none;">
-                <div class="section-label">صندوق الشكاوى والمقترحات الواردة</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div class="section-label" style="margin: 0;">الشكاوى والمقترحات الواردة</div>
+    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminTickets(true)">تحديث</button>
+</div>
                 <div id="admin-tickets-list" style="margin-top: 15px;"><p style="text-align: center;">جاري التحميل...</p></div>
             </div>
 
@@ -3236,6 +3242,7 @@
                 <!-- 📋 قسم استعراض وإدارة الأسئلة السحابية المضافة -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); margin-bottom: 10px; text-align: center;">الأسئلة السحابية المضافة مسبقاً 📋</h3>
+<button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminCustomQuestions(true)">تحديث بنك الأسئلة</button>
                     <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; text-align: center;">
                         هنا يمكنك استعراض جميع الأسئلة التي قمت بإضافتها وحذف أي سؤال عند الحاجة.
                     </p>
@@ -3315,6 +3322,7 @@
         <!-- استعراض الأسئلة المضافة -->
         <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
             <h3 style="color: #c084fc; margin-bottom: 10px; text-align: center;">الأسئلة المضافة للعبة اهبد صح 📋</h3>
+<button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminEhbedQuestions(true)">تحديث الأسئلة</button>
             <div id="admin-ehbed-questions-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
                 <p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>
             </div>

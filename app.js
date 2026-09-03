@@ -71,7 +71,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.4";
+    const CURRENT_APP_VERSION = "1.1.5";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -110,62 +110,74 @@ function shuffleArray(array) {
     }
 
     function loadAcademicTasks() {
-        const list = document.getElementById('acad-tasks-list');
-        db.ref('academic_tasks').once('value', (snap) => {
-            if (!snap.exists()) {
-                list.innerHTML = `
-                <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
-                    <img src="https://img.icons8.com/fluency/96/ok.png" style="width: 55px; height: 55px; margin-bottom: 8px;" alt="Empty">
-                    <p style="color: #0f172a; font-weight: 800; font-size: 0.95rem;">لا توجد تكليفات مطلوبة حالياً 🎉</p>
-                </div>`;
-                return;
-            }
-            let html = '';
-            const myCompletedTasks = (currentUser && currentUser.completed_tasks) ? currentUser.completed_tasks : JSON.parse(localStorage.getItem('completed_tasks_' + (currentUser ? currentUser.phone : 'guest')) || '[]');
-
-            snap.forEach(child => {
-                const task = child.val();
-                const taskId = child.key;
-                const isDone = myCompletedTasks.includes(taskId);
-
-                const deadlineDate = new Date(task.deadline);
-                const now = new Date();
-                const diffHours = Math.round((deadlineDate - now) / (1000 * 60 * 60));
-                
-                let deadlineText = diffHours > 0 ? `⏳ متبقي: ${Math.floor(diffHours / 24)} يوم و ${diffHours % 24} س` : 'انتهى موعد التسليم ⏰';
-                let isUrgent = diffHours > 0 && diffHours <= 48;
-
-                let badgeClass = isDone ? 'pill-badge badge-done' : (isUrgent ? 'pill-badge badge-timer-urgent' : 'pill-badge badge-timer-active');
-                let badgeText = isDone ? 'تم التسليم بنجاح ✔️' : deadlineText;
-
-                html += `
-                <div class="acad-glass-card ${isDone ? 'completed' : ''}" id="task-${taskId}">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span class="pill-badge badge-subject">
-                            <img src="https://img.icons8.com/fluency/48/open-book.png" style="width: 14px;"> ${task.subject}
-                        </span>
-                        <span class="${badgeClass}">${badgeText}</span>
-                    </div>
-                    <h4 style="font-size: 0.96rem; margin-bottom: 12px; line-height: 1.5;">${task.title}</h4>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        ${task.url ? `
-                            <button class="btn-action-glow btn-download-file" onclick="window.open('${task.url}', '_blank')">
-                                <img src="https://img.icons8.com/fluency/48/google-drive--v2.png" style="width: 16px;"> تحميل الملف
-                            </button>` : ''}
-                        <button class="btn-action-glow btn-check-task ${isDone ? 'done' : ''}" style="flex: 1;" onclick="toggleTaskComplete('${taskId}')">
-                            <img src="https://img.icons8.com/fluency/48/${isDone ? 'checked-checkbox.png' : 'checkmark--v1.png'}" style="width: 16px;">
-                            ${isDone ? 'تم الإنجاز بنجاح' : 'تحديد كـ مكتمل'}
-                        </button>
-                        ${currentUser && currentUser.phone === '01061032507' ? `
-                            <button class="admin-action-btn danger" style="padding: 7px 10px; border-radius: 10px;" onclick="adminDeleteTask('${taskId}')">
-                                <img src="https://img.icons8.com/fluency/48/delete-trash.png" style="width: 16px;">
-                            </button>` : ''}
-                    </div>
-                </div>`;
-            });
-            list.innerHTML = html;
-        });
+    const list = document.getElementById('acad-tasks-list');
+    const localTasks = localStorage.getItem('local_acad_tasks');
+    
+    // عرض المحفوظ في الموبايل فوراً
+    if (localTasks) {
+        renderTasksToDOM(JSON.parse(localTasks), list);
     }
+
+    // جلب التحديث في الخلفية مرة واحدة فقط وحفظه
+    db.ref('academic_tasks').once('value', (snap) => {
+        let tasksObj = {};
+        if (snap.exists()) tasksObj = snap.val();
+        localStorage.setItem('local_acad_tasks', JSON.stringify(tasksObj));
+        renderTasksToDOM(tasksObj, list);
+    });
+}
+
+function renderTasksToDOM(tasksObj, list) {
+    if (!tasksObj || Object.keys(tasksObj).length === 0) {
+        list.innerHTML = `
+        <div class="acad-glass-card" style="text-align: center; padding: 25px 15px;">
+            <img src="https://img.icons8.com/fluency/96/ok.png" style="width: 55px; height: 55px; margin-bottom: 8px;" alt="Empty">
+            <p style="color: #0f172a; font-weight: 800; font-size: 0.95rem;">لا توجد تكليفات مطلوبة حالياً 🎉</p>
+        </div>`;
+        return;
+    }
+    let html = '';
+    const myCompletedTasks = (currentUser && currentUser.completed_tasks) ? currentUser.completed_tasks : JSON.parse(localStorage.getItem('completed_tasks_' + (currentUser ? currentUser.phone : 'guest')) || '[]');
+
+    Object.keys(tasksObj).forEach(taskId => {
+        const task = tasksObj[taskId];
+        const isDone = myCompletedTasks.includes(taskId);
+        const deadlineDate = new Date(task.deadline);
+        const now = new Date();
+        const diffHours = Math.round((deadlineDate - now) / (1000 * 60 * 60));
+        
+        let deadlineText = diffHours > 0 ? `⏳ متبقي: ${Math.floor(diffHours / 24)} يوم و ${diffHours % 24} س` : 'انتهى موعد التسليم ⏰';
+        let isUrgent = diffHours > 0 && diffHours <= 48;
+        let badgeClass = isDone ? 'pill-badge badge-done' : (isUrgent ? 'pill-badge badge-timer-urgent' : 'pill-badge badge-timer-active');
+        let badgeText = isDone ? 'تم التسليم بنجاح ✔️' : deadlineText;
+
+        html += `
+        <div class="acad-glass-card ${isDone ? 'completed' : ''}" id="task-${taskId}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="pill-badge badge-subject">
+                    <img src="https://img.icons8.com/fluency/48/open-book.png" style="width: 14px;"> ${task.subject}
+                </span>
+                <span class="${badgeClass}">${badgeText}</span>
+            </div>
+            <h4 style="font-size: 0.96rem; margin-bottom: 12px; line-height: 1.5;">${task.title}</h4>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                ${task.url ? `
+                    <button class="btn-action-glow btn-download-file" onclick="window.open('${task.url}', '_blank')">
+                        <img src="https://img.icons8.com/fluency/48/google-drive--v2.png" style="width: 16px;"> تحميل الملف
+                    </button>` : ''}
+                <button class="btn-action-glow btn-check-task ${isDone ? 'done' : ''}" style="flex: 1;" onclick="toggleTaskComplete('${taskId}')">
+                    <img src="https://img.icons8.com/fluency/48/${isDone ? 'checked-checkbox.png' : 'checkmark--v1.png'}" style="width: 16px;">
+                    ${isDone ? 'تم الإنجاز بنجاح' : 'تحديد كـ مكتمل'}
+                </button>
+                ${currentUser && currentUser.phone === '01061032507' ? `
+                    <button class="admin-action-btn danger" style="padding: 7px 10px; border-radius: 10px;" onclick="adminDeleteTask('${taskId}')">
+                        <img src="https://img.icons8.com/fluency/48/delete-trash.png" style="width: 16px;">
+                    </button>` : ''}
+            </div>
+        </div>`;
+    });
+    list.innerHTML = html;
+}
 
     function toggleTaskComplete(taskId) {
         playClickSound();
@@ -982,6 +994,8 @@ let hasCheckedDailyLoginSession = false;
                     localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
                     updateProfileUI();
+initUserTicketRepliesListener(); 
+
                     const bottomNav = document.getElementById('main-bottom-nav');
                     if (bottomNav) bottomNav.style.display = 'flex';
 
@@ -1753,7 +1767,6 @@ renderAchievementsTabUI();
             } else {
                 document.getElementById('sidebar-admin-panel').style.display = 'none';
             }
-            initUserTicketRepliesListener();
         }
     }
 
@@ -3553,7 +3566,7 @@ function loadAdminCustomQuestions() {
     const container = document.getElementById('admin-custom-questions-list');
     if (!container) return;
 
-    db.ref('custom_questions').on('value', snap => {
+    db.ref('custom_questions').once('value', snap => {
         if (!snap.exists()) {
             container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أسئلة سحابية مضافة حتى الآن.</p>';
             return;
@@ -3596,26 +3609,46 @@ function deleteCustomQuestion(qId) {
     }
 }
 
-    function loadAdminData() {
-        if (isAdminDataLoaded) { filterAdminUsers(); return; } // لو الداتا محملة، متسحبش حاجة من النت!
-        
-        document.getElementById('admin-users-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
-        document.getElementById('admin-codes-list').innerHTML = '<p style="text-align: center;">جاري التحميل...</p>';
-        
+    function loadAdminData(forceRefresh = false) {
+    if (!forceRefresh && isAdminDataLoaded) { filterAdminUsers(); return; } 
+
+    const containerUsers = document.getElementById('admin-users-list');
+    const containerCodes = document.getElementById('admin-codes-list');
+
+    if(forceRefresh) {
+        containerUsers.innerHTML = '<p style="text-align: center;">جاري التحديث من السيرفر... ⏳</p>';
+        showTopToast('جاري التحديث...', 'info');
+    }
+
+    const cachedUsers = localStorage.getItem('cached_admin_users');
+    if (cachedUsers && !forceRefresh) {
+        adminAllUsersData = JSON.parse(cachedUsers);
+        renderAdminUsers(adminAllUsersData);
+        isAdminDataLoaded = true;
+    } else {
         db.ref('users').once('value').then((snap) => {
             adminAllUsersData = [];
             snap.forEach(child => { adminAllUsersData.push({ id: child.key, ...child.val() }); });
             adminAllUsersData.sort((a, b) => ((b.xp || b.points || 0) - (a.xp || a.points || 0)));
+            localStorage.setItem('cached_admin_users', JSON.stringify(adminAllUsersData));
             renderAdminUsers(adminAllUsersData);
-            isAdminDataLoaded = true; // تم الحفظ في الذاكرة
+            isAdminDataLoaded = true;
+            if(forceRefresh) showTopToast('تم تحديث قائمة الطلاب بنجاح ✅', 'success');
         });
+    }
 
+    const cachedCodes = localStorage.getItem('cached_admin_codes');
+    if (cachedCodes && !forceRefresh) {
+        renderAdminCodes(JSON.parse(cachedCodes));
+    } else {
         db.ref('promo_codes').once('value').then((snap) => {
             let codesArr = [];
             snap.forEach(child => { codesArr.push({ code: child.key, ...child.val() }); });
+            localStorage.setItem('cached_admin_codes', JSON.stringify(codesArr));
             renderAdminCodes(codesArr);
         });
     }
+}
 
     function renderAdminUsers(usersArray) {
         const container = document.getElementById('admin-users-list');
@@ -3706,44 +3739,48 @@ function openAdminUserDetails(userId) {
         });
     }
 
-    function loadAdminTickets() {
+    function loadAdminTickets(forceRefresh = false) {
     const container = document.getElementById('admin-tickets-list');
-    db.ref('user_tickets').on('value', (snap) => {
-        if (!snap.exists()) {
-            container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد شكاوى أو مقترحات واردة حالياً.</p>';
-            return;
-        }
-        let html = '';
-        snap.forEach(child => {
-            const t = child.val();
-            const id = child.key;
-            html += `
-            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <span class="card-badge" style="background: ${t.type === 'مشكلة' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)'}; color: ${t.type === 'مشكلة' ? '#ef4444' : 'var(--accent-gold)'}; font-size: 0.75rem;">${t.type}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-sub);">${new Date(t.sentAt).toLocaleDateString('ar-EG')}</span>
-                </div>
-                <h4 style="color: var(--text-main); font-size: 0.95rem;">${t.title}</h4>
-                <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5;">${t.desc}</p>
-                
-                <div style="width: 100%; margin-top: 6px; background: var(--bg-primary); padding: 10px; border-radius: 10px; border: 1px dashed var(--border-card);">
-                    ${t.reply ? `
-                        <div style="font-size: 0.8rem; color: var(--accent-emerald); font-weight: bold; margin-bottom: 4px;">✅ تم إرسال الرد:</div>
-                        <p style="font-size: 0.82rem; color: var(--text-main); line-height: 1.4;">${t.reply}</p>
-                    ` : `
-                        <input type="text" id="admin-reply-input-${id}" class="form-input" placeholder="اكتب ردك للطالب هنا..." style="padding: 8px 12px; font-size: 0.82rem; margin-bottom: 6px;">
-                        <button class="btn-action-glow btn-check-task" style="width: 100%; padding: 6px; font-size: 0.8rem;" onclick="adminSendTicketReply('${id}')">إرسال الرد للطالب 💬</button>
-                    `}
-                </div>
+    const cachedTickets = localStorage.getItem('cached_admin_tickets');
 
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 4px; border-top: 1px dashed var(--border-card); padding-top: 6px;">
-                    <span style="font-size: 0.75rem; color: var(--accent-gold);">من: ${t.senderName} (${t.senderPhone})</span>
-                    <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteTicket('${id}')">حذف 🗑️</button>
-                </div>
-            </div>`;
+    if (cachedTickets && !forceRefresh) {
+        renderAdminTicketsDOM(JSON.parse(cachedTickets), container);
+    } else {
+        if(forceRefresh) container.innerHTML = '<p style="text-align: center;">جاري التحديث...</p>';
+        db.ref('user_tickets').once('value', (snap) => {
+            let tickets = [];
+            if(snap.exists()) {
+                snap.forEach(child => { tickets.push({ id: child.key, ...child.val() }); });
+            }
+            localStorage.setItem('cached_admin_tickets', JSON.stringify(tickets));
+            renderAdminTicketsDOM(tickets, container);
+            if(forceRefresh) showTopToast('تم تحديث التذاكر بنجاح ✅', 'success');
         });
-        container.innerHTML = html;
+    }
+}
+
+function renderAdminTicketsDOM(ticketsArr, container) {
+    if (ticketsArr.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد شكاوى أو مقترحات واردة حالياً.</p>';
+        return;
+    }
+    let html = '';
+    ticketsArr.forEach(t => {
+        html += `
+        <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <span class="card-badge" style="background: ${t.type === 'مشكلة' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(212, 175, 55, 0.2)'}; color: ${t.type === 'مشكلة' ? '#ef4444' : 'var(--accent-gold)'}; font-size: 0.75rem;">${t.type}</span>
+                <span style="font-size: 0.75rem; color: var(--text-sub);">${new Date(t.sentAt).toLocaleDateString('ar-EG')}</span>
+            </div>
+            <h4 style="color: var(--text-main); font-size: 0.95rem;">${t.title}</h4>
+            <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.5;">${t.desc}</p>
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 4px; border-top: 1px dashed var(--border-card); padding-top: 6px;">
+                <span style="font-size: 0.75rem; color: var(--accent-gold);">من: ${t.senderName} (${t.senderPhone})</span>
+                <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="deleteTicket('${t.id}')">حذف 🗑️</button>
+            </div>
+        </div>`;
     });
+    container.innerHTML = html;
 }
 
 function adminSendTicketReply(ticketId) {
@@ -4080,29 +4117,37 @@ function markTicketRepliesAsSeen(type) {
     let countdownTicker = null;
 
     function listenToCountdowns() {
-        db.ref('app_countdowns').once('value', (snap) => {
-            appCountdownsList = [];
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    appCountdownsList.push({ id: c.key, ...c.val() });
-                });
-            }
-            renderHomeCountdowns();
-            renderAdminCountdowns();
-        });
-
-        db.ref('academic_tasks').on('value', (snap) => {
-            const select = document.getElementById('adm-cd-task-link');
-            if (!select) return;
-            select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    const t = c.val();
-                    select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
-                });
-            }
-        });
+    // الكاش للمؤقتات
+    const localCD = localStorage.getItem('local_countdowns');
+    if(localCD) { 
+        appCountdownsList = JSON.parse(localCD); 
+        renderHomeCountdowns(); 
+        renderAdminCountdowns(); 
     }
+
+    db.ref('app_countdowns').once('value', (snap) => {
+        appCountdownsList = [];
+        if (snap.exists()) {
+            snap.forEach(c => { appCountdownsList.push({ id: c.key, ...c.val() }); });
+        }
+        localStorage.setItem('local_countdowns', JSON.stringify(appCountdownsList));
+        renderHomeCountdowns();
+        renderAdminCountdowns();
+    });
+
+    // تحويل ربط التكليفات في الأدمن لمرة واحدة فقط
+    db.ref('academic_tasks').once('value', (snap) => {
+        const select = document.getElementById('adm-cd-task-link');
+        if (!select) return;
+        select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
+        if (snap.exists()) {
+            snap.forEach(c => {
+                const t = c.val();
+                select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
+            });
+        }
+    });
+}
 
 function renderHomeCountdowns() {
         const wrapper = document.getElementById('home-countdowns-wrapper');
@@ -4722,74 +4767,79 @@ rewardEl.innerHTML = `
         } catch (e) {}
     }
 
-    function loadAdminAnalyticsAndLogs() {
-        // 1. استخدام البيانات الجاهزة في الذاكرة بدلاً من استهلاك النت!
-        let totalUsers = adminAllUsersData.length;
-        let totalCorrect = 0;
-        let totalPlayed = 0;
-        let totalDerbyWins = 0;
-        let totalPenalties = 0;
+    function loadAdminAnalyticsAndLogs(forceRefresh = false) {
+    let totalUsers = adminAllUsersData.length;
+    let totalCorrect = 0, totalPlayed = 0, totalDerbyWins = 0, totalPenalties = 0;
 
-        adminAllUsersData.forEach(u => {
-            totalCorrect += (u.quizCorrect || 0);
-            totalPlayed += (u.quizPlayed || 0);
-            totalDerbyWins += (u.derby_wins || 0);
-            totalPenalties += (u.penalties_scored || 0);
-        });
+    adminAllUsersData.forEach(u => {
+        totalCorrect += (u.quizCorrect || 0);
+        totalPlayed += (u.quizPlayed || 0);
+        totalDerbyWins += (u.derby_wins || 0);
+        totalPenalties += (u.penalties_scored || 0);
+    });
 
-        const totalQuestionsAnswered = totalPlayed * 5;
-        const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
+    const totalQuestionsAnswered = totalPlayed * 5;
+    const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
 
-        document.getElementById('stat-total-users').innerText = totalUsers;
-        document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
-        document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
+    document.getElementById('stat-total-users').innerText = totalUsers;
+    document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
+    document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
 
-        // 2. قراءة السجلات مرة واحدة (once) بدل (on) لمنع التحديث المزعج
+    const container = document.getElementById('admin-live-logs-list');
+    const cachedLogs = localStorage.getItem('cached_admin_logs');
+
+    if (cachedLogs && !forceRefresh) {
+        renderLogsDOM(JSON.parse(cachedLogs), container);
+    } else {
+        if(forceRefresh) container.innerHTML = '<p style="text-align: center;">جاري التحديث... ⏳</p>';
         db.ref('app_activity_logs').limitToLast(100).once('value', snap => {
-            const container = document.getElementById('admin-live-logs-list');
-            if (!snap.exists()) {
-                container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أنشطة مسجلة حتى الآن.</p>';
-                return;
-            }
-
             let logsArr = [];
-            let derbyCount = 0, penaltyCount = 0, classicCount = 0;
-
-            snap.forEach(child => {
-                const log = child.val();
-                log.id = child.key;
-                logsArr.push(log);
-                if (log.type === 'derby') derbyCount++;
-                else if (log.type === 'penalty') penaltyCount++;
-                else if (log.type === 'classic') classicCount++;
-            });
-
-            document.getElementById('stat-derby-battles').innerText = derbyCount;
-            document.getElementById('stat-penalty-played').innerText = penaltyCount;
-            document.getElementById('stat-classic-quizzes').innerText = classicCount;
-
-            logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-            let html = '';
-            logsArr.slice(0, 50).forEach(log => {
-                let badgeStyle = log.type === 'derby' ? 'background: rgba(239, 68, 68, 0.2); color: #ef4444;' : 
-                                 log.type === 'penalty' ? 'background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);' : 
-                                 'background: rgba(99, 102, 241, 0.2); color: var(--accent-highlight);';
-                let typeText = log.type === 'derby' ? '⚔️ ديربي 1v1' : log.type === 'penalty' ? '⚽ ركلات جزاء' : '🧠 تحدي كلاسيكي';
-                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن';
-
-                html += `
-                <div class="live-log-item">
-                    <div class="live-log-header">
-                        <span class="card-badge" style="${badgeStyle}">${typeText}</span>
-                        <span style="font-size: 0.7rem; color: var(--text-sub);">${timeStr}</span>
-                    </div>
-                    <p style="font-size: 0.84rem; color: var(--text-main); font-weight: 700; margin: 0;">${log.details}</p>
-                </div>`;
-            });
-            container.innerHTML = html;
+            if (snap.exists()) {
+                snap.forEach(child => { logsArr.push({ id: child.key, ...child.val() }); });
+            }
+            localStorage.setItem('cached_admin_logs', JSON.stringify(logsArr));
+            renderLogsDOM(logsArr, container);
+            if(forceRefresh) showTopToast('تم تحديث الإحصائيات بنجاح ✅', 'success');
         });
     }
+}
+
+function renderLogsDOM(logsArr, container) {
+    if(logsArr.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أنشطة مسجلة حتى الآن.</p>';
+        return;
+    }
+    let derbyCount = 0, penaltyCount = 0, classicCount = 0;
+    logsArr.forEach(log => {
+        if (log.type === 'derby') derbyCount++;
+        else if (log.type === 'penalty') penaltyCount++;
+        else if (log.type === 'classic') classicCount++;
+    });
+
+    document.getElementById('stat-derby-battles').innerText = derbyCount;
+    document.getElementById('stat-penalty-played').innerText = penaltyCount;
+    document.getElementById('stat-classic-quizzes').innerText = classicCount;
+
+    logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    let html = '';
+    logsArr.slice(0, 50).forEach(log => {
+        let badgeStyle = log.type === 'derby' ? 'background: rgba(239, 68, 68, 0.2); color: #ef4444;' : 
+                         log.type === 'penalty' ? 'background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);' : 
+                         'background: rgba(99, 102, 241, 0.2); color: var(--accent-highlight);';
+        let typeText = log.type === 'derby' ? '⚔️ ديربي 1v1' : log.type === 'penalty' ? '⚽ ركلات جزاء' : '🧠 تحدي كلاسيكي';
+        const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن';
+
+        html += `<div class="live-log-item">
+            <div class="live-log-header">
+                <span class="card-badge" style="${badgeStyle}">${typeText}</span>
+                <span style="font-size: 0.7rem; color: var(--text-sub);">${timeStr}</span>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-main); font-weight: 700; margin: 0;">${log.details}</p>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
 
     function clearActivityLogs() {
         playErrorSound();
@@ -5656,7 +5706,7 @@ rewardEl.innerHTML = `
         const container = document.getElementById('admin-ehbed-questions-list');
         if (!container) return;
 
-        db.ref('ehbed_custom_questions').on('value', snap => {
+        db.ref('ehbed_custom_questions').once('value', snap => {
             if (!snap.exists()) {
                 container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أسئلة تخمين مضافة حتى الآن.</p>';
                 return;
