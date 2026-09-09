@@ -1,0 +1,17 @@
+{
+  "name": "علوم الأغذية 28",
+  "short_name": "FS Society 28",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

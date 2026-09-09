@@ -1,30 +1,120 @@
 let cloudQuestionsCache = null;
 let ehbedQuestionsCache = null;
 
-// نظام قفل الصيانة الذكي مع استثناء المطور
-document.addEventListener("DOMContentLoaded", () => {
-    const maintenanceScreen = document.getElementById('maintenance-lock-screen');
-    const adminPhone = "01061032507"; // رقم المطور المستثنى من القفل
-    const currentPhone = localStorage.getItem('active_user_phone'); // قراءة رقم الطالب من الذاكرة
-    
-    // موعد فك القفل (1 سبتمبر 2026 الساعة 12 منتصف الليل)
-    const unlockDate = new Date("2026-09-01T00:00:00"); 
-    const now = new Date();
+// ================= نظام القفل والفيدباك (صفر استهلاك سيرفر) =================
+let finaleSelectedRating = 0;
 
-    // الشرط: لو الموعد لسه مجاش، واللي فاتح التطبيق *مش المطور* -> اقفل التطبيق
-    if (now < unlockDate && currentPhone !== adminPhone) {
-        if (maintenanceScreen) {
-            maintenanceScreen.style.display = 'flex';
-            document.body.style.overflow = 'hidden'; 
-        }
+document.addEventListener("DOMContentLoaded", () => {
+    const finaleScreen = document.getElementById('grand-finale-screen');
+    const allowedPhones = ["01061032507", "01061032508"]; // أرقامك المستثناة
+    const currentPhone = localStorage.getItem('active_user_phone');
+    
+    // موعد العودة (18 سبتمبر 2026 الساعة 11:00 مساءً)
+    const unlockDate = new Date("2026-09-18T23:00:00").getTime();
+    const now = Date.now();
+
+    // القفل يشتغل لو الموعد لسه مجاش، والرقم مش من الأرقام المستثناة
+    if (now < unlockDate && !allowedPhones.includes(currentPhone)) {
+        if (finaleScreen) finaleScreen.style.display = 'flex';
+        
+        // إخفاء وعزل التطبيق بالكامل
+        document.querySelector('.container').style.display = 'none';
+        document.querySelector('header').style.display = 'none';
+        const bottomNav = document.getElementById('main-bottom-nav');
+        if (bottomNav) bottomNav.style.display = 'none';
+
+        startFinaleCountdown(unlockDate);
+        initFinaleStars();
+        
+        // 🛑 (Return) تمنع تشغيل أي دوال تسحب بيانات من فايربيز (استهلاك صفر)
+        return; 
     } else {
-        // فك القفل فوراً لو الموعد عدى، أو لو اللي فاتح هو المطور
-        if (maintenanceScreen) {
-            maintenanceScreen.remove();
-            document.body.style.overflow = 'auto';
-        }
+        // فك القفل وتشغيل التطبيق لحسابك أو بعد الموعد
+        if (finaleScreen) finaleScreen.remove();
+        updateSoundUI();
+        checkAppEntryFlow();
+        checkBroadcastAlerts();
+        initUserTicketRepliesListener();
+        listenToCountdowns();
+        preloadLeaderboardData();
     }
 });
+
+function initFinaleStars() {
+    const stars = document.querySelectorAll('.fb-star');
+    stars.forEach(star => {
+        star.style.cursor = 'pointer';
+        star.onclick = function() {
+            if(typeof playClickSound === 'function') playClickSound();
+            finaleSelectedRating = parseInt(this.getAttribute('data-val'));
+            stars.forEach(s => {
+                if(parseInt(s.getAttribute('data-val')) <= finaleSelectedRating) {
+                    s.style.filter = 'grayscale(0) opacity(1)';
+                    s.style.transform = 'scale(1.1)';
+                } else {
+                    s.style.filter = 'grayscale(1) opacity(0.35)';
+                    s.style.transform = 'scale(1)';
+                }
+            });
+        }
+    });
+}
+
+function startFinaleCountdown(targetTime) {
+    const cdDiv = document.getElementById('finale-countdown');
+    if(!cdDiv) return;
+    
+    function update() {
+        const diff = targetTime - Date.now();
+        if (diff <= 0) { 
+            cdDiv.innerHTML = '<span style="grid-column: span 4; color:var(--accent-emerald); font-weight:900; font-size:1.1rem;">حان وقت العودة! أعد تحميل الصفحة 🚀</span>'; 
+            return; 
+        }
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        cdDiv.innerHTML = `
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); padding: 12px 6px; border-radius: 14px;"><div style="font-size: 1.35rem; font-weight: 900; color: var(--text-main);">${s}</div><div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700; margin-top: 2px;">ثانية</div></div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); padding: 12px 6px; border-radius: 14px;"><div style="font-size: 1.35rem; font-weight: 900; color: var(--text-main);">${m}</div><div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700; margin-top: 2px;">دقيقة</div></div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); padding: 12px 6px; border-radius: 14px;"><div style="font-size: 1.35rem; font-weight: 900; color: var(--text-main);">${h}</div><div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700; margin-top: 2px;">ساعة</div></div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); padding: 12px 6px; border-radius: 14px;"><div style="font-size: 1.35rem; font-weight: 900; color: var(--accent-gold);">${d}</div><div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700; margin-top: 2px;">يوم</div></div>
+        `;
+    }
+    update();
+    setInterval(update, 1000);
+}
+
+function submitFinaleFeedback() {
+    if (finaleSelectedRating === 0) { alert('حدد تقييمك بالنجوم الأول يا هندسة!'); return; }
+    
+    const text = document.getElementById('finale-feedback-text').value.trim();
+    if (!text) { alert('اكتب رأيك أو اقتراحك الأول!'); return; }
+    
+    if(typeof playClickSound === 'function') playClickSound();
+    document.getElementById('btn-submit-feedback').innerText = 'جاري الإرسال... ⏳';
+    
+    const cachedUser = JSON.parse(localStorage.getItem('cached_user_data') || '{}');
+    const phone = localStorage.getItem('active_user_phone') || 'غير مسجل';
+    const name = cachedUser.name || 'طالب غير معروف';
+
+    db.ref('beta_feedback').push({
+        phone: phone,
+        name: name,
+        rating: finaleSelectedRating,
+        feedback: text,
+        submittedAt: new Date().toISOString()
+    }).then(() => {
+        if(typeof playSuccessSound === 'function') playSuccessSound();
+        if(typeof triggerConfetti === 'function') triggerConfetti();
+        document.getElementById('feedback-section').style.display = 'none';
+        document.getElementById('feedback-success-msg').style.display = 'block';
+    }).catch(() => {
+        document.getElementById('btn-submit-feedback').innerText = 'إرسال التقييم 📤';
+        alert('حدث خطأ في الاتصال، حاول مجدداً!');
+    });
+}
 
 function shuffleArray(array) {
     const arr = [...array];
@@ -33,6 +123,61 @@ function shuffleArray(array) {
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
+}
+// ================= محرك الكاش الذكي للأسئلة الفردية =================
+async function getQuestionsWithCache(dbNodeName) {
+    try {
+        // 1. سؤال خفيف جداً لمعرفة رقم الإصدار من السيرفر
+        const versionSnap = await db.ref('settings/' + dbNodeName + '_version').once('value');
+        const serverVersion = versionSnap.val() || 1;
+        const localVersion = localStorage.getItem('version_' + dbNodeName);
+
+        // 2. لو الرقم متطابق، نعرض الداتا من الموبايل فوراً (صفر استهلاك)
+        if (localVersion == serverVersion) {
+            const cachedString = localStorage.getItem('cache_' + dbNodeName);
+            if (cachedString) {
+                console.log("تم جلب الأسئلة من ذاكرة الهاتف ⚡");
+                return JSON.parse(cachedString);
+            }
+        }
+
+        // 3. لو مفيش كاش أو الرقم اتغير، نحمل الجديد من فايربيز
+        console.log("جاري سحب التحديث الجديد للأسئلة من السيرفر... ☁️");
+        const dataSnap = await db.ref(dbNodeName).once('value');
+        
+        let questionsArr = [];
+        if (dataSnap.exists()) {
+            dataSnap.forEach(child => {
+                let customQ = child.val();
+                if (customQ && customQ.q && customQ.a) {
+                    questionsArr.push({
+                        id: `custom_${child.key}`, 
+                        q: customQ.q, 
+                        a: [...customQ.a],
+                        correct: customQ.correct || 0, 
+                        categoryName: customQ.category || "أسئلة إضافية"
+                    });
+                }
+            });
+        }
+
+        // 4. حفظ النسخة الجديدة وتحديث رقم الإصدار في الموبايل
+        localStorage.setItem('cache_' + dbNodeName, JSON.stringify(questionsArr));
+        localStorage.setItem('version_' + dbNodeName, serverVersion);
+
+        return questionsArr;
+    } catch (error) {
+        // في حالة انقطاع النت، نستخدم الكاش القديم
+        const cachedString = localStorage.getItem('cache_' + dbNodeName);
+        return cachedString ? JSON.parse(cachedString) : [];
+    }
+}
+
+// دالة للإدارة لرفع رقم الإصدار أوتوماتيكياً عند إضافة أو حذف أسئلة
+function incrementQuestionsVersion(dbNodeName) {
+    db.ref('settings/' + dbNodeName + '_version').transaction(currentVal => {
+        return (currentVal || 1) + 1;
+    });
 }
     // ================= إعدادات فايربيز =================
     const firebaseConfig = {
@@ -71,7 +216,7 @@ function shuffleArray(array) {
     }
 
     // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.5";
+    const CURRENT_APP_VERSION = "1.1.6";
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -670,34 +815,40 @@ function playExactMatchSound() {
         }
     }
 
-    function goHomeDirectly() {
-        // حماية الديربي من الهروب
-        if (currentBattleId || currentEhbedRoomId) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً من التحدي (وقد تخسر عملاتك ونقاطك)!\n\nهل أنت متأكد من الخروج؟')) {
-                if (currentBattleId) cancelBattleLobby();
-                if (currentEhbedRoomId) cancelEhbedLobby();
-            }
-            return;
+    function goHomeDirectly(force = false) {
+    if (force) {
+        isClassicQuizActive = false; isLevelBossActive = false; isPenaltyGameActive = false;
+        navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+        showViewSection('view-home'); updateHeader(); updateNavState('nav-home');
+        return;
+    }
+
+    if (currentBattleId || currentEhbedRoomId) {
+        if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً لأن المنافس في انتظارك!\n\nهل أنت متأكد من الخروج؟')) {
+            if (currentBattleId) cancelBattleLobby();
+            if (currentEhbedRoomId) cancelEhbedLobby();
         }
-        if (isClassicQuizActive) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً وسيتم احتساب إجاباتك 0/5 وخصم 35 XP!\n\nهل أنت متأكد من الخروج؟')) {
-                forfeitClassicQuiz();
-            }
-            return;
-        }
-        if (isPenaltyGameActive) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر إهداراً لركلة الجزاء وخصم 25 XP!\n\nهل أنت متأكد من الخروج؟')) {
-                forfeitPenaltyGame();
-            }
-            return;
-        }
+        return;
+    }
+    
+    // الخروج الآمن بدون خصم وإيقاف التايمر
+    if (isClassicQuizActive || isPenaltyGameActive || isLevelBossActive) {
+        pauseAllActiveTimers();
+        showTopToast('تم إيقاف التحدي مؤقتاً ⏸️. يمكنك العودة لاستكماله لاحقاً بدون خسارة.', 'info');
         playClickSound();
         navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
         showViewSection('view-home');
         updateHeader();
         updateNavState('nav-home');
-        window.history.pushState({ viewId: 'view-home' }, "");
+        return;
     }
+
+    playClickSound();
+    navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+    showViewSection('view-home');
+    updateHeader();
+    updateNavState('nav-home');
+}
 
     function navigateTo(viewId, title, subtitle) {
         playClickSound();
@@ -715,30 +866,52 @@ function playExactMatchSound() {
     }
 
     function navigateBack() {
-        if (currentBattleId || currentEhbedRoomId) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً من التحدي (وقد تخسر عملاتك ونقاطك)!\n\nهل أنت متأكد من الخروج؟')) {
-                if (currentBattleId) cancelBattleLobby();
-                if (currentEhbedRoomId) cancelEhbedLobby();
-            }
-            return;
+    if (currentBattleId || currentEhbedRoomId) {
+        if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً لأن المنافس في انتظارك!\n\nهل أنت متأكد من الخروج؟')) {
+            if (currentBattleId) cancelBattleLobby();
+            if (currentEhbedRoomId) cancelEhbedLobby();
         }
-        if (isClassicQuizActive) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر انسحاباً وسيتم احتساب إجاباتك 0/5 بالكامل وخصم 35 XP من رصيدك!\n\nهل أنت متأكد من الانسحاب؟')) {
-                forfeitClassicQuiz();
-            }
-            return;
-        }
-        if (isPenaltyGameActive) {
-            if (confirm('⚠️ تحذير: خروجك الآن سيعتبر إهداراً لركلة الجزاء وسيتم خصم 25 XP من رصيدك فوراً!\n\nهل أنت متأكد من الانسحاب؟')) {
-                forfeitPenaltyGame();
-            }
-            return;
-        }
-        if (navHistory.length > 1) {
-            playBackSound();
-            window.history.back(); 
-        }
+        return;
     }
+    
+    // الخروج الآمن عند الرجوع
+    if (isClassicQuizActive || isPenaltyGameActive || isLevelBossActive) {
+        pauseAllActiveTimers();
+        showTopToast('تم إيقاف التحدي مؤقتاً ⏸️. يمكنك العودة لاستكماله لاحقاً.', 'info');
+        playBackSound();
+        window.history.back(); 
+        return;
+    }
+
+    if (navHistory.length > 1) {
+        playBackSound();
+        window.history.back(); 
+    }
+}
+
+window.addEventListener('popstate', function (event) {
+    if (navHistory.length > 1) {
+        navHistory.pop();
+        const previous = navHistory[navHistory.length - 1];
+        
+        // إيقاف التايمر لو رجع من زرار الموبايل نفسه
+        if (previous.viewId !== 'view-quiz-game' && previous.viewId !== 'view-penalty-arena' && previous.viewId !== 'view-boss-bomb' && previous.viewId !== 'view-boss-monster') {
+            if (isClassicQuizActive || isPenaltyGameActive || isLevelBossActive) {
+                pauseAllActiveTimers();
+                showTopToast('تم إيقاف التحدي مؤقتاً ⏸️.', 'info');
+            }
+        }
+
+        showViewSection(previous.viewId);
+        updateHeader();
+        
+        if(previous.viewId === 'view-home') updateNavState('nav-home');
+        else if(previous.viewId === 'view-stats') updateNavState('nav-stats');
+        else if(previous.viewId === 'view-leaderboard') updateNavState('nav-leaderboard');
+        else if(previous.viewId === 'view-profile') updateNavState('nav-profile');
+        else updateNavState(null);
+    }
+});
 
     function showViewSection(viewId) {
         const activeSection = document.querySelector('.view-section.active');
@@ -789,22 +962,7 @@ function playExactMatchSound() {
 
     window.history.replaceState({ viewId: 'view-home' }, "");
 
-    window.addEventListener('popstate', function (event) {
-        if (navHistory.length > 1) {
-            navHistory.pop();
-            const previous = navHistory[navHistory.length - 1];
-            showViewSection(previous.viewId);
-            updateHeader();
-            
-            if(previous.viewId === 'view-home') updateNavState('nav-home');
-            else if(previous.viewId === 'view-stats') updateNavState('nav-stats');
-            else if(previous.viewId === 'view-leaderboard') updateNavState('nav-leaderboard');
-            else if(previous.viewId === 'view-profile') updateNavState('nav-profile');
-            else updateNavState(null);
-        }
-    });
-
-    // ================= القوائم والنوافذ =================
+        // ================= القوائم والنوافذ =================
     function openSidebar() { 
         if (!currentUser) {
             showTopToast('يرجى تسجيل الدخول أولاً للوصول للقائمة!', 'error');
@@ -854,25 +1012,6 @@ function playExactMatchSound() {
         document.getElementById('quiz-rules-modal').classList.add('show');
     }
 
-    function openPenaltySelectionFlow() {
-        const todayDate = getRealDateString();
-        const lastPenaltyDate = currentUser ? (currentUser.last_penalty_date || '') : '';
-        const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
-
-        if (penaltyCountToday >= DAILY_QUIZ_LIMIT) {
-            if ((currentUser.extraPenaltyCount || 0) > 0) {
-                currentUser.extraPenaltyCount -= 1;
-                db.ref('users/' + currentUser.phone + '/extraPenaltyCount').set(currentUser.extraPenaltyCount);
-                showTopToast('تم خصم محاولة جزاء من رصيدك الإضافي 🎟️', 'info');
-            } else {
-                showTopToast(`استنفدت محاولات ركلات الجزاء اليوم! اشتري محاولات إضافية من المتجر 🎟️`, 'error');
-                return;
-            }
-        }
-
-        closeModal('quiz-rules-modal');
-        navigateTo('view-penalty-select', 'ركلات الجزاء ⚽', 'اختر نجمك المفضل');
-    }
     function closeModal(id) { playBackSound(); document.getElementById(id).classList.remove('show'); }
     function openModal(id) { document.getElementById(id).classList.add('show'); }
 
@@ -930,6 +1069,26 @@ function getAvatarFrameOverlayHtml(frameKey) {
         return '';
     }
 
+// ================= فحص رسائل البث العامة =================
+    function checkBroadcastAlerts() {
+        db.ref('broadcast_message').on('value', (snap) => {
+            if (snap.exists() && snap.val()) {
+                const data = snap.val();
+                const lastSeenId = localStorage.getItem('last_seen_broadcast');
+                if (data.active && data.id !== lastSeenId) {
+                    document.getElementById('broadcast-msg-title').innerText = data.title || "تنبيه عام 📢";
+                    document.getElementById('broadcast-msg-body').innerText = data.body || "";
+                    
+                    const banner = document.getElementById('broadcast-msg-modal');
+                    if (banner) {
+                        banner.classList.add('show');
+                        if (typeof playSuccessSound === 'function') playSuccessSound();
+                    }
+                }
+            }
+        });
+    }
+
     // ================= تهيئة المستخدم =================
     let currentUser = null; 
 let cachedFameData = null;
@@ -950,6 +1109,7 @@ let hasCheckedDailyLoginSession = false;
         const cachedUserData = localStorage.getItem('cached_user_data');
 
         if (loggedInPhone) {
+            // 1. عرض البيانات فوراً من ذاكرة الهاتف لتفادي أي انتظار أو وميض بالشاشة
             if (cachedUserData) {
                 try {
                     currentUser = JSON.parse(cachedUserData);
@@ -959,10 +1119,11 @@ let hasCheckedDailyLoginSession = false;
                 } catch (e) {}
             }
 
-            db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
+            // 2. قراءة مفردة واحدة فقط (.once) لتوفير الباقة وإغلاق الاتصال فوراً
+            db.ref('users/' + loggedInPhone).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     currentUser = snapshot.val();
-// كود تنظيف آلي لمرة واحدة لتخفيف وزن الحساب القديم
+
                     if (currentUser.transactions) {
                         db.ref('users/' + loggedInPhone + '/transactions').remove();
                         delete currentUser.transactions;
@@ -991,10 +1152,11 @@ let hasCheckedDailyLoginSession = false;
                     if (currentUser.can_edit_bio === undefined) currentUser.can_edit_bio = false;
                     if (currentUser.completed_tasks === undefined) currentUser.completed_tasks = [];
 
+                    // حفظ أحدث نسخة في هاتف الطالب
                     localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
                     updateProfileUI();
-initUserTicketRepliesListener(); 
+                    initUserTicketRepliesListener();
 
                     const bottomNav = document.getElementById('main-bottom-nav');
                     if (bottomNav) bottomNav.style.display = 'flex';
@@ -1010,6 +1172,12 @@ initUserTicketRepliesListener();
                 } else {
                     logoutUserLocally();
                     showAuthGateDirectly();
+                }
+            }).catch(() => {
+                // في حال انقطاع النت تماماً، يظل الحساب معتمداً على الكاش المحلي
+                if (!currentUser && cachedUserData) {
+                    currentUser = JSON.parse(cachedUserData);
+                    updateProfileUI();
                 }
             });
         } else {
@@ -1154,25 +1322,38 @@ initUserTicketRepliesListener();
         document.getElementById('stat-quiz-played').innerText = played;
         document.getElementById('stat-quiz-correct').innerText = correct;
         document.getElementById('stat-quiz-accuracy').innerText = `${accuracy}% 🎯`;
-    }
 
-    function checkBroadcastAlerts() {
-        db.ref('broadcast_message').on('value', (snap) => {
-            if (snap.exists() && snap.val()) {
-                const data = snap.val();
-                const lastSeenId = localStorage.getItem('last_seen_broadcast');
-                if (data.active && data.id !== lastSeenId) {
-                    document.getElementById('broadcast-msg-title').innerText = data.title || "تنبيه عام 📢";
-                    document.getElementById('broadcast-msg-body').innerText = data.body || "";
-                    
-                    const banner = document.getElementById('broadcast-msg-modal');
-                    if (banner) {
-                        banner.classList.add('show');
-                        playSuccessSound();
-                    }
-                }
+        // 💡 جلب السجل المحلي وعرضه بدون أي طلبات للسيرفر
+        const historyContainer = document.getElementById('local-stats-history-list');
+        if (historyContainer) {
+            const localHistory = JSON.parse(localStorage.getItem('my_detailed_stats') || '[]');
+            if (localHistory.length === 0) {
+                historyContainer.innerHTML = '<div class="eng-bento-card" style="padding: 15px; text-align: center;"><p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">لم تقم بإجراء أي اختبارات حتى الآن.</p></div>';
+                return;
             }
-        });
+            
+            let histHtml = '';
+            localHistory.forEach(item => {
+                const passRate = item.score / item.total;
+                const color = passRate === 1 ? 'var(--accent-emerald)' : (passRate >= 0.5 ? 'var(--accent-gold)' : '#ef4444');
+                const icon = item.type === 'exam' ? '⏱️' : '🧠';
+                
+                histHtml += `
+                <div class="eng-bento-card" style="padding: 12px 14px; flex-direction: row; justify-content: space-between; align-items: center; border-color: rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.4rem;">${icon}</span>
+                        <div>
+                            <h4 style="font-size: 0.85rem; margin-bottom: 2px; color: var(--text-main);">${item.title}</h4>
+                            <span style="font-size: 0.7rem; color: var(--text-sub);">${item.date}</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 1.1rem; font-weight: 900; color: ${color};">
+                        ${item.score}/${item.total}
+                    </div>
+                </div>`;
+            });
+            historyContainer.innerHTML = histHtml;
+        }
     }
 
     // ================= تسجيل الخروج والدخول =================
@@ -1307,34 +1488,45 @@ initUserTicketRepliesListener();
             return; 
         }
 
-        db.ref('users').once('value', (snapshot) => {
-            let foundUser = null;
-            snapshot.forEach(child => {
-                const u = child.val();
-                if (u.phone === inputVal || (u.email && u.email.toLowerCase() === inputVal.toLowerCase())) {
-                    foundUser = u;
+        const isEmail = inputVal.includes('@');
+        
+        if (!isEmail) {
+            // بحث مباشر برقم الهاتف (سحب بيانات شخص واحد فقط = صفر استهلاك)
+            db.ref('users/' + inputVal).once('value', (snapshot) => {
+                finalizeLogin(snapshot.val(), pass);
+            });
+        } else {
+            // بحث بالبريد الإلكتروني باستخدام Query ذكي
+            db.ref('users').orderByChild('email').equalTo(inputVal.toLowerCase()).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = Object.values(snapshot.val())[0];
+                    finalizeLogin(userData, pass);
+                } else {
+                    finalizeLogin(null, pass);
                 }
             });
+        }
+    }
 
-            if (!foundUser) {
-                showTopToast('هذا الحساب غير موجود! برجاء إنشاء حساب جديد.', 'error');
-                return;
-            }
+    function finalizeLogin(foundUser, pass) {
+        if (!foundUser) {
+            showTopToast('هذا الحساب غير موجود! برجاء إنشاء حساب جديد.', 'error');
+            return;
+        }
+        if (foundUser.password !== pass) {
+            showTopToast('كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.', 'error');
+            return;
+        }
 
-            if (foundUser.password !== pass) {
-                showTopToast('كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.', 'error');
-                return;
-            }
-
-            localStorage.setItem('active_user_phone', foundUser.phone);
-            localStorage.setItem('cached_user_data', JSON.stringify(foundUser));
-            currentUser = foundUser;
-            updateProfileUI();
-            document.getElementById('login-password').value = '';
-            document.getElementById('main-bottom-nav').style.display = 'flex';
-            showTopToast('تم تسجيل الدخول بنجاح ✨', 'success');
-            goHomeDirectly();
-        });
+        localStorage.setItem('active_user_phone', foundUser.phone);
+        localStorage.setItem('cached_user_data', JSON.stringify(foundUser));
+        currentUser = foundUser;
+        updateProfileUI();
+        document.getElementById('login-password').value = '';
+        const bottomNav = document.getElementById('main-bottom-nav');
+        if(bottomNav) bottomNav.style.display = 'flex';
+        showTopToast('تم تسجيل الدخول بنجاح ✨', 'success');
+        goHomeDirectly();
     }
     
     function logoutUserLocally() {
@@ -2192,36 +2384,39 @@ function preloadLeaderboardData() {
 // 2. عرض الليدربورد الذكي
 function renderLeaderboard() {
     const container = document.getElementById('leaderboard-content');
+    container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري التحقق... ⏳</p>';
 
-    // عرض البيانات من ذاكرة التليفون فوراً (صفر استهلاك انترنت وصفر وقت تحميل)
-    if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
-        buildLeaderboardDOM(cachedLeaderboardData, container);
-    } else {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-sub); margin-top: 30px; font-weight: 800;">جاري تحميل الأبطال... ⏳</p>';
-    }
+    // 1. التحقق من حالة اللوحة (مقفلة أم مفتوحة)
+    db.ref('settings/leaderboard_locked').once('value').then(lockSnap => {
+        const isLocked = lockSnap.exists() ? lockSnap.val() : false;
 
-    // فحص سريع في الخلفية لأول 10 لتحديث الواجهة إذا حدث تغيير
-    db.ref('users').orderByChild('xp').limitToLast(10).once('value').then(snapshot => {
-        let usersArr = [];
-        snapshot.forEach(child => {
-            let u = child.val();
-            u.id = child.key;
-            u.xp = u.xp || u.points || 0;
-            usersArr.push(u);
-        });
+        // 2. إذا كانت اللوحة مقفلة، نعرض رسالة الغموض ولا نحمل أي بيانات أخرى
+        if (isLocked) {
+            container.innerHTML = `
+                <div class="auth-card" style="text-align: center; padding: 40px 20px; border-color: #ef4444; margin-top: 20px;">
+                    <span style="font-size: 4.5rem; display: block; margin-bottom: 15px;">🤫</span>
+                    <h3 style="color: #ef4444; margin-bottom: 10px; font-size: 1.4rem;">الترتيب سري حالياً!</h3>
+                    <p style="color: var(--text-main); font-size: 0.95rem; line-height: 1.8; font-weight: 700;">
+                        لوحة المتصدرين مغلقة لزيادة الحماس والمنافسة.<br>استمر في جمع النقاط وإنجاز التحديات، وسيتم الكشف عن المراكز الأولى قريباً جداً! 🔥
+                    </p>
+                </div>`;
+            return;
+        }
 
-        usersArr.reverse();
-        
-        // لو حصل تغيير فعلي، نحدث الشاشة والذاكرة
-        if (JSON.stringify(usersArr) !== JSON.stringify(cachedLeaderboardData)) {
-            cachedLeaderboardData = usersArr;
-            localStorage.setItem('local_top_10', JSON.stringify(usersArr));
+        // 3. إذا كانت مفتوحة، نحمل قائمة الأبطال كالمعتاد
+        db.ref('users').orderByChild('xp').limitToLast(10).once('value').then(snapshot => {
+            let usersArr = [];
+            snapshot.forEach(child => {
+                let u = child.val();
+                u.id = child.key;
+                u.xp = u.xp || u.points || 0;
+                usersArr.push(u);
+            });
+            usersArr.reverse();
             buildLeaderboardDOM(usersArr, container);
-        }
-    }).catch(err => {
-        if (!cachedLeaderboardData) {
+        }).catch(() => {
             container.innerHTML = '<p style="text-align: center; color: #ef4444; margin-top: 30px;">حدث خطأ في تحميل البيانات.</p>';
-        }
+        });
     });
 }
 
@@ -2318,21 +2513,7 @@ function buildLeaderboardDOM(usersArr, container) {
         navigateTo('view-subject-content', subjectName, 'اختر نوع المحتوى');
     }
 
-    function openSubjectTypeDetails(type) {
-        playClickSound();
-        currentActiveType = type;
-        const typeName = type === 'theory' ? 'قسم النظري' : 'قسم العملي';
-        const cardTitle = type === 'theory' ? 'كتاب المقرر' : 'مذكرة العملي والسكاشن';
-        const cardIcon = type === 'theory' ? 'https://img.icons8.com/fluency/96/literature.png' : 'https://img.icons8.com/fluency/96/microscope.png';
-        
-        document.getElementById('subject-detail-label').innerText = `${typeName} - ${currentActiveSubject}`;
-        document.getElementById('detail-card-title').innerText = cardTitle;
-        document.getElementById('detail-card-icon').src = cardIcon;
-        
-        navigateTo('view-subject-detail', currentActiveSubject, typeName);
-        updateBookRewardBadgeUI(); // تحديث النص فور فتح الشاشة
-    }
-function updateBookRewardBadgeUI() {
+                function updateBookRewardBadgeUI() {
         const badgeEl = document.getElementById('book-reward-status-badge');
         if (!badgeEl) return;
 
@@ -2354,26 +2535,44 @@ function updateBookRewardBadgeUI() {
     }
 
     function handleBookDownloadClick() {
-        playClickSound();
-        const safeKey = getSafeSubjectKey(currentActiveSubject);
-        const bookIdentifier = `${safeKey}_${currentActiveType}`;
-        
-        // احتساب المكافأة فوراً وتحديث النص وتسجيل المعاملة
-        rewardUserForBookSilent(bookIdentifier);
+    playClickSound();
+    const safeKey = getSafeSubjectKey(currentActiveSubject);
+    const bookIdentifier = `${safeKey}_${currentActiveType}`;
+    
+    // احتساب المكافأة فوراً
+    rewardUserForBookSilent(bookIdentifier);
 
-        db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
-            if (snapshot.exists() && snapshot.val()) {
-                const rawUrl = snapshot.val();
-                downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
-            } else {
-                if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
-                    downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
-                } else {
-                    showTopToast('سيتم إتاحة ملف هذا القسم للتحميل قريباً من قبل المطور! ⏳', 'info');
-                }
-            }
-        });
+    // 1. فحص وجود الرابط محلياً أولاً
+    const cachedLink = localStorage.getItem('cached_book_url_' + bookIdentifier);
+
+    // 🚀 إذا كان الرابط محفوظاً مسبقاً، نزل فوراً بدون لمس فايربيز نهائياً
+    if (cachedLink) {
+        downloadBookFromDrive(cachedLink, `${currentActiveSubject}_${currentActiveType}.pdf`);
+        return;
     }
+
+    // 2. إذا لم يكن محفوظاً (أول مرة فقط)، اطلبه من فايربيز واحفظه للأبد
+    showTopToast('جاري تجهيز رابط التحميل... ⏳', 'info');
+    db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
+        if (snapshot.exists() && snapshot.val()) {
+            const rawUrl = snapshot.val();
+            localStorage.setItem('cached_book_url_' + bookIdentifier, rawUrl); // حفظ الرابط في هاتف الطالب
+            downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
+        } else {
+            fallbackDownload();
+        }
+    }).catch(() => {
+        fallbackDownload();
+    });
+}
+
+function fallbackDownload() {
+    if (currentActiveSubject === 'تكنولوجيا الحبوب' && currentActiveType === 'theory') {
+        downloadDirectFile('grains_book.pdf', 'grains_book.pdf');
+    } else {
+        showTopToast('تعذر جلب الرابط حالياً، تأكد من اتصال الإنترنت! ⏳', 'error');
+    }
+}
 
     function rewardUserForBookSilent(bookIdentifier) {
         if (!currentUser) return;
@@ -2459,11 +2658,17 @@ function updateBookRewardBadgeUI() {
     }
 
     closeModal('modal-derby-setup');
-    showTopToast('جاري فتح غرفة الديربي فوراً ⚡', 'success'); // رسالة سريعة
+    showTopToast('جاري فتح غرفة الديربي فوراً ⚡', 'success');
 
     const randomCode = 'DERBY-' + Math.floor(100 + Math.random() * 900);
 
-    // 1. إنشاء الغرفة فوراً بدون انتظار تجهيز الأسئلة لضمان السرعة الفائقة
+    // 1. جلب الأسئلة وتجهيزها أولاً
+    const deck = await fetchBattleQuestionsDeck();
+
+    // 2. فصل الأسئلة في مسار مستقل تماماً (يتم قراءتها مرة واحدة فقط ولن تستهلك مجدداً)
+    await db.ref('battles_questions/' + randomCode).set(deck);
+
+    // 3. رفع حالة الغرفة واللاعبين فقط في المسار الأساسي (حجم صغير جداً للتحديثات)
     const roomData = {
         roomId: randomCode,
         stake: selectedDerbyStake,
@@ -2479,22 +2684,15 @@ function updateBookRewardBadgeUI() {
             answeredCurrent: false,
             answerTime: 0
         },
-        player2: null,
-        questions: [] // سيتم جلبها وتوليدها بذكاء فور اكتمال الانضمام
+        player2: null
     };
 
-    // خصم العملات وحفظ الغرفة دفعة واحدة وبسرعة خيالية
     await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins => {
         return (currentCoins || 0) - selectedDerbyStake;
     });
     
     await db.ref('battles/' + randomCode).set(roomData);
     currentBattleId = randomCode;
-
-    // 2. تجهيز الأسئلة في الخلفية بهدوء وبدون ما نعطل الواجهة
-    fetchBattleQuestionsDeck().then(deck => {
-        db.ref('battles/' + randomCode + '/questions').set(deck);
-    });
 
     enterBattleLobbyView(randomCode);
 }
@@ -2706,18 +2904,27 @@ function startDerbyBattleByHost() {
         goHomeDirectly();
     }
 
-    function enterBattleArenaView(roomId) {
-        navigateTo('view-battle-arena', 'ساحة الديربي 1v1', 'مواجهة حية مباشرة');
-        if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+    let currentMatchQuestions = null; // متغير لحفظ أسئلة المباراة مؤقتاً
 
+function enterBattleArenaView(roomId) {
+    navigateTo('view-battle-arena', 'ساحة الديربي 1v1', 'مواجهة حية مباشرة');
+    if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+
+    // 1. قراءة الأسئلة "مرة واحدة فقط" عند دخول الساحة لصفر استهلاك أثناء اللعب
+    db.ref('battles_questions/' + roomId).once('value').then(qSnap => {
+        currentMatchQuestions = qSnap.val() || [];
+
+        // 2. مراقبة الحالة والنتيجة فقط لحظة بلحظة (حجم بايتات معدود)
         battleListener = db.ref('battles/' + roomId).on('value', snap => {
             if (!snap.exists()) return;
             const room = snap.val();
+            room.questions = currentMatchQuestions; // دمج الأسئلة المخزنة مع حالة الغرفة
             syncArenaState(room);
         });
-    }
+    });
+}
 
-    function syncArenaState(room) {
+function syncArenaState(room) {
     if (room.status === 'finished') {
         if (battleListener && currentBattleId) {
             db.ref('battles/' + currentBattleId).off('value', battleListener);
@@ -2726,7 +2933,6 @@ function startDerbyBattleByHost() {
         concludeBattle(room);
         return;
     }
-    // باقي الكود كما هو تماماً...
 
     const isHost = room.player1.phone === currentUser.phone;
     const me = isHost ? room.player1 : room.player2;
@@ -2749,29 +2955,31 @@ function startDerbyBattleByHost() {
     document.getElementById('arena-question-counter').innerText = `السؤال ${qIndex + 1} / 10`;
     
     const currentQ = room.questions[qIndex];
-    document.getElementById('arena-q-category').innerText = currentQ.category || 'عام';
-    document.getElementById('arena-q-text').innerText = currentQ.q;
+    if (currentQ) {
+        document.getElementById('arena-q-category').innerText = currentQ.category || 'عام';
+        document.getElementById('arena-q-text').innerText = currentQ.q;
+    }
 
     // تجهيز السؤال الجديد عند تغير رقم السؤال
     if (document.getElementById('arena-options-list').dataset.currentQ !== String(qIndex)) {
         hasAnsweredCurrentArenaQ = false;
         document.getElementById('arena-p1-status').innerText = 'يفكر... ⏳';
         document.getElementById('arena-p1-status').style.color = 'var(--accent-gold)';
-        renderArenaChoices(currentQ, qIndex, isHost);
+        if (currentQ) renderArenaChoices(currentQ, qIndex, isHost);
     }
 
     // الانتقال للسؤال التالي بمجرد إجابة الطرفين (مع حماية القفل)
-        if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
-            if (isHost && !isAdvancingQ) {
-                isAdvancingQ = true; // 👈 قفل الباب عشان الأمر ميتكررش
-                setTimeout(() => {
-                    advanceArenaNextQuestion(room).then(() => {
-                        isAdvancingQ = false; // 👈 نفتح القفل تاني بعد ما السؤال يتغير فعلياً
-                    });
-                }, 1200);
-            }
+    if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
+        if (isHost && !isAdvancingQ) {
+            isAdvancingQ = true; 
+            setTimeout(() => {
+                advanceArenaNextQuestion(room).then(() => {
+                    isAdvancingQ = false; 
+                });
+            }, 1200);
         }
-    } // 👈👈👈 ضيف القوس ده هنا عشان تقفل دالة syncArenaState 
+    }
+} 
 
     // دالة لتغيير حالة القفل من لوحة الأدمن وحفظها في فايربيز
     function setHallOfFameLockStatus(lockState) {
@@ -2781,6 +2989,30 @@ function startDerbyBattleByHost() {
         updateAdminFameButtonsUI(lockState);
     });
 }
+
+// ================= قفل وفتح لوحة المتصدرين =================
+function setLeaderboardLockStatus(lockState) {
+    if (typeof playClickSound === 'function') playClickSound();
+    db.ref('settings/leaderboard_locked').set(lockState).then(() => {
+        showTopToast(lockState ? 'تم إخفاء لوحة المتصدرين بنجاح 🔒' : 'تم إظهار لوحة المتصدرين للطلاب 🔓', 'success');
+        updateAdminLbButtonsUI(lockState);
+    });
+}
+
+function updateAdminLbButtonsUI(isLocked) {
+    const lockBtn = document.getElementById('btn-lock-lb');
+    const unlockBtn = document.getElementById('btn-unlock-lb');
+    if (lockBtn && unlockBtn) {
+        lockBtn.style.opacity = isLocked ? '0.5' : '1';
+        unlockBtn.style.opacity = isLocked ? '1' : '0.5';
+    }
+}
+
+// الاستماع لتغييرات حالة القفل لتحديث أزرار الأدمن تلقائياً
+db.ref('settings/leaderboard_locked').on('value', snap => {
+    const isLocked = snap.exists() ? snap.val() : false;
+    updateAdminLbButtonsUI(isLocked);
+});
 
 // تحديث شكل الأزرار في لوحة الأدمن حسب الحالة الحالية
 function updateAdminFameButtonsUI(isLocked) {
@@ -3146,58 +3378,50 @@ function checkHallOfFameStatus() {
     let timeLeft = 15;
     let hint5050UsedInCurrentQuestion = false;
 
-    function startActualQuiz() {
-        closeModal('quiz-rules-modal'); 
-        playClickSound();
+    async function startActualQuiz() { 
+    closeModal('quiz-rules-modal'); 
+    playClickSound();
 
-        // استخدام وقت السيرفر الآمن لو كنت طبقته، أو الوقت العادي
-        const todayDate = typeof getRealDateString !== 'undefined' ? getRealDateString() : new Date().toLocaleDateString('en-CA');
-        const lastQuizDate = currentUser.last_quiz_date || '';
-        const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+    // فحص استكمال الكلاسيك لو مخرجش منه
+    if (isClassicQuizActive && !isLevelBossActive && activeQuizQuestions && activeQuizQuestions.length > 0 && currentQuizIndex < 5) {
+        showTopToast('جاري استكمال التحدي من حيث توقفت 🚀', 'success');
+        navigateTo('view-quiz-game', 'تحدي المعلومات', 'جولة تحدي العباقرة');
+        if (!isAnswerLocked) resumeQuizTimer();
+        return;
+    }
 
-        if (quizCountToday >= DAILY_QUIZ_LIMIT) {
-            if ((currentUser.extraClassicCount || 0) > 0) {
-                currentUser.extraClassicCount -= 1;
-                db.ref('users/' + currentUser.phone + '/extraClassicCount').set(currentUser.extraClassicCount);
-                showTopToast('تم خصم محاولة كلاسيك من رصيدك الإضافي 🎟️', 'info');
-            } else {
-                showTopToast(`تم استهلاك جميع محاولات اليوم! اشتري محاولات إضافية من المتجر 🎟️`, 'error');
-                return;
-            }
+    const todayDate = typeof getRealDateString !== 'undefined' ? getRealDateString() : new Date().toLocaleDateString('en-CA');
+    const lastQuizDate = currentUser.last_quiz_date || '';
+    const quizCountToday = (lastQuizDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
+
+    if (quizCountToday >= DAILY_QUIZ_LIMIT) {
+        if ((currentUser.extraClassicCount || 0) > 0) {
+            currentUser.extraClassicCount -= 1;
+            db.ref('users/' + currentUser.phone + '/extraClassicCount').set(currentUser.extraClassicCount);
+            showTopToast('تم خصم محاولة كلاسيك من رصيدك الإضافي 🎟️', 'info');
+        } else {
+            showTopToast(`تم استهلاك جميع محاولات اليوم! اشتري محاولات إضافية من المتجر 🎟️`, 'error');
+            return;
         }
+    }
 
-        let allAvailableQuestions = [];
-        Object.keys(masterQuestionsBank).forEach(cat => {
-            masterQuestionsBank[cat].forEach((q, idx) => {
-                allAvailableQuestions.push({ 
-                    id: `master_${cat}_${idx}`, 
-                    q: q.q, 
-                    a: [...q.a], 
-                    correct: q.correct, 
-                    categoryName: cat 
-                });
+    let allAvailableQuestions = [];
+    Object.keys(masterQuestionsBank).forEach(cat => {
+        masterQuestionsBank[cat].forEach((q, idx) => {
+            allAvailableQuestions.push({ 
+                id: `master_${cat}_${idx}`, 
+                q: q.q, 
+                a: [...q.a], 
+                correct: q.correct, 
+                categoryName: cat 
             });
         });
+    });
 
-        if (cloudQuestionsCache) {
-            processSmartQuizDeck(allAvailableQuestions.concat(cloudQuestionsCache));
-        } else {
-            db.ref('custom_questions').once('value').then((snapshot) => {
-                cloudQuestionsCache = [];
-                if (snapshot.exists()) {
-                    snapshot.forEach(child => {
-                        let customQ = child.val();
-                        if (customQ && customQ.q && customQ.a) {
-                            cloudQuestionsCache.push({
-                                id: `custom_${child.key}`, q: customQ.q, a: [...customQ.a],
-                                correct: customQ.correct || 0, categoryName: customQ.category || "أسئلة إضافية"
-                            });
-                        }
-                    });
-                }
-                processSmartQuizDeck(allAvailableQuestions.concat(cloudQuestionsCache));
-            }).catch(() => processSmartQuizDeck(allAvailableQuestions));
-        }
+    // 👈 التعديل السحري: استخدام الكاش الموفر للبيانات
+    showTopToast('جاري تجهيز التحدي... ⏳', 'info');
+    const cloudQuestions = await getQuestionsWithCache('custom_questions');
+    processSmartQuizDeck(allAvailableQuestions.concat(cloudQuestions));
 }
 
     // الذاكرة الذكية لمنع التكرار
@@ -3391,7 +3615,9 @@ function checkHallOfFameStatus() {
 
     function finishQuizGame() {
 isClassicQuizActive = false;
-        let wrongCount = 5 - quizScoreCount; 
+        let wrongCount = 5 - quizScoreCount;
+
+saveLocalQuizHistory('تحدي العباقرة', quizScoreCount, 5, 'classic'); 
         
 let xpChange = (quizScoreCount * 5) - (wrongCount * 2); // الخصم أصبح نقطتين بدل خمسة
 let coinsChange = (quizScoreCount * 2);        let bonusMsg = "";
@@ -3501,7 +3727,7 @@ if (currentUser) {
 
     function switchAdminTab(tabName) {
         playClickSound();
-        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'academy'].forEach(t => {
+        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science'].forEach(t => {
             const tabBtn = document.getElementById('tab-admin-' + t);
             const tabSec = document.getElementById('admin-section-' + t);
             if (tabBtn) tabBtn.classList.remove('active');
@@ -3514,13 +3740,13 @@ if (currentUser) {
         if (currentBtn) currentBtn.classList.add('active');
         if (currentSec) currentSec.style.display = 'block';
 
-        // التحميل يتم مرة واحدة فقط لكل قسم!
         if (tabName === 'analytics' && !loadedAdminTabs.analytics) { loadAdminAnalyticsAndLogs(); loadedAdminTabs.analytics = true; }
         if (tabName === 'tickets' && !loadedAdminTabs.tickets) { loadAdminTickets(); loadedAdminTabs.tickets = true; }
         if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
         if (tabName === 'quiz' && !loadedAdminTabs.quiz) { loadAdminCustomQuestions(); loadedAdminTabs.quiz = true; }
         if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
         if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
+        if (tabName === 'science') { loadAdminScienceContent(); }
     }
 
     function populateAdminStoreInputs() {
@@ -3604,7 +3830,9 @@ function deleteCustomQuestion(qId) {
     playErrorSound();
     if (confirm('هل أنت متأكد من رغبتك في حذف هذا السؤال نهائياً من بنك الأسئلة؟')) {
         db.ref('custom_questions/' + qId).remove().then(() => {
+            incrementQuestionsVersion('custom_questions'); // 👈 تحديث الفيرجن
             showTopToast('تم حذف السؤال بنجاح 🗑️', 'info');
+            loadAdminCustomQuestions(); // تحديث القائمة أمامك
         });
     }
 }
@@ -3862,76 +4090,79 @@ function adminSendTicketReply(ticketId) {
     }
 
     function saveNewCloudQuestion() {
-        playClickSound();
-        const cat = document.getElementById('admin-new-q-cat').value.trim() || 'عام';
-        const qText = document.getElementById('admin-new-q-text').value.trim();
-        const correctAns = document.getElementById('admin-new-q-correct').value.trim();
-        const opt1 = document.getElementById('admin-new-q-opt1').value.trim();
-        const opt2 = document.getElementById('admin-new-q-opt2').value.trim();
-        const opt3 = document.getElementById('admin-new-q-opt3').value.trim();
+    playClickSound();
+    const cat = document.getElementById('admin-new-q-cat').value.trim() || 'عام';
+    const qText = document.getElementById('admin-new-q-text').value.trim();
+    const correctAns = document.getElementById('admin-new-q-correct').value.trim();
+    const opt1 = document.getElementById('admin-new-q-opt1').value.trim();
+    const opt2 = document.getElementById('admin-new-q-opt2').value.trim();
+    const opt3 = document.getElementById('admin-new-q-opt3').value.trim();
 
-        if (!qText || !correctAns || !opt1 || !opt2 || !opt3) {
-            showTopToast('يرجى كتابة نص السؤال وجميع الخيارات الأربعة كاملة!', 'error');
-            return;
-        }
-
-        const newQData = {
-            category: cat,
-            q: qText,
-            a: [correctAns, opt1, opt2, opt3],
-            correct: 0,
-            createdAt: new Date().toISOString()
-        };
-
-        db.ref('custom_questions').push(newQData).then(() => {
-            document.getElementById('admin-new-q-text').value = '';
-            document.getElementById('admin-new-q-correct').value = '';
-            document.getElementById('admin-new-q-opt1').value = '';
-            document.getElementById('admin-new-q-opt2').value = '';
-            document.getElementById('admin-new-q-opt3').value = '';
-            showTopToast('تمت إضافة السؤال بنجاح إلى بنك الأسئلة باللعبة! 🧠✨', 'success');
-        });
+    if (!qText || !correctAns || !opt1 || !opt2 || !opt3) {
+        showTopToast('يرجى كتابة نص السؤال وجميع الخيارات الأربعة كاملة!', 'error');
+        return;
     }
+
+    const newQData = {
+        category: cat,
+        q: qText,
+        a: [correctAns, opt1, opt2, opt3],
+        correct: 0,
+        createdAt: new Date().toISOString()
+    };
+
+    db.ref('custom_questions').push(newQData).then(() => {
+        document.getElementById('admin-new-q-text').value = '';
+        document.getElementById('admin-new-q-correct').value = '';
+        document.getElementById('admin-new-q-opt1').value = '';
+        document.getElementById('admin-new-q-opt2').value = '';
+        document.getElementById('admin-new-q-opt3').value = '';
+        
+        incrementQuestionsVersion('custom_questions'); // 👈 تحديث الفيرجن
+        showTopToast('تمت إضافة السؤال بنجاح إلى بنك الأسئلة باللعبة! 🧠✨', 'success');
+    });
+}
 
     function uploadBulkQuestions() {
-        playClickSound();
-        const rawText = document.getElementById('admin-bulk-quiz-input').value.trim();
-        if (!rawText) {
-            showTopToast('يرجى لصق الأسئلة أولاً بالصيغة الموضحة!', 'error');
-            return;
-        }
-
-        const lines = rawText.split('\n');
-        let addedCount = 0;
-        const updates = {};
-
-        lines.forEach(line => {
-            const parts = line.split('#').map(p => p.trim());
-            if (parts.length === 6) {
-                const [cat, qText, correct, opt1, opt2, opt3] = parts;
-                const newKey = db.ref('custom_questions').push().key;
-                updates[newKey] = {
-                    category: cat || 'عام',
-                    q: qText,
-                    a: [correct, opt1, opt2, opt3],
-                    correct: 0,
-                    createdAt: new Date().toISOString()
-                };
-                addedCount++;
-            }
-        });
-
-        if (addedCount === 0) {
-            showTopToast('تأكد من كتابة الأسئلة وفصلها بـ 6 خانات بعلامة (#)', 'error');
-            return;
-        }
-
-        db.ref('custom_questions').update(updates).then(() => {
-            document.getElementById('admin-bulk-quiz-input').value = '';
-            playSuccessSound();
-            showTopToast(`تم رفع (${addedCount}) سؤال بنجاح إلى السحابة! 🧠✨`, 'success');
-        });
+    playClickSound();
+    const rawText = document.getElementById('admin-bulk-quiz-input').value.trim();
+    if (!rawText) {
+        showTopToast('يرجى لصق الأسئلة أولاً بالصيغة الموضحة!', 'error');
+        return;
     }
+
+    const lines = rawText.split('\n');
+    let addedCount = 0;
+    const updates = {};
+
+    lines.forEach(line => {
+        const parts = line.split('#').map(p => p.trim());
+        if (parts.length === 6) {
+            const [cat, qText, correct, opt1, opt2, opt3] = parts;
+            const newKey = db.ref('custom_questions').push().key;
+            updates[newKey] = {
+                category: cat || 'عام',
+                q: qText,
+                a: [correct, opt1, opt2, opt3],
+                correct: 0,
+                createdAt: new Date().toISOString()
+            };
+            addedCount++;
+        }
+    });
+
+    if (addedCount === 0) {
+        showTopToast('تأكد من كتابة الأسئلة وفصلها بـ 6 خانات بعلامة (#)', 'error');
+        return;
+    }
+
+    db.ref('custom_questions').update(updates).then(() => {
+        document.getElementById('admin-bulk-quiz-input').value = '';
+        incrementQuestionsVersion('custom_questions'); // 👈 تحديث الفيرجن
+        playSuccessSound();
+        showTopToast(`تم رفع (${addedCount}) سؤال بنجاح إلى السحابة! 🧠✨`, 'success');
+    });
+}
 
     // 1. إنشاء الكود بمواصفاته الجديدة
 function createNewPromoCode() {
@@ -4397,87 +4628,33 @@ function renderHomeCountdowns() {
         } catch(e) {}
     }
 
-    async function launchPenaltyMode(strikerId, strikerName, strikerImg) {
-        playClickSound();
-        if (!currentUser) return;
+    function launchPenaltyMode(strikerId, strikerName, strikerImg) {
+    playClickSound();
 
-        selectedPenaltyStriker = { id: strikerId, name: strikerName, img: strikerImg };
+    // حفظ بيانات اللاعب المختار
+    selectedPenaltyStriker = { id: strikerId, name: strikerName, img: strikerImg };
 
-        let allAvailableQuestions = [];
-        Object.keys(masterQuestionsBank).forEach(cat => {
-            masterQuestionsBank[cat].forEach((q, idx) => {
-                allAvailableQuestions.push({ 
-                    id: `master_pen_${cat}_${idx}`,
-                    q: q.q, 
-                    a: [...q.a], 
-                    correct: q.correct, 
-                    category: cat 
-                });
-            });
-        });
+    // تفعيل حالة اللعبة كزعيم ركلات جزاء
+    isPenaltyGameActive = true; 
+    penaltyCorrectAnswersCount = 0;
+    
+    // سحب أسئلة الزعيم المجهزة مسبقاً (الخاصة بالمستوى الحالي)
+    penaltyQuestionsDeck = [...bossQuestionsDeck]; 
+    currentPenaltyQIndex = 0;
 
-        if (cloudQuestionsCache) {
-            cloudQuestionsCache.forEach((val, index) => {
-                allAvailableQuestions.push({
-                    id: `custom_pen_cached_${index}`,
-                    q: val.q,
-                    a: [...val.a],
-                    correct: val.correct || 0,
-                    category: val.category || "أسئلة إضافية"
-                });
-            });
-        } else {
-            try {
-                const snap = await db.ref('custom_questions').once('value');
-                cloudQuestionsCache = [];
-                if (snap.exists()) {
-                    snap.forEach(c => {
-                        const val = c.val();
-                        if (val && val.q && val.a) {
-                            cloudQuestionsCache.push(val);
-                            allAvailableQuestions.push({
-                                id: `custom_pen_${c.key}`,
-                                q: val.q,
-                                a: [...val.a],
-                                correct: val.correct || 0,
-                                category: val.category || "أسئلة إضافية"
-                            });
-                        }
-                    });
-                }
-            } catch (e) {}
-        }
+    // تطبيق صورة واسم النجم المختار على الواجهة
+    const strikerImgEl = document.getElementById('penalty-striker-img');
+    const strikerNameEl = document.getElementById('penalty-striker-name');
+    if (strikerImgEl) strikerImgEl.src = strikerImg;
+    if (strikerNameEl) strikerNameEl.innerText = strikerName;
 
-        let seenIds = JSON.parse(localStorage.getItem('user_seen_penalty_' + currentUser.phone) || '[]');
-        let pool = allAvailableQuestions.filter(q => !seenIds.includes(q.id));
-
-        if (pool.length < 5) {
-            seenIds = [];
-            pool = [...allAvailableQuestions];
-            showTopToast('تم تجديد بنك أسئلة ركلات الجزاء بالكامل! 🔄✨', 'info');
-        }
-
-        pool = shuffleArray(pool);
-        penaltyQuestionsDeck = pool.slice(0, 5);
-
-        penaltyQuestionsDeck.forEach(q => {
-            if (!seenIds.includes(q.id)) seenIds.push(q.id);
-        });
-        localStorage.setItem('user_seen_penalty_' + currentUser.phone, JSON.stringify(seenIds));
-
-        currentPenaltyQIndex = 0;
-        isPenaltyGameActive = true;
-        penaltyCorrectAnswersCount = 0;
-
-        document.getElementById('penalty-striker-img').src = strikerImg;
-        document.getElementById('penalty-striker-name').innerText = strikerName;
-
-        resetPenaltyStadiumActors();
-        startStadiumCrowdAudio();
-
-        navigateTo('view-penalty-arena', 'ركلة الجزاء ⚽', `تسديدة ${strikerName}`);
-        renderPenaltyQuestion();
-    }
+    resetPenaltyStadiumActors(); 
+    startStadiumCrowdAudio();
+    
+    // الدخول لساحة المعركة
+    navigateTo('view-penalty-arena', `زعيم المستوى ${currentLevelPlaying}`, `تسديدة ${strikerName}`);
+    renderPenaltyQuestion(); 
+}
 
     function resetPenaltyStadiumActors() {
         const ball = document.getElementById('penalty-soccer-ball');
@@ -4499,35 +4676,55 @@ function renderHomeCountdowns() {
     }
 
     function renderPenaltyQuestion() {
-        isPenaltyAnswerLocked = false;
-        const qData = penaltyQuestionsDeck[currentPenaltyQIndex];
-        if (!qData) {
-            triggerPenaltyShootoutCinematic();
-            return;
-        }
-
-        document.getElementById('penalty-q-counter').innerText = `السؤال ${currentPenaltyQIndex + 1} من 5`;
-        document.getElementById('penalty-q-text').innerText = qData.q;
-
-        const optionsBox = document.getElementById('penalty-options-box');
-        optionsBox.innerHTML = '';
-
-        let options = shuffleArray([...qData.a]);
-        const correctText = qData.a[qData.correct || 0];
-
-        options.forEach(optText => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-option-btn';
-            btn.style.padding = '10px 14px';
-            btn.style.margin = '2px 0';
-            btn.style.fontSize = '0.85rem';
-            btn.innerText = optText;
-            btn.onclick = () => handlePenaltyAnswerClick(btn, optText, correctText);
-            optionsBox.appendChild(btn);
-        });
-
-        startPenaltyQuestionTimer();
+    isPenaltyAnswerLocked = false;
+    
+    // تأمين لو بنك أسئلة الزعيم فاضي للمستوى ده
+    if (!penaltyQuestionsDeck || penaltyQuestionsDeck.length === 0) {
+        penaltyQuestionsDeck = [
+            { q: "ما هي عاصمة مصر؟", a: ["القاهرة", "الإسكندرية", "الجيزة", "أسوان"], correct: 0, categoryName: "عام" },
+            { q: "ما هو العنصر الأكثر وفرة في الغلاف الجوي؟", a: ["النيتروجين", "الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين"], correct: 0, categoryName: "عام" },
+            { q: "كم عدد عظام جسم الإنسان البالغ؟", a: ["206", "180", "250", "300"], correct: 0, categoryName: "عام" },
+            { q: "ما هو الكوكب الأقرب للشمس؟", a: ["عطارد", "الزهرة", "المريخ", "المشتري"], correct: 0, categoryName: "عام" },
+            { q: "أي من الآتي يعتبر خطراً بيولوجياً في الهاسب؟", a: ["السالمونيلا", "شظايا الزجاج", "بقايا المنظفات", "المسامير"], correct: 0, categoryName: "عام" }
+        ];
     }
+
+    const qData = penaltyQuestionsDeck[currentPenaltyQIndex];
+    if (!qData || currentPenaltyQIndex >= 5) { // هنا بنتأكد انه بيلعب 5 اسئلة
+        triggerPenaltyShootoutCinematic();
+        return;
+    }
+
+    // استخراج النص والخيارات بشكل سليم ودقيق 100%
+    const questionText = qData.q || "سؤال زعيم ركلات الجزاء";
+    const optionsArray = qData.a || ["خيار 1", "خيار 2", "خيار 3", "خيار 4"];
+    const correctIdx = qData.correct !== undefined ? qData.correct : 0;
+    const correctText = optionsArray[correctIdx];
+
+    // إظهار رقم السؤال
+    document.getElementById('penalty-q-counter').innerText = `السؤال ${currentPenaltyQIndex + 1} من 5`;
+    
+    // إظهار نص السؤال
+    document.getElementById('penalty-q-text').innerText = questionText;
+
+    const optionsBox = document.getElementById('penalty-options-box');
+    optionsBox.innerHTML = '';
+
+    let shuffledOptions = shuffleArray([...optionsArray]);
+
+    shuffledOptions.forEach(optText => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.style.padding = '10px 14px';
+        btn.style.margin = '2px 0';
+        btn.style.fontSize = '0.85rem';
+        btn.innerText = optText;
+        btn.onclick = () => handlePenaltyAnswerClick(btn, optText, correctText);
+        optionsBox.appendChild(btn);
+    });
+
+    startPenaltyQuestionTimer();
+}
 
     function startPenaltyQuestionTimer() {
         clearInterval(penaltyTimer);
@@ -4611,69 +4808,116 @@ function renderHomeCountdowns() {
     }
 
     function triggerPenaltyShootoutCinematic() {
-        clearInterval(penaltyTimer);
-        const stadium = document.getElementById('penalty-stadium-box');
-        const qCard = document.getElementById('penalty-q-card');
-        const ball = document.getElementById('penalty-soccer-ball');
-        const striker = document.getElementById('penalty-striker-actor');
-        const keeper = document.getElementById('penalty-goalkeeper');
-        const net = document.getElementById('penalty-goal-net');
+    clearInterval(penaltyTimer);
+    const stadium = document.getElementById('penalty-stadium-box');
+    const qCard = document.getElementById('penalty-q-card');
+    const ball = document.getElementById('penalty-soccer-ball');
+    const striker = document.getElementById('penalty-striker-actor');
+    const keeper = document.getElementById('penalty-goalkeeper');
+    const net = document.getElementById('penalty-goal-net');
 
-        // 1. إخفاء كارت الأسئلة فوراً لكشف زاوية الرؤية
-        if (qCard) qCard.classList.add('hidden-for-kick');
+    if (qCard) qCard.classList.add('hidden-for-kick');
 
-        const isGoalScored = (penaltyCorrectAnswersCount >= 4);
+    const isGoalScored = (penaltyCorrectAnswersCount >= 4);
 
-        // تشغيل صوت المعلق المخصص للاعب المختار في حال التسجيل
-        if (isGoalScored) {
-            playCustomGoalAudio(selectedPenaltyStriker.id);
+    if (isGoalScored) {
+        playCustomGoalAudio(selectedPenaltyStriker.id);
+    }
+
+    setTimeout(() => {
+        if (striker) striker.classList.add('run-to-kick');
+    }, 400);
+
+    setTimeout(() => {
+        playStadiumSFX('kick');
+        if (stadium) {
+            stadium.classList.add('camera-shake-screen');
+            setTimeout(() => stadium.classList.remove('camera-shake-screen'), 350);
         }
 
-        // 2. انطلاق اللاعب نحو الكرة
-        setTimeout(() => {
-            if (striker) striker.classList.add('run-to-kick');
-        }, 400);
+        if (isGoalScored) {
+            const isRight = Math.random() > 0.5;
+            ball.classList.add(isRight ? 'kick-top-right' : 'kick-top-left');
+            keeper.classList.add('dive-wrong');
 
-        // 3. لحظة ركل الكرة وهزة الكاميرا والصوت
-        setTimeout(() => {
-            playStadiumSFX('kick');
-            if (stadium) {
-                stadium.classList.add('camera-shake-screen');
-                setTimeout(() => stadium.classList.remove('camera-shake-screen'), 350);
-            }
+            setTimeout(() => {
+                if (net) net.classList.add('net-shake');
+                if (striker) striker.classList.add('celebrate');
+                shootStars();
+                triggerConfetti();
+            }, 750);
+        } else {
+            ball.classList.add('kick-saved');
+            keeper.classList.add('save-left');
 
-            if (isGoalScored) {
-                const isRight = Math.random() > 0.5;
-                ball.classList.add(isRight ? 'kick-top-right' : 'kick-top-left');
-                keeper.classList.add('dive-wrong');
+            setTimeout(() => {
+                playStadiumSFX('post_hit');
+                keeper.innerText = '🛡️';
+                playErrorSound();
+            }, 750);
+        }
+    }, 850);
 
-                // اصطدام الكرة بالشباك واحتفال اللاعب
-                setTimeout(() => {
-                    if (net) net.classList.add('net-shake');
-                    if (striker) striker.classList.add('celebrate');
-                    shootStars();
-                    triggerConfetti();
-                }, 750);
-            } else {
-                ball.classList.add('kick-saved');
-                keeper.classList.add('save-left');
+    const resultDelay = isGoalScored ? 5500 : 2500;
 
-                setTimeout(() => {
-                    playStadiumSFX('post_hit');
-                    keeper.innerText = '🛡️';
-                    playErrorSound();
-                }, 750);
-            }
-        }, 850);
-
-        // 4. إيقاف صوت الجمهور وإظهار شاشة النتيجة مع مهلة إضافية 3 ثوانٍ عند تسجيل الهدف للاستمتاع بالمشهد والاحتفال
-        const resultDelay = isGoalScored ? 5500 : 2500;
-
-        setTimeout(() => {
-            stopStadiumCrowdAudio();
+    // توجيه دقيق بدون تكرار
+    setTimeout(() => {
+        stopStadiumCrowdAudio();
+        if (isLevelBossActive) {
+            concludeLevelBoss(isGoalScored);
+        } else {
             concludePenaltyGame(isGoalScored);
-        }, resultDelay);
+        }
+    }, resultDelay);
+}
+
+function concludeLevelBoss(isWin) {
+    isLevelBossActive = false;
+    isPenaltyGameActive = false;
+    clearInterval(bombTimer);
+    stopStadiumCrowdAudio();
+    
+    // إخفاء أي واجهات منبثقة تخص ركلات الجزاء فوراً حتى لا تعلق الشاشة
+    const cinemaModal = document.getElementById('penalty-cinema-modal');
+    if (cinemaModal) cinemaModal.classList.remove('show');
+    
+    let userLevels = currentUser.levels_progress || {};
+    let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
+    
+    let updatedStars = Math.max(oldData.stars, currentLevelStarsEarned);
+
+    if (isWin) {
+        let rewards = getLevelRewards(currentLevelPlaying);
+        userLevels[currentLevelPlaying] = { stars: updatedStars, boss_defeated: true, cooldown: 0 };
+        
+        currentUser.xp = (currentUser.xp || 0) + rewards.xp;
+        currentUser.points = currentUser.xp;
+        currentUser.coins = (currentUser.coins || 0) + rewards.coins;
+
+        db.ref('users/' + currentUser.phone).update({
+            levels_progress: userLevels,
+            xp: currentUser.xp,
+            points: currentUser.xp,
+            coins: currentUser.coins
+        }).then(() => {
+            updateProfileUI();
+            goHomeDirectly(true);
+            showTopToast(`أسطورة! تم تدمير الزعيم بنجاح 🏆 (+${rewards.xp} XP و +${rewards.coins} عملة)`, 'success');
+            setTimeout(() => { openLevelsMap(); triggerConfetti(); }, 500);
+        });
+
+    } else {
+        // الخسارة والعقوبة الفورية
+        let cooldownTime = Date.now() + ((globalBossConfig.cooldownHours || 12) * 60 * 60 * 1000);
+        userLevels[currentLevelPlaying] = { stars: updatedStars, boss_defeated: oldData.boss_defeated, cooldown: cooldownTime };
+        
+        db.ref('users/' + currentUser.phone + '/levels_progress').set(userLevels).then(() => {
+            goHomeDirectly(true); // الخروج فوراً للشاشة الرئيسية وإغلاق اللعب
+            showTopToast(`تم هزيمتك أمام الزعيم! تم قفل المستوى للراحة ❌`, 'error');
+            setTimeout(() => { openLevelsMap(); }, 500); // فتح الخريطة لتظهر علامة القفل
+        });
     }
+}
 
     function concludePenaltyGame(isGoal) {
         isPenaltyGameActive = false;
@@ -4758,6 +5002,7 @@ rewardEl.innerHTML = `
     }
 // ================= منظومة تسجيل ومراقبة النشاط والإحصائيات =================
     function recordActivityLog(type, details) {
+        return; // 👈 السطر ده هيوقف استهلاك السيرفر فوراً
         try {
             db.ref('app_activity_logs').push({
                 type: type,
@@ -4767,87 +5012,33 @@ rewardEl.innerHTML = `
         } catch (e) {}
     }
 
-    function loadAdminAnalyticsAndLogs(forceRefresh = false) {
-    let totalUsers = adminAllUsersData.length;
-    let totalCorrect = 0, totalPlayed = 0, totalDerbyWins = 0, totalPenalties = 0;
+function loadAdminAnalyticsAndLogs(forceRefresh = false) {
+        let totalUsers = adminAllUsersData.length;
+        let totalCorrect = 0, totalPlayed = 0, totalDerbyWins = 0, totalPenalties = 0;
 
-    adminAllUsersData.forEach(u => {
-        totalCorrect += (u.quizCorrect || 0);
-        totalPlayed += (u.quizPlayed || 0);
-        totalDerbyWins += (u.derby_wins || 0);
-        totalPenalties += (u.penalties_scored || 0);
-    });
-
-    const totalQuestionsAnswered = totalPlayed * 5;
-    const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
-
-    document.getElementById('stat-total-users').innerText = totalUsers;
-    document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
-    document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
-
-    const container = document.getElementById('admin-live-logs-list');
-    const cachedLogs = localStorage.getItem('cached_admin_logs');
-
-    if (cachedLogs && !forceRefresh) {
-        renderLogsDOM(JSON.parse(cachedLogs), container);
-    } else {
-        if(forceRefresh) container.innerHTML = '<p style="text-align: center;">جاري التحديث... ⏳</p>';
-        db.ref('app_activity_logs').limitToLast(100).once('value', snap => {
-            let logsArr = [];
-            if (snap.exists()) {
-                snap.forEach(child => { logsArr.push({ id: child.key, ...child.val() }); });
-            }
-            localStorage.setItem('cached_admin_logs', JSON.stringify(logsArr));
-            renderLogsDOM(logsArr, container);
-            if(forceRefresh) showTopToast('تم تحديث الإحصائيات بنجاح ✅', 'success');
+        // تجميع البيانات الحقيقية من حسابات الطلاب
+        adminAllUsersData.forEach(u => {
+            totalCorrect += (u.quizCorrect || 0);
+            totalPlayed += (u.quizPlayed || 0);
+            totalDerbyWins += (u.derby_wins || 0);
+            totalPenalties += (u.penalties_scored || 0);
         });
-    }
-}
 
-function renderLogsDOM(logsArr, container) {
-    if(logsArr.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أنشطة مسجلة حتى الآن.</p>';
-        return;
-    }
-    let derbyCount = 0, penaltyCount = 0, classicCount = 0;
-    logsArr.forEach(log => {
-        if (log.type === 'derby') derbyCount++;
-        else if (log.type === 'penalty') penaltyCount++;
-        else if (log.type === 'classic') classicCount++;
-    });
+        const totalQuestionsAnswered = totalPlayed * 5;
+        const accuracy = totalQuestionsAnswered > 0 ? Math.round((totalCorrect / totalQuestionsAnswered) * 100) : 0;
 
-    document.getElementById('stat-derby-battles').innerText = derbyCount;
-    document.getElementById('stat-penalty-played').innerText = penaltyCount;
-    document.getElementById('stat-classic-quizzes').innerText = classicCount;
+        // حقن الأرقام في الواجهة
+        document.getElementById('stat-total-users').innerText = totalUsers;
+        document.getElementById('stat-total-questions-solved').innerText = totalQuestionsAnswered;
+        document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
+        
+        const derbyEl = document.getElementById('stat-total-derby-wins');
+        if (derbyEl) derbyEl.innerText = totalDerbyWins;
+        
+        const penaltyEl = document.getElementById('stat-total-penalties');
+        if (penaltyEl) penaltyEl.innerText = totalPenalties;
 
-    logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-    let html = '';
-    logsArr.slice(0, 50).forEach(log => {
-        let badgeStyle = log.type === 'derby' ? 'background: rgba(239, 68, 68, 0.2); color: #ef4444;' : 
-                         log.type === 'penalty' ? 'background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);' : 
-                         'background: rgba(99, 102, 241, 0.2); color: var(--accent-highlight);';
-        let typeText = log.type === 'derby' ? '⚔️ ديربي 1v1' : log.type === 'penalty' ? '⚽ ركلات جزاء' : '🧠 تحدي كلاسيكي';
-        const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن';
-
-        html += `<div class="live-log-item">
-            <div class="live-log-header">
-                <span class="card-badge" style="${badgeStyle}">${typeText}</span>
-                <span style="font-size: 0.7rem; color: var(--text-sub);">${timeStr}</span>
-            </div>
-            <p style="font-size: 0.84rem; color: var(--text-main); font-weight: 700; margin: 0;">${log.details}</p>
-        </div>`;
-    });
-    container.innerHTML = html;
-}
-
-    function clearActivityLogs() {
-        playErrorSound();
-        if (confirm('هل أنت متأكد من مسح جميع سجلات النشاط المباشر؟')) {
-            db.ref('app_activity_logs').remove().then(() => {
-                showTopToast('تم مسح السجلات بنجاح 🗑️', 'info');
-            });
-        }
+        if (forceRefresh) showTopToast('تم تحديث إحصائيات التطبيق بنجاح ✅', 'success');
     }
 // ================= محرك الإنجازات ومنظومة الألقاب المتدرجة =================
     const defaultAchievementsConfig = {
@@ -5136,30 +5327,33 @@ function renderLogsDOM(logsArr, container) {
     }
 
     async function createEhbedRoomAction() {
-        playClickSound();
-        if ((currentUser.coins || 0) < ehbedStake) { showTopToast('رصيدك غير كافٍ!', 'error'); return; }
-        
-        closeModal('modal-ehbed-setup');
-        showTopToast('جاري تجهيز أسئلة التحدي وفتح الغرفة ⚡', 'success');
+    playClickSound();
+    if ((currentUser.coins || 0) < ehbedStake) { showTopToast('رصيدك غير كافٍ!', 'error'); return; }
+    
+    closeModal('modal-ehbed-setup');
+    showTopToast('جاري تجهيز أسئلة التحدي وفتح الغرفة ⚡', 'success');
 
-        const roomId = 'NUM-' + Math.floor(100 + Math.random() * 900);
-        
-        // جلب الأسئلة الذكية من السحابة وتطبيق منع التكرار
-        const questionsDeck = await fetchEhbedSmartQuestionsDeck();
+    const roomId = 'NUM-' + Math.floor(100 + Math.random() * 900);
+    
+    // 1. جلب الأسئلة الذكية
+    const questionsDeck = await fetchEhbedSmartQuestionsDeck();
 
-        const roomData = {
-            status: 'waiting', stake: ehbedStake, rewardXP: ehbedRewardXP, currentQIndex: 0,
-            player1: { phone: currentUser.phone, name: currentUser.name, avatar: currentUser.avatar, score: 0, guess: null, answeredCurrent: false },
-            player2: null,
-            questions: questionsDeck
-        };
+    // 2. فصل الأسئلة في مسار مستقل
+    await db.ref('ehbed_battles_questions/' + roomId).set(questionsDeck);
 
-        await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - ehbedStake);
-        await db.ref('ehbed_battles/' + roomId).set(roomData);
-        
-        currentEhbedRoomId = roomId;
-        enterEhbedLobby(roomId);
-    }
+    // 3. رفع الحالة الأساسية فقط للغرفة
+    const roomData = {
+        status: 'waiting', stake: ehbedStake, rewardXP: ehbedRewardXP, currentQIndex: 0,
+        player1: { phone: currentUser.phone, name: currentUser.name, avatar: currentUser.avatar, score: 0, guess: null, answeredCurrent: false },
+        player2: null
+    };
+
+    await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - ehbedStake);
+    await db.ref('ehbed_battles/' + roomId).set(roomData);
+    
+    currentEhbedRoomId = roomId;
+    enterEhbedLobby(roomId);
+}
 
     async function joinEhbedRoomAction() {
     playClickSound();
@@ -5332,17 +5526,27 @@ function renderLogsDOM(logsArr, container) {
         window.open(`https://api.whatsapp.com/send?text=تحديتك في اهبد صح! 🔢%0Aادخل بالكود: *${currentEhbedRoomId}*`, '_blank');
     }
 
-    function enterEhbedArena() {
-        navigateTo('view-ehbed-game', 'اهبد صح 1v1', 'مواجهة التخمين');
-        ehbedQIndex = -1;
-        
-        if (ehbedListener) db.ref('ehbed_battles/' + currentEhbedRoomId).off('value', ehbedListener);
+    let currentEhbedQuestions = null; // متغير لحفظ أسئلة اهبد مؤقتاً
+
+function enterEhbedArena() {
+    navigateTo('view-ehbed-game', 'اهبد صح 1v1', 'مواجهة التخمين');
+    ehbedQIndex = -1;
+    
+    if (ehbedListener) db.ref('ehbed_battles/' + currentEhbedRoomId).off('value', ehbedListener);
+    
+    // 1. قراءة الأسئلة مرة واحدة فقط عند الدخول
+    db.ref('ehbed_battles_questions/' + currentEhbedRoomId).once('value').then(qSnap => {
+        currentEhbedQuestions = qSnap.val() || [];
+
+        // 2. مراقبة حالة اللعب والنتائج فقط بصمت
         ehbedListener = db.ref('ehbed_battles/' + currentEhbedRoomId).on('value', snap => {
             if (!snap.exists()) return;
             currentEhbedRoom = snap.val();
+            currentEhbedRoom.questions = currentEhbedQuestions; // دمج الأسئلة
             syncEhbedArena();
         });
-    }
+    });
+}
 
     function syncEhbedArena() {
         const room = currentEhbedRoom;
@@ -5825,10 +6029,6 @@ function openTransferModal() {
                 await db.ref('users/' + targetPhone + '/coins').transaction(c => (c || 0) + amount);
                 
                 recordUserTransaction(`تحويل عملات لـ ${receiverName}`, 0, -amount, 'purchase');
-                db.ref('user_transactions/' + targetPhone).push({
-                    title: `دعم عملات من ${currentUser.name.split(' ')[0]}`,
-                    xp: 0, coins: amount, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
                 
                 showTopToast(`تم تحويل ${amount} عملة لـ ${receiverName} بنجاح! 🎉`, 'success');
             } 
@@ -5852,10 +6052,6 @@ function openTransferModal() {
                 });
 
                 recordUserTransaction(`تحويل نقاط لـ ${receiverName}`, -amount, 0, 'purchase');
-                db.ref('user_transactions/' + targetPhone).push({
-                    title: `دعم نقاط (XP) من ${currentUser.name.split(' ')[0]}`,
-                    xp: amount, coins: 0, type: 'reward', timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
                 
                 showTopToast(`تم تحويل ${amount} XP لـ ${receiverName} بنجاح! ⚡`, 'success');
             }
@@ -6394,3 +6590,1853 @@ function switchHaccpTab(tabId, clickedBtn) {
     // عمل Scroll ناعم للزر ليكون في المنتصف عند الضغط (للهواتف)
     clickedBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
+
+// ============================================================================
+// ===================== محرك تحدي المستويات الـ 50 الجديد =======================
+// ============================================================================
+
+let pendingLevelStart = 1;
+let isLevelBossActive = false;
+let currentLevelPlaying = 1;
+let currentLevelStarsEarned = 0;
+let currentQuestionStars = 0;
+let cooldownTickerInterval = null;
+
+let globalLevelsConfig = {}; 
+let globalBossConfig = { cooldownHours: 12, skipCost: 50 };
+
+// 1. قراءة إعدادات المستويات المحفوظة في ذاكرة الهاتف أولاً
+const localLevelsCfg = localStorage.getItem('local_levels_config');
+if (localLevelsCfg) {
+    try {
+        const parsed = JSON.parse(localLevelsCfg);
+        if (parsed.levels) globalLevelsConfig = parsed.levels;
+        if (parsed.boss) globalBossConfig = parsed.boss;
+    } catch(e) {}
+}
+
+// 2. فحص السحابة بهدوء وتحديث الكاش المحلي
+db.ref('levels_config').once('value').then(snap => {
+    if (snap.exists()) {
+        const data = snap.val();
+        localStorage.setItem('local_levels_config', JSON.stringify(data));
+        if (data.levels) globalLevelsConfig = data.levels;
+        if (data.boss) globalBossConfig = data.boss;
+    }
+});
+
+function getLevelReqStars(level) {
+    if (level === 1) return 0; 
+    if (globalLevelsConfig[level] && globalLevelsConfig[level].reqStars !== undefined) {
+        return parseInt(globalLevelsConfig[level].reqStars);
+    }
+    return (level - 1) * 20; 
+}
+
+function getLevelRewards(level) {
+    if (globalLevelsConfig[level]) {
+        return {
+            xp: parseInt(globalLevelsConfig[level].rewardXP) || 0,
+            coins: parseInt(globalLevelsConfig[level].rewardCoins) || 0
+        };
+    }
+    let xp = Math.round(10 + ((1500 - 10) / 49) * (level - 1));
+    let coins = Math.round(2 + ((500 - 2) / 49) * (level - 1));
+    return { xp, coins };
+}
+
+// 2. دوال لوحة تحكم الأدمن
+function loadAdminSingleLevelConfig() {
+    const lvl = parseInt(document.getElementById('adm-specific-lvl').value);
+    if (!lvl || lvl < 1 || lvl > 50) return;
+    const currentReq = getLevelReqStars(lvl);
+    const currentRew = getLevelRewards(lvl);
+    document.getElementById('adm-specific-stars').value = currentReq;
+    document.getElementById('adm-specific-xp').value = currentRew.xp;
+    document.getElementById('adm-specific-coins').value = currentRew.coins;
+}
+
+function saveAdminSingleLevelConfig() {
+    playClickSound();
+    const lvl = parseInt(document.getElementById('adm-specific-lvl').value);
+    if (!lvl || lvl < 1 || lvl > 50) { showTopToast('يرجى اختيار مستوى صحيح (1-50)', 'error'); return; }
+
+    const reqStars = parseInt(document.getElementById('adm-specific-stars').value) || 0;
+    const rewardXP = parseInt(document.getElementById('adm-specific-xp').value) || 0;
+    const rewardCoins = parseInt(document.getElementById('adm-specific-coins').value) || 0;
+
+    db.ref(`levels_config/levels/${lvl}`).set({ reqStars, rewardXP, rewardCoins }).then(() => {
+        showTopToast(`تم حفظ إعدادات المستوى ${lvl} بنجاح! هتسمع عند الكل فوراً ✅`, 'success');
+    });
+}
+
+function saveAdminBossGeneralConfig() {
+    playClickSound();
+    const cooldownHours = parseInt(document.getElementById('adm-lvl-cooldown-hrs').value) || 12;
+    const skipCost = parseInt(document.getElementById('adm-lvl-skip-cost').value) || 50;
+
+    db.ref('levels_config/boss').set({ cooldownHours, skipCost }).then(() => {
+        showTopToast('تم حفظ إعدادات الزعماء (الكول داون) ⚙️', 'success');
+    });
+}
+
+function uploadAdminLevelQuestions() {
+    playClickSound();
+    const levelNum = parseInt(document.getElementById('adm-upload-lvl-num').value);
+    const type = document.getElementById('adm-upload-lvl-type').value; 
+    const rawText = document.getElementById('adm-lvl-bulk-input').value.trim();
+
+    if (!levelNum || levelNum < 1 || levelNum > 50 || !rawText) {
+        showTopToast('يرجى تحديد رقم المستوى ولصق الأسئلة!', 'error'); return;
+    }
+
+    const lines = rawText.split('\n');
+    let formattedQuestions = [];
+
+    lines.forEach(line => {
+        // تجاهل السطور الفاضية تماماً
+        if (line.trim() === '') return;
+        
+        const parts = line.split('#').map(p => p.trim());
+        
+        // التأكد من وجود 6 أجزاء (التصنيف + السؤال + 4 اختيارات)
+        if (parts.length >= 6) {
+            const [cat, qText, correct, opt1, opt2, opt3] = parts;
+            formattedQuestions.push({ 
+                q: qText, 
+                a: [correct, opt1, opt2, opt3], 
+                correct: 0, 
+                categoryName: cat // 👈 تم حفظ التصنيف الفعلي هنا
+            });
+        }
+    });
+
+    // لو مفيش ولا سؤال اتقرأ صح، نطلع إيرور
+    if (formattedQuestions.length === 0) { 
+        showTopToast('صيغة خاطئة! استخدم: التصنيف # السؤال # الصح # خطأ # خطأ # خطأ', 'error'); 
+        return; 
+    }
+
+    db.ref(`levels_data/level_${levelNum}/${type}`).set(formattedQuestions).then(() => {
+        document.getElementById('adm-lvl-bulk-input').value = '';
+        showTopToast(`تم حفظ (${formattedQuestions.length}) أسئلة بنجاح لـ ${type === 'classic' ? 'المستوى' : 'الزعيم'} ${levelNum} 🚀`, 'success');
+    });
+}
+
+// 3. واجهة خريطة المستويات وبدء التحدي
+function renderLevelsGridUI() {
+    const container = document.getElementById('levels-grid-container');
+    let html = '';
+    const userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
+    let totalGlobalStars = 0;
+    
+    for(let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
+    
+    for (let i = 1; i <= 50; i++) {
+        let lvlData = userLevels[i] || { stars: 0, boss_defeated: false, cooldown: 0 };
+        let isUnlocked = false;
+        
+        let requiredStars = getLevelReqStars(i);
+        let prevBossDefeated = (i === 1) ? true : (userLevels[i-1] && userLevels[i-1].boss_defeated);
+        
+        if (i === 1 || (totalGlobalStars >= requiredStars && prevBossDefeated)) {
+            isUnlocked = true;
+        }
+        
+        let stateClass = 'locked';
+        let starsDisplay = `قفل (${requiredStars}⭐)`;
+
+        if (isUnlocked) {
+            if (lvlData.cooldown && lvlData.cooldown > Date.now()) {
+                stateClass = 'cooldown-locked'; // 👈 إعطاء الكلاس المميز الأحمر
+                starsDisplay = '⏱️ راحة للزعيم';
+            } else {
+                stateClass = lvlData.boss_defeated ? 'completed' : 'unlocked';
+                starsDisplay = `${lvlData.stars} / 30 ⭐`;
+            }
+        }
+        
+        html += `
+        <div class="level-node ${stateClass}" onclick="startLevelNode(${i}, '${stateClass}')">
+            <div class="level-number">${i}</div>
+            <div class="level-lock-icon">${lvlData.cooldown && lvlData.cooldown > Date.now() ? '⏱️' : '🔒'}</div>
+            <div class="level-stars" style="font-size: 0.95rem; font-weight: 900; color: var(--accent-gold); margin-top: 5px;">
+                ${starsDisplay}
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+    document.getElementById('total-stars-display').innerText = totalGlobalStars;
+if (currentUser) {
+        const mapXp = document.getElementById('map-xp-display');
+        const mapCoins = document.getElementById('map-coins-display');
+        if (mapXp) mapXp.innerText = currentUser.xp || currentUser.points || 0;
+        if (mapCoins) mapCoins.innerText = currentUser.coins || 0;
+    }
+}
+
+function startClassicQuizWithQuestions(questions) {
+    activeQuizQuestions = shuffleArray(questions).slice(0, 10);
+    currentQuizIndex = 0;
+    quizScoreCount = 0;
+    isClassicQuizActive = true;
+    navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
+    renderLevelQuestion();
+}
+
+function generateMockQuestionsForLevel(levelNum, count) {
+    let mock = [];
+    for(let i=1; i<=count; i++) {
+        mock.push({
+            q: `هذا سؤال تجريبي رقم ${i} للمستوى ${levelNum}. اختر الإجابة الصحيحة.`,
+            a: [`الإجابة الصحيحة ${levelNum}-${i}`, `خطأ A`, `خطأ B`, `خطأ C`],
+            correct: 0,
+            categoryName: `المستوى ${levelNum}`
+        });
+    }
+    return mock;
+}
+
+// 4. أسئلة المستوى ومنطق احتساب النجوم
+function renderLevelQuestion() {
+    isAnswerLocked = false;
+    currentQuestionStars = 0;
+    const container = document.getElementById('quiz-container');
+    const qData = activeQuizQuestions[currentQuizIndex];
+    
+    if (!qData) { checkBossEligibility(); return; }
+
+    let options = shuffleArray([...qData.a]);
+    const correctText = qData.a[qData.correct || 0];
+    
+    let html = `
+        <div class="section-label" style="justify-content: space-between;">
+            <span>السؤال ${currentQuizIndex + 1} / 10</span>
+            <span style="color: var(--accent-gold); font-weight: 800;">نجومك: ${currentLevelStarsEarned} ⭐</span>
+        </div>
+        <div class="quiz-card">
+            <div id="quiz-timer" class="quiz-timer-box">⏱️ 15</div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5; color: var(--text-main);">${qData.q}</h3>
+            <div id="options-list" style="display: flex; flex-direction: column; gap: 8px;">`;
+            
+    options.forEach(opt => { 
+        html += `<button class="quiz-option-btn" onclick="handleLevelAnswer(this, '${opt}', '${correctText}')">${opt}</button>`; 
+    });
+    
+    html += `</div>
+            <div id="question-feedback-stars" style="text-align: center; margin-top: 15px; font-size: 1.5rem; display: none;"></div>
+            <div id="next-question-area" style="margin-top: 20px; display: none;">
+                <button class="btn-submit btn-action-quiz" onclick="proceedToNextLevelQuestion()">
+                    ${currentQuizIndex === 9 ? 'تحقق من النجوم 🏆' : 'السؤال التالي ⬅️'}
+                </button>
+            </div>
+        </div>`;
+        
+    container.innerHTML = html; 
+    startLevelTimer();
+}
+
+function startLevelTimer() {
+    timeLeft = 15; 
+    const timerEl = document.getElementById('quiz-timer'); 
+    timerEl.innerHTML = `⏱️ ${timeLeft}`; 
+    timerEl.style.color = 'var(--text-main)';
+    clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+        timeLeft--; 
+        timerEl.innerHTML = `⏱️ ${timeLeft}`; 
+        if (timeLeft <= 5) timerEl.style.color = '#ef4444';
+        if (timeLeft <= 0) { 
+            clearInterval(timerInterval); 
+            handleLevelAnswer(null, '', 'TIMEOUT'); 
+        }
+    }, 1000);
+}
+
+function handleLevelAnswer(buttonElem, selectedAns, correctAns) {
+    if (isAnswerLocked) return; 
+    isAnswerLocked = true; 
+    clearInterval(timerInterval); 
+    
+    const isCorrect = (selectedAns === correctAns);
+    const feedbackStars = document.getElementById('question-feedback-stars');
+    feedbackStars.style.display = 'block';
+
+    if (isCorrect) { 
+        quizScoreCount++; 
+        playSuccessSound(); 
+        if (buttonElem) buttonElem.classList.add('correct-choice'); 
+        
+        if (timeLeft >= 10) {
+            currentQuestionStars = 3;
+            feedbackStars.innerHTML = '⭐⭐⭐<br><span style="font-size:0.8rem; color:var(--accent-gold);">ممتاز! سرعة بديهة خرافية</span>';
+        } else if (timeLeft >= 5) {
+            currentQuestionStars = 2;
+            feedbackStars.innerHTML = '⭐⭐<br><span style="font-size:0.8rem; color:var(--accent-emerald);">جيد جداً! إجابة موفقة</span>';
+        } else {
+            currentQuestionStars = 1;
+            feedbackStars.innerHTML = '⭐<br><span style="font-size:0.8rem; color:var(--text-sub);">صحيح، لكن حاول أن تكون أسرع</span>';
+        }
+        currentLevelStarsEarned += currentQuestionStars;
+        shootStars(); 
+    } else {
+        playErrorSound(); 
+        currentQuestionStars = 0;
+        feedbackStars.innerHTML = '❌<br><span style="font-size:0.8rem; color:#ef4444;">إجابة خاطئة! لم تحصل على نجوم</span>';
+        if (buttonElem) buttonElem.classList.add('wrong-choice');
+        
+        document.querySelectorAll('.quiz-option-btn').forEach(btn => { 
+            if (btn.innerText === correctAns) { 
+                btn.classList.add('correct-choice'); 
+                btn.style.transform = 'scale(1)'; 
+            } 
+        });
+    }
+    
+    document.querySelectorAll('.quiz-option-btn').forEach(btn => btn.disabled = true); 
+    document.getElementById('next-question-area').style.display = 'block';
+}
+
+function proceedToNextLevelQuestion() { 
+    playClickSound(); 
+    currentQuizIndex++; 
+    if (currentQuizIndex < 10) {
+        renderLevelQuestion(); 
+    } else {
+        checkBossEligibility(); 
+    }
+}
+
+function checkBossEligibility() {
+    isClassicQuizActive = false;
+    clearInterval(timerInterval);
+
+    let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
+    let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
+    
+    // حفظ النجوم بشكل قاطع وفوري بمجرد إنهاء الـ 10 أسئلة
+    let updatedStars = Math.max(oldData.stars || 0, currentLevelStarsEarned);
+    userLevels[currentLevelPlaying] = { ...oldData, stars: updatedStars };
+    
+    if (currentUser) {
+        currentUser.levels_progress = userLevels;
+        db.ref('users/' + currentUser.phone + '/levels_progress').set(userLevels);
+    }
+
+    let totalGlobalStars = 0;
+    for(let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
+    const starsDisplay = document.getElementById('total-stars-display');
+    if (starsDisplay) starsDisplay.innerText = totalGlobalStars;
+
+    // 👈 التعديل السحري: لو الزعيم مهزوم أصلاً، نقفل ونرجع الخريطة فوراً
+    if (oldData.boss_defeated) {
+        goHomeDirectly(true);
+        if (currentLevelStarsEarned > (oldData.stars || 0)) {
+            showTopToast(`عاش! حسنت نجومك لـ ${currentLevelStarsEarned}⭐ في المستوى ده 🚀`, 'success');
+            triggerConfetti();
+        } else {
+            showTopToast(`جمعت ${currentLevelStarsEarned}⭐، رقمك القياسي ${oldData.stars}⭐ لم يتأثر.`, 'info');
+        }
+        setTimeout(() => openLevelsMap(), 500);
+        return; // بنوقف التنفيذ هنا عشان ميروحش للزعيم
+    }
+
+    // لو لسه مخلصش الزعيم يكمل العادي:
+    let reqStarsForNext = getLevelReqStars(currentLevelPlaying + 1);
+
+    if (totalGlobalStars >= reqStarsForNext) {
+        openModal('modal-pre-boss');
+    } else {
+        document.getElementById('shortage-desc').innerText = `جمعت ${totalGlobalStars} نجمة تراكمية، لكنك تحتاج ${reqStarsForNext} نجمة لمواجهة وحش هذا المستوى. عد وحسن نجومك القديمة!`;
+        openModal('modal-boss-shortage');
+    }
+}
+
+function saveLevelProgressPartial() {
+    if (!currentUser) return;
+    let userLevels = currentUser.levels_progress || {};
+    let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
+
+    if (currentLevelStarsEarned > oldData.stars) {
+        userLevels[currentLevelPlaying] = { ...oldData, stars: currentLevelStarsEarned };
+        currentUser.levels_progress = userLevels;
+        db.ref('users/' + currentUser.phone + '/levels_progress').set(userLevels);
+    }
+}
+
+// 5. محرك توجيه الزعماء الذكي (Dynamic Boss Router)
+let activeBossType = 'penalty'; 
+let bossQuestionsDeck = [];
+let currentBossQIndex = 0;
+
+function startPenaltyBoss() {
+    showTopToast(`زعيم المستوى ${currentLevelPlaying}: ركلات الجزاء ⚽🔥`, 'info');
+    
+    // توجيه الطالب لشاشة اختيار النجم بدلاً من الدخول للساحة مباشرة
+    navigateTo('view-penalty-select', `زعيم المستوى ${currentLevelPlaying}`, 'اختر نجمك للتسديد');
+}
+
+// 6. منطق زعيم القنبلة الموقوتة
+let bombTimer;
+let bombTimeLeft = 30;
+let wiresCut = 0;
+
+function startBombBoss() {
+    showTopToast(`زعيم المستوى ${currentLevelPlaying}: القنبلة الموقوتة 💣`, 'error');
+    bombTimeLeft = 30;
+    wiresCut = 0;
+    updateBombUI();
+    navigateTo('view-boss-bomb', 'القنبلة الموقوتة', 'اقطع الأسلاك قبل الانفجار');
+    renderBombQuestion();
+    
+    clearInterval(bombTimer);
+    bombTimer = setInterval(() => {
+        bombTimeLeft--;
+        updateBombUI();
+        if (bombTimeLeft <= 0) {
+            clearInterval(bombTimer);
+            concludeLevelBoss(false);
+        }
+    }, 1000);
+}
+
+function updateBombUI() {
+    const timerDisplay = document.getElementById('bomb-timer-display');
+    const wiresDisplay = document.getElementById('bomb-wires-cut');
+    if (timerDisplay) timerDisplay.innerText = `00:${bombTimeLeft < 10 ? '0'+bombTimeLeft : bombTimeLeft}`;
+    if (wiresDisplay) wiresDisplay.innerText = `الأسلاك المقطوعة: ${wiresCut} / 3`;
+}
+
+function renderBombQuestion() {
+    if (currentBossQIndex >= bossQuestionsDeck.length) { concludeLevelBoss(false); return; }
+    const qData = bossQuestionsDeck[currentBossQIndex];
+    const qTextEl = document.getElementById('bomb-q-text');
+    if (qTextEl) qTextEl.innerText = qData.q;
+    
+    const optsBox = document.getElementById('bomb-options-list');
+    if (!optsBox) return;
+    optsBox.innerHTML = '';
+    
+    let options = shuffleArray([...qData.a]);
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (opt === qData.a[qData.correct]) {
+                playSuccessSound();
+                wiresCut++;
+                if (wiresCut >= 3) {
+                    clearInterval(bombTimer);
+                    concludeLevelBoss(true);
+                } else {
+                    currentBossQIndex++;
+                    renderBombQuestion();
+                }
+            } else {
+                playErrorSound();
+                bombTimeLeft -= 5;
+                showTopToast('-5 ثواني! أسرع!', 'error');
+                currentBossQIndex++;
+                renderBombQuestion();
+            }
+        };
+        optsBox.appendChild(btn);
+    });
+}
+
+// 7. منطق زعيم صراع الوحش
+let playerHearts = 3;
+let monsterHp = 100;
+
+function startMonsterBoss() {
+    showTopToast(`زعيم المستوى ${currentLevelPlaying}: صراع الوحش 🐉`, 'info');
+    playerHearts = 3;
+    monsterHp = 100;
+    updateMonsterUI();
+    navigateTo('view-boss-monster', 'الوحش المجهول', 'هاجم قبل أن يقضي عليك');
+    renderMonsterQuestion();
+}
+
+function updateMonsterUI() {
+    const heartsEl = document.getElementById('player-hearts');
+    const hpBarEl = document.getElementById('monster-hp-bar');
+    if (heartsEl) heartsEl.innerText = '❤️'.repeat(playerHearts) + '🖤'.repeat(3 - playerHearts);
+    if (hpBarEl) hpBarEl.style.width = `${monsterHp}%`;
+}
+
+function renderMonsterQuestion() {
+    if (currentBossQIndex >= bossQuestionsDeck.length) { concludeLevelBoss(false); return; }
+    const qData = bossQuestionsDeck[currentBossQIndex];
+    const qTextEl = document.getElementById('monster-q-text');
+    if (qTextEl) qTextEl.innerText = qData.q;
+    
+    const optsBox = document.getElementById('monster-options-list');
+    if (!optsBox) return;
+    optsBox.innerHTML = '';
+    
+    let options = shuffleArray([...qData.a]);
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (opt === qData.a[qData.correct]) {
+                playSuccessSound();
+                monsterHp -= 34;
+                updateMonsterUI();
+                if (monsterHp <= 0) {
+                    concludeLevelBoss(true);
+                } else {
+                    currentBossQIndex++;
+                    renderMonsterQuestion();
+                }
+            } else {
+                playErrorSound();
+                playerHearts--;
+                updateMonsterUI();
+                if (playerHearts <= 0) {
+                    concludeLevelBoss(false);
+                } else {
+                    currentBossQIndex++;
+                    renderMonsterQuestion();
+                }
+            }
+        };
+        optsBox.appendChild(btn);
+    });
+}
+
+function openCooldownModal(levelNum, cooldownTime) {
+    playErrorSound();
+    pendingLevelStart = levelNum;
+    openModal('modal-boss-cooldown');
+    
+    if (cooldownTickerInterval) clearInterval(cooldownTickerInterval);
+    
+    cooldownTickerInterval = setInterval(() => {
+        let diff = cooldownTime - Date.now();
+        if (diff <= 0) {
+            clearInterval(cooldownTickerInterval);
+            document.getElementById('cooldown-timer-display').innerText = "00:00:00";
+            let userLevels = currentUser.levels_progress || {};
+            if(userLevels[levelNum]) {
+                userLevels[levelNum].cooldown = 0;
+                db.ref('users/' + currentUser.phone + '/levels_progress').set(userLevels);
+            }
+            closeModal('modal-boss-cooldown');
+            openLevelsMap();
+        } else {
+            let h = Math.floor(diff / (1000 * 60 * 60));
+            let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            let s = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById('cooldown-timer-display').innerText = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+function payToSkipCooldown() {
+    playClickSound();
+    const cost = globalBossConfig.skipCost || 50;
+
+    if ((currentUser.coins || 0) < cost) {
+        showTopToast(`رصيدك من العملات غير كافٍ! تحتاج إلى ${cost} عملة للدفع.`, 'error');
+        return;
+    }
+    
+    db.ref('users/' + currentUser.phone).transaction(user => {
+        if(user) {
+            user.coins = (user.coins || 0) - cost;
+            if(user.levels_progress && user.levels_progress[pendingLevelStart]) {
+                user.levels_progress[pendingLevelStart].cooldown = 0;
+            }
+        }
+        return user;
+    }).then(() => {
+        currentUser.coins -= cost;
+        if(currentUser.levels_progress[pendingLevelStart]) currentUser.levels_progress[pendingLevelStart].cooldown = 0;
+        
+        updateProfileUI();
+        clearInterval(cooldownTickerInterval);
+        closeModal('modal-boss-cooldown');
+        showTopToast(`تم الدفع (${cost} عملة) وإلغاء وقت الراحة بنجاح! 💸`, 'success');
+        
+        // 👈 الدخول لمواجهة الزعيم مباشرة بدلاً من شاشة البداية
+        startDynamicBossDirectly();
+    });
+}
+
+// ================= دوال إيقاف واستئناف الوقت للتحديات =================
+function pauseAllActiveTimers() {
+    if (typeof timerInterval !== 'undefined') clearInterval(timerInterval);
+    if (typeof penaltyTimer !== 'undefined') clearInterval(penaltyTimer);
+    if (typeof bombTimer !== 'undefined') clearInterval(bombTimer);
+    if (typeof stopStadiumCrowdAudio === 'function') stopStadiumCrowdAudio();
+}
+
+function resumeQuizTimer() {
+    const timerEl = document.getElementById('quiz-timer'); 
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--; 
+        if(timerEl) {
+            timerEl.innerHTML = `⏱️ ${timeLeft}`; 
+            if (timeLeft <= 5) timerEl.style.color = '#ef4444';
+        }
+        if (timeLeft <= 0) { 
+            clearInterval(timerInterval); 
+            handleQuizAnswer(null, false, true); 
+        }
+    }, 1000);
+}
+
+function resumeLevelTimer() {
+    const timerEl = document.getElementById('quiz-timer'); 
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--; 
+        if(timerEl) {
+            timerEl.innerHTML = `⏱️ ${timeLeft}`; 
+            if (timeLeft <= 5) timerEl.style.color = '#ef4444';
+        }
+        if (timeLeft <= 0) { 
+            clearInterval(timerInterval); 
+            handleLevelAnswer(null, '', 'TIMEOUT'); 
+        }
+    }, 1000);
+}
+
+function resumePenaltyTimer() {
+    const timerPill = document.getElementById('penalty-timer-pill');
+    clearInterval(penaltyTimer);
+    penaltyTimer = setInterval(() => {
+        penaltyTimeLeft--;
+        if (timerPill) timerPill.innerText = `⏱️ ${penaltyTimeLeft}ث`;
+        if (penaltyTimeLeft <= 0) {
+            clearInterval(penaltyTimer);
+            handlePenaltyAnswerClick(null, '', 'TIMEOUT');
+        }
+    }, 1000);
+}
+
+function resumeBombTimer() {
+    clearInterval(bombTimer);
+    bombTimer = setInterval(() => {
+        bombTimeLeft--;
+        updateBombUI();
+        if (bombTimeLeft <= 0) {
+            clearInterval(bombTimer);
+            concludeLevelBoss(false);
+        }
+    }, 1000);
+}
+
+// =========================================================
+// التحديث النهائي والأخير لتنظيف وحل مشاكل المستويات والزعماء
+// =========================================================
+
+function startPenaltyBoss() {
+    isPenaltyGameActive = false; // تصفير الحالة لمنع الاستئناف الخاطئ
+    showTopToast(`زعيم المستوى ${currentLevelPlaying}: ركلات الجزاء ⚽🔥`, 'info');
+    navigateTo('view-penalty-select', `زعيم المستوى ${currentLevelPlaying}`, 'اختر نجمك للتسديد');
+}
+
+function launchPenaltyMode(strikerId, strikerName, strikerImg) {
+    playClickSound();
+
+    selectedPenaltyStriker = { id: strikerId, name: strikerName, img: strikerImg };
+    isPenaltyGameActive = true; 
+    penaltyCorrectAnswersCount = 0;
+    
+    // سحب أسئلة الزعيم الحقيقية المحملة مسبقاً
+    penaltyQuestionsDeck = [...bossQuestionsDeck]; 
+    currentPenaltyQIndex = 0;
+
+    const strikerImgEl = document.getElementById('penalty-striker-img');
+    const strikerNameEl = document.getElementById('penalty-striker-name');
+    if (strikerImgEl) strikerImgEl.src = strikerImg;
+    if (strikerNameEl) strikerNameEl.innerText = strikerName;
+
+    resetPenaltyStadiumActors(); 
+    startStadiumCrowdAudio();
+    
+    navigateTo('view-penalty-arena', `زعيم المستوى ${currentLevelPlaying}`, `تسديدة ${strikerName}`);
+    renderPenaltyQuestion(); 
+}
+
+// =========================================================
+// التحديث الجذري والأخير لزعيم ركلات الجزاء ورفع الأسئلة
+// =========================================================
+
+// 1. إصلاح دالة رفع الأسئلة لتقرأ التصنيف بشكل صحيح وترفع 5 أسئلة
+function uploadAdminLevelQuestions() {
+    playClickSound();
+    const levelNum = parseInt(document.getElementById('adm-upload-lvl-num').value);
+    const type = document.getElementById('adm-upload-lvl-type').value; 
+    const rawText = document.getElementById('adm-lvl-bulk-input').value.trim();
+
+    if (!levelNum || levelNum < 1 || levelNum > 50 || !rawText) {
+        showTopToast('يرجى تحديد رقم المستوى ولصق الأسئلة!', 'error'); return;
+    }
+
+    const lines = rawText.split('\n');
+    let formattedQuestions = [];
+
+    lines.forEach(line => {
+        if (line.trim() === '') return; // تجاهل السطور الفاضية
+        
+        const parts = line.split('#').map(p => p.trim());
+        
+        // نتأكد إن السطر فيه 6 أجزاء: تصنيف + سؤال + إجابة صح + 3 غلط
+        if (parts.length >= 6) {
+            const [cat, qText, correct, opt1, opt2, opt3] = parts;
+            formattedQuestions.push({ 
+                q: qText, 
+                a: [correct, opt1, opt2, opt3], 
+                correct: 0, 
+                categoryName: cat // 👈 حفظ التصنيف الفعلي هنا
+            });
+        }
+    });
+
+    if (formattedQuestions.length === 0) { 
+        showTopToast('صيغة خاطئة! استخدم: التصنيف # السؤال # الصح # خطأ # خطأ # خطأ', 'error'); 
+        return; 
+    }
+
+    db.ref(`levels_data/level_${levelNum}/${type}`).set(formattedQuestions).then(() => {
+        document.getElementById('adm-lvl-bulk-input').value = '';
+        showTopToast(`تم رفع (${formattedQuestions.length}) أسئلة بنجاح لـ ${type === 'classic' ? 'المستوى' : 'الزعيم'} ${levelNum} 🚀`, 'success');
+    });
+}
+
+// 2. إصلاح استدعاء الزعيم ليعوض النقص لو السحابة فيها أقل من 5 أسئلة
+// 3. عرض السؤال والتصنيف بدقة وتشغيل الـ 5 أسئلة
+function renderPenaltyQuestion() {
+    isPenaltyAnswerLocked = false;
+    
+    if (!penaltyQuestionsDeck || penaltyQuestionsDeck.length === 0) {
+        triggerPenaltyShootoutCinematic();
+        return;
+    }
+
+    const qData = penaltyQuestionsDeck[currentPenaltyQIndex];
+    if (!qData || currentPenaltyQIndex >= 5) {
+        triggerPenaltyShootoutCinematic();
+        return;
+    }
+
+    const questionText = qData.q || "سؤال زعيم ركلات الجزاء";
+    const catText = qData.categoryName || "عام";
+    const optionsArray = qData.a || ["خيار 1", "خيار 2", "خيار 3", "خيار 4"];
+    const correctIdx = qData.correct !== undefined ? qData.correct : 0;
+    const correctText = optionsArray[correctIdx];
+
+    // إظهار رقم السؤال + التصنيف (الكاتيجوري) مع بعض فوق
+    document.getElementById('penalty-q-counter').innerHTML = `السؤال ${currentPenaltyQIndex + 1} من 5 | <span style="color:#00f0ff;">${catText}</span>`;
+    document.getElementById('penalty-q-text').innerText = questionText;
+
+    const optionsBox = document.getElementById('penalty-options-box');
+    optionsBox.innerHTML = '';
+
+    let shuffledOptions = shuffleArray([...optionsArray]);
+
+    shuffledOptions.forEach(optText => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.style.padding = '10px 14px';
+        btn.style.margin = '2px 0';
+        btn.style.fontSize = '0.85rem';
+        btn.innerText = optText;
+        btn.onclick = () => handlePenaltyAnswerClick(btn, optText, correctText);
+        optionsBox.appendChild(btn);
+    });
+
+    startPenaltyQuestionTimer();
+}
+
+// =========================================================
+// التحديث النهائي: خريطة سريعة + كاش الأسئلة + رسوم التحسين + توجيه الزعماء الذكي
+// =========================================================
+
+function openLevelsMap() {
+    playClickSound();
+    if (!currentUser) { showTopToast('يرجى تسجيل الدخول أولاً!', 'error'); return; }
+    navigateTo('view-levels-map', 'تحدي المعلومات', 'خريطة المستويات');
+    renderLevelsGridUI();
+}
+
+function startLevelNode(levelNum, state) {
+    playClickSound();
+    
+    let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
+    let lvlData = userLevels[levelNum] || {};
+    
+    if (lvlData.cooldown && lvlData.cooldown > Date.now()) {
+        openCooldownModal(levelNum, lvlData.cooldown);
+        return;
+    }
+
+    if(state === 'locked') {
+        const requiredStars = getLevelReqStars(levelNum);
+        showTopToast(`المستوى مغلق! تحتاج ${requiredStars} نجمة تراكمية وهزيمة زعيم المستوى السابق 🔒`, 'error');
+        return;
+    }
+    
+    pendingLevelStart = levelNum;
+    let rewards = getLevelRewards(levelNum);
+    
+    document.getElementById('level-intro-title').innerText = `المستوى ${levelNum}`;
+    document.getElementById('level-intro-rewards').innerText = `المكافأة الكبرى: ${rewards.xp} XP | ${rewards.coins} عملة 💸`;
+
+    let totalGlobalStars = 0;
+    for(let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
+    
+    let reqStarsForNext = getLevelReqStars(levelNum + 1);
+    let btnDirectBoss = document.getElementById('btn-direct-boss');
+    let btnStartQuiz = document.getElementById('btn-start-level-quiz');
+    let bossWarning = document.getElementById('level-boss-warning'); 
+    let hasPlayedCurrentLevel = (lvlData.stars !== undefined);
+
+    if (lvlData.boss_defeated) {
+        if(bossWarning) bossWarning.style.display = 'none'; 
+        if(btnDirectBoss) btnDirectBoss.style.display = 'none';
+        if(btnStartQuiz) {
+            btnStartQuiz.style.background = 'rgba(255, 255, 255, 0.05)';
+            btnStartQuiz.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+            btnStartQuiz.style.color = 'var(--text-main)';
+            btnStartQuiz.innerText = 'تحسين النجوم (-15 عملة) 🔄';
+        }
+    } else if (totalGlobalStars >= reqStarsForNext && !lvlData.boss_defeated && hasPlayedCurrentLevel) {
+        if(bossWarning) bossWarning.style.display = 'block'; 
+        if(btnDirectBoss) btnDirectBoss.style.display = 'block';
+        if(btnStartQuiz) {
+            btnStartQuiz.style.background = 'rgba(255, 255, 255, 0.05)';
+            btnStartQuiz.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+            btnStartQuiz.style.color = 'var(--text-main)';
+            btnStartQuiz.innerText = 'تحسين النجوم (-15 عملة) 🔄';
+        }
+    } else {
+        if(bossWarning) bossWarning.style.display = 'block'; 
+        if(btnDirectBoss) btnDirectBoss.style.display = 'none';
+        if(btnStartQuiz) {
+            btnStartQuiz.style.background = 'linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%)';
+            btnStartQuiz.style.border = 'none';
+            btnStartQuiz.style.color = '#000';
+            btnStartQuiz.innerText = hasPlayedCurrentLevel ? 'تحسين النجوم (-15 عملة) 🔄' : 'بدء التحدي 🚀';
+        }
+    }
+    openModal('modal-level-intro');
+}
+
+async function confirmStartLevel() {
+    closeModal('modal-level-intro');
+    
+    if (isClassicQuizActive && !isLevelBossActive && currentLevelPlaying === pendingLevelStart && activeQuizQuestions && activeQuizQuestions.length > 0 && currentQuizIndex < 10) {
+        showTopToast(`جاري استكمال مستوى ${currentLevelPlaying} 🚀`, 'success');
+        navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
+        if (!isAnswerLocked) resumeLevelTimer();
+        return;
+    }
+
+    // التحقق من رسوم التحسين (خصم 15 عملة)
+    let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
+    let hasPlayedCurrentLevel = (userLevels[pendingLevelStart] && userLevels[pendingLevelStart].stars !== undefined);
+    
+    if (hasPlayedCurrentLevel) {
+        if ((currentUser.coins || 0) < 15) {
+            showTopToast('رصيدك غير كافٍ للتحسين! تحتاج 15 عملة 💸', 'error');
+            return;
+        }
+        await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - 15);
+        currentUser.coins -= 15;
+        if(typeof updateProfileUI === 'function') updateProfileUI();
+        if(typeof updateHeaderCoinsDisplay === 'function') updateHeaderCoinsDisplay();
+    }
+
+    currentLevelPlaying = pendingLevelStart;
+    currentLevelStarsEarned = 0;
+    
+    // نظام الكاش (لاستهلاك صفر نت في المرات القادمة)
+    const cacheKey = `cached_level_${currentLevelPlaying}_classic`;
+    const cachedData = localStorage.getItem(cacheKey);
+
+    if (cachedData) {
+        startClassicQuizWithQuestions(JSON.parse(cachedData));
+    } else {
+        showTopToast('جاري تحميل أسئلة المستوى... ⏳', 'info');
+        db.ref(`levels_data/level_${currentLevelPlaying}/classic`).once('value').then(snap => {
+            if (!snap.exists()) {
+                showTopToast('لم يتم رفع أسئلة لهذا المستوى بعد!', 'error');
+                return;
+            }
+            let questions = [];
+            snap.forEach(child => {
+                let val = child.val();
+                if (Array.isArray(val)) val.forEach(q => { if (q && q.q) questions.push(q); });
+                else if (val && val.q) questions.push(val);
+            });
+            
+            if (questions.length < 10) {
+                showTopToast(`عذراً، الأسئلة المرفوعة ${questions.length} فقط (مطلوب 10)!`, 'error');
+                return;
+            }
+            localStorage.setItem(cacheKey, JSON.stringify(questions)); // حفظ في جهاز الطالب
+            startClassicQuizWithQuestions(questions);
+        }).catch(e => {
+            showTopToast('حدث خطأ بالشبكة أثناء جلب الأسئلة.', 'error');
+        });
+    }
+}
+
+function startClassicQuizWithQuestions(questions) {
+    activeQuizQuestions = shuffleArray(questions).slice(0, 10);
+    currentQuizIndex = 0;
+    quizScoreCount = 0;
+    isClassicQuizActive = true;
+    navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
+    renderLevelQuestion();
+}
+
+function triggerCorrectBossMode() {
+    isLevelBossActive = true;
+    currentBossQIndex = 0;
+
+    // التوزيع الدقيق حسب رقم المستوى
+    const remainder = currentLevelPlaying % 3;
+
+    if (remainder === 1) {
+        activeBossType = 'penalty';
+        startPenaltyBoss(); // هذه الدالة ستعرض توست وتوجه للساحة
+    } else if (remainder === 2) {
+        activeBossType = 'bomb';
+        startBombBoss();
+    } else {
+        activeBossType = 'monster';
+        startMonsterBoss();
+    }
+}
+
+function launchBossWithQuestions(questions) {
+    bossQuestionsDeck = shuffleArray(questions).slice(0, 5);
+    triggerCorrectBossMode();
+}
+
+function startDynamicBoss() {
+    closeModal('modal-pre-boss');
+    showTopToast('جاري استدعاء الزعيم... ⏳', 'info');
+    
+    // نظام كاش للزعيم أيضاً
+    const cacheKey = `cached_level_${currentLevelPlaying}_boss`;
+    const cachedData = localStorage.getItem(cacheKey);
+
+    if (cachedData) {
+        launchBossWithQuestions(JSON.parse(cachedData));
+    } else {
+        db.ref(`levels_data/level_${currentLevelPlaying}/boss`).once('value').then(snap => {
+            let questions = [];
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    let val = child.val();
+                    if (Array.isArray(val)) val.forEach(q => { if (q && q.q) questions.push(q); });
+                    else if (val && val.q) questions.push(val);
+                });
+            }
+            
+            if (questions.length < 5) {
+                showTopToast(`تم إيجاد ${questions.length} سؤال فقط للزعيم. جاري الاستكمال!`, 'info');
+                const fallbacks = [
+                    { q: "ما هي عاصمة مصر؟", a: ["القاهرة", "الإسكندرية", "الجيزة", "أسوان"], correct: 0, categoryName: "عام" },
+                    { q: "ما هو العنصر الأكثر وفرة في الغلاف الجوي؟", a: ["النيتروجين", "الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين"], correct: 0, categoryName: "عام" },
+                    { q: "كم عدد عظام جسم الإنسان البالغ؟", a: ["206", "180", "250", "300"], correct: 0, categoryName: "عام" },
+                    { q: "ما هو الكوكب الأقرب للشمس؟", a: ["عطارد", "الزهرة", "المريخ", "المشتري"], correct: 0, categoryName: "عام" },
+                    { q: "أي من الآتي يعتبر خطراً بيولوجياً في الهاسب؟", a: ["السالمونيلا", "شظايا الزجاج", "بقايا المنظفات", "المسامير"], correct: 0, categoryName: "عام" }
+                ];
+                let i = 0;
+                while (questions.length < 5) { questions.push(fallbacks[i % fallbacks.length]); i++; }
+            }
+            localStorage.setItem(cacheKey, JSON.stringify(questions)); // الحفظ في الكاش
+            launchBossWithQuestions(questions);
+        }).catch(e => {
+            showTopToast('خطأ في جلب أسئلة الزعيم!', 'error');
+        });
+    }
+}
+
+function startDynamicBossDirectly() {
+    playClickSound();
+    closeModal('modal-level-intro');
+    closeModal('modal-boss-cooldown');
+    
+    // 🚀 التعديل السحري: إجبار تحديث المستوى فوراً وبدون شروط
+    currentLevelPlaying = pendingLevelStart;
+    
+    showTopToast('جاري استدعاء الزعيم مباشرة... ⚔️', 'info');
+    
+    db.ref(`levels_data/level_${currentLevelPlaying}/boss`).once('value').then(snap => {
+        let questions = [];
+        if (snap.exists()) {
+            snap.forEach(child => {
+                let val = child.val();
+                if (Array.isArray(val)) {
+                    val.forEach(q => { if (q && q.q) questions.push(q); });
+                } else if (val && val.q) {
+                    questions.push(val);
+                }
+            });
+        }
+        
+        if (questions.length < 5) {
+            const fallbacks = [
+                { q: "ما هي عاصمة مصر؟", a: ["القاهرة", "الإسكندرية", "الجيزة", "أسوان"], correct: 0, categoryName: "عام" },
+                { q: "ما هو العنصر الأكثر وفرة في الغلاف الجوي؟", a: ["النيتروجين", "الأكسجين", "ثاني أكسيد الكربون", "الهيدروجين"], correct: 0, categoryName: "عام" },
+                { q: "كم عدد عظام جسم الإنسان البالغ؟", a: ["206", "180", "250", "300"], correct: 0, categoryName: "عام" },
+                { q: "ما هو الكوكب الأقرب للشمس؟", a: ["عطارد", "الزهرة", "المريخ", "المشتري"], correct: 0, categoryName: "عام" },
+                { q: "أي من الآتي يعتبر خطراً بيولوجياً في الهاسب؟", a: ["السالمونيلا", "شظايا الزجاج", "بقايا المنظفات", "المسامير"], correct: 0, categoryName: "عام" }
+            ];
+            let i = 0;
+            while (questions.length < 5) {
+                questions.push(fallbacks[i % fallbacks.length]);
+                i++;
+            }
+        }
+        
+        bossQuestionsDeck = shuffleArray(questions).slice(0, 5);
+        triggerCorrectBossMode(); 
+
+    }).catch((e) => {
+        console.log("Error loading direct boss questions:", e);
+        showTopToast('خطأ في جلب أسئلة الزعيم!', 'error');
+    });
+}
+
+// ================= محرك عرض المحتوى للطالب =================
+    let currentActiveCategory = '';
+    window.tempLessonContentStore = {}; // مخزن مؤقت لسرعة فتح الشروحات المدمجة
+
+    function openSubjectTypeDetails(type) {
+        if (typeof playClickSound === 'function') playClickSound();
+        currentActiveType = type;
+        const typeName = type === 'theory' ? 'قسم النظري' : 'قسم العملي';
+        
+        document.getElementById('subject-detail-label').innerText = `${currentActiveSubject} - ${typeName}`;
+        
+        const lecturesTitle = document.getElementById('hub-lectures-title');
+        if (lecturesTitle) {
+            lecturesTitle.innerText = type === 'theory' ? 'المحاضرات' : 'السكاشن';
+        }
+        
+        navigateTo('view-subject-detail', currentActiveSubject, typeName);
+        if (typeof updateBookRewardBadgeUI === 'function') updateBookRewardBadgeUI();
+    }
+
+    function openDynamicContentList(category) {
+        if (typeof playClickSound === 'function') playClickSound();
+        currentActiveCategory = category;
+        
+        let catName = '';
+        if (category === 'lectures') catName = currentActiveType === 'theory' ? 'المحاضرات' : 'السكاشن';
+        if (category === 'summaries') catName = 'الشروحات والتلخيصات';
+        if (category === 'quizzes') catName = 'بنك الأسئلة والاختبارات';
+
+        document.getElementById('dynamic-list-title').innerText = `${currentActiveSubject} - ${catName}`;
+        navigateTo('view-dynamic-list', currentActiveSubject, catName);
+        
+        const container = document.getElementById('dynamic-content-container');
+        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        const path = `scientific_content/${safeKey}/${currentActiveType}/${category}`;
+        const cacheKey = `cache_${safeKey}_${currentActiveType}_${category}`;
+        const cachedData = localStorage.getItem(cacheKey);
+
+        // 1. عرض البيانات من ذاكرة الهاتف فوراً
+        if (cachedData) {
+            renderDynamicContentDOM(JSON.parse(cachedData), container);
+        } else {
+            container.innerHTML = '<p style="text-align:center; color: var(--text-sub);">جاري التحميل... ⏳</p>';
+        }
+
+        // 2. فحص صامت في الخلفية باستخدام .once
+        db.ref(path).once('value').then(snap => {
+            let items = [];
+            if (snap.exists()) {
+                snap.forEach(child => { items.push({ id: child.key, ...child.val() }); });
+            }
+            
+            const newDataString = JSON.stringify(items);
+            
+            // 3. لو الداتا اللي على السيرفر مختلفة، حدث الموبايل واعرض الجديد
+            if (newDataString !== cachedData) {
+                localStorage.setItem(cacheKey, newDataString);
+                renderDynamicContentDOM(items, container);
+            }
+        });
+    }
+
+        function openLessonReader(title, itemId) {
+        if (typeof playClickSound === 'function') playClickSound();
+        const storedItem = window.tempLessonContentStore[itemId];
+        const contentHtml = (storedItem && storedItem.content) ? storedItem.content : 'عذراً، محتوى الشرح غير متوفر.';
+        
+        document.getElementById('lesson-reader-title').innerText = title;
+        document.getElementById('lesson-reader-body').innerHTML = contentHtml;
+        
+        const qBoxes = document.querySelectorAll('#lesson-reader-body .interactive-q-box');
+        qBoxes.forEach(box => {
+            const btns = Array.from(box.querySelectorAll('.quiz-option-btn'));
+            if (btns.length > 0) {
+                const parent = btns[0].parentNode;
+                for (let i = btns.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [btns[i], btns[j]] = [btns[j], btns[i]];
+                }
+                parent.innerHTML = '';
+                btns.forEach(btn => parent.appendChild(btn));
+            }
+        });
+
+        navigateTo('view-lesson-reader', currentActiveSubject, title);
+    }
+
+    // ================= دوال إدارة المحتوى العلمي (الأدمن) =================
+
+// ================= بناء الكروت وتوجيهها للواجهة الصحيحة بذكاء =================
+    function renderDynamicContentDOM(items, container) {
+        window.tempLessonContentStore = {}; 
+        
+        if (items.length === 0) {
+            container.innerHTML = '<div class="auth-card" style="text-align:center; padding: 30px 15px;"><span style="font-size:3rem; display:block; margin-bottom:10px;">📭</span><p style="color:var(--text-sub); font-weight:700;">لا يوجد محتوى حالياً.</p></div>';
+            return;
+        }
+
+        if (currentActiveCategory === 'quizzes') {
+            let banksHTML = ''; let examsHTML = '';
+            
+            // سحب قائمة الاختبارات اللي الطالب اخد جايزتها قبل كده
+            const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
+
+            items.forEach(item => {
+                window.tempLessonContentStore[item.id] = item;
+                const customEmoji = item.emoji || (item.formatType === 'exam' ? '⏱️' : '📚');
+
+                if (item.formatType === 'qbank') {
+                    banksHTML += `
+                    <div class="eng-bento-card" style="--theme-color: var(--accent-gold); padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" onclick="openQBankMode('${item.id}')">
+                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                        <div style="font-size:0.7rem; color:var(--text-sub);">تدريب مفتوح</div>
+                    </div>`;
+                } else if (item.formatType === 'exam') {
+                    // فحص ما إذا كان الطالب أكمل الاختبار واستلم الجائزة مسبقاً
+                    const isCompleted = rewardedExams.includes(item.id);
+                    const examRewardUI = isCompleted 
+                        ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
+                        : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة | +${item.examXP} XP</div>`;
+                    
+                    examsHTML += `
+                    <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 16px 10px; text-align: center; align-items: center; justify-content: center; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="openExamMode('${item.id}')">
+                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                        ${examRewardUI}
+                    </div>`;
+                } else {
+                    let clickAction = item.formatType === 'content' ? `onclick="openLessonReader('${item.title}', '${item.id}')"` : (item.url ? `onclick="window.open('${item.url}', '_blank');"` : ``);
+                    banksHTML += `
+                    <div class="eng-bento-card" style="--theme-color: #3b82f6; padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" ${clickAction}>
+                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                        <div style="font-size:0.7rem; color:var(--text-sub);">محتوى إضافي</div>
+                    </div>`;
+                }
+            });
+            
+            container.innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: var(--text-sub);">بنوك الأسئلة (تدريب)</div>
+                    ${banksHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: var(--border-card);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: #ef4444;">الاختبارات (تقييم)</div>
+                    ${examsHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: rgba(239,68,68,0.3);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
+                </div>
+            </div>`;
+        } else {
+            let html = '';
+            items.forEach(item => {
+                window.tempLessonContentStore[item.id] = item; 
+                let actionBtnUI = ''; let clickAction = '';
+                const customEmoji = item.emoji || '📄';
+                let extraDownloadBtn = '';
+
+                if (item.formatType === 'qbank') {
+                    actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📚 اضغط لفتح بنك الأسئلة</div>`;
+                    clickAction = `onclick="openQBankMode('${item.id}')"`;
+                } else if (item.formatType === 'exam') {
+                    actionBtnUI = `<div class="dynamic-content-download" style="color:#ef4444;">⏱️ اختبار: ${item.examTime} دقيقة</div>`;
+                    clickAction = `onclick="openExamMode('${item.id}')"`;
+                } else if (item.formatType === 'content') {
+                    actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📖 اضغط لفتح الشرح التفاعلي</div>`;
+                    clickAction = `onclick="openLessonReader('${item.title}', '${item.id}')"`;
+                    
+                    if (item.url) {
+                        extraDownloadBtn = `<button onclick="event.stopPropagation(); window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 0.75rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); z-index: 10; display: flex; align-items: center; gap: 4px;">تحميل الملف</button>`;
+                    }
+                } else {
+                    actionBtnUI = item.url ? `<div class="dynamic-content-download">⬇️ اضغط لتحميل الملف</div>` : `<div class="dynamic-content-download" style="color:var(--text-sub);">قيد التجهيز ⏳</div>`;
+                    clickAction = item.url ? `onclick="window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();"` : `onclick="showTopToast('المحتوى قيد التجهيز', 'info')"`;
+                }
+                
+                html += `<div class="dynamic-content-card" ${clickAction}>
+                            ${extraDownloadBtn}
+                            <div class="dynamic-emoji-box">${customEmoji}</div>
+                            <div class="dynamic-content-info" style="${item.formatType === 'content' && item.url ? 'padding-left: 80px;' : ''}">
+                                <h4>${item.title}</h4>
+                                ${actionBtnUI}
+                            </div>
+                            ${item.formatType === 'content' && item.url ? '' : '<div class="dynamic-arrow">←</div>'}
+                        </div>`;
+            });
+            container.innerHTML = html;
+        }
+    }
+    // ================= محرك بنك الأسئلة (Study Mode) =================
+    let currentBankQuestions = [];
+    function openQBankMode(itemId) {
+        if (typeof playClickSound === 'function') playClickSound();
+        const bankData = window.tempLessonContentStore[itemId];
+        if(!bankData || !bankData.content) return showTopToast('لا توجد أسئلة', 'error');
+        
+        document.getElementById('qbank-title').innerText = bankData.title;
+        currentBankQuestions = parseRawQuestions(bankData.content);
+        
+        // استخراج الأنواع الموجودة فعلياً لعمل أزرار الفلترة
+        const typesPresent = [...new Set(currentBankQuestions.map(q => q.type))];
+        const filterBar = document.getElementById('qbank-filters');
+        let filterHtml = `<button class="qbank-filter-btn active" onclick="renderQBankList('all', this)">الكل</button>`;
+        if(typesPresent.includes('اختر')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اختر', this)">اختر</button>`;
+        if(typesPresent.includes('صح_وخطا')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('صح_وخطا', this)">صح وخطأ</button>`;
+        if(typesPresent.includes('اكمل')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اكمل', this)">أكمل</button>`;
+        if(typesPresent.includes('مقالي')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('مقالي', this)">مقالي</button>`;
+        filterBar.innerHTML = filterHtml;
+
+        renderQBankList('all', filterBar.firstElementChild);
+        navigateTo('view-qbank-reader', currentActiveSubject, bankData.title);
+    }
+
+    function renderQBankList(filterType, btnElem) {
+        // تحديث لون الزرار النشط في الفلتر
+        if(btnElem) {
+            document.querySelectorAll('.qbank-filter-btn').forEach(b => b.classList.remove('active'));
+            btnElem.classList.add('active');
+        }
+        
+        const container = document.getElementById('qbank-questions-container');
+        let html = '';
+        
+        currentBankQuestions.forEach((q, idx) => {
+            // فلترة الأسئلة حسب النوع
+            if (filterType !== 'all' && q.type !== filterType) return;
+            
+            let typeBadge = `<span class="card-badge" style="background: rgba(212,175,55,0.15); color:var(--accent-gold); margin-bottom:8px; display:inline-block;">${q.type.replace('_', ' ')}</span>`;
+            
+            let interactiveArea = '';
+            
+            // 1. لو السؤال (اختر) أو (صح وخطأ) -> اعرضهم كأزرار تفاعلية
+            if (q.type === 'اختر' || q.type === 'صح_وخطا') {
+                let opts = [q.correct];
+                if(q.opt1) opts.push(q.opt1);
+                if(q.opt2) opts.push(q.opt2);
+                if(q.opt3) opts.push(q.opt3);
+                opts = shuffleArray(opts); // خلط الخيارات عشوائياً
+                
+                let optsHtml = opts.map(opt => {
+                    const isCorrect = (opt === q.correct);
+                    return `<button class="quiz-option-btn" style="text-align: right;" data-correct="${isCorrect}" onclick="checkQBankAns(this)">${opt}</button>`;
+                }).join('');
+                
+                interactiveArea = `<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">${optsHtml}</div>`;
+            } 
+            // 2. لو السؤال (أكمل) أو (مقالي) -> اعرض زرار كشف الإجابة فقط
+            else {
+                interactiveArea = `
+                <button class="admin-action-btn" style="width: 100%; border-color: var(--border-card); color: var(--text-sub); margin-top: 10px;" onclick="this.nextElementSibling.style.display='block'; this.style.display='none'; if(typeof playClickSound === 'function') playClickSound();">👁️ عرض الإجابة</button>
+                <div class="qbank-ans-box">✅ ${q.correct}</div>`;
+            }
+            
+            html += `
+            <div class="qbank-item-card">
+                ${typeBadge}
+                <div class="qbank-q-text">${idx+1}. ${q.qText}</div>
+                ${interactiveArea}
+            </div>`;
+        });
+        
+        if (html === '') {
+            html = '<p style="text-align:center; color:var(--text-sub);">لا توجد أسئلة من هذا النوع.</p>';
+        }
+        container.innerHTML = html;
+    }
+
+    // دالة فحص الإجابة داخل بنك الأسئلة (بدون درجات، للتدريب فقط)
+    function checkQBankAns(btn) {
+        const parent = btn.parentElement;
+        const allBtns = parent.querySelectorAll('.quiz-option-btn');
+        
+        // إيقاف الأزرار لمنع الضغط مرتين
+        allBtns.forEach(b => {
+            b.disabled = true;
+            b.style.pointerEvents = 'none';
+            b.style.opacity = '0.8';
+        });
+
+        const isCorrect = btn.getAttribute('data-correct') === 'true';
+
+        if (isCorrect) {
+            if (typeof playSuccessSound === 'function') playSuccessSound();
+            btn.style.background = '#10b981';
+            btn.style.borderColor = '#059669';
+            btn.style.color = '#fff';
+            btn.innerHTML = '✅ ' + btn.innerText;
+            btn.style.opacity = '1';
+        } else {
+            if (typeof playErrorSound === 'function') playErrorSound();
+            btn.style.background = '#ef4444';
+            btn.style.borderColor = '#b91c1c';
+            btn.style.color = '#fff';
+            btn.innerHTML = '❌ ' + btn.innerText;
+            btn.style.opacity = '1';
+            
+            // إظهار الإجابة الصحيحة تلقائياً
+            const correctBtn = parent.querySelector('[data-correct="true"]');
+            if (correctBtn) {
+                correctBtn.style.background = '#10b981';
+                correctBtn.style.borderColor = '#059669';
+                correctBtn.style.color = '#fff';
+                correctBtn.style.opacity = '1';
+                correctBtn.innerHTML = '✅ ' + correctBtn.innerText;
+            }
+        }
+    }
+    // ================= محرك الاختبارات (Exam Mode) =================
+    let examActiveQuestions = [];
+    let examCurrentIdx = 0;
+    let examUserAnswers = {};
+    let examGlobalTimerInt = null;
+    let examDataCache = null;
+
+    function openExamMode(itemId) {
+        if (typeof playClickSound === 'function') playClickSound();
+        const examData = window.tempLessonContentStore[itemId];
+        if(!examData || !examData.content) return showTopToast('لا توجد أسئلة', 'error');
+
+        examDataCache = examData;
+        // استبعاد المقالي من الاختبارات
+        examActiveQuestions = parseRawQuestions(examData.content).filter(q => q.type !== 'مقالي');
+        if(examActiveQuestions.length === 0) return showTopToast('لا توجد أسئلة تقييمية صالحة', 'error');
+
+        examCurrentIdx = 0;
+        examUserAnswers = {};
+        
+        // بناء شريط التنقل العلوي
+        let navHtml = '';
+        examActiveQuestions.forEach((_, i) => {
+            navHtml += `<button class="exam-nav-btn ${i===0?'active-q':''}" id="exam-nav-btn-${i}" onclick="jumpToExamQ(${i})">${i+1}</button>`;
+        });
+        document.getElementById('exam-nav-bar').innerHTML = navHtml;
+        
+        document.getElementById('btn-exam-submit').style.display = 'none';
+
+        // ضبط المؤقت
+        let totalSeconds = (parseInt(examData.examTime) || 15) * 60;
+        clearInterval(examGlobalTimerInt);
+        updateExamTimerUI(totalSeconds);
+        
+        examGlobalTimerInt = setInterval(() => {
+            totalSeconds--;
+            updateExamTimerUI(totalSeconds);
+            if(totalSeconds <= 0) {
+                clearInterval(examGlobalTimerInt);
+                submitFinalExam(true);
+            }
+        }, 1000);
+
+        renderExamQuestion();
+        navigateTo('view-exam-player', currentActiveSubject, examData.title);
+    }
+
+    function updateExamTimerUI(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        const el = document.getElementById('exam-global-timer');
+        el.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        if (seconds < 60) { el.style.color = '#ef4444'; el.style.borderColor = '#ef4444'; el.style.background = 'rgba(239, 68, 68, 0.15)'; }
+    }
+
+    function jumpToExamQ(idx) {
+        examCurrentIdx = idx;
+        renderExamQuestion();
+    }
+
+    function examNavigate(dir) {
+        const newIdx = examCurrentIdx + dir;
+        if(newIdx >= 0 && newIdx < examActiveQuestions.length) {
+            examCurrentIdx = newIdx;
+            renderExamQuestion();
+        }
+    }
+
+    function renderExamQuestion() {
+        if (typeof playClickSound === 'function') playClickSound();
+        const qData = examActiveQuestions[examCurrentIdx];
+        
+        document.querySelectorAll('.exam-nav-btn').forEach((b, i) => {
+            b.classList.remove('active-q');
+            if(i === examCurrentIdx) b.classList.add('active-q');
+            if(examUserAnswers[i] !== undefined) b.classList.add('answered');
+        });
+
+        document.getElementById('exam-q-text').innerText = qData.qText;
+        const optsContainer = document.getElementById('exam-options-container');
+        optsContainer.innerHTML = '';
+
+        if (qData.type === 'اكمل') {
+            const savedAns = examUserAnswers[examCurrentIdx] || '';
+            optsContainer.innerHTML = `<input type="text" class="form-input" style="text-align:center; font-size:1.1rem; font-weight:800;" placeholder="اكتب الكلمة هنا..." value="${savedAns}" onblur="saveExamAnswer(this.value)">`;
+        } else {
+            // اختر أو صح وخطأ (نخلط الخيارات لو مفيش إجابة محفوظة عشان نحافظ على الترتيب)
+            if(!qData.shuffledOpts) {
+                let opts = [qData.correct];
+                if(qData.opt1) opts.push(qData.opt1);
+                if(qData.opt2) opts.push(qData.opt2);
+                if(qData.opt3) opts.push(qData.opt3);
+                qData.shuffledOpts = shuffleArray(opts);
+            }
+            
+            qData.shuffledOpts.forEach(opt => {
+                const isSelected = examUserAnswers[examCurrentIdx] === opt;
+                optsContainer.innerHTML += `<button class="exam-option-radio ${isSelected ? 'selected' : ''}" onclick="saveExamAnswer('${opt}')">${opt}</button>`;
+            });
+        }
+
+        // التحكم في أزرار التالي والسابق والتسليم
+        document.getElementById('btn-exam-prev').style.visibility = examCurrentIdx === 0 ? 'hidden' : 'visible';
+        
+        if (examCurrentIdx === examActiveQuestions.length - 1) {
+            document.getElementById('btn-exam-next').style.display = 'none';
+            document.getElementById('btn-exam-submit').style.display = 'block';
+        } else {
+            document.getElementById('btn-exam-next').style.display = 'block';
+            document.getElementById('btn-exam-submit').style.display = 'none';
+        }
+    }
+
+    function saveExamAnswer(val) {
+        if(val.trim() !== '') {
+            examUserAnswers[examCurrentIdx] = val.trim();
+            document.getElementById(`exam-nav-btn-${examCurrentIdx}`).classList.add('answered');
+            if(examActiveQuestions[examCurrentIdx].type !== 'اكمل') renderExamQuestion(); // تحديث لون الزرار
+        }
+    }
+
+    function submitFinalExam(isTimeout = false) {
+        clearInterval(examGlobalTimerInt);
+        let correctCount = 0;
+        let mistakesHtml = '';
+        
+        examActiveQuestions.forEach((q, i) => {
+            const uAns = examUserAnswers[i] || '';
+            if (uAns.toLowerCase() === q.correct.toLowerCase()) {
+                correctCount++;
+            } else {
+                // 💡 تجميع الأخطاء لعرضها للطالب
+                mistakesHtml += `
+                <div class="mistake-card">
+                    <div class="mistake-q">${i+1}. ${q.qText}</div>
+                    <div class="mistake-user-ans">إجابتك: ${uAns === '' ? 'لم يتم الإجابة ⏳' : uAns}</div>
+                    <div class="mistake-correct-ans">التصحيح: ${q.correct} ✅</div>
+                </div>`;
+            }
+        });
+saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.length, 'exam');
+
+        const passRate = correctCount / examActiveQuestions.length;
+        const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
+        const alreadyRewarded = rewardedExams.includes(examDataCache.id);
+        
+        const xpReward = Math.round((parseInt(examDataCache.examXP) || 0) * passRate);
+        const coinsReward = Math.round((parseInt(examDataCache.examCoins) || 0) * passRate);
+
+        let rewardMsgHtml = '';
+
+        // 💡 منح الجائزة فقط إذا لم يتم استلامها مسبقاً
+        if (!alreadyRewarded) {
+            if (currentUser) {
+                currentUser.xp = (currentUser.xp || currentUser.points || 0) + xpReward;
+                currentUser.points = currentUser.xp;
+                currentUser.coins = (currentUser.coins || 0) + coinsReward;
+                
+                rewardedExams.push(examDataCache.id);
+                currentUser.rewarded_exams = rewardedExams;
+
+                db.ref('users/' + currentUser.phone).update({ 
+                    xp: currentUser.xp, 
+                    points: currentUser.points, 
+                    coins: currentUser.coins,
+                    rewarded_exams: rewardedExams
+                });
+                if(typeof updateProfileUI === 'function') updateProfileUI();
+            }
+            rewardMsgHtml = `مكافأة الاختبار: +${xpReward} XP | +${coinsReward} عملة 💸`;
+        } else {
+            rewardMsgHtml = `لقد حصلت على مكافأة هذا الاختبار مسبقاً (محاولة للتدريب)`;
+        }
+
+        // 💡 إعداد وتجهيز شاشة النتيجة
+        const circleEl = document.getElementById('exam-score-circle');
+        circleEl.innerText = `${correctCount}/${examActiveQuestions.length}`;
+        
+        const msgEl = document.getElementById('exam-result-msg');
+        if (passRate === 1) {
+            msgEl.innerText = "علامة كاملة! أداء أسطوري ومثالي 🏆";
+            msgEl.style.color = "var(--accent-emerald)";
+            circleEl.style.borderColor = "var(--accent-emerald)";
+            circleEl.style.color = "var(--accent-emerald)";
+            if (typeof playFlawlessVictorySound === 'function') playFlawlessVictorySound();
+            if (typeof triggerConfetti === 'function') triggerConfetti();
+        } else if (passRate >= 0.5) {
+            msgEl.innerText = "أداء جيد، راجع أخطاءك بالأسفل لتتحسن! 👍";
+            msgEl.style.color = "var(--accent-gold)";
+            circleEl.style.borderColor = "var(--accent-gold)";
+            circleEl.style.color = "var(--accent-gold)";
+            if (typeof playSuccessSound === 'function') playSuccessSound();
+        } else {
+            msgEl.innerText = isTimeout ? "انتهى الوقت! تحتاج لسرعة وتركيز أكبر ⏰" : "حاول مرة أخرى وركز أكثر في مراجعة المادة! ⚠️";
+            msgEl.style.color = "#ef4444";
+            circleEl.style.borderColor = "#ef4444";
+            circleEl.style.color = "#ef4444";
+            if (typeof playErrorSound === 'function') playErrorSound();
+        }
+
+        const rewardBox = document.getElementById('exam-reward-box');
+        rewardBox.style.display = 'block';
+        rewardBox.innerText = rewardMsgHtml;
+
+        const mistakesContainer = document.getElementById('exam-mistakes-container');
+        if (mistakesHtml === '') {
+            mistakesContainer.innerHTML = '<div style="text-align:center; color:var(--accent-emerald); font-weight:900; margin-top:20px; font-size:1.1rem;">إجاباتك كلها مثالية ولا يوجد أي أخطاء! 🎉</div>';
+        } else {
+            mistakesContainer.innerHTML = '<h4 style="color:#ef4444; margin-bottom:15px; font-size:0.95rem; text-align:center;">مراجعة أخطائك في الاختبار 📝</h4>' + mistakesHtml;
+        }
+
+        // إغلاق واجهة الاختبار وفتح شاشة النتيجة بذكاء عشان زرار الرجوع يشتغل صح
+        navHistory.pop(); 
+        navHistory.push({ viewId: 'view-exam-result', title: 'نتيجة الاختبار', subtitle: 'تقرير الأداء الشامل' });
+        showViewSection('view-exam-result');
+        updateHeader();
+    }
+
+    function parseRawQuestions(rawText) {
+        let qs = [];
+        // حل مشكلة المسافات لو الموبايل نزل السطر بصيغة مختلفة
+        const lines = rawText.split(/\r?\n/);
+        lines.forEach(line => {
+            if(line.trim() === '') return;
+            const p = line.split('#').map(s => s.trim());
+            if(p.length >= 3) {
+                qs.push({ type: p[0], qText: p[1], correct: p[2], opt1: p[3]||'', opt2: p[4]||'', opt3: p[5]||'' });
+            }
+        });
+        return qs;
+    }
+
+    // ================= تعديلات الأدمن للمحتوى العلمي الشامل =================
+    function toggleSciFormatType() {
+        const format = document.getElementById('adm-sci-format').value;
+        const urlContainer = document.getElementById('sci-url-container');
+        const contentContainer = document.getElementById('sci-content-container');
+        const examSettings = document.getElementById('sci-exam-settings');
+        const qbankHint = document.getElementById('sci-qbank-hint');
+        const lblContent = document.getElementById('lbl-sci-content');
+        const builderBtns = document.getElementById('sci-builder-btns');
+
+        if (format === 'url') {
+            urlContainer.style.display = 'block';
+            contentContainer.style.display = 'none';
+            if (examSettings) examSettings.style.display = 'none';
+        } else if (format === 'content') {
+            urlContainer.style.display = 'block'; // 💡 أصبحت تظهر دائمًا لتمكين إضافة ملف PDF
+            contentContainer.style.display = 'block';
+            if (examSettings) examSettings.style.display = 'none';
+            if (qbankHint) qbankHint.style.display = 'none';
+            if (lblContent) lblContent.innerText = 'محتوى الشرح التفاعلي';
+            if (builderBtns) builderBtns.style.display = 'flex';
+        } else if (format === 'qbank' || format === 'exam') {
+            urlContainer.style.display = 'none';
+            contentContainer.style.display = 'block';
+            if (examSettings) examSettings.style.display = format === 'exam' ? 'block' : 'none';
+            if (qbankHint) qbankHint.style.display = 'block';
+            if (lblContent) lblContent.innerText = 'الأسئلة (كل سؤال في سطر)';
+            if (builderBtns) builderBtns.style.display = 'none';
+        }
+    }
+
+    // 💡 إنشاء كاش في الذاكرة لتخزين المحتوى بأمان بعيداً عن أزرار الـ HTML
+    window.adminScienceCache = {}; 
+
+    function loadAdminScienceContent() {
+        const subject = document.getElementById('adm-sci-subject').value;
+        const type = document.getElementById('adm-sci-type').value;
+        const category = document.getElementById('adm-sci-category').value;
+        const list = document.getElementById('admin-science-list');
+        
+        if (!list) return;
+        list.innerHTML = '<p style="text-align: center; color: var(--text-sub);">جاري التحميل... ⏳</p>';
+
+        const safeKey = getSafeSubjectKey(subject);
+        const path = `scientific_content/${safeKey}/${type}/${category}`;
+
+        db.ref(path).once('value').then(snap => {
+            list.innerHTML = '';
+            window.adminScienceCache = {}; // تصفير الذاكرة مع كل تحميل
+            
+            if (!snap.exists()) {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا يوجد محتوى مضاف هنا حتى الآن.</p>';
+                return;
+            }
+
+            let html = '';
+            snap.forEach(child => {
+                const id = child.key;
+                const data = child.val();
+                
+                // 💡 حفظ الكارت بالكامل في الذاكرة لتمرير الـ ID فقط للزر
+                window.adminScienceCache[id] = data; 
+                
+                let typeBadge = data.formatType === 'content' ? '📖 شرح مدمج' : 
+                                data.formatType === 'qbank' ? '📚 بنك أسئلة' : 
+                                data.formatType === 'exam' ? '⏱️ اختبار' : '🔗 رابط خارجي';
+
+                html += `
+                <div class="admin-item-card">
+                    <div class="admin-item-info">
+                        <div class="admin-item-name">${data.emoji || '📄'} ${data.title}</div>
+                        <div class="admin-item-sub" style="direction: rtl; text-align: right; font-size: 0.75rem; color: var(--accent-gold); font-weight: 800; margin-top: 4px;">
+                            ${typeBadge}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-direction: column; flex-shrink: 0;">
+                        <!-- الزرار الآن أصبح نظيف تماماً ومستحيل يعطل -->
+                        <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem;" onclick="editAdminScienceContent('${id}')">تعديل ✏️</button>
+                        <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.7rem;" onclick="deleteAdminScienceContent('${id}')">حذف 🗑️</button>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        });
+    }
+
+    function saveAdminScienceContent() {
+        playClickSound();
+        const idField = document.getElementById('adm-sci-id').value.trim();
+        const finalId = idField !== '' ? idField : 'sci_' + Date.now();
+        
+        const subject = document.getElementById('adm-sci-subject').value;
+        const type = document.getElementById('adm-sci-type').value;
+        const category = document.getElementById('adm-sci-category').value;
+        
+        const formatType = document.getElementById('adm-sci-format').value;
+        const emoji = document.getElementById('adm-sci-emoji').value.trim();
+        const title = document.getElementById('adm-sci-title').value.trim();
+        const url = document.getElementById('adm-sci-url').value.trim();
+        const content = document.getElementById('adm-sci-content').value.trim();
+
+        if (!title) { showTopToast('يرجى كتابة عنوان الكارت!', 'error'); return; }
+
+        let itemData = { title, formatType, emoji };
+
+        if (formatType === 'url') {
+            if (!url) { showTopToast('يرجى وضع الرابط!', 'error'); return; }
+            itemData.url = url;
+        } else if (formatType === 'content') {
+            if (!content) { showTopToast('يرجى كتابة الشرح!', 'error'); return; }
+            itemData.content = content;
+            if (url) itemData.url = url; // 💡 يحفظ الرابط في الداتا بيز لو الأدمن أضافه
+        } else if (formatType === 'qbank' || formatType === 'exam') {
+            if (!content) { showTopToast('يرجى إدخال الأسئلة!', 'error'); return; }
+            itemData.content = content;
+            if (formatType === 'exam') {
+                itemData.examTime = parseInt(document.getElementById('adm-sci-time').value) || 15;
+                itemData.examXP = parseInt(document.getElementById('adm-sci-xp').value) || 50;
+                itemData.examCoins = parseInt(document.getElementById('adm-sci-coins').value) || 10;
+            }
+        }
+
+        const safeKey = getSafeSubjectKey(subject);
+        db.ref(`scientific_content/${safeKey}/${type}/${category}/${finalId}`).update(itemData).then(() => {
+            showTopToast('تم حفظ الكارت بنجاح! ✅', 'success');
+            resetScienceAdminForm();
+            loadAdminScienceContent();
+        });
+    }
+
+    function editAdminScienceContent(id) {
+        if (typeof playClickSound === 'function') playClickSound();
+        
+        // 💡 سحب البيانات النظيفة بالكامل من الذاكرة
+        const data = window.adminScienceCache[id];
+        if (!data) {
+            showTopToast('حدث خطأ في جلب البيانات!', 'error');
+            return;
+        }
+
+        document.getElementById('adm-sci-id').value = id;
+        document.getElementById('adm-sci-title').value = data.title || '';
+        document.getElementById('adm-sci-emoji').value = data.emoji || '📄';
+        document.getElementById('adm-sci-format').value = data.formatType || 'url';
+        toggleSciFormatType(); // دي بتظهر وتخفي الخانات حسب النوع
+        
+        document.getElementById('adm-sci-url').value = data.url || '';
+        document.getElementById('adm-sci-content').value = data.content || '';
+        
+        if (data.formatType === 'exam') {
+            document.getElementById('adm-sci-time').value = data.examTime || 15;
+            document.getElementById('adm-sci-xp').value = data.examXP || 0;
+            document.getElementById('adm-sci-coins').value = data.examCoins || 0;
+        }
+        
+        document.getElementById('btn-save-sci').innerText = 'حفظ التعديلات 💾';
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        showTopToast('تم جلب البيانات بنجاح، يمكنك التعديل الآن.', 'info');
+    }
+
+    function deleteAdminScienceContent(id) {
+        if(confirm('هل أنت متأكد من الحذف؟')) {
+            const safeKey = getSafeSubjectKey(document.getElementById('adm-sci-subject').value);
+            const type = document.getElementById('adm-sci-type').value;
+            const cat = document.getElementById('adm-sci-category').value;
+            db.ref(`scientific_content/${safeKey}/${type}/${cat}/${id}`).remove().then(() => {
+                showTopToast('تم الحذف بنجاح.', 'info');
+                loadAdminScienceContent();
+                localStorage.removeItem(`cache_${safeKey}_${type}_${cat}`);
+            });
+        }
+    }
+
+    function resetScienceAdminForm() {
+        document.getElementById('adm-sci-id').value = '';
+        document.getElementById('adm-sci-title').value = '';
+        document.getElementById('adm-sci-url').value = '';
+        document.getElementById('adm-sci-content').value = '';
+        document.getElementById('adm-sci-time').value = '';
+        document.getElementById('adm-sci-xp').value = '';
+        document.getElementById('adm-sci-coins').value = '';
+        document.getElementById('btn-save-sci').innerText = 'إضافة للمحتوى 💾';
+    }
+    
+        function insertScienceBlock(type) {
+        const textarea = document.getElementById('adm-sci-content');
+        let snippet = '';
+        
+        if (type === 'title') snippet = `\n<h3 style="color: var(--accent-gold); margin: 20px 0 10px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;">عنوان رئيسي هنا</h3>\n`;
+        else if (type === 'note') snippet = `\n<div class="reader-note-box">💡 <b>ملحوظة ذهبية:</b> اكتب الملاحظة هنا...</div>\n`;
+        else if (type === 'warning') snippet = `\n<div class="reader-warn-box">⚠️ <b>تحذير:</b> اكتب التحذير هنا...</div>\n`;
+        else if (type === 'def') snippet = `\n<div class="reader-def-box">📌 <b>المصطلح:</b> اكتب التعريف هنا...</div>\n`;
+        else if (type === 'interactive') snippet = `\n<div class="interactive-q-box">\n    <div class="interactive-q-text">❓ سؤال: اكتب السؤال التفاعلي هنا...</div>\n    <button class="btn-reveal-ans" onclick="if(typeof playClickSound==='function')playClickSound(); this.nextElementSibling.style.display='block'; this.style.display='none';">👁️ عرض الإجابة</button>\n    <div class="interactive-ans-text">✅ الإجابة: الشرح التفصيلي للإجابة هنا...</div>\n</div>\n`;
+        else if (type === 'mcq') snippet = `\n<div class="interactive-q-box" style="border-color: #f59e0b;">\n    <div class="interactive-q-text">🎯 اختبر نفسك: اكتب السؤال هنا...</div>\n    <div style="display: flex; flex-direction: column; gap: 8px;">\n        <button class="quiz-option-btn" style="text-align: right;" data-correct="true" onclick="checkInAppAns(this, true)">الخيار الصحيح</button>\n        <button class="quiz-option-btn" style="text-align: right;" data-correct="false" onclick="checkInAppAns(this, false)">خيار خاطئ 1</button>\n        <button class="quiz-option-btn" style="text-align: right;" data-correct="false" onclick="checkInAppAns(this, false)">خيار خاطئ 2</button>\n    </div>\n</div>\n`;
+        else if (type === 'table') snippet = `\n<div style="overflow-x:auto; margin: 15px 0;">\n<table class="haccp-professional-table">\n<tr><th>وجه المقارنة</th><th>أ</th><th>ب</th></tr>\n<tr><td>النقطة 1</td><td>تفاصيل أ</td><td>تفاصيل ب</td></tr>\n</table>\n</div>\n`;
+        else if (type === 'reveal') snippet = `\n<div class="reader-accordion-card">\n    <div class="reader-accordion-header" onclick="if(typeof playClickSound==='function')playClickSound(); this.parentElement.classList.toggle('open'); const body = this.nextElementSibling; body.style.display = body.style.display === 'block' ? 'none' : 'block';">\n        <div class="reader-accordion-title">العنوان </div>\n        <div class="reader-accordion-arrow">▼</div>\n    </div>\n    <div class="reader-accordion-body">الشرح</div>\n</div>\n`;
+        else if (type === 'mindmap') snippet = `\n<div class="magic-mindmap">\n    <div class="mindmap-node">\n        <div class="mindmap-title">الخطوة الأولى</div>\n        <div class="mindmap-desc">شرح الخطوة الأولى...</div>\n    </div>\n    <div class="mindmap-node">\n        <div class="mindmap-title">الخطوة الثانية</div>\n        <div class="mindmap-desc">شرح الخطوة الثانية...</div>\n    </div>\n</div>\n`;
+
+        const startPos = textarea.selectionStart;
+        const endPos = textarea.selectionEnd;
+        textarea.value = textarea.value.substring(0, startPos) + snippet + textarea.value.substring(endPos, textarea.value.length);
+        textarea.focus();
+    }
+
+    // دالة فحص سؤال "اختبر نفسك" المدمج داخل الشروحات
+function checkInAppAns(btn, isCorrect) {
+    const parent = btn.parentElement;
+    const allBtns = parent.querySelectorAll('.quiz-option-btn');
+    
+    // إيقاف جميع الأزرار عشان الطالب ميجاوبش مرتين
+    allBtns.forEach(b => {
+        b.disabled = true;
+        b.style.pointerEvents = 'none';
+        b.style.opacity = '0.8';
+    });
+
+    if (isCorrect) {
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+        if (typeof shootStars === 'function') shootStars();
+        btn.style.background = '#10b981';
+        btn.style.borderColor = '#059669';
+        btn.style.color = '#fff';
+        btn.innerHTML = '✅ إجابة صحيحة!';
+        btn.style.opacity = '1';
+    } else {
+        if (typeof playErrorSound === 'function') playErrorSound();
+        btn.style.background = '#ef4444';
+        btn.style.borderColor = '#b91c1c';
+        btn.style.color = '#fff';
+        btn.innerHTML = '❌ خطأ!';
+        btn.style.opacity = '1';
+        
+        // إظهار الإجابة الصحيحة باللون الأخضر تلقائياً للطالب
+        const correctBtn = parent.querySelector('[data-correct="true"]');
+        if (correctBtn) {
+            correctBtn.style.background = '#10b981';
+            correctBtn.style.borderColor = '#059669';
+            correctBtn.style.color = '#fff';
+            correctBtn.style.opacity = '1';
+        }
+    }
+}
+
+// دالة حفظ الإحصائيات في هاتف الطالب فقط (صفر استهلاك انترنت)
+function saveLocalQuizHistory(quizTitle, correct, total, type) {
+    let history = JSON.parse(localStorage.getItem('my_detailed_stats') || '[]');
+    
+    // إضافة الكويز الجديد في بداية القائمة
+    history.unshift({
+        title: quizTitle,
+        score: correct,
+        total: total,
+        type: type, // 'exam' أو 'classic'
+        date: new Date().toLocaleDateString('ar-EG')
+    });
+
+    // الاحتفاظ بآخر 15 اختبار فقط لتوفير مساحة الهاتف
+    if (history.length > 15) history.pop();
+    
+    localStorage.setItem('my_detailed_stats', JSON.stringify(history));
+}
+
+// ================= نظام التثبيت المخصص (PWA) للأندرويد =================
+let deferredPrompt;
+const installBtn = document.getElementById('custom-install-btn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); 
+    deferredPrompt = e; 
+    if(installBtn) installBtn.style.display = 'block'; 
+});
+
+if(installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt(); 
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installBtn.style.display = 'none'; 
+            }
+            deferredPrompt = null;
+        }
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    if(installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+});

@@ -8,6 +8,14 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>برنامج علوم الأغذية - الدفعة 28</title>
+<link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:ital,wght@0,700;1,400&family=Aref+Ruqaa:wght@700&family=Noto+Naskh+Arabic:wght@700&family=Reem+Kufi:wght@700&display=swap" rel="stylesheet">
@@ -637,9 +645,16 @@
         .fame-user-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-top: 6px; }
         .fame-stat-val { font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); margin-top: 2px; }
 
-        .quiz-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px; padding: 22px; margin-top: 10px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
-        .quiz-timer-box { font-size: 1.4rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.3); border-radius: 12px; padding: 8px; display: inline-block; min-width: 80px; margin-bottom: 15px; border: 1px solid var(--border-card); transition: color 0.3s; }
-        .quiz-option-btn { display: block; width: 100%; background: var(--bg-secondary); border: 1px solid var(--border-card); color: var(--text-main); padding: 16px; margin: 10px 0; border-radius: 14px; font-weight: 800; font-size: 0.98rem; cursor: pointer; transition: all 0.3s; text-align: right; }
+        /* تصغير مسافات وأحجام التحدي لاحتواء الشاشة بالكامل */
+.quiz-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 18px; padding: 14px 16px; margin-top: 5px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+.quiz-timer-box { font-size: 1.2rem; font-weight: 900; color: var(--text-main); background: rgba(0,0,0,0.3); border-radius: 10px; padding: 4px 12px; display: inline-block; min-width: 70px; margin-bottom: 8px; border: 1px solid var(--border-card); transition: color 0.3s; }
+.quiz-option-btn { display: block; width: 100%; background: var(--bg-secondary); border: 1px solid var(--border-card); color: var(--text-main); padding: 12px 14px; margin: 5px 0; border-radius: 12px; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; text-align: right; line-height: 1.4; }
+
+/* إجبار تصغير المسافات المحقونة من الجافاسكريبت */
+.quiz-card h3 { margin-bottom: 10px !important; font-size: 1rem !important; line-height: 1.4 !important; }
+#options-list { gap: 5px !important; }
+#next-question-area { margin-top: 12px !important; }
+#question-feedback-stars { margin-top: 6px !important; font-size: 1.2rem !important; }
         .quiz-option-btn:hover:not(:disabled) { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.12); transform: translateY(-2px); }
         .quiz-option-btn.correct-choice { background: #10b981 !important; border-color: #059669 !important; color: #ffffff !important; transform: scale(1.05) !important; box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5); z-index: 10; }
         .quiz-option-btn.wrong-choice { background: #ef4444 !important; border-color: #b91c1c !important; color: #ffffff !important; animation: shake 0.4s both; }
@@ -1658,6 +1673,190 @@
 .haccp-professional-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
 .ccp-badge { background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 6px; font-weight: 900; font-size: 0.7rem;}
 
+/* ================= ستايل خريطة المستويات الـ 50 ================= */
+.levels-header-bar {
+    background: var(--card-gradient); border: 1px solid var(--border-card);
+    border-radius: 18px; padding: 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+.levels-header-stats .stat-badge {
+    background: rgba(212, 175, 55, 0.15); color: var(--accent-gold);
+    font-weight: 900; font-size: 1.2rem; padding: 8px 16px;
+    border-radius: 14px; border: 1px solid var(--accent-gold);
+    box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.1);
+}
+.levels-grid-container {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; padding: 5px; direction: ltr; /* الترتيب من اليسار لليمين أو العكس حسب رغبتك */
+}
+.level-node {
+    position: relative; background: var(--bg-secondary);
+    border: 2.5px solid var(--border-card); border-radius: 20px;
+    aspect-ratio: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden;
+}
+.level-node::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+    pointer-events: none;
+}
+.level-node.unlocked {
+    border-color: var(--accent-emerald);
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.05));
+    animation: pulseLevel 2s infinite; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+.level-node.completed {
+    border-color: var(--accent-gold);
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(179, 134, 0, 0.05));
+}
+
+/* الأساسيات (رقم المستوى والأيقونة) */
+.level-number { 
+    font-size: 2.5rem; /* 👈 كبرنا الخط هنا من 1.8 لـ 2.5 */
+    font-weight: 900; 
+    color: var(--text-main); 
+    z-index: 2; 
+    text-shadow: 0 2px 6px rgba(0,0,0,0.7); 
+}
+.level-lock-icon { display: none; z-index: 2; } /* 👈 ده السطر اللي بيخفي القفل من المستويات المفتوحة */
+
+/* 1. المستويات المقفولة العادية (التي لم يصل إليها الطالب بعد) */
+.level-node.locked { opacity: 0.6; cursor: not-allowed; background: rgba(0,0,0,0.5); }
+.level-node.locked .level-number { display: none; }
+.level-node.locked .level-lock-icon { display: block; font-size: 1.6rem; filter: grayscale(1) opacity(0.7); }
+.level-node.locked .level-stars { display: none; }
+.level-node:active:not(.locked):not(.cooldown-locked) { transform: scale(0.92); border-color: #fff; }
+
+/* 2. المستويات المعاقبة (وقت راحة الزعيم) */
+.level-node.cooldown-locked { 
+    opacity: 0.9; 
+    cursor: not-allowed; 
+    background: linear-gradient(145deg, #1a0505, #0a0a0a); 
+    border: 2px dashed #ef4444; 
+    transform: scale(0.96); 
+}
+.level-node.cooldown-locked .level-number { display: none; }
+.level-node.cooldown-locked .level-lock-icon { 
+    display: block; 
+    font-size: 2.8rem; 
+    filter: drop-shadow(0 4px 8px rgba(239, 68, 68, 0.4)); 
+    margin-bottom: 5px; 
+}
+
+/* ستايل النجوم المنسق (بدون تكرار) */
+.level-stars { display: flex; gap: 4px; margin-top: 6px; z-index: 2; }
+.level-stars span { font-size: 0.8rem; filter: grayscale(1) opacity(0.3); transition: all 0.3s ease; }
+.level-stars span.earned { filter: grayscale(0) opacity(1); text-shadow: 0 0 8px var(--accent-gold); transform: scale(1.1); }
+
+@keyframes pulseLevel {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+/* كروت المحتوى الديناميكي (محاضرات، تلخيصات، اختبارات) */
+.dynamic-content-card {
+    background: var(--card-gradient); border: 1px solid var(--border-card);
+    border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer; position: relative; overflow: hidden;
+}
+.dynamic-content-card:active { transform: scale(0.96); border-color: var(--accent-gold); }
+.dynamic-emoji-box {
+    width: 50px; height: 50px; background: rgba(255,255,255,0.05); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.dynamic-content-info { flex: 1; text-align: right; }
+.dynamic-content-info h4 { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+.dynamic-content-download { font-size: 0.75rem; color: var(--accent-emerald); font-weight: 800; display: flex; align-items: center; gap: 4px; }
+.dynamic-arrow { color: var(--text-sub); font-size: 1.2rem; font-weight: bold; opacity: 0.7; }
+
+/* ستايلات قارئ الشروحات المدمجة */
+.interactive-q-box { background: var(--card-gradient); border: 1.5px solid var(--accent-highlight); border-radius: 12px; padding: 16px; margin: 20px 0; text-align: right; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.interactive-q-text { font-size: 0.95rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px; line-height: 1.5; }
+.btn-reveal-ans { background: rgba(99, 102, 241, 0.15); border: 1px solid var(--accent-highlight); color: var(--accent-highlight); padding: 10px 14px; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;}
+.btn-reveal-ans:active { transform: scale(0.96); }
+.interactive-ans-text { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-card); font-size: 0.9rem; font-weight: 800; color: var(--accent-emerald); animation: fadeInAns 0.4s ease; line-height: 1.6;}
+@keyframes fadeInAns { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* تنسيقات تعريفات وملاحظات القارئ */
+.reader-def-box { background: rgba(255,255,255,0.05); padding: 14px; border-radius: 8px; border-right: 4px solid #3b82f6; margin: 15px 0; }
+.reader-note-box { background: rgba(212, 175, 55, 0.1); padding: 14px; border-radius: 8px; border-right: 4px solid var(--accent-gold); margin: 15px 0; font-weight: 700;}
+.reader-warn-box { background: rgba(239, 68, 68, 0.1); padding: 14px; border-radius: 8px; border-right: 4px solid #ef4444; margin: 15px 0; font-weight: 700;}
+/* تنسيقات كروت بنوك الأسئلة والاختبارات */
+.quizzes-split-layout { display: flex; gap: 12px; margin-top: 10px; }
+.quizzes-column { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.quizzes-column-title { text-align: center; font-size: 0.85rem; font-weight: 800; color: var(--text-sub); margin-bottom: 5px; }
+
+/* شريط فلترة بنك الأسئلة */
+.qbank-filter-btn { background: var(--bg-secondary); border: 1px solid var(--border-card); color: var(--text-sub); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; white-space: nowrap; cursor: pointer; transition: 0.3s; }
+.qbank-filter-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
+
+/* أزرار تنقل الاختبار */
+.exam-nav-btn { min-width: 35px; height: 35px; border-radius: 50%; background: var(--bg-secondary); border: 1px solid var(--border-card); color: var(--text-sub); font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+.exam-nav-btn.answered { background: rgba(16, 185, 129, 0.2); border-color: var(--accent-emerald); color: var(--accent-emerald); }
+.exam-nav-btn.active-q { border: 2px solid var(--accent-gold); transform: scale(1.1); color: var(--accent-gold); }
+
+/* كروت أسئلة البنك */
+.qbank-item-card { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 12px; padding: 14px; text-align: right; }
+.qbank-q-text { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px; line-height: 1.5; }
+.qbank-ans-box { display: none; margin-top: 10px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-right: 3px solid var(--accent-emerald); border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: var(--accent-emerald); animation: fadeIn 0.3s ease; }
+.exam-option-radio { display: block; width: 100%; text-align: right; background: var(--bg-secondary); border: 1px solid var(--border-card); padding: 12px; border-radius: 10px; margin-bottom: 8px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+.exam-option-radio.selected { background: rgba(212, 175, 55, 0.15); border-color: var(--accent-gold); color: var(--accent-gold); }
+/* شاشة نتيجة الاختبار */
+.exam-result-header { text-align: center; margin-bottom: 20px; }
+.exam-score-circle { width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900; color: var(--accent-emerald); margin: 0 auto 15px; background: rgba(16, 185, 129, 0.1); }
+.mistake-card { background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 10px; text-align: right; }
+.mistake-q { font-size: 0.9rem; font-weight: 900; color: var(--text-main); margin-bottom: 8px; }
+.mistake-user-ans { font-size: 0.8rem; color: #ef4444; text-decoration: line-through; margin-bottom: 4px; font-weight: 700; }
+.mistake-correct-ans { font-size: 0.85rem; color: #10b981; font-weight: 900; }
+
+/* الشرح المدمج: الكروت التفاعلية المنسدلة (Accordion) */
+.reader-accordion-card { background: var(--bg-secondary); border: 1.5px solid var(--border-card); border-radius: 12px; margin: 15px 0; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.reader-accordion-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.02); transition: background 0.2s; }
+.reader-accordion-header:active { background: rgba(255,255,255,0.05); }
+.reader-accordion-title { font-size: 0.95rem; font-weight: 900; color: var(--accent-gold); }
+.reader-accordion-arrow { font-size: 1rem; color: var(--text-sub); transition: transform 0.3s ease; }
+.reader-accordion-body { display: none; padding: 14px 16px; border-top: 1px dashed var(--border-card); font-size: 0.9rem; font-weight: 700; color: var(--text-main); line-height: 1.7; text-align: right; background: var(--bg-primary); animation: fadeInAns 0.3s ease; }
+.reader-accordion-card.open { border-color: var(--accent-emerald); }
+.reader-accordion-card.open .reader-accordion-arrow { transform: rotate(180deg); color: var(--accent-emerald); }
+
+/* الشرح المدمج: خريطة ذهنية مبسطة (Steps) */
+.magic-mindmap { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; position: relative; }
+.magic-mindmap::before { content: ''; position: absolute; right: 20px; top: 10px; bottom: 10px; width: 2px; background: var(--accent-emerald); opacity: 0.5; z-index: 0; }
+.mindmap-node { position: relative; z-index: 1; background: var(--bg-primary); border: 1px solid var(--accent-emerald); border-radius: 10px; padding: 12px 15px 12px 12px; margin-right: 40px; text-align: right; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.mindmap-node::before { content: ''; position: absolute; right: -25px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: var(--accent-emerald); border-radius: 50%; border: 3px solid var(--bg-primary); }
+.mindmap-title { font-weight: 900; color: var(--accent-emerald); font-size: 0.95rem; margin-bottom: 4px; }
+.mindmap-desc { font-size: 0.8rem; color: var(--text-sub); line-height: 1.5; font-weight: 700; }
+/* ================= ستايل كروت المواد بالصور ================= */
+.subject-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 95px;
+    padding-right: 15px !important;
+}
+.subject-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 70%; /* الصورة هتاخد 65% من مساحة الكارت عالشمال */
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0.75; /* شفافية عشان متزغيش العين */
+    /* تدريج سحري بيخفي الصورة من اليمين ويظهرها من الشمال */
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 95%);
+    mask-image: linear-gradient(to right, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 95%);
+}
+/* رفع العناصر فوق الصورة */
+.subject-card .card-info, .subject-card .card-arrow {
+    position: relative;
+    z-index: 2;
+}
+
 </style>
 </head>
 <body>
@@ -1993,6 +2192,76 @@
         </div>
     </div>
 
+<!-- نافذة تأكيد بدء المستوى (الوحيدة والصحيحة) -->
+<div id="modal-level-intro" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <button class="btn-close-modal" onclick="closeModal('modal-level-intro')">×</button>
+        <div style="font-size: 3rem; margin-bottom: 10px;">🏆</div>
+        <h3 id="level-intro-title" style="color: var(--accent-gold); margin-bottom: 5px;">المستوى 1</h3>
+        <p id="level-intro-rewards" style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 900; margin-bottom: 15px;">المكافأة: 10 XP | 2 عملة</p>
+        
+        <div style="background: var(--bg-secondary); border-radius: 12px; padding: 15px; text-align: right; margin-bottom: 15px; border: 1px solid var(--border-card);">
+            <h4 style="color: var(--accent-emerald); font-size: 0.95rem; margin-bottom: 10px;">📋 توزيع النجوم والوقت:</h4>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--text-sub); line-height: 1.8;">
+                <li>⭐⭐⭐ الإجابة في أول 5 ثوانٍ</li>
+                <li>⭐⭐ الإجابة قبل 10 ثوانٍ</li>
+                <li>⭐ الإجابة بعد 10 ثوانٍ</li>
+                <li>❌ إجابة خاطئة = 0 نجوم</li>
+            </ul>
+        </div>
+        
+        <!-- 👇 صندوق التحذير في مكانه الجديد 👇 -->
+        <div id="level-boss-warning" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px dashed #ef4444; border-radius: 8px; padding: 10px; margin-bottom: 20px; color: #ef4444; font-size: 0.85rem; font-weight: 800;">
+            😈 تحذير: يوجد وحش في نهاية المستوى يجب أن تهزمه لفتح المستوى التالي!
+        </div>
+        <!-- 👆 نهاية صندوق التحذير 👆 -->
+        
+        <div id="level-intro-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-start-level-quiz" class="btn-submit" style="width: 100%; font-size: 1.05rem;" onclick="confirmStartLevel()">بدء التحدي 🚀</button>
+            <button id="btn-direct-boss" class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; width: 100%; font-size: 1.05rem; display: none;" onclick="startDynamicBossDirectly()">مواجهة الزعيم مباشرة 😈</button>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة التحذير قبل الزعيم -->
+<div id="modal-pre-boss" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <div style="font-size: 3.5rem; margin-bottom: 10px; animation: pulseLevel 1s infinite;">😈</div>
+        <h3 style="color: #ef4444; margin-bottom: 10px;">تحذير: وصلت لزعيم المستوى!</h3>
+        <p id="pre-boss-desc" style="font-size: 0.9rem; color: var(--text-main); font-weight: 700; margin-bottom: 20px;">
+            لقد استوفيت شروط النجوم. لتتخطى هذا المستوى وتحصل على المكافأة الكبرى، يجب أن تهزم الزعيم في تحدي خاص!
+        </p>
+        <button class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; width: 100%;" onclick="startDynamicBoss()">مواجهة الزعيم ⚔️</button>
+    </div>
+</div>
+
+<!-- نافذة نقص النجوم (لم يستوفِ الشروط) -->
+<div id="modal-boss-shortage" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <button class="btn-close-modal" onclick="closeModal('modal-boss-shortage'); goHomeDirectly(true);">×</button>
+        <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+        <h3 style="color: var(--accent-gold); margin-bottom: 10px;">لم تستوفِ شروط الزعيم!</h3>
+        <p id="shortage-desc" style="font-size: 0.9rem; color: var(--text-main); font-weight: 700; margin-bottom: 20px;">
+            لقد أنهيت الأسئلة بنجاح وحُفظت نجومك، لكن مجموع نجومك التراكمي غير كافٍ لفتح بوابة الزعيم. عد وحسن نجومك في المستويات السابقة!
+        </p>
+        <button class="btn-submit" style="width: 100%;" onclick="closeModal('modal-boss-shortage'); goHomeDirectly(true);">العودة للخريطة 🗺️</button>
+    </div>
+</div>
+
+<!-- نافذة الكول داون (عقوبة خسارة الزعيم) -->
+<div id="modal-boss-cooldown" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <button class="btn-close-modal" onclick="closeModal('modal-boss-cooldown')">×</button>
+        <div style="font-size: 3rem; margin-bottom: 10px;">⏱️</div>
+        <h3 style="color: #ef4444; margin-bottom: 10px;">المستوى مغلق للراحة!</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">لقد خسرت أمام الزعيم مؤخراً. يجب أن تنتظر حتى ينتهي وقت الراحة أو تدفع 50 عملة للمحاولة فوراً.</p>
+        <div id="cooldown-timer-display" style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 20px;">00:00:00</div>
+        
+        <button class="btn-submit" style="width: 100%; margin-bottom: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" onclick="payToSkipCooldown()">دفع 50 عملة والدخول فوراً 💸</button>
+        <button class="admin-action-btn" style="width: 100%; padding: 12px;" onclick="closeModal('modal-boss-cooldown')">الانتظار ⏳</button>
+    </div>
+</div>
+
     <!-- نافذة تعديل نقاط وعملات الطالب في لوحة التحكم -->
     <div id="edit-points-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 350px;">
@@ -2108,6 +2377,10 @@
                 </div>
             </div>
 
+<button id="custom-install-btn" class="btn-submit" style="display: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; margin-bottom: 20px; font-size: 1rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                ⬇️ تثبيت التطبيق على هاتفك 
+            </button>
+
 <!-- سلايدر المؤقتات التنازلية للأحداث والتكليفات -->
             <div id="home-countdowns-wrapper" class="countdowns-wrapper-box" style="display: none;">
                 <div class="countdowns-carousel" id="home-countdowns-container" onscroll="updateCountdownDots()"></div>
@@ -2131,12 +2404,12 @@
                     <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
                         <img src="https://img.icons8.com/fluency/96/books.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
-                    <h3 style="color: #3b82f6;">مواد الترم الأول</h3>
-                    <p>الكتب والمحاضرات والسكاشن</p>
+                    <h3 style="color: #3b82f6;">المحتوى العلمي</h3>
+                    <p>كل ما يخص الدراسة</p>
                 </div>
 
                 <!-- 3. تحدي المعلومات (عريض كامل) -->
-                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b;" onclick="openQuizRulesModal()">
+                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b;" onclick="openLevelsMap()">
                     <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0;">
                         <img src="https://img.icons8.com/fluency/96/brain.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
@@ -2522,6 +2795,11 @@
                     </div>
                 </div>
             </div>
+
+            <div class="section-label" style="margin-top: 20px;">آخر الاختبارات والتحديات</div>
+            <div id="local-stats-history-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- سيتم حقن سجل التليفون هنا -->
+            </div>
         </div>
 
         <!-- شاشة الحسابات -->
@@ -2896,498 +3174,422 @@
         <div id="view-admin-panel" class="view-section">
             <div class="auth-tabs">
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
-                <button class="auth-tab-btn" id="tab-admin-analytics" onclick="switchAdminTab('analytics')">📊 الإحصائيات والنشاط</button>
-                <button class="auth-tab-btn" id="tab-admin-achievements" onclick="switchAdminTab('achievements')">🎖️ الإنجازات والألقاب</button>
+                <button class="auth-tab-btn" id="tab-admin-analytics" onclick="switchAdminTab('analytics')">📊 الإحصائيات</button>
+                <button class="auth-tab-btn" id="tab-admin-achievements" onclick="switchAdminTab('achievements')">🎖️ الإنجازات</button>
                 <button class="auth-tab-btn" id="tab-admin-academic" onclick="switchAdminTab('academic')">المنظم الأكاديمي 🎓</button>
                 <button class="auth-tab-btn" id="tab-admin-store" onclick="switchAdminTab('store')">إدارة المتجر 🏷️</button>
-                <button class="auth-tab-btn" id="tab-admin-tickets" onclick="switchAdminTab('tickets')">الشكاوى والمقترحات</button>
+                <button class="auth-tab-btn" id="tab-admin-tickets" onclick="switchAdminTab('tickets')">الشكاوى</button>
                 <button class="auth-tab-btn" id="tab-admin-broadcast" onclick="switchAdminTab('broadcast')">رسائل البث</button>
                 <button class="auth-tab-btn" id="tab-admin-books" onclick="switchAdminTab('books')">روابط الكتب</button>
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
                 <button class="auth-tab-btn" id="tab-admin-codes" onclick="switchAdminTab('codes')">الأكواد</button>
-<button class="auth-tab-btn" id="tab-admin-ehbed-quiz" onclick="switchAdminTab('ehbed-quiz')">أسئلة اهبد صح 🔢</button>
-<button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">إدارة الأكاديمية 💼</button>
+                <button class="auth-tab-btn" id="tab-admin-ehbed-quiz" onclick="switchAdminTab('ehbed-quiz')">أسئلة اهبد 🔢</button>
+                <button class="auth-tab-btn" id="tab-admin-levels-sys" onclick="switchAdminTab('levels-sys')">تحدي المستويات 🗺️</button>
+                <button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">أكاديمية الجودة 💼</button>
+                <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
             </div>
 
             <!-- تبويب الطلاب -->
             <div id="admin-section-users">
-                <div class="form-group">
-                    <input type="text" id="admin-search-user" class="form-input" placeholder="بحث بالاسم أو رقم الهاتف..." onkeyup="filterAdminUsers()">
-                </div>
+                <div class="form-group"><input type="text" id="admin-search-user" class="form-input" placeholder="بحث بالاسم أو رقم الهاتف..." onkeyup="filterAdminUsers()"></div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <div class="section-label" style="margin: 0;">قائمة الطلاب المسجلين</div>
-    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminData(true)">تحديث</button>
-</div>
+                    <div class="section-label" style="margin: 0;">قائمة الطلاب المسجلين</div>
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminData(true)">تحديث</button>
+                </div>
                 <div id="admin-users-list" style="margin-top: 15px;"></div>
             </div>
-<!-- تبويب الإحصائيات الشاملة وسجل النشاط المباشر -->
+
+            <!-- تبويب الإحصائيات -->
             <div id="admin-section-analytics" style="display: none;">
-                <div class="section-label">📈 نظرة عامة على نشاط التطبيق</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div class="section-label" style="margin: 0;">📈 نظرة عامة على نشاط التطبيق</div>
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminAnalyticsAndLogs(true)">تحديث الأرقام 🔄</button>
+                </div>
                 
-                <div class="analytics-grid">
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-total-users" style="color: var(--accent-gold);">0</div>
-                        <div class="analytics-card-label">👥 الطلاب المسجلين</div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-total-questions-solved" style="color: var(--accent-emerald);">0</div>
-                        <div class="analytics-card-label">❓ إجمالي الأسئلة المحلولة</div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-accuracy-rate" style="color: #10b981;">0%</div>
-                        <div class="analytics-card-label">🎯 نسبة الدقة العامة</div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-derby-battles" style="color: #ef4444;">0</div>
-                        <div class="analytics-card-label">⚔️ مباريات الديربي 1v1</div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-penalty-played" style="color: #00f0ff;">0</div>
-                        <div class="analytics-card-label">⚽ ركلات الجزاء الملعوبة</div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-card-val" id="stat-classic-quizzes" style="color: #818cf8;">0</div>
-                        <div class="analytics-card-label">📚 جولات التحدي الكلاسيكي</div>
-                    </div>
+                <div class="analytics-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="analytics-card"><div class="analytics-card-val" id="stat-total-users" style="color: var(--accent-gold);">0</div><div class="analytics-card-label">👥 الطلاب</div></div>
+                    <div class="analytics-card"><div class="analytics-card-val" id="stat-total-questions-solved" style="color: var(--accent-emerald);">0</div><div class="analytics-card-label">❓ أسئلة محلولة</div></div>
+                    <div class="analytics-card"><div class="analytics-card-val" id="stat-accuracy-rate" style="color: #10b981;">0%</div><div class="analytics-card-label">🎯 دقة عامة</div></div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div class="section-label" style="margin: 0;">⚡ سجل الألعاب والنشاط المباشر</div>
-<button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminAnalyticsAndLogs(true)">تحديث</button>
-                    <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="clearActivityLogs()">مسح السجل 🗑️</button>
-                </div>
-                
-                <div id="admin-live-logs-list">
-                    <p style="text-align: center; color: var(--text-sub);">جاري تحميل السجلات المباشرة...</p>
+                <div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 10px;">
+                    <div class="analytics-card"><div class="analytics-card-val" id="stat-total-derby-wins" style="color: #ef4444;">0</div><div class="analytics-card-label">⚔️ إجمالي انتصارات الديربي</div></div>
+                    <div class="analytics-card"><div class="analytics-card-val" id="stat-total-penalties" style="color: #00f0ff;">0</div><div class="analytics-card-label">⚽ إجمالي أهداف الجزاء</div></div>
                 </div>
             </div>
-<!-- تبويب إدارة وتخصيص الإنجازات للأدمن -->
+
+            <!-- تبويب الإنجازات -->
             <div id="admin-section-achievements" style="display: none;">
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة / تعديل إنجاز ولقب 🎖️</h3>
-                    
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة / تعديل إنجاز 🎖️</h3>
+                    <div class="form-group"><input type="text" id="adm-ach-id" class="form-input" placeholder="كود الإنجاز (مثال: derby_10)"></div>
+                    <div class="form-group"><input type="text" id="adm-ach-title" class="form-input" placeholder="اسم اللقب"></div>
                     <div class="form-group">
-                        <label>كود الإنجاز الفريد (معرف بالإنجليزية بدون مسافات)</label>
-                        <input type="text" id="adm-ach-id" class="form-input" placeholder="مثال: derby_10 أو quiz_50">
-                    </div>
-
-                    <div class="form-group">
-                        <label>اسم اللقب المكتسب</label>
-                        <input type="text" id="adm-ach-title" class="form-input" placeholder="مثال: جلاد الديربي الأسطوري">
-                    </div>
-
-                    <div class="form-group">
-                        <label>نوع العداد المرتبط بالشرط</label>
                         <select id="adm-ach-metric" class="form-input" style="background: var(--bg-primary);">
-                            <option value="derby_wins">⚔️ عدد مرات الفوز بالديربي (derby_wins)</option>
-                            <option value="penalties_scored">⚽ عدد أهداف ركلات الجزاء (penalties_scored)</option>
-                            <option value="quizCorrect">🧠 عدد الإجابات الصحيحة بالتحدي (quizCorrect)</option>
-                            <option value="daily_streak">🔥 أيام الدخول المتتالية (daily_streak)</option>
-                            <option value="total_login_days">📅 إجمالي أيام الدخول (total_login_days)</option>
+                            <option value="derby_wins">⚔️ فوز ديربي</option>
+                            <option value="penalties_scored">⚽ أهداف جزاء</option>
+                            <option value="quizCorrect">🧠 إجابات صحيحة</option>
+                            <option value="daily_streak">🔥 أيام متتالية</option>
+                            <option value="total_login_days">📅 أيام كلية</option>
                         </select>
                     </div>
-
+                    <div class="form-group"><input type="number" id="adm-ach-target" class="form-input" placeholder="الرقم المستهدف"></div>
                     <div class="form-group">
-                        <label>الرقم المستهدف لإكمال الإنجاز (Target Value)</label>
-                        <input type="number" id="adm-ach-target" class="form-input" placeholder="مثال: 10 أو 50">
-                    </div>
-
-                    <div class="form-group">
-                        <label>ندرة ولون اللقب</label>
                         <select id="adm-ach-rarity" class="form-input" style="background: var(--bg-primary);">
-                            <option value="common">🟢 عادي (أخضر)</option>
-                            <option value="rare">🟣 نادر (بنفسجي متوهج)</option>
-                            <option value="mythic">🔴 ميثيك أسطوري (أحمر ناري متحرك)</option>
+                            <option value="common">🟢 عادي</option>
+                            <option value="rare">🟣 نادر</option>
+                            <option value="mythic">🔴 أسطوري</option>
                         </select>
                     </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label style="color: var(--accent-emerald);">مكافأة نقاط الخبرة (XP)</label>
-                            <input type="number" id="adm-ach-xp" class="form-input" placeholder="مثال: 200">
-                        </div>
-                        <div class="form-group">
-                            <label style="color: var(--accent-gold);">مكافأة العملات (Coins)</label>
-                            <input type="number" id="adm-ach-coins" class="form-input" placeholder="مثال: 50">
-                        </div>
+                        <input type="number" id="adm-ach-xp" class="form-input" placeholder="XP">
+                        <input type="number" id="adm-ach-coins" class="form-input" placeholder="Coins">
                     </div>
-
-                    <button class="btn-submit" onclick="adminSaveAchievement()">حفظ ونشر الإنجاز فوراً 💾</button>
+                    <button class="btn-submit" onclick="adminSaveAchievement()">حفظ 💾</button>
                 </div>
-
-                <div class="section-label">الإنجازات المتاحة حالياً بالسيرفر</div>
+                <div class="section-label">الإنجازات المتاحة</div>
                 <div id="admin-achievements-list"></div>
             </div>
 
-            <!-- تبويب إدارة المنظم الأكاديمي للأدمن -->
+            <!-- تبويب المنظم الأكاديمي -->
             <div id="admin-section-academic" style="display: none;">
-                
-                <!-- إضافة وإدارة المؤقتات التنازلية -->
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة مؤقت عد تنازلي ⏱️</h3>
-                    
+                <!-- المؤقتات -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة مؤقت ⏱️</h3>
+                    <div class="form-group"><input type="text" id="adm-cd-title" class="form-input" placeholder="عنوان المؤقت"></div>
+                    <div class="form-group"><input type="datetime-local" id="adm-cd-target" class="form-input" style="color-scheme: dark;"></div>
                     <div class="form-group">
-                        <label>عنوان الحدث / المؤقت</label>
-                        <input type="text" id="adm-cd-title" class="form-input" placeholder="مثال: بدء امتحانات الميدتيرم">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>تاريخ ووقت انتهاء العد</label>
-                        <input type="datetime-local" id="adm-cd-target" class="form-input" style="color-scheme: dark;">
-                    </div>
-
-                    <div class="form-group">
-                        <label>ربط بتكليف معين (اختياري)</label>
                         <select id="adm-cd-task-link" class="form-input" style="background: var(--bg-primary);">
-                            <option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>
+                            <option value="none">بدون ربط</option>
                         </select>
-                        <span style="font-size: 0.72rem; color: var(--text-sub); margin-top: 3px; display: block;">
-                            * إذا تم ربطه بتكليف، سيختفي المؤقت تلقائياً عند الطالب الذي يسلم التكليف.
-                        </span>
                     </div>
-
-                    <button class="btn-submit" onclick="adminPublishCountdown()">نشر المؤقت 🚀</button>
-
-                    <div class="section-label" style="margin-top: 20px;">المؤقتات النشطة حالياً</div>
-                    <div id="adm-countdowns-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    <button class="btn-submit" onclick="adminPublishCountdown()">نشر 🚀</button>
+                    <div id="adm-countdowns-list" style="margin-top: 15px;"></div>
                 </div>
-                <!-- إضافة تكليف جديد -->
+                <!-- التكليفات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة تكليف / تاسك جديد 📝</h3>
-                    <div class="form-group"><label>اسم المادة</label><input type="text" id="adm-task-subject" class="form-input" placeholder="مثال: كيمياء ألبان"></div>
-                    <div class="form-group"><label>عنوان وتفاصيل التكليف</label><input type="text" id="adm-task-title" class="form-input" placeholder="مثال: تقرير السكشن الأول عن تقدير الحموضة"></div>
-                    <div class="form-group"><label>تاريخ ووقت انتهاء التسليم (Deadline)</label><input type="datetime-local" id="adm-task-deadline" class="form-input" style="color-scheme: dark;"></div>
-                    <div class="form-group"><label>رابط ملف التكليف (Google Drive - اختياري)</label><input type="url" id="adm-task-url" class="form-input" placeholder="https://drive.google.com/..." dir="ltr"></div>
-                    <button class="btn-submit" onclick="adminPublishTask()">نشر التكليف للدفعة 🚀</button>
+                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة تكليف 📝</h3>
+                    <div class="form-group"><input type="text" id="adm-task-subject" class="form-input" placeholder="اسم المادة"></div>
+                    <div class="form-group"><input type="text" id="adm-task-title" class="form-input" placeholder="عنوان التكليف"></div>
+                    <div class="form-group"><input type="datetime-local" id="adm-task-deadline" class="form-input" style="color-scheme: dark;"></div>
+                    <div class="form-group"><input type="url" id="adm-task-url" class="form-input" placeholder="رابط الملف" dir="ltr"></div>
+                    <button class="btn-submit" onclick="adminPublishTask()">نشر التكليف 🚀</button>
                 </div>
-
-                <!-- إضافة إعلان جديد للكلية -->
+                <!-- الإعلانات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">نشر إعلان / قرار رسمي 📢</h3>
-                    <div class="form-group"><label>عنوان التنبيه</label><input type="text" id="adm-alert-title" class="form-input" placeholder="مثال: نقل موعد محاضرة تكنولوجيا السكر"></div>
-                    <div class="form-group"><label>نص التنبيه بالتفصيل</label><textarea id="adm-alert-body" class="form-input" rows="3" style="resize: none;" placeholder="اكتب نص الإعلان هنا..."></textarea></div>
-                    <div class="form-group"><label>رابط مرفق إضافي (اختياري)</label><input type="url" id="adm-alert-url" class="form-input" placeholder="رابط خارجي أو ملف" dir="ltr"></div>
-                    <button class="btn-submit" onclick="adminPublishCollegeAlert()">نشر الإعلان فوراً 📢</button>
+                    <h3 style="color: var(--accent-gold); text-align: center;">نشر إعلان 📢</h3>
+                    <div class="form-group"><input type="text" id="adm-alert-title" class="form-input" placeholder="عنوان التنبيه"></div>
+                    <div class="form-group"><textarea id="adm-alert-body" class="form-input" rows="3" placeholder="النص..."></textarea></div>
+                    <div class="form-group"><input type="url" id="adm-alert-url" class="form-input" placeholder="رابط" dir="ltr"></div>
+                    <button class="btn-submit" onclick="adminPublishCollegeAlert()">نشر 📢</button>
                 </div>
-
-                <!-- 🏛️ كارت تحكم قاعة المشاهير الجديد -->
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 8px; text-align: center;">إدارة قاعة المشاهير 🏛️</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">اقفل أو افتح القسم للطلاب بشكل فوري</p>
+                <!-- قاعة المشاهير -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">قاعة المشاهير 🏛️</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button id="btn-lock-fame" class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff;" onclick="setHallOfFameLockStatus(true)">قفل القسم 🔒</button>
-                        <button id="btn-unlock-fame" class="btn-submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" onclick="setHallOfFameLockStatus(false)">فتح القسم 🔓</button>
+                        <button id="btn-lock-fame" class="btn-submit" style="background: #ef4444; color: #fff;" onclick="setHallOfFameLockStatus(true)">قفل 🔒</button>
+                        <button id="btn-unlock-fame" class="btn-submit" style="background: #10b981; color: #fff;" onclick="setHallOfFameLockStatus(false)">فتح 🔓</button>
                     </div>
                 </div>
-
-                <!-- تحديث روابط جداول السكاشن -->
+<!-- لوحة المتصدرين -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">تحديث روابط الجداول 🗓️</h3>
-                    <div class="form-group"><label>اختر السكشن</label>
+                    <h3 style="color: var(--accent-gold); text-align: center;">لوحة المتصدرين 🏆</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-lock-lb" class="btn-submit" style="background: #ef4444; color: #fff;" onclick="setLeaderboardLockStatus(true)">إخفاء 🔒</button>
+                        <button id="btn-unlock-lb" class="btn-submit" style="background: #10b981; color: #fff;" onclick="setLeaderboardLockStatus(false)">إظهار 🔓</button>
+                    </div>
+                </div>
+                <!-- الجداول -->
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">تحديث الجداول 🗓️</h3>
+                    <div class="form-group">
                         <select id="adm-schedule-sec" class="form-input" style="background: var(--bg-primary);">
-                            <option value="sec1">جدول سكشن 1</option>
-                            <option value="sec2">جدول سكشن 2</option>
-                            <option value="sec3">جدول سكشن 3</option>
+                            <option value="sec1">سكشن 1</option><option value="sec2">سكشن 2</option><option value="sec3">سكشن 3</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>رابط ملف/صورة الجدول (Google Drive)</label><input type="url" id="adm-schedule-url" class="form-input" dir="ltr" placeholder="رابط العرض المباشر"></div>
-                    <button class="btn-submit" onclick="adminSaveScheduleUrl()">تحديث الجدول 💾</button>
+                    <div class="form-group"><input type="url" id="adm-schedule-url" class="form-input" dir="ltr" placeholder="رابط الصورة"></div>
+                    <button class="btn-submit" onclick="adminSaveScheduleUrl()">تحديث 💾</button>
                 </div>
             </div>
 
-            <!-- تبويب إدارة أسعار وعروض المتجر -->
+            <!-- تبويب المتجر -->
             <div id="admin-section-store" style="display: none;">
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">تعديل أسعار وعروض المتجر 🏷️</h3>
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: var(--text-main); text-align: center;">تعديل المتجر 🏷️</h3>
                     <div class="form-group">
-                        <label>اختر السلعة</label>
                         <select id="admin-store-item-select" class="form-input" style="background: var(--bg-primary);" onchange="populateAdminStoreInputs()">
-                            <option value="frame_gold">إطار ذهبي ملكي ✨</option>
-                            <option value="frame_fire">إطار ناري متوهج 🔥</option>
-                            <option value="frame_cyber">إطار سايبر نيون ⚡</option>
-                            <option value="frame_cosmic">إطار كوني متدرج 🌌</option>
-<option value="frame_ring_inferno">إطار التنين الناري الدائري 🔥</option>
-<option value="frame_ring_cyber">إطار السايبر نيون الدوار ⚡</option>
-<option value="frame_ring_celestial">إطار الملاك المذهب الأسطوري 👑</option>
-<option value="frame_ring_nebula">إطار السديم الكوني الدائري 🌌</option>
-                            <option value="hat_grad">قبعة تخرج أكاديمية 🎓</option>
-                            <option value="hat_crown">تاج ملكي مذهب 👑</option>
-                            <option value="hat_bow">فيونكة وردية لطيفة 🎀</option>
-                            <option value="hat_band">عصبة رأس رياضية 🔴</option>
-                            <option value="hat_flowers">طوق ورد طبيعي 🌸</option>
-                            <option value="hat_cap">كاب كاجوال شبابي 🧢</option>
-                            <option value="hat_horns">قرون نيون مضيئة 😈</option>
-                            <option value="hat_headphones">سماعات رأس جيمنج 🎧</option>
-                            <option value="hat_wizard">قبعة العبقري الساحر 🎩</option>
-                            <option value="hat_halo">هالة نورانية طافية 😇</option>
-                            <option value="vip_profile">باقة VIP بروفايل الأسطوري 👑</option>
-                            <option value="top_card">بطاقة متصدرين متحركة 🃏</option>
-                            <option value="glow_name">اسم بلون متوهج ولامع 🌈</option>
-                            <option value="user_bio">تفعيل كتابة بايو شخصي ✍️</option>
-<option value="extra_classic_5">حزمة +5 محاولات كلاسيك 📚</option>
-                            <option value="extra_penalty_5">حزمة +5 محاولات جزاء ⚽</option>
-                            <option value="double_xp">مضاعف نقاط 24 ساعة (2x XP) 🚀</option>
-                            <option value="hint_5050">تلميح التحدي (حذف إجابتين) 💡</option>
-                            <option value="hint_time">تجميد الوقت بالتحدي (+15 ثانية) ⏱️</option>
-                            <option value="freeze">تجميد السلسلة (Streak Freeze) 🛡️</option>
+                            <option value="frame_gold">إطار ذهبي</option><option value="frame_fire">إطار ناري</option>
+                            <option value="extra_classic_5">محاولات كلاسيك</option><option value="double_xp">مضاعف XP</option>
                         </select>
                     </div>
-<div class="form-group">
-    <label>تعديل اسم السلعة</label>
-    <input type="text" id="admin-store-name" class="form-input" placeholder="اسم السلعة الجديد">
-</div>
-                    <div class="form-group">
-                        <label>السعر الأساسي / القديم (Coins)</label>
-                        <input type="number" id="admin-store-price" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>سعر الخصم / العرض (اتركه فارغاً إن لم يكن هناك عرض)</label>
-                        <input type="number" id="admin-store-sale-price" class="form-input" placeholder="مثال: 50">
-                    </div>
-                    <div class="form-group">
-                        <label>شارة العرض (مثل: لفترة محدودة / خصم 50%)</label>
-                        <input type="text" id="admin-store-badge-text" class="form-input" placeholder="عرض لفترة محدودة">
-                    </div>
-                    <button class="btn-submit" onclick="saveStorePriceSettings()">حفظ وتحديث المتجر فوراً 💾</button>
+                    <div class="form-group"><input type="text" id="admin-store-name" class="form-input" placeholder="اسم السلعة"></div>
+                    <div class="form-group"><input type="number" id="admin-store-price" class="form-input" placeholder="السعر"></div>
+                    <div class="form-group"><input type="number" id="admin-store-sale-price" class="form-input" placeholder="سعر الخصم"></div>
+                    <div class="form-group"><input type="text" id="admin-store-badge-text" class="form-input" placeholder="شارة العرض"></div>
+                    <button class="btn-submit" onclick="saveStorePriceSettings()">حفظ 💾</button>
                 </div>
             </div>
 
-            <!-- تبويب الشكاوى والمقترحات -->
+            <!-- تبويب الشكاوى -->
             <div id="admin-section-tickets" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <div class="section-label" style="margin: 0;">الشكاوى والمقترحات الواردة</div>
-    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminTickets(true)">تحديث</button>
-</div>
-                <div id="admin-tickets-list" style="margin-top: 15px;"><p style="text-align: center;">جاري التحميل...</p></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div class="section-label" style="margin: 0;">الشكاوى الواردة</div>
+                    <button class="admin-action-btn" onclick="loadAdminTickets(true)">تحديث</button>
+                </div>
+                <div id="admin-tickets-list"></div>
             </div>
 
             <!-- تبويب رسائل البث -->
             <div id="admin-section-broadcast" style="display: none;">
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إرسال رسالة منبثقة لجميع الطلاب 📢</h3>
-                    <div class="form-group">
-                        <label>عنوان الرسالة / التنبيه</label>
-                        <input type="text" id="admin-broadcast-title" class="form-input" placeholder="مثال: تم رفع مذكرة العملي الآن!">
-                    </div>
-                    <div class="form-group">
-                        <label>نص الرسالة</label>
-                        <textarea id="admin-broadcast-body" class="form-input" rows="3" style="resize: none;" placeholder="اكتب الرسالة التي ستظهر للطلاب عند فتح التطبيق..."></textarea>
-                    </div>
-                    <button class="btn-submit" onclick="publishBroadcastAlert()">نشر الرسالة لجميع المستخدمين 🚀</button>
-                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="clearBroadcastAlert()">حذف الرسالة الحالية 🗑️</button>
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: var(--text-main); text-align: center;">إرسال رسالة منبثقة 📢</h3>
+                    <div class="form-group"><input type="text" id="admin-broadcast-title" class="form-input" placeholder="العنوان"></div>
+                    <div class="form-group"><textarea id="admin-broadcast-body" class="form-input" rows="3" placeholder="النص"></textarea></div>
+                    <button class="btn-submit" onclick="publishBroadcastAlert()">نشر 🚀</button>
+                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="clearBroadcastAlert()">حذف 🗑️</button>
                 </div>
             </div>
 
-            <!-- تبويب إدارة روابط الكتب والملفات -->
+            <!-- تبويب روابط الكتب -->
             <div id="admin-section-books" style="display: none;">
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">تحديث رابط كتاب المادة 📥</h3>
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: var(--text-main); text-align: center;">تحديث كتاب المادة 📥</h3>
                     <div class="form-group">
-                        <label>اختر المادة</label>
                         <select id="admin-book-subject" class="form-input" style="background: var(--bg-primary);">
-                            <option value="تكنولوجيا اللحوم والأسماك">تكنولوجيا اللحوم والأسماك</option>
-                            <option value="تكنولوجيا الحبوب">تكنولوجيا الحبوب</option>
-                            <option value="تكنولوجيا السكر">تكنولوجيا السكر</option>
+                            <option value="تكنولوجيا اللحوم والأسماك">اللحوم والأسماك</option>
+                            <option value="تكنولوجيا الحبوب">الحبوب</option>
+                            <option value="تكنولوجيا السكر">السكر</option>
                             <option value="كيمياء ألبان">كيمياء ألبان</option>
-                            <option value="تكنولوجيا الجبن">تكنولوجيا الجبن</option>
-                            <option value="الإدارة الفنية لمصانع الالبان">الإدارة الفنية لمصانع الالبان</option>
+                            <option value="تكنولوجيا الجبن">الجبن</option>
+                            <option value="الإدارة الفنية لمصانع الالبان">الإدارة الفنية</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>القسم</label>
                         <select id="admin-book-type" class="form-input" style="background: var(--bg-primary);">
-                            <option value="theory">النظري (كتاب المقرر)</option>
-                            <option value="practical">العملي (مذكرة العملي)</option>
+                            <option value="theory">نظري</option><option value="practical">عملي</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>رابط Google Drive (الملف المباشر)</label>
-                        <input type="url" id="admin-book-url" class="form-input" placeholder="https://drive.google.com/file/d/..." dir="ltr">
-                    </div>
-                    <button class="btn-submit" onclick="saveBookDriveLink()">حفظ وتحديث الرابط فوراً 💾</button>
+                    <div class="form-group"><input type="url" id="admin-book-url" class="form-input" placeholder="رابط درايف" dir="ltr"></div>
+                    <button class="btn-submit" onclick="saveBookDriveLink()">حفظ 💾</button>
                 </div>
             </div>
 
-            <!-- تبويب إضافة أسئلة جديدة للتحدي -->
+            <!-- تبويب أسئلة الكلاسيك -->
             <div id="admin-section-quiz" style="display: none;">
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إضافة سؤال جديد للتحدي 🧠</h3>
-                    <div class="form-group">
-                        <label>التصنيف / المجال</label>
-                        <input type="text" id="admin-new-q-cat" class="form-input" placeholder="مثال: علوم وتكنولوجيا الأغذية">
-                    </div>
-                    <div class="form-group">
-                        <label>نص السؤال</label>
-                        <input type="text" id="admin-new-q-text" class="form-input" placeholder="اكتب السؤال هنا...">
-                    </div>
-                    <div class="form-group">
-                        <label style="color: var(--accent-emerald);">الإجابة الصحيحة (دائماً في هذا الحقل)</label>
-                        <input type="text" id="admin-new-q-correct" class="form-input" style="border-color: var(--accent-emerald);">
-                    </div>
-                    <div class="form-group">
-                        <label>الخيار الخطأ الأول</label>
-                        <input type="text" id="admin-new-q-opt1" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>الخيار الخطأ الثاني</label>
-                        <input type="text" id="admin-new-q-opt2" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>الخيار الخطأ الثالث</label>
-                        <input type="text" id="admin-new-q-opt3" class="form-input">
-                    </div>
-                    <button class="btn-submit" onclick="saveNewCloudQuestion()">إضافة السؤال للعبة 🚀</button>
+                    <h3 style="color: var(--text-main); text-align: center;">إضافة سؤال تحدي 🧠</h3>
+                    <div class="form-group"><input type="text" id="admin-new-q-cat" class="form-input" placeholder="التصنيف"></div>
+                    <div class="form-group"><input type="text" id="admin-new-q-text" class="form-input" placeholder="نص السؤال"></div>
+                    <div class="form-group"><input type="text" id="admin-new-q-correct" class="form-input" style="border-color: var(--accent-emerald);" placeholder="الصح"></div>
+                    <div class="form-group"><input type="text" id="admin-new-q-opt1" class="form-input" placeholder="خطأ 1"></div>
+                    <div class="form-group"><input type="text" id="admin-new-q-opt2" class="form-input" placeholder="خطأ 2"></div>
+                    <div class="form-group"><input type="text" id="admin-new-q-opt3" class="form-input" placeholder="خطأ 3"></div>
+                    <button class="btn-submit" onclick="saveNewCloudQuestion()">إضافة 🚀</button>
                 </div>
-
-                <!-- 📋 قسم استعراض وإدارة الأسئلة السحابية المضافة -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 10px; text-align: center;">الأسئلة السحابية المضافة مسبقاً 📋</h3>
-<button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminCustomQuestions(true)">تحديث بنك الأسئلة</button>
-                    <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; text-align: center;">
-                        هنا يمكنك استعراض جميع الأسئلة التي قمت بإضافتها وحذف أي سؤال عند الحاجة.
-                    </p>
-                    <div id="admin-custom-questions-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
-                        <p style="text-align: center; color: var(--text-sub);">جاري تحميل الأسئلة...</p>
-                    </div>
+                    <h3 style="color: var(--accent-gold); text-align: center;">الأسئلة السحابية 📋</h3>
+                    <button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminCustomQuestions(true)">تحديث</button>
+                    <div id="admin-custom-questions-list" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
-
-                <!-- قسم الرفع الجماعي للأسئلة -->
                 <div class="auth-card" style="padding: 18px;">
-                    <h3 style="color: var(--accent-gold); margin-bottom: 10px; text-align: center;">إضافة أسئلة جماعية دفعة واحدة 🚀</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.6;">
-                        اكتب كل سؤال في سطر منفصل بالصيغة التالية (افصل بين العناصر بعلامة <b>#</b>):<br>
-                        <span style="color: var(--accent-emerald);" dir="ltr">التصنيف # نص السؤال # الإجابة الصحيحة # خطأ 1 # خطأ 2 # خطأ 3</span>
-                    </p>
-                    <div class="form-group">
-                        <textarea id="admin-bulk-quiz-input" class="form-input" rows="7" style="resize: vertical; font-size: 0.85rem;" placeholder="علوم # ما هو أسرع كوكب؟ # عطارد # الزهرة # المريخ # زحل
-تاريخ # عاصمة مصر؟ # القاهرة # الإسكندرية # الجيزة # أسوان"></textarea>
-                    </div>
-                    <button class="btn-submit" onclick="uploadBulkQuestions()">رفع جميع الأسئلة للسحابة 📤</button>
+                    <h3 style="color: var(--accent-gold); text-align: center;">رفع جماعي 🚀</h3>
+                    <div class="form-group"><textarea id="admin-bulk-quiz-input" class="form-input" rows="5" placeholder="تصنيف # سؤال # صح # خطأ # خطأ # خطأ"></textarea></div>
+                    <button class="btn-submit" onclick="uploadBulkQuestions()">رفع 📤</button>
                 </div>
             </div>
-                
-            <!-- تبويب الأكواد المحدث -->
+
+            <!-- تبويب الأكواد -->
             <div id="admin-section-codes" style="display: none;">
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إضافة كود مكافأة جديد 🎁</h3>
-                    
-                    <div class="form-group">
-                        <label>كود المكافأة</label>
-                        <input type="text" id="admin-new-code" class="form-input" placeholder="اكتب الكود (مثال: HERO2026)" style="text-transform: uppercase;">
+                    <h3 style="color: var(--text-main); text-align: center;">إضافة كود مكافأة 🎁</h3>
+                    <div class="form-group"><input type="text" id="admin-new-code" class="form-input" placeholder="الكود" style="text-transform: uppercase;"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <select id="admin-code-type" class="form-input" style="background: var(--bg-primary);"><option value="xp">XP</option><option value="coins">Coins</option></select>
+                        <input type="number" id="admin-new-code-pts" class="form-input" placeholder="القيمة">
                     </div>
+                    <div class="form-group">
+                        <select id="admin-code-scope" class="form-input" style="background: var(--bg-primary);"><option value="single">فردي</option><option value="global">جماعي</option></select>
+                    </div>
+                    <button class="btn-submit" onclick="createNewPromoCode()">إنشاء ✨</button>
+                </div>
+                <div class="section-label">الأكواد المتاحة</div>
+                <div id="admin-codes-list"></div>
+            </div>
 
+            <!-- تبويب اهبد صح -->
+            <div id="admin-section-ehbed-quiz" style="display: none;">
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: #c084fc; text-align: center;">إضافة سؤال اهبد 🔢</h3>
+                    <div class="form-group"><input type="text" id="admin-ehbed-q-text" class="form-input" placeholder="نص السؤال"></div>
+                    <div class="form-group"><input type="number" id="admin-ehbed-q-ans" class="form-input" placeholder="الرقم الصح"></div>
+                    <button class="btn-submit" style="background: #a855f7; color: #fff;" onclick="saveNewEhbedQuestion()">إضافة 🚀</button>
+                </div>
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: #c084fc; text-align: center;">أسئلة اهبد المضافة 📋</h3>
+                    <button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminEhbedQuestions(true)">تحديث</button>
+                    <div id="admin-ehbed-questions-list" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: #c084fc; text-align: center;">رفع جماعي 📤</h3>
+                    <div class="form-group"><textarea id="admin-ehbed-bulk-input" class="form-input" rows="5" placeholder="السؤال # الرقم"></textarea></div>
+                    <button class="btn-submit" style="background: #a855f7; color: #fff;" onclick="uploadBulkEhbedQuestions()">رفع 🚀</button>
+                </div>
+            </div>
+
+            <!-- تبويب المستويات -->
+            <div id="admin-section-levels-sys" style="display: none;">
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">تخصيص مستوى ⚙️</h3>
+                    <div class="form-group"><input type="number" id="adm-specific-lvl" class="form-input" min="1" max="50" value="1" onkeyup="loadAdminSingleLevelConfig()" placeholder="رقم المستوى"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="adm-specific-stars" class="form-input" placeholder="نجوم للفتح">
+                        <input type="number" id="adm-specific-xp" class="form-input" placeholder="XP مكافأة">
+                        <input type="number" id="adm-specific-coins" class="form-input" placeholder="Coins مكافأة">
+                    </div>
+                    <button class="btn-submit" onclick="saveAdminSingleLevelConfig()">حفظ 💾</button>
+                </div>
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-main); text-align: center;">إعدادات الزعماء 😈</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="adm-lvl-cooldown-hrs" class="form-input" placeholder="وقت الراحة">
+                        <input type="number" id="adm-lvl-skip-cost" class="form-input" placeholder="تكلفة التخطي">
+                    </div>
+                    <button class="btn-submit" onclick="saveAdminBossGeneralConfig()">حفظ ⚙️</button>
+                </div>
+                <div class="auth-card" style="padding: 18px;">
+                    <h3 style="color: var(--text-main); text-align: center;">رفع أسئلة مستوى 📤</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="adm-upload-lvl-num" class="form-input" placeholder="المستوى">
+                        <select id="adm-upload-lvl-type" class="form-input" style="background: var(--bg-primary);"><option value="classic">كلاسيك</option><option value="boss">زعيم</option></select>
+                    </div>
+                    <div class="form-group"><textarea id="adm-lvl-bulk-input" class="form-input" rows="5" placeholder="تصنيف # سؤال # صح # خطأ # خطأ # خطأ"></textarea></div>
+                    <button class="btn-submit" onclick="uploadAdminLevelQuestions()">رفع 🚀</button>
+                </div>
+            </div>
+
+            <!-- تبويب أكاديمية الجودة -->
+            <div id="admin-section-academy" style="display: none;">
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-gold); text-align: center;">تعديل درس بالأكاديمية 💼</h3>
+                    <input type="hidden" id="adm-acad-id">
+                    <div class="form-group"><input type="text" id="adm-acad-title" class="form-input" placeholder="عنوان الدرس"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 10px;">
+                        <input type="text" id="adm-acad-icon" class="form-input" placeholder="🌱">
+                        <input type="text" id="adm-acad-desc" class="form-input" placeholder="وصف قصير">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+                            <button class="admin-action-btn" onclick="insertAcademyBlock('box')">فقرة 📄</button>
+                            <button class="admin-action-btn" onclick="insertAcademyBlock('highlight')">ملاحظة 💡</button>
+                            <button class="admin-action-btn" onclick="insertAcademyBlock('danger')">تحذير ⚠️</button>
+                            <button class="admin-action-btn" onclick="insertAcademyBlock('timeline')">تايم لاين 🏭</button>
+                            <button class="admin-action-btn" style="border-color: #3b82f6;" onclick="insertAcademyBlock('scenario')">سيناريو ❓</button>
+                        </div>
+                        <textarea id="adm-acad-content" class="form-input" rows="8" placeholder="محتوى HTML..."></textarea>
+                    </div>
+                    <button class="btn-submit" onclick="adminSaveAcademyLesson()">حفظ 💾</button>
+                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="resetAcademyAdminForm()">إلغاء 🔄</button>
+                </div>
+                <div class="section-label">الدروس المتاحة</div>
+                <div id="admin-academy-list"></div>
+            </div>
+
+            <!-- تبويب إدارة المحتوى العلمي الشامل -->
+            <div id="admin-section-science" style="display: none;">
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إدارة المحتوى العلمي 📚</h3>
+                    <input type="hidden" id="adm-sci-id">
+                    
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
-                            <label>نوع المكافأة</label>
-                            <select id="admin-code-type" class="form-input" style="background: var(--bg-primary);">
-                                <option value="xp">⚡ نقاط خبرة (XP)</option>
-                                <option value="coins">💸 عملات (Coins)</option>
+                            <label>المادة</label>
+                            <select id="adm-sci-subject" class="form-input" style="background: var(--bg-primary);" onchange="loadAdminScienceContent()">
+                                <option value="تكنولوجيا اللحوم والأسماك">اللحوم والأسماك</option>
+                                <option value="تكنولوجيا الحبوب">الحبوب</option>
+                                <option value="تكنولوجيا السكر">السكر</option>
+                                <option value="كيمياء ألبان">كيمياء ألبان</option>
+                                <option value="تكنولوجيا الجبن">الجبن</option>
+                                <option value="الإدارة الفنية لمصانع الالبان">الإدارة الفنية</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>القيمة / العدد</label>
-                            <input type="number" id="admin-new-code-pts" class="form-input" placeholder="مثال: 50">
+                            <label>القسم</label>
+                            <select id="adm-sci-type" class="form-input" style="background: var(--bg-primary);" onchange="loadAdminScienceContent()">
+                                <option value="theory">النظري</option>
+                                <option value="practical">العملي</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>التصنيف</label>
+                            <select id="adm-sci-category" class="form-input" style="background: var(--bg-primary);" onchange="loadAdminScienceContent()">
+                                <option value="lectures">المحاضرات / السكاشن</option>
+                                <option value="summaries">الشروحات والتلخيصات</option>
+                                <option value="quizzes">بنك الأسئلة والاختبارات</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الكارت / المرفق ⚙️</label>
+                            <select id="adm-sci-format" class="form-input" style="background: var(--bg-primary); border-color: var(--accent-emerald);" onchange="toggleSciFormatType()">
+                                <option value="url">🔗 رابط خارجي (Drive/PDF)</option>
+                                <option value="content">📖 شرح مدمج (تفاعلي)</option>
+                                <option value="qbank">📚 بنك أسئلة (تدريب مفتوح)</option>
+                                <option value="exam">⏱️ اختبار موقوت (بدرجات)</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>طبيعة استخدام الكود</label>
-                        <select id="admin-code-scope" class="form-input" style="background: var(--bg-primary);">
-                            <option value="single">👤 فردي (يستخدمه شخص واحد فقط وينتهي)</option>
-                            <option value="global">👥 جماعي (يمكن لكل طالب بالدفعة شحنه مرة واحدة)</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 10px;">
+                        <div class="form-group"><label>إيموجي</label><input type="text" id="adm-sci-emoji" class="form-input" placeholder="📄" style="text-align: center;"></div>
+                        <div class="form-group"><label>عنوان الكارت</label><input type="text" id="adm-sci-title" class="form-input" placeholder="مثال: المحاضرة الأولى"></div>
                     </div>
 
-                    <button class="btn-submit" onclick="createNewPromoCode()">إنشاء وإضافة الكود ✨</button>
+                    <!-- إعدادات الاختبار الموقوت (تظهر فقط مع الـ Exam) -->
+                    <div id="sci-exam-settings" style="display: none; background: rgba(239, 68, 68, 0.05); border: 1px dashed #ef4444; padding: 12px; border-radius: 12px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                            <div class="form-group" style="margin: 0;"><label>الوقت (دقائق)</label><input type="number" id="adm-sci-time" class="form-input" placeholder="مثال: 15"></div>
+                            <div class="form-group" style="margin: 0;"><label>مكافأة XP</label><input type="number" id="adm-sci-xp" class="form-input" placeholder="مثال: 50"></div>
+                            <div class="form-group" style="margin: 0;"><label>مكافأة Coins</label><input type="number" id="adm-sci-coins" class="form-input" placeholder="مثال: 10"></div>
+                        </div>
+                    </div>
+
+                    <!-- حقل الرابط العادي -->
+                    <div class="form-group" id="sci-url-container">
+                        <label>الرابط</label>
+                        <input type="url" id="adm-sci-url" class="form-input" placeholder="رابط درايف..." dir="ltr">
+                    </div>
+
+                    <!-- المحرر الذكي الشامل (للشرح أو الأسئلة) -->
+                    <div class="form-group" id="sci-content-container" style="display: none;">
+                        <label id="lbl-sci-content" style="color: var(--accent-emerald);">محتوى الشرح</label>
+                        <div id="sci-builder-btns" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+                            <button class="admin-action-btn" onclick="insertScienceBlock('title')">عنوان 📌</button>
+                            <button class="admin-action-btn" onclick="insertScienceBlock('note')">ملحوظة 💡</button>
+                            <button class="admin-action-btn" onclick="insertScienceBlock('warning')">تحذير ⚠️</button>
+                            <button class="admin-action-btn" onclick="insertScienceBlock('def')">تعريف 📘</button>
+                            <button class="admin-action-btn" style="border-color: #a855f7; color: #a855f7;" onclick="insertScienceBlock('interactive')">سؤال تفاعلي ❓</button>
+                            <button class="admin-action-btn" style="border-color: #f59e0b; color: #f59e0b;" onclick="insertScienceBlock('mcq')">اختبر نفسك 🎯</button>
+<button class="admin-action-btn" style="border-color: #10b981; color: #10b981;" onclick="insertScienceBlock('reveal')">كارت مخفي 🃏</button>
+                            <button class="admin-action-btn" style="border-color: #06b6d4; color: #06b6d4;" onclick="insertScienceBlock('mindmap')">خريطة تدفق 🛤️</button>
+                        </div>
+                        <div id="sci-qbank-hint" style="display: none; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 8px; line-height: 1.6;">
+                            صيغة الرفع: <span style="color: var(--accent-gold);">النوع # السؤال # الصح # خطأ1 # خطأ2 # خطأ3</span><br>
+                            أنواع الأسئلة المدعومة: <b style="color: #fff;">اختر ، صح_وخطا ، اكمل ، مقالي</b> (المقالي للاختبارات غير مسموح).
+                        </div>
+                        <textarea id="adm-sci-content" class="form-input" rows="12" style="resize: vertical; font-size: 0.85rem; direction: ltr;" placeholder="اكتب المحتوى هنا..."></textarea>
+                    </div>
+
+                    <button class="btn-submit" id="btn-save-sci" onclick="saveAdminScienceContent()">حفظ في السيرفر 💾</button>
+                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="resetScienceAdminForm()">إلغاء التعديل 🔄</button>
                 </div>
-
-                <div class="section-label">الأكواد المتاحة والسابقة</div>
-                <div id="admin-codes-list" style="margin-top: 15px;"></div>
-            </div>
-<!-- تبويب إضافة وإدارة أسئلة اهبد صح -->
-    <div id="admin-section-ehbed-quiz" style="display: none;">
-        <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-            <h3 style="color: #c084fc; margin-bottom: 15px; font-size: 1.1rem; text-align: center;">إضافة سؤال جديد للعبة اهبد صح 🔢</h3>
-            <div class="form-group">
-                <label>نص السؤال (تخمين رقم)</label>
-                <input type="text" id="admin-ehbed-q-text" class="form-input" placeholder="مثال: في أي عام تم افتتاح قناة السويس؟">
-            </div>
-            <div class="form-group">
-                <label style="color: var(--accent-gold);">الإجابة الصحيحة (رقم فقط)</label>
-                <input type="number" id="admin-ehbed-q-ans" class="form-input" placeholder="1869" style="text-align: center; font-size: 1.2rem; font-weight: 900;">
-            </div>
-            <button class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="saveNewEhbedQuestion()">إضافة السؤال للسحابة 🚀</button>
-        </div>
-
-        <!-- استعراض الأسئلة المضافة -->
-        <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-            <h3 style="color: #c084fc; margin-bottom: 10px; text-align: center;">الأسئلة المضافة للعبة اهبد صح 📋</h3>
-<button class="admin-action-btn" style="width: 100%; margin-bottom: 12px; padding: 6px;" onclick="loadAdminEhbedQuestions(true)">تحديث الأسئلة</button>
-            <div id="admin-ehbed-questions-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
-                <p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>
-            </div>
-        </div>
-
-        <!-- الرفع الجماعي -->
-        <div class="auth-card" style="padding: 18px;">
-            <h3 style="color: #c084fc; margin-bottom: 10px; text-align: center;">رفع أسئلة اهبد صح جماعية دفعة واحدة 📤</h3>
-            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.6;">
-                الصيغة في كل سطر (افصل بينهم بعلامة <b>#</b>):<br>
-                <span style="color: var(--accent-gold);" dir="ltr">نص السؤال # الرقم الصحيح</span>
-            </p>
-            <div class="form-group">
-                <textarea id="admin-ehbed-bulk-input" class="form-input" rows="6" style="resize: vertical; font-size: 0.85rem;" placeholder="في أي عام تم افتتاح قناة السويس؟ # 1869
-كم عدد عظام جسم الإنسان البالغ؟ # 206"></textarea>
-            </div>
-            <button class="btn-submit" style="background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;" onclick="uploadBulkEhbedQuestions()">رفع الأسئلة الجماعية للسحابة 🚀</button>
-
-        </div>
-    </div>
-
-<div id="admin-section-academy" style="display: none;">
-        <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
-            <h3 style="color: var(--accent-gold); margin-bottom: 12px; text-align: center;">إضافة / تعديل درس بالأكاديمية 💼</h3>
-            
-            <input type="hidden" id="adm-acad-id">
-
-            <div class="form-group">
-                <label>عنوان الدرس</label>
-                <input type="text" id="adm-acad-title" class="form-input" placeholder="مثال: 01. افهم الأساسيات بقوة">
+                
+                <div class="section-label">المحتوى المضاف حالياً في هذا القسم</div>
+                <div id="admin-science-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 10px;">
-                <div class="form-group">
-                    <label>الأيقونة</label>
-                    <input type="text" id="adm-acad-icon" class="form-input" placeholder="🌱" style="text-align: center;">
-                </div>
-                <div class="form-group">
-                    <label>وصف قصير</label>
-                    <input type="text" id="adm-acad-desc" class="form-input" placeholder="وصف للدرس يظهر بالخارج">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label style="color: var(--accent-emerald);">محتوى الدرس (المُحرر الذكي)</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
-                    <button class="admin-action-btn" onclick="insertAcademyBlock('box')">إدراج فقرة عادية 📄</button>
-                    <button class="admin-action-btn" onclick="insertAcademyBlock('highlight')">إدراج ملاحظة ذهبية 💡</button>
-                    <button class="admin-action-btn" onclick="insertAcademyBlock('danger')">إدراج تحذير أحمر ⚠️</button>
-                    <button class="admin-action-btn" onclick="insertAcademyBlock('timeline')">إدراج خطوة تايم لاين 🏭</button>
-                    <button class="admin-action-btn" style="border-color: #3b82f6; color: #3b82f6;" onclick="insertAcademyBlock('scenario')">إدراج سؤال وسيناريو تفاعلي ❓</button>
-                </div>
-                <textarea id="adm-acad-content" class="form-input" rows="12" style="resize: vertical; font-family: monospace; font-size: 0.85rem; direction: ltr;" placeholder="محتوى الـ HTML الخاص بالدرس..."></textarea>
-            </div>
-
-            <button class="btn-submit" onclick="adminSaveAcademyLesson()">حفظ ونشر الدرس فوراً 💾</button>
-            <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="resetAcademyAdminForm()">إلغاء / إفراغ الخانات 🔄</button>
-        </div>
-
-        <div class="section-label">الدروس المتاحة حالياً بالسيرفر</div>
-        <div id="admin-academy-list" style="display: flex; flex-direction: column; gap: 10px;">
-            <p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>
-        </div>
-    </div>
-</div> <!-- 👈 الإغلاق السليم للوحة التحكم بالكامل -->
+</div>
 
         <!-- لوحة المتصدرين المحسنة مع زر قاعة المشاهير -->
         <div id="view-leaderboard" class="view-section">
@@ -3424,22 +3626,28 @@
         <div id="view-term-subjects" class="view-section">
             <div class="section-label">مواد الفصل الدراسي الأول</div>
             <div class="grid-cards">
-                <div class="app-card" onclick="openSubject('تكنولوجيا اللحوم والأسماك')">
+                <div class="app-card subject-card" onclick="openSubject('تكنولوجيا اللحوم والأسماك')">
+                    <img src="meat.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/steak.png" alt="Meat"></div><div class="card-text"><h3>تكنولوجيا اللحوم والأسماك</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="openSubject('تكنولوجيا الحبوب')">
+                <div class="app-card subject-card" onclick="openSubject('تكنولوجيا الحبوب')">
+                    <img src="grains.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/wheat.png" alt="Grains"></div><div class="card-text"><h3>تكنولوجيا الحبوب</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="openSubject('تكنولوجيا السكر')">
+                <div class="app-card subject-card" onclick="openSubject('تكنولوجيا السكر')">
+                    <img src="sugar.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/sugar-cubes.png" alt="Sugar"></div><div class="card-text"><h3>تكنولوجيا السكر</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="openSubject('كيمياء ألبان')">
+                <div class="app-card subject-card" onclick="openSubject('كيمياء ألبان')">
+                    <img src="milk.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/test-tube.png" alt="Chemistry"></div><div class="card-text"><h3>كيمياء ألبان</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="openSubject('تكنولوجيا الجبن')">
+                <div class="app-card subject-card" onclick="openSubject('تكنولوجيا الجبن')">
+                    <img src="cheese.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/cheese.png" alt="Cheese"></div><div class="card-text"><h3>تكنولوجيا الجبن</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
-                <div class="app-card" onclick="openSubject('الإدارة الفنية لمصانع الالبان')">
+                <div class="app-card subject-card" onclick="openSubject('الإدارة الفنية لمصانع الالبان')">
+                    <img src="factory.jpg" class="subject-bg-img" alt="bg">
                     <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/factory.png" alt="Factory"></div><div class="card-text"><h3>الإدارة الفنية لمصانع الالبان</h3><p>محتوى المادة</p></div></div><div class="card-arrow">←</div>
                 </div>
             </div>
@@ -3460,65 +3668,157 @@
             </div>
         </div>
 
-        <!-- تفاصيل المادة وتنزيل الملف -->
+        <!-- تفاصيل المادة (منصة المحتوى الشاملة - Subject Hub) -->
         <div id="view-subject-detail" class="view-section">
-            <div id="subject-detail-label" class="section-label">تحميل المحتوى</div>
-            <div class="grid-cards">
-                <div class="app-card card-primary-glow" onclick="handleBookDownloadClick()">
-                    <div class="card-info">
-                        <div class="card-icon"><img id="detail-card-icon" src="https://img.icons8.com/fluency/96/literature.png" alt="Book"></div>
-                        <div class="card-text">
-                            <h3 id="detail-card-title">كتاب المقرر</h3>
-                            <p style="font-size: 0.72rem; color: var(--accent-gold); margin-top: 2px;">اضغط لتنزيل الملف</p>
-<div id="book-reward-status-badge" style="font-size: 0.72rem; font-weight: 800; margin-top: 8px; text-align: center; transition: all 0.3s ease;">
-    +15 XP 🎁
-</div>
-                        </div>
+            <div class="lab-sub-header" style="margin-bottom: 20px; justify-content: center;">
+                <h2 id="subject-detail-label" style="color: var(--accent-gold); font-size: 1.2rem; margin: 0; text-align: center; width: 100%;"></h2>
+            </div>
+            
+            <div class="eng-bento-grid" id="subject-hub-grid">
+                <!-- 1. كارت الكتاب / المذكرة (عرض كامل) -->
+                <div class="eng-bento-card bento-large card-primary-glow" onclick="handleBookDownloadClick()">
+                    <div class="card-icon"><img id="detail-card-icon" src="https://img.icons8.com/fluency/96/literature.png" alt="Book"></div>
+                    <div class="card-text">
+                        <h3 id="detail-card-title">كتاب المقرر</h3>
+                        <p style="color: var(--accent-gold);">اضغط لتنزيل الملف</p>
+                        <div id="book-reward-status-badge" style="font-size: 0.72rem; font-weight: 800; margin-top: 6px; color: var(--accent-gold);">+15 XP 🎁</div>
                     </div>
-                    <div class="card-arrow">⬇</div>
+                </div>
+
+                <!-- 2. كارت المحاضرات / السكاشن (نصف عرض) -->
+                <div class="eng-bento-card" style="--theme-color: #3b82f6;" onclick="openDynamicContentList('lectures')">
+                    <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; font-size: 1.8rem;">👨‍🏫</div>
+                    <h3 id="hub-lectures-title" style="color: #3b82f6;">المحاضرات</h3>
+                    <p>ملفات وعروض الشرح</p>
+                </div>
+
+                <!-- 3. كارت التلخيصات (نصف عرض) -->
+                <div class="eng-bento-card" style="--theme-color: #10b981;" onclick="openDynamicContentList('summaries')">
+                    <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; font-size: 1.8rem;">📝</div>
+                    <h3 style="color: #10b981;">الشروحات والتلخيصات</h3>
+                    <p>مراجعات وأوراق عمل</p>
+                </div>
+
+                <!-- 4. كارت بنوك الأسئلة (عرض كامل) -->
+                <div class="eng-bento-card bento-large" style="--theme-color: #a855f7;" onclick="openDynamicContentList('quizzes')">
+                    <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7; font-size: 2.2rem;">🎯</div>
+                    <div>
+                        <h3 style="color: #c084fc;">بنك الأسئلة والاختبارات</h3>
+                        <p>نماذج وتدريبات شاملة للقسم</p>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- واجهة عرض القوائم الديناميكية (محاضرات/شروحات/اختبارات) -->
+        <div id="view-dynamic-list" class="view-section">
+            <div class="lab-sub-header" style="margin-bottom: 20px; justify-content: center;">
+                <h2 id="dynamic-list-title" style="color: var(--accent-gold); font-size: 1.2rem; margin: 0; text-align: center; width: 100%;">المحتوى</h2>
+            </div>
+            <div id="dynamic-content-container" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- سيتم حقن الكروت هنا -->
+            </div>
+        </div>
+<!-- واجهة قارئ الشروحات المدمجة (Lesson Reader) -->
+        <div id="view-lesson-reader" class="view-section" style="display: none;">
+            <div class="lab-sub-header" style="margin-bottom: 20px; justify-content: center; position: relative;">
+                <h2 id="lesson-reader-title" style="color: var(--accent-gold); font-size: 1.2rem; margin: 0; text-align: center; width: 100%;">الشرح</h2>
+            </div>
+            
+            <div id="lesson-reader-body" style="padding: 10px 5px; line-height: 1.8; color: var(--text-main); font-size: 0.95rem;">
+                <!-- سيتم حقن محتوى الشرح التفاعلي هنا -->
+            </div>
+</div>
+<!-- واجهة بنك الأسئلة (Study Mode) -->
+        <div id="view-qbank-reader" class="view-section" style="display: none;">
+            <div class="lab-sub-header" style="margin-bottom: 15px; justify-content: center; position: relative;">
+                <button class="btn-back-lab" style="position: absolute; left: 0;" onclick="navigateBack()">↩ رجوع</button>
+                <h2 id="qbank-title" style="color: var(--accent-gold); font-size: 1.1rem; margin: 0; text-align: center;">بنك الأسئلة</h2>
+            </div>
+            <!-- شريط الفلترة الذكي -->
+            <div id="qbank-filters" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px;"></div>
+            <!-- حاوية الأسئلة -->
+            <div id="qbank-questions-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </div>
+
+        <!-- واجهة الاختبار الموقوت (Exam Mode) -->
+        <div id="view-exam-player" class="view-section" style="display: none;">
+            <div class="lab-sub-header" style="margin-bottom: 15px; justify-content: space-between;">
+                <button class="btn-back-lab" style="color: #ef4444; border-color: #ef4444;" onclick="navigateBack()">إلغاء ❌</button>
+                <div id="exam-global-timer" style="font-size: 1.2rem; font-weight: 900; color: var(--accent-emerald); background: rgba(16, 185, 129, 0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid var(--accent-emerald);">00:00</div>
+            </div>
+            <!-- شريط أرقام الأسئلة العلوي -->
+            <div id="exam-nav-bar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; direction: ltr;"></div>
+            
+            <div class="quiz-card" style="min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
+                <h3 id="exam-q-text" style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5; color: var(--text-main);">جاري التحميل...</h3>
+                <div id="exam-options-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap: 10px;">
+                <button id="btn-exam-prev" class="admin-action-btn" style="flex: 1;" onclick="examNavigate(-1)">⬅️ السابق</button>
+                <button id="btn-exam-next" class="admin-action-btn" style="flex: 1; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="examNavigate(1)">التالي ➡️</button>
+            </div>
+            <button id="btn-exam-submit" class="btn-submit" style="margin-top: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; display: none;" onclick="submitFinalExam()">تسليم الاختبار 🏁</button>
+        </div>
+        </div>
+<!-- واجهة نتيجة الاختبار التفصيلية -->
+        <div id="view-exam-result" class="view-section" style="display: none;">
+            <div class="auth-card" style="text-align: center; padding: 30px 15px;">
+                <div class="exam-result-header">
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">نتيجة الاختبار 📊</h2>
+                    <div id="exam-score-circle" class="exam-score-circle">0/0</div>
+                    <p id="exam-result-msg" style="font-size: 0.95rem; color: var(--text-sub); font-weight: 700;"></p>
+                    <div id="exam-reward-box" style="margin-top: 15px; padding: 10px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; border: 1px dashed var(--accent-gold); color: var(--accent-gold); font-weight: 900; display: none;"></div>
+                </div>
+                
+                <div id="exam-mistakes-container" style="margin-top: 20px; text-align: right; border-top: 1px solid var(--border-card); padding-top: 15px;">
+                    <!-- الأخطاء هتظهر هنا -->
+                </div>
+
+                <button class="btn-submit" style="margin-top: 20px; width: 100%;" onclick="navigateBack()">عودة للقائمة ↩</button>
+            </div>
+        </div>
+                    
         <!-- اللعبة -->
         <div id="view-quiz-game" class="view-section">
             <div id="quiz-container"></div>
         </div>
 <!-- واجهة اختيار نجم ركلة الجزاء -->
-        <div id="view-penalty-select" class="view-section">
-            <div class="auth-card" style="text-align: center; padding: 22px 16px;">
-                <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">⚽🎯</span>
-                <h3 style="color: var(--accent-gold); margin-bottom: 6px;">تحدي ركلات الجزاء ⚽</h3>
-                <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 18px;">
-                    اختر نجمك المفضل لسداد ركلة الجزاء نحو الشباك:
-                </p>
+<div id="view-penalty-select" class="view-section">
+    <div class="auth-card" style="text-align: center; padding: 22px 16px;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">⚽🎯</span>
+        <h3 style="color: var(--accent-gold); margin-bottom: 6px;">تحدي ركلات الجزاء ⚽</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 18px;">
+            اختر نجمك المفضل لسداد ركلة الجزاء نحو الشباك:
+        </p>
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                    <!-- ميسي -->
-                    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #00f0ff;" onclick="launchPenaltyMode('messi', 'ليونيل ميسي', 'https://images.fotmob.com/image_resources/playerimages/30981.png')">
-                        <img src="https://images.fotmob.com/image_resources/playerimages/30981.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(0,240,255,0.1); margin-bottom: 6px;">
-                        <h4 style="font-size: 0.85rem;">ميسي 🇦🇷</h4>
-                        <p style="font-size: 0.68rem; color: #00f0ff !important;">الـ GOAT</p>
-                    </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+            <!-- صلاح -->
+            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #10b981;" onclick="launchPenaltyMode('salah', 'محمد صلاح', 'salah.png')">
+                <img src="salah.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(16,185,129,0.1); margin-bottom: 6px;">
+                <h4 style="font-size: 0.85rem;">صلاح 🇪🇬</h4>
+                <p style="font-size: 0.68rem; color: #10b981 !important;">فخر العرب</p>
+            </div>
 
-                    <!-- رونالدو -->
-                    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #ef4444;" onclick="launchPenaltyMode('ronaldo', 'كريستيانو رونالدو', 'https://images.fotmob.com/image_resources/playerimages/30893.png')">
-                        <img src="https://images.fotmob.com/image_resources/playerimages/30893.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(239,68,68,0.1); margin-bottom: 6px;">
-                        <h4 style="font-size: 0.85rem;">رونالدو 🇵🇹</h4>
-                        <p style="font-size: 0.68rem; color: #ef4444 !important;">الدون</p>
-                    </div>
+            <!-- ميسي -->
+            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #00f0ff;" onclick="launchPenaltyMode('messi', 'ليونيل ميسي', 'https://images.fotmob.com/image_resources/playerimages/30981.png')">
+                <img src="https://images.fotmob.com/image_resources/playerimages/30981.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(0,240,255,0.1); margin-bottom: 6px;">
+                <h4 style="font-size: 0.85rem;">ميسي 🇦🇷</h4>
+                <p style="font-size: 0.68rem; color: #00f0ff !important;">الـ GOAT</p>
+            </div>
 
-                    <!-- صلاح -->
-                    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #10b981;" onclick="launchPenaltyMode('salah', 'محمد صلاح', 'https://images.fotmob.com/image_resources/playerimages/292462.png')">
-                        <img src="https://images.fotmob.com/image_resources/playerimages/292462.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(16,185,129,0.1); margin-bottom: 6px;">
-                        <h4 style="font-size: 0.85rem;">صلاح 🇪🇬</h4>
-                        <p style="font-size: 0.68rem; color: #10b981 !important;">فخر العرب</p>
-                    </div>
-                </div>
-
-                <button class="btn-submit" onclick="navigateBack()">رجوع ⬅️</button>
+            <!-- رونالدو -->
+            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #ef4444;" onclick="launchPenaltyMode('ronaldo', 'كريستيانو رونالدو', 'https://images.fotmob.com/image_resources/playerimages/30893.png')">
+                <img src="https://images.fotmob.com/image_resources/playerimages/30893.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(239,68,68,0.1); margin-bottom: 6px;">
+                <h4 style="font-size: 0.85rem;">رونالدو 🇵🇹</h4>
+                <p style="font-size: 0.68rem; color: #ef4444 !important;">الدون</p>
             </div>
         </div>
+
+        <button class="btn-submit" onclick="navigateBack()">رجوع ⬅️</button>
+    </div>
+</div>
 
         <!-- واجهة مشهد ركلة الجزاء التفاعلية الكاملة -->
         <div id="view-penalty-arena" class="view-section">
@@ -3561,6 +3861,66 @@
                 </div>
             </div>
         </div>
+
+<!-- واجهة زعيم القنبلة الموقوتة 💣 -->
+<div id="view-boss-bomb" class="view-section">
+    <div class="auth-card" style="text-align: center; border-color: #ef4444; background: #2a0a0a;">
+        <h3 style="color: #ef4444;">تفكيك القنبلة الموقوتة 💣</h3>
+        <div id="bomb-timer-display" style="font-size: 3.5rem; font-weight: 900; color: #ef4444; text-shadow: 0 0 15px #ef4444; margin: 15px 0;">00:30</div>
+        <p style="color: #fca5a5; font-size: 0.85rem; margin-bottom: 20px;">أجب إجابات صحيحة لقطع الأسلاك. إجابة خاطئة = تسريع الوقت!</p>
+        
+        <h4 id="bomb-q-text" style="color: #fff; margin-bottom: 15px;">جاري التحميل...</h4>
+        <div id="bomb-options-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        
+        <div style="margin-top: 15px; font-size: 1.2rem; font-weight: 900; color: #fff;" id="bomb-wires-cut">
+            الأسلاك المقطوعة: 0 / 3
+        </div>
+    </div>
+</div>
+
+<!-- واجهة زعيم صراع الوحش 🐉 -->
+<div id="view-boss-monster" class="view-section">
+    <div class="auth-card" style="text-align: center; border-color: #a855f7; background: #1a0b2e;">
+        <h3 style="color: #c084fc;">صراع الوحش المجهول 🐉</h3>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+            <div style="text-align: right;">
+                <span style="display:block; color:#fff; font-size:0.8rem;">صحتك</span>
+                <div id="player-hearts" style="font-size: 1.5rem;">❤️❤️❤️</div>
+            </div>
+            <img src="monster.png" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px #a855f7);">
+            <div style="text-align: left;">
+                <span style="display:block; color:#fff; font-size:0.8rem;">صحة الوحش</span>
+                <div style="width: 60px; height: 10px; background: #333; border-radius: 5px; overflow: hidden; display: inline-block;">
+                    <div id="monster-hp-bar" style="width: 100%; height: 100%; background: #ef4444; transition: 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <h4 id="monster-q-text" style="color: #fff; margin-bottom: 15px;">جاري التحميل...</h4>
+        <div id="monster-options-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+</div>
+
+<!-- واجهة خريطة الـ 50 مستوى -->
+<div id="view-levels-map" class="view-section">
+    <div class="levels-header-bar" style="flex-direction: column; align-items: stretch; gap: 12px;">
+        <div style="text-align: right;">
+            <h3 style="color: var(--accent-gold); margin-bottom: 4px; font-size: 1.15rem;">تحدي المعلومات 🧠</h3>
+            <p style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">أجب بسرعة لجمع النجوم وفتح المستويات!</p>
+        </div>
+        <div class="levels-header-stats" style="display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap;">
+            <div class="stat-badge" style="flex: 1; text-align: center; padding: 6px; font-size: 0.85rem; border-color: var(--accent-emerald); color: var(--accent-emerald);"><span id="map-xp-display">0</span> XP ⚡</div>
+            <div class="stat-badge" style="flex: 1; text-align: center; padding: 6px; font-size: 0.85rem; border-color: var(--accent-gold); color: var(--accent-gold);"><span id="map-coins-display">0</span> 💸</div>
+            <div class="stat-badge" style="flex: 1; text-align: center; padding: 6px; font-size: 0.85rem; background: rgba(255,255,255,0.05); color: #fff; border-color: var(--border-card);"><span id="total-stars-display">0</span> ⭐</div>
+        </div>
+    </div>
+    
+    <div class="levels-grid-container" id="levels-grid-container">
+        <!-- سيتم حقن المستويات הـ 50 هنا بواسطة الجافاسكريبت -->
+    </div>
+</div>
+
 <!-- غرفة انتظار اهبد صح -->
     <div id="view-ehbed-lobby" class="view-section">
         <div class="auth-card" style="text-align: center; padding: 25px 20px;">
@@ -3830,6 +4190,7 @@
 </div>
 
 </div> 
+
     <!-- شريط التنقل السفلي الثابت -->
     <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
         <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">
@@ -3882,17 +4243,64 @@
             <button class="btn-submit" onclick="executeCoinTransfer()">إرسال الدعم 🚀</button>
         </div>
     </div>
-<!-- شاشة الصيانة المؤقتة الذكية -->
-<div id="maintenance-lock-screen" class="intro-screen-overlay" style="display: none; z-index: 999999; background: var(--bg-primary);">
-    <div class="intro-card" style="text-align: center;">
-        <div style="font-size: 4.5rem; margin-bottom: 15px; animation: bounceEmoji 2s infinite alternate;">🛠️</div>
-        <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 12px;">تحديثات وصيانة ⚙️</h1>
-        <p style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.8; margin-bottom: 15px;">
-            معلش هنغيب عنك يومين بس بسبب بعض أعمال الصيانة الشاملة للسيرفرات.
-        </p>
-        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 12px; padding: 10px; color: #ef4444; font-weight: 900; font-size: 0.95rem;">
-            سنعود يوم 1 سبتمبر 🚀
+
+<!-- شاشة النهاية التجريبية (Full Page Redesign) -->
+<div id="grand-finale-screen" style="display: none; position: fixed; inset: 0; z-index: 999999; background: radial-gradient(circle at top center, rgba(99, 102, 241, 0.15) 0%, var(--bg-primary) 70%); overflow-y: auto; padding: 24px 16px 50px;">
+    
+    <div style="max-width: 580px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- رأس الصفحة ورسالة النهاية -->
+        <div style="text-align: center; padding: 20px 10px 10px;">
+            <div style="font-size: 3.8rem; display: inline-block; filter: drop-shadow(0 6px 15px rgba(245, 158, 11, 0.35)); margin-bottom: 12px;">🚀</div>
+            <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 12px; letter-spacing: -0.5px;">انتهت الفترة التجريبية بنجاح</h1>
+            <p style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.9; margin: 0 auto; opacity: 0.95;">
+                شكراً لكل حد شارك معانا في تجربة النسخة المبدئية من التطبيق.<br>
+                التطبيق الآن مغلق مؤقتًا لإجراء صيانة وتطوير شامل، عشان نرجع لكم بنسخة نهائية أقوى وأسرع تليق بيكم، وتستوعب المحتوى العلمي كامل خلال الترم.
+            </p>
         </div>
+
+        <!-- كارت العداد التنازلي الشامل -->
+        <div style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 20px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+                <span style="font-size: 1.2rem;">⏳</span>
+                <span style="color: var(--accent-emerald); font-size: 1rem; font-weight: 900;">موعد الإطلاق الرسمي القادم</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; direction: ltr;" id="finale-countdown">
+                <!-- سيتم حقن العداد هنا -->
+            </div>
+        </div>
+
+        <!-- قسم الفيدباك والتقييم -->
+        <div id="feedback-section" style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 22px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: right;">
+            <div style="text-align: center; margin-bottom: 18px;">
+                <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 6px;">رأيك يهمنا في النسخة الجديدة 💡</h3>
+                <p style="font-size: 0.82rem; color: var(--text-sub); font-weight: 600; margin: 0;">شاركنا تقييمك، إيه اللي عجبك، نقاط الضعف، واقتراحاتك للأقسام والاضافات القادمة.</p>
+            </div>
+            
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px 10px; margin-bottom: 16px; text-align: center;">
+                <div style="color: var(--accent-gold); font-size: 0.82rem; font-weight: 800; margin-bottom: 8px;">كم نجمة يستحقها التطبيق؟</div>
+                <div style="font-size: 2.2rem; direction: ltr; display: flex; justify-content: center; gap: 8px;" id="star-rating-box">
+                    <span class="fb-star" data-val="1" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="2" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="3" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="4" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="5" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 14px;">
+                <textarea id="finale-feedback-text" class="form-input" rows="4" placeholder="اكتب إيه اللي عجبك، المشاكل اللي واجهتك، ومقترحاتك للتطوير..." style="resize: none; line-height: 1.6; font-size: 0.9rem;"></textarea>
+            </div>
+            
+            <button id="btn-submit-feedback" class="btn-submit" style="margin: 0;" onclick="submitFinaleFeedback()">إرسال التقييم للمطور 📤</button>
+        </div>
+
+        <!-- رسالة التأكيد بعد الإرسال -->
+        <div id="feedback-success-msg" style="display: none; text-align: center; color: var(--accent-emerald); font-weight: 800; font-size: 0.95rem; padding: 18px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--accent-emerald); border-radius: 16px;">
+            تم استلام رسالتك بنجاح يا هندسة.. شكراً جداً لوقتك ودعمك! ❤️
+        </div>
+
     </div>
 </div>
 
