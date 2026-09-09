@@ -3,6 +3,8 @@ let ehbedQuestionsCache = null;
 
 // ================= نظام القفل والفيدباك (صفر استهلاك سيرفر) =================
 let finaleSelectedRating = 0;
+// متغير للتحكم العام، لو التطبيق مقفول هنخليه true عشان نمنع أي مستمع خارجي يشتغل
+let isAppLockedForMaintenance = false; 
 
 document.addEventListener("DOMContentLoaded", () => {
     const finaleScreen = document.getElementById('grand-finale-screen');
@@ -15,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // القفل يشتغل لو الموعد لسه مجاش، والرقم مش من الأرقام المستثناة
     if (now < unlockDate && !allowedPhones.includes(currentPhone)) {
+        isAppLockedForMaintenance = true; // 👈 تفعيل متغير القفل لمنع باقي التطبيق
+
         if (finaleScreen) finaleScreen.style.display = 'flex';
         
         // إخفاء وعزل التطبيق بالكامل
@@ -26,17 +30,22 @@ document.addEventListener("DOMContentLoaded", () => {
         startFinaleCountdown(unlockDate);
         initFinaleStars();
         
-        // 🛑 (Return) تمنع تشغيل أي دوال تسحب بيانات من فايربيز (استهلاك صفر)
+        console.log("🔒 التطبيق مقفل للصيانة. تم إيقاف جميع الاتصالات بالسيرفر.");
         return; 
     } else {
-        // فك القفل وتشغيل التطبيق لحسابك أو بعد الموعد
-        if (finaleScreen) finaleScreen.remove();
+        // 🔓 فك القفل وتشغيل التطبيق لحسابك أو بعد الموعد
+        isAppLockedForMaintenance = false;
+
+        if (finaleScreen) finaleScreen.style.display = 'none'; // استخدمت none بدل remove عشان ميعملش مشكلة لو الشاشة مش موجودة
         updateSoundUI();
-        checkAppEntryFlow();
+        checkAppEntryFlow(); // بتبدأ تجيب بيانات المستخدم هنا!
         checkBroadcastAlerts();
         initUserTicketRepliesListener();
         listenToCountdowns();
         preloadLeaderboardData();
+
+        // 👈 تشغيل مستمعات فايربيز العامة (الوقت والإصدار) هنا فقط!
+        initGlobalFirebaseListeners();
     }
 });
 
@@ -195,11 +204,6 @@ function incrementQuestionsVersion(dbNodeName) {
     }
     const db = firebase.database();
     const auth = firebase.auth();
-// ================= محرك مزامنة وقت السيرفر (لمنع الغش) =================
-    let serverTimeOffset = 0;
-    db.ref('.info/serverTimeOffset').on('value', function(snap) {
-        serverTimeOffset = snap.val() || 0;
-    });
 
     // دالة تجلب الوقت الحقيقي بالملي ثانية من سيرفر جوجل
     function getRealTimeMs() {
@@ -214,9 +218,15 @@ function incrementQuestionsVersion(dbNodeName) {
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
+// ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
+let serverTimeOffset = 0;
+const CURRENT_APP_VERSION = "1.1.7";
 
-    // ================= نظام التحديث التلقائي وتخطي الكاش =================
-    const CURRENT_APP_VERSION = "1.1.6";
+// 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
+function initGlobalFirebaseListeners() {
+    db.ref('.info/serverTimeOffset').on('value', function(snap) {
+        serverTimeOffset = snap.val() || 0;
+    });
 
     db.ref('app_version').on('value', (snapshot) => {
         if (snapshot.exists()) {
@@ -231,6 +241,7 @@ function incrementQuestionsVersion(dbNodeName) {
             }
         }
     });
+}
 
     // ================= دوال المنظم الأكاديمي والمنصة =================
     function openAcademicHub() {
@@ -604,16 +615,7 @@ function renderTasksToDOM(tasksObj, list) {
 
     let currentStoreConfig = { ...defaultStorePrices };
 
-    db.ref('store_config').once('value', (snap) => {
-        if (snap.exists()) {
-            currentStoreConfig = { ...defaultStorePrices, ...snap.val() };
-        } else {
-            db.ref('store_config').set(defaultStorePrices);
-        }
-        if (typeof renderStoreCatalog === 'function') renderStoreCatalog();
-    });
-
-    // ================= الصوت والمؤثرات =================
+        // ================= الصوت والمؤثرات =================
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
@@ -1095,16 +1097,7 @@ let cachedFameData = null;
     let editSelectedAvatar = 'https://img.icons8.com/fluency/96/user-male.png';
 let hasCheckedDailyLoginSession = false;
 
-    window.addEventListener('DOMContentLoaded', () => {
-        updateSoundUI();
-        checkAppEntryFlow();
-        checkBroadcastAlerts();
-        initUserTicketRepliesListener();
-        listenToCountdowns();
-        preloadLeaderboardData();
-    });
-
-    function checkAppEntryFlow() {
+        function checkAppEntryFlow() {
         const loggedInPhone = localStorage.getItem('active_user_phone');
         const cachedUserData = localStorage.getItem('cached_user_data');
 
