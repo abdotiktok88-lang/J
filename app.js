@@ -1,51 +1,52 @@
 let cloudQuestionsCache = null;
 let ehbedQuestionsCache = null;
 
-// ================= نظام القفل والفيدباك (صفر استهلاك سيرفر) =================
+// ================= نظام القفل والفيدباك =================
 let finaleSelectedRating = 0;
-// متغير للتحكم العام، لو التطبيق مقفول هنخليه true عشان نمنع أي مستمع خارجي يشتغل
-let isAppLockedForMaintenance = false; 
+let isAppLockedForMaintenance = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     const finaleScreen = document.getElementById('grand-finale-screen');
     const allowedPhones = ["01061032507", "01061032508"]; // أرقامك المستثناة
     const currentPhone = localStorage.getItem('active_user_phone');
     
-    // موعد العودة (18 سبتمبر 2026 الساعة 11:00 مساءً)
-    const unlockDate = new Date("2026-09-18T23:00:00").getTime();
+    // موعد العودة الجديد: 19 سبتمبر 2026 الساعة 11:00 مساءً
+    const unlockDate = new Date("2026-09-19T23:00:00").getTime();
     const now = Date.now();
 
-    // القفل يشتغل لو الموعد لسه مجاش، والرقم مش من الأرقام المستثناة
+    // تشغيل القفل إذا كان الوقت لم يحن بعد والمستخدم ليس من المستثنين
     if (now < unlockDate && !allowedPhones.includes(currentPhone)) {
-        isAppLockedForMaintenance = true; // 👈 تفعيل متغير القفل لمنع باقي التطبيق
+        isAppLockedForMaintenance = true;
 
-        if (finaleScreen) finaleScreen.style.display = 'flex';
+        if (finaleScreen) {
+            finaleScreen.style.setProperty('display', 'block', 'important'); // إظهار الشاشة بشكل إجباري ومضمون
+        }
         
-        // إخفاء وعزل التطبيق بالكامل
-        document.querySelector('.container').style.display = 'none';
-        document.querySelector('header').style.display = 'none';
+        // إخفاء عناصر التطبيق
+        const mainContainer = document.querySelector('.container');
+        if (mainContainer) mainContainer.style.display = 'none';
+
+        const mainHeader = document.querySelector('header');
+        if (mainHeader) mainHeader.style.display = 'none';
+
         const bottomNav = document.getElementById('main-bottom-nav');
         if (bottomNav) bottomNav.style.display = 'none';
 
         startFinaleCountdown(unlockDate);
         initFinaleStars();
-        
-        console.log("🔒 التطبيق مقفل للصيانة. تم إيقاف جميع الاتصالات بالسيرفر.");
         return; 
     } else {
-        // 🔓 فك القفل وتشغيل التطبيق لحسابك أو بعد الموعد
+        // فك القفل لحساب المطور
         isAppLockedForMaintenance = false;
 
-        if (finaleScreen) finaleScreen.style.display = 'none'; // استخدمت none بدل remove عشان ميعملش مشكلة لو الشاشة مش موجودة
+        if (finaleScreen) finaleScreen.style.display = 'none';
         updateSoundUI();
-        checkAppEntryFlow(); // بتبدأ تجيب بيانات المستخدم هنا!
+        checkAppEntryFlow();
         checkBroadcastAlerts();
         initUserTicketRepliesListener();
         listenToCountdowns();
-        preloadLeaderboardData();
-
-        // 👈 تشغيل مستمعات فايربيز العامة (الوقت والإصدار) هنا فقط!
-        initGlobalFirebaseListeners();
+        if (typeof listenToContentMarkers === 'function') listenToContentMarkers();
+if (typeof listenToAcademicMarkers === 'function') listenToAcademicMarkers();
     }
 });
 
@@ -54,10 +55,10 @@ function initFinaleStars() {
     stars.forEach(star => {
         star.style.cursor = 'pointer';
         star.onclick = function() {
-            if(typeof playClickSound === 'function') playClickSound();
+            if (typeof playClickSound === 'function') playClickSound();
             finaleSelectedRating = parseInt(this.getAttribute('data-val'));
             stars.forEach(s => {
-                if(parseInt(s.getAttribute('data-val')) <= finaleSelectedRating) {
+                if (parseInt(s.getAttribute('data-val')) <= finaleSelectedRating) {
                     s.style.filter = 'grayscale(0) opacity(1)';
                     s.style.transform = 'scale(1.1)';
                 } else {
@@ -65,13 +66,13 @@ function initFinaleStars() {
                     s.style.transform = 'scale(1)';
                 }
             });
-        }
+        };
     });
 }
 
 function startFinaleCountdown(targetTime) {
     const cdDiv = document.getElementById('finale-countdown');
-    if(!cdDiv) return;
+    if (!cdDiv) return;
     
     function update() {
         const diff = targetTime - Date.now();
@@ -133,50 +134,63 @@ function shuffleArray(array) {
     }
     return arr;
 }
-// ================= محرك الكاش الذكي للأسئلة الفردية =================
+// ================= محرك الكاش الذكي المطور (يدعم أسئلة ريسك والاختبارات) =================
 async function getQuestionsWithCache(dbNodeName) {
     try {
-        // 1. سؤال خفيف جداً لمعرفة رقم الإصدار من السيرفر
         const versionSnap = await db.ref('settings/' + dbNodeName + '_version').once('value');
         const serverVersion = versionSnap.val() || 1;
         const localVersion = localStorage.getItem('version_' + dbNodeName);
 
-        // 2. لو الرقم متطابق، نعرض الداتا من الموبايل فوراً (صفر استهلاك)
+        // لو الإصدار متطابق، يتم الجلب من ذاكرة الهاتف فوراً
         if (localVersion == serverVersion) {
             const cachedString = localStorage.getItem('cache_' + dbNodeName);
             if (cachedString) {
-                console.log("تم جلب الأسئلة من ذاكرة الهاتف ⚡");
                 return JSON.parse(cachedString);
             }
         }
 
-        // 3. لو مفيش كاش أو الرقم اتغير، نحمل الجديد من فايربيز
-        console.log("جاري سحب التحديث الجديد للأسئلة من السيرفر... ☁️");
+        // لو الإصدار اتغير أو مفيش كاش، بنسحب من فايربيز مباشرة
         const dataSnap = await db.ref(dbNodeName).once('value');
-        
         let questionsArr = [];
+
         if (dataSnap.exists()) {
             dataSnap.forEach(child => {
-                let customQ = child.val();
-                if (customQ && customQ.q && customQ.a) {
-                    questionsArr.push({
-                        id: `custom_${child.key}`, 
-                        q: customQ.q, 
-                        a: [...customQ.a],
-                        correct: customQ.correct || 0, 
-                        categoryName: customQ.category || "أسئلة إضافية"
-                    });
+                let item = child.val();
+                if (!item) return;
+
+                // لو كانت أسئلة ريسك (تحتوي على points و category)
+                if (dbNodeName === 'risk_questions') {
+                    if (item.q && item.a && item.category && item.points !== undefined) {
+                        questionsArr.push({
+                            id: child.key,
+                            category: item.category,
+                            points: parseInt(item.points),
+                            q: item.q,
+                            a: item.a
+                        });
+                    }
+                } 
+                // لباقي الأسئلة العادية (تحديات الكلاسيك)
+                else {
+                    if (item.q && item.a) {
+                        questionsArr.push({
+                            id: `custom_${child.key}`,
+                            q: item.q,
+                            a: Array.isArray(item.a) ? [...item.a] : [item.a],
+                            correct: item.correct || 0,
+                            categoryName: item.category || "أسئلة إضافية"
+                        });
+                    }
                 }
             });
         }
 
-        // 4. حفظ النسخة الجديدة وتحديث رقم الإصدار في الموبايل
+        // حفظ الداتا الجديدة ورقم الإصدار محلياً
         localStorage.setItem('cache_' + dbNodeName, JSON.stringify(questionsArr));
         localStorage.setItem('version_' + dbNodeName, serverVersion);
 
         return questionsArr;
     } catch (error) {
-        // في حالة انقطاع النت، نستخدم الكاش القديم
         const cachedString = localStorage.getItem('cache_' + dbNodeName);
         return cachedString ? JSON.parse(cachedString) : [];
     }
@@ -245,25 +259,33 @@ function initGlobalFirebaseListeners() {
 
     // ================= دوال المنظم الأكاديمي والمنصة =================
     function openAcademicHub() {
-        playClickSound();
-        navigateTo('view-academic-hub', 'المنظم الأكاديمي', 'المنصة والتكليفات والجداول');
-        loadAcademicTasks();
+    playClickSound();
+    localStorage.setItem('seen_acad_marker_tasks', Date.now().toString());
+    navigateTo('view-academic-hub', 'المنظم الأكاديمي', 'المنصة والتكليفات والجداول');
+    loadAcademicTasks();
+    setTimeout(updateAcademicRedDots, 50);
+}
+
+function switchAcademicTab(tab) {
+    playClickSound();
+    if (['tasks', 'schedules', 'alerts'].includes(tab)) {
+        localStorage.setItem(`seen_acad_marker_${tab}`, Date.now().toString());
     }
 
-    function switchAcademicTab(tab) {
-        playClickSound();
-        ['tasks', 'schedules', 'exams', 'alerts'].forEach(t => {
-            const b = document.getElementById(`tab-acad-${t}`);
-            const s = document.getElementById(`acad-sub-${t}`);
-            if (b) b.classList.remove('active');
-            if (s) s.style.display = 'none';
-        });
-        document.getElementById(`tab-acad-${tab}`).classList.add('active');
-        document.getElementById(`acad-sub-${tab}`).style.display = 'block';
+    ['tasks', 'schedules', 'exams', 'alerts'].forEach(t => {
+        const b = document.getElementById(`tab-acad-${t}`);
+        const s = document.getElementById(`acad-sub-${t}`);
+        if (b) b.classList.remove('active');
+        if (s) s.style.display = 'none';
+    });
+    document.getElementById(`tab-acad-${tab}`).classList.add('active');
+    document.getElementById(`acad-sub-${tab}`).style.display = 'block';
 
-        if (tab === 'tasks') loadAcademicTasks();
-        if (tab === 'alerts') loadAcademicAlerts();
-    }
+    if (tab === 'tasks') loadAcademicTasks();
+    if (tab === 'alerts') loadAcademicAlerts();
+
+    setTimeout(updateAcademicRedDots, 50);
+}
 
     function loadAcademicTasks() {
     const list = document.getElementById('acad-tasks-list');
@@ -451,24 +473,25 @@ function renderTasksToDOM(tasksObj, list) {
     }
 
     function adminPublishTask() {
-        playClickSound();
-        const subject = document.getElementById('adm-task-subject').value.trim();
-        const title = document.getElementById('adm-task-title').value.trim();
-        const deadline = document.getElementById('adm-task-deadline').value;
-        const url = document.getElementById('adm-task-url').value.trim();
+    playClickSound();
+    const subject = document.getElementById('adm-task-subject').value.trim();
+    const title = document.getElementById('adm-task-title').value.trim();
+    const deadline = document.getElementById('adm-task-deadline').value;
+    const url = document.getElementById('adm-task-url').value.trim();
 
-        if (!subject || !title || !deadline) {
-            showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
-            return;
-        }
-        db.ref('academic_tasks').push({ subject, title, deadline, url, createdAt: Date.now() }).then(() => {
-            showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
-            document.getElementById('adm-task-subject').value = '';
-            document.getElementById('adm-task-title').value = '';
-            document.getElementById('adm-task-deadline').value = '';
-            document.getElementById('adm-task-url').value = '';
-        });
+    if (!subject || !title || !deadline) {
+        showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
+        return;
     }
+    db.ref('academic_tasks').push({ subject, title, deadline, url, createdAt: Date.now() }).then(() => {
+        db.ref('academic_markers/tasks').set(Date.now());
+        showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
+        document.getElementById('adm-task-subject').value = '';
+        document.getElementById('adm-task-title').value = '';
+        document.getElementById('adm-task-deadline').value = '';
+        document.getElementById('adm-task-url').value = '';
+    });
+}
 
     function adminDeleteTask(id) {
         if (confirm('هل تريد حذف هذا التكليف نهائياً؟')) {
@@ -477,22 +500,23 @@ function renderTasksToDOM(tasksObj, list) {
     }
 
     function adminPublishCollegeAlert() {
-        playClickSound();
-        const title = document.getElementById('adm-alert-title').value.trim();
-        const body = document.getElementById('adm-alert-body').value.trim();
-        const url = document.getElementById('adm-alert-url').value.trim();
+    playClickSound();
+    const title = document.getElementById('adm-alert-title').value.trim();
+    const body = document.getElementById('adm-alert-body').value.trim();
+    const url = document.getElementById('adm-alert-url').value.trim();
 
-        if (!title || !body) {
-            showTopToast('يرجى كتابة العنوان والتفاصيل!', 'error');
-            return;
-        }
-        db.ref('college_alerts').push({ title, body, url, date: Date.now() }).then(() => {
-            showTopToast('تم نشر التنبيه بنجاح! 📢', 'success');
-            document.getElementById('adm-alert-title').value = '';
-            document.getElementById('adm-alert-body').value = '';
-            document.getElementById('adm-alert-url').value = '';
-        });
+    if (!title || !body) {
+        showTopToast('يرجى كتابة العنوان والتفاصيل!', 'error');
+        return;
     }
+    db.ref('college_alerts').push({ title, body, url, date: Date.now() }).then(() => {
+        db.ref('academic_markers/alerts').set(Date.now());
+        showTopToast('تم نشر التنبيه بنجاح! 📢', 'success');
+        document.getElementById('adm-alert-title').value = '';
+        document.getElementById('adm-alert-body').value = '';
+        document.getElementById('adm-alert-url').value = '';
+    });
+}
 
     function adminDeleteCollegeAlert(alertId) {
         if (confirm('هل أنت متأكد من رغبتك في حذف هذا الإعلان نهائياً؟')) {
@@ -503,18 +527,19 @@ function renderTasksToDOM(tasksObj, list) {
     }
 
     function adminSaveScheduleUrl() {
-        playClickSound();
-        const sec = document.getElementById('adm-schedule-sec').value;
-        const url = document.getElementById('adm-schedule-url').value.trim();
-        if (!url) {
-            showTopToast('يرجى إدخال الرابط أولاً!', 'error');
-            return;
-        }
-        db.ref('schedules/' + sec).set(url).then(() => {
-            showTopToast('تم حفظ وتحديث الجدول بنجاح! 🗓️', 'success');
-            document.getElementById('adm-schedule-url').value = '';
-        });
+    playClickSound();
+    const sec = document.getElementById('adm-schedule-sec').value;
+    const url = document.getElementById('adm-schedule-url').value.trim();
+    if (!url) {
+        showTopToast('يرجى إدخال الرابط أولاً!', 'error');
+        return;
     }
+    db.ref('schedules/' + sec).set(url).then(() => {
+        db.ref('academic_markers/schedules').set(Date.now());
+        showTopToast('تم حفظ وتحديث الجدول بنجاح! 🗓️', 'success');
+        document.getElementById('adm-schedule-url').value = '';
+    });
+}
 
     // ================= قاعة المشاهير (Hall of Fame) =================
     function openHallOfFame() {
@@ -583,6 +608,26 @@ function renderTasksToDOM(tasksObj, list) {
 
     // ================= إعدادات المتجر =================
     const defaultStorePrices = {
+"theme_spiderman": { 
+            price: 320, 
+            name: "ثيم سبايدر مان 🕷️", 
+            category: "profile", 
+            desc: "مظهر الأبطال الخارقين بتدرجات الأحمر والأزرق المميزة" 
+        },
+        "theme_classic_vintage": { 
+            price: 250, 
+            name: "الثيم الكلاسيكي القديم 📜", 
+            category: "profile", 
+            desc: "ألوان ترابية ودافئة تمنح التطبيق طابعاً أثرياً فخماً" 
+        },
+        "theme_doctor_doom": { 
+            price: 350, 
+            name: "ثيم دكتور دوم 🟢", 
+            category: "profile", 
+            desc: "مظهر سيادة الشر المطلق بألوان الأخضر الداكن والمعدني" 
+        },
+"theme_cyberpunk": { price: 300, name: "ثيم السايبر نيون ⚡", category: "profile", desc: "ألوان نيون RGB، سيان ووردي لجميع واجهات التطبيق" },
+        "theme_royal_gold": { price: 350, name: "ثيم الذهب الملكي 👑", category: "profile", desc: "مظهر ملكي فخم باللون الأسود والذهب الخالص للتطبيق بالكامل" },
         "frame_gold": { price: 150, name: "إطار ذهبي ملكي ✨", category: "frames", desc: "إطار مذهب متوهج للبروفايل" },
         "frame_fire": { price: 200, name: "إطار ناري متوهج 🔥", category: "frames", desc: "لهب متوهج ومتحرك حول صورتك" },
         "frame_cyber": { price: 220, name: "إطار سايبر نيون ⚡", category: "frames", desc: "تأثير نيون أزرق وبنفسجي لافت" },
@@ -605,11 +650,10 @@ function renderTasksToDOM(tasksObj, list) {
         "top_card": { price: 180, name: "بطاقة متصدرين متحركة 🃏", category: "profile", desc: "تمييز بطاقتك في قائمة المتصدرين بأنيميشن نيون" },
         "glow_name": { price: 120, name: "اسم بلون متوهج ولامع 🌈", category: "profile", desc: "تدرج ضوئي متحرك لاسمك بالتطبيق" },
         "user_bio": { price: 80, name: "تفعيل كتابة بايو شخصي ✍️", category: "profile", desc: "اكتب جملتك في البروفايل والمتصدرين" },
-"extra_classic_5": { price: 70, name: "حزمة +5 محاولات كلاسيك 📚", category: "boosters", desc: "تمنحك 5 محاولات إضافية لتحدي العباقرة" },
-        "extra_penalty_5": { price: 70, name: "حزمة +5 محاولات جزاء ⚽", category: "boosters", desc: "تمنحك 5 محاولات إضافية لركلات الجزاء" },
         "double_xp": { price: 100, name: "مضاعف نقاط 24 ساعة (2x XP) 🚀", category: "boosters", desc: "ضاعف نقاط كل تحدي لمدة 24 ساعة" },
-        "hint_5050": { price: 40, name: "تلميح التحدي (حذف إجابتين) 💡", category: "boosters", desc: "يحذف إجابتين خطأ أثناء السؤال" },
-        "hint_time": { price: 35, name: "تجميد الوقت بالتحدي (+15 ثانية) ⏱️", category: "boosters", desc: "إضافة 15 ثانية إضافية للتفكير" },
+        "hint_5050": { price: 40, name: "تلميح المستويات (حذف إجابتين) 💡", category: "boosters", desc: "يحذف إجابتين خطأ في تحدي المستويات" },
+        "hint_time": { price: 35, name: "وقت إضافي للمستويات (+15 ثانية) ⏱️", category: "boosters", desc: "إضافة 15 ثانية للتفكير في سؤال المستوى" },
+        "booster_skip": { price: 60, name: "تخطي السؤال مع 3 نجوم 🚀", category: "boosters", desc: "تخطي السؤال الحالي واحتسابه صحيحاً بـ 3 نجوم كاملة" },
         "freeze": { price: 90, name: "تجميد السلسلة (Streak Freeze) 🛡️", category: "boosters", desc: "حماية سلسلة دخولك اليومي من الضياع" }
     };
 
@@ -783,6 +827,8 @@ function playExactMatchSound() {
         const currentTheme = document.documentElement.getAttribute('data-theme'); 
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         setAppTheme(newTheme);
+// جوه دالة تبديل الوضع (الليلي / النهاري) عندك، أضف السطر ده في النهاية:
+applyUserCustomTheme(localStorage.getItem('active_custom_theme'));
     }
 
     function setAppTheme(theme) {
@@ -801,9 +847,15 @@ function playExactMatchSound() {
     }
 
     (function loadSavedTheme() {
-        const savedTheme = localStorage.getItem('app-theme') || localStorage.getItem('app_theme_preference') || 'dark';
-        setAppTheme(savedTheme);
-    })();
+    const savedTheme = localStorage.getItem('app-theme') || localStorage.getItem('app_theme_preference') || 'dark';
+    setAppTheme(savedTheme);
+
+    // تطبيق الثيم المخصص مباشرة بدون استدعاء دوال خارجية تسبب خطأ
+    const savedCustomTheme = localStorage.getItem('active_custom_theme');
+    if (savedCustomTheme && savedCustomTheme !== 'none' && savedCustomTheme !== 'default') {
+        document.documentElement.setAttribute('data-custom-theme', savedCustomTheme);
+    }
+})();
 
     // ================= التنقل (Navigation) =================
     let navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
@@ -915,6 +967,11 @@ window.addEventListener('popstate', function (event) {
     }
 });
 
+function openChallengesHub() {
+        playClickSound();
+        navigateTo('view-challenges-hub', 'التحديات والترفيه', 'اختبر معلوماتك ونافس زملائك');
+    }
+
     function showViewSection(viewId) {
         const activeSection = document.querySelector('.view-section.active');
         if (activeSection) activeSection.classList.remove('active');
@@ -979,42 +1036,7 @@ window.addEventListener('popstate', function (event) {
     function openDeveloperModal() { playClickSound(); document.getElementById('developer-modal').classList.add('show'); }
     const DAILY_QUIZ_LIMIT = 10;
 
-    function openQuizRulesModal() {
-        playClickSound();
-        if (!currentUser) {
-            showTopToast('يرجى تسجيل الدخول أولاً للمشاركة في التحدي!', 'error');
-            return;
-        }
-
-        const todayDate = getRealDateString();
-        
-        // عداد الكلاسيك
-        const lastClassicDate = currentUser.last_quiz_date || '';
-        const classicCountToday = (lastClassicDate === todayDate) ? (currentUser.daily_quiz_count || 0) : 0;
-        const classicRemaining = Math.max(0, DAILY_QUIZ_LIMIT - classicCountToday);
-
-        // عداد ركلات الجزاء
-        const lastPenaltyDate = currentUser.last_penalty_date || '';
-        const penaltyCountToday = (lastPenaltyDate === todayDate) ? (currentUser.daily_penalty_count || 0) : 0;
-        const penaltyRemaining = Math.max(0, DAILY_QUIZ_LIMIT - penaltyCountToday);
-
-        const counterEl = document.getElementById('quiz-modal-daily-counter');
-        if (counterEl) {
-            let extraClassicText = (currentUser.extraClassicCount || 0) > 0 ? ` <span style="color:#10b981; font-size:0.7rem;">(+${currentUser.extraClassicCount} إضافي)</span>` : '';
-            let extraPenaltyText = (currentUser.extraPenaltyCount || 0) > 0 ? ` <span style="color:#10b981; font-size:0.7rem;">(+${currentUser.extraPenaltyCount} إضافي)</span>` : '';
-            
-            counterEl.innerHTML = `
-                <div style="display: flex; justify-content: space-around; gap: 10px; margin-top: 5px;">
-                    <span>📚 كلاسيك: <b>${classicRemaining}/10</b>${extraClassicText}</span>
-                    <span>⚽ جزاء: <b>${penaltyRemaining}/10</b>${extraPenaltyText}</span>
-                </div>
-            `;
-        }
-
-        document.getElementById('quiz-rules-modal').classList.add('show');
-    }
-
-    function closeModal(id) { playBackSound(); document.getElementById(id).classList.remove('show'); }
+        function closeModal(id) { playBackSound(); document.getElementById(id).classList.remove('show'); }
     function openModal(id) { document.getElementById(id).classList.add('show'); }
 
     // ================= الرتب والإكسسوارات =================
@@ -1102,17 +1124,18 @@ let hasCheckedDailyLoginSession = false;
         const cachedUserData = localStorage.getItem('cached_user_data');
 
         if (loggedInPhone) {
-            // 1. عرض البيانات فوراً من ذاكرة الهاتف لتفادي أي انتظار أو وميض بالشاشة
+            // ⚡ إظهار الشريط السفلي والواجهة لحظياً في صفر ثانية من الكاش
+            const bottomNav = document.getElementById('main-bottom-nav');
+            if (bottomNav) bottomNav.style.display = 'flex';
+
             if (cachedUserData) {
                 try {
                     currentUser = JSON.parse(cachedUserData);
                     updateProfileUI();
-                    const bottomNav = document.getElementById('main-bottom-nav');
-                    if (bottomNav) bottomNav.style.display = 'flex';
                 } catch (e) {}
             }
 
-            // 2. قراءة مفردة واحدة فقط (.once) لتوفير الباقة وإغلاق الاتصال فوراً
+            // مزامنة السيرفر في الخلفية بهدوء
             db.ref('users/' + loggedInPhone).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     currentUser = snapshot.val();
@@ -1121,6 +1144,13 @@ let hasCheckedDailyLoginSession = false;
                         db.ref('users/' + loggedInPhone + '/transactions').remove();
                         delete currentUser.transactions;
                     }
+
+                    // توليد ID فريد للطالب لو مش موجود عنده
+                    if (!currentUser.student_id) {
+                        currentUser.student_id = Math.floor(10000 + Math.random() * 90000);
+                        db.ref('users/' + loggedInPhone + '/student_id').set(currentUser.student_id);
+                    }
+
                     if (currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
                     if (currentUser.coins === undefined) currentUser.coins = 0;
                     if (currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
@@ -1130,6 +1160,7 @@ let hasCheckedDailyLoginSession = false;
                     if (currentUser.derby_wins === undefined) currentUser.derby_wins = 0;
                     if (currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
                     if (currentUser.hintTimeCount === undefined) currentUser.hintTimeCount = 0;
+                    if (currentUser.skipCount === undefined) currentUser.skipCount = 0;
                     if (currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
                     if (currentUser.active_frame === undefined) currentUser.active_frame = 'none';
                     if (currentUser.owned_frames === undefined) currentUser.owned_frames = [];
@@ -1145,14 +1176,10 @@ let hasCheckedDailyLoginSession = false;
                     if (currentUser.can_edit_bio === undefined) currentUser.can_edit_bio = false;
                     if (currentUser.completed_tasks === undefined) currentUser.completed_tasks = [];
 
-                    // حفظ أحدث نسخة في هاتف الطالب
                     localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
                     updateProfileUI();
                     initUserTicketRepliesListener();
-
-                    const bottomNav = document.getElementById('main-bottom-nav');
-                    if (bottomNav) bottomNav.style.display = 'flex';
 
                     if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                         goHomeDirectly();
@@ -1167,7 +1194,6 @@ let hasCheckedDailyLoginSession = false;
                     showAuthGateDirectly();
                 }
             }).catch(() => {
-                // في حال انقطاع النت تماماً، يظل الحساب معتمداً على الكاش المحلي
                 if (!currentUser && cachedUserData) {
                     currentUser = JSON.parse(cachedUserData);
                     updateProfileUI();
@@ -1390,7 +1416,7 @@ let hasCheckedDailyLoginSession = false;
         if (!name || !phone || !email || !pass || !confirmPass) { 
             showTopToast('يرجى ملء جميع الحقول بما فيها البريد الإلكتروني!', 'error'); 
             return; 
-        } // ✅ تم إغلاق القوس هنا بنجاح
+        }
 
         // 2. التحقق من صيغة البريد الإلكتروني
         if (!email.includes('@') || !email.includes('.')) {
@@ -1415,11 +1441,13 @@ let hasCheckedDailyLoginSession = false;
             } else {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then((userCredential) => {
+                        const newStudentId = Math.floor(10000 + Math.random() * 90000);
                         const newUser = { 
                             name: name, 
                             phone: phone, 
                             email: email, 
                             password: pass, 
+                            student_id: newStudentId,
                             avatar: 'https://img.icons8.com/fluency/96/user-male.png', 
                             xp: 100,
                             points: 100,
@@ -1536,7 +1564,9 @@ let hasCheckedDailyLoginSession = false;
         document.getElementById('home-balance-bar').style.display = 'none';
     }
 
-    // ================= إعدادات المتجر والملف الشخصي =================
+    let isStoreFetched = false;
+    let isAchievementsFetched = false;
+
     function switchProfileTab(tab) {
         playClickSound();
         ['main', 'store', 'badges'].forEach(t => {
@@ -1547,8 +1577,34 @@ let hasCheckedDailyLoginSession = false;
         });
         document.getElementById(`tab-prof-${tab}`).classList.add('active');
         document.getElementById(`prof-section-${tab}`).style.display = 'block';
-        if (tab === 'store') renderStoreCatalog();
-if (tab === 'badges') renderAchievementsTabUI();
+        
+        if (tab === 'store') {
+            if (!isStoreFetched) {
+                db.ref('store_config').once('value', (snap) => {
+                    if (snap.exists()) {
+                        currentStoreConfig = { ...defaultStorePrices, ...snap.val() };
+                    }
+                    renderStoreCatalog();
+                });
+                isStoreFetched = true;
+            } else {
+                renderStoreCatalog();
+            }
+        }
+        
+        if (tab === 'badges') {
+            if (!isAchievementsFetched) {
+                db.ref('achievements_config').once('value', snap => {
+                    if (snap.exists()) {
+                        activeAchievementsConfig = { ...defaultAchievementsConfig, ...snap.val() };
+                    }
+                    renderAchievementsTabUI();
+                });
+                isAchievementsFetched = true;
+            } else {
+                renderAchievementsTabUI();
+            }
+        }
     }
 
     function switchStoreSubTab(subTab) {
@@ -1569,7 +1625,6 @@ if (tab === 'badges') renderAchievementsTabUI();
         const framesList = document.getElementById('store-list-frames');
         const profileList = document.getElementById('store-list-profile');
         const boostersList = document.getElementById('store-list-boosters');
-
         if (!framesList || !profileList || !boostersList) return;
 
         framesList.innerHTML = '';
@@ -1616,6 +1671,9 @@ if (tab === 'badges') renderAchievementsTabUI();
             
             let previewCircleHtml = '';
             if (itemId === 'frame_gold') previewCircleHtml = `<div class="store-preview-circle frame-gold">👑</div>`;
+else if (itemId === 'theme_spiderman') previewCircleHtml = `<div class="store-preview-circle" style="background:#0f172a; border:2px solid #ef4444;">🕷️</div>`;
+            else if (itemId === 'theme_classic_vintage') previewCircleHtml = `<div class="store-preview-circle" style="background:#1c1917; border:2px solid #d97706;">📜</div>`;
+            else if (itemId === 'theme_doctor_doom') previewCircleHtml = `<div class="store-preview-circle" style="background:#022c22; border:2px solid #34d399;">🟢</div>`;
             else if (itemId === 'frame_fire') previewCircleHtml = `<div class="store-preview-circle frame-fire">🔥</div>`;
             else if (itemId === 'frame_cyber') previewCircleHtml = `<div class="store-preview-circle frame-cyber">⚡</div>`;
             else if (itemId === 'frame_cosmic') previewCircleHtml = `<div class="store-preview-circle frame-cosmic">🌌</div>`;
@@ -1637,18 +1695,18 @@ if (tab === 'badges') renderAchievementsTabUI();
             else if (itemId === 'top_card') previewCircleHtml = `<div class="store-preview-circle" style="border: 2px dashed #a855f7;">🃏</div>`;
             else if (itemId === 'glow_name') previewCircleHtml = `<div class="store-preview-circle glow-name-effect">Aa</div>`;
             else if (itemId === 'user_bio') previewCircleHtml = `<div class="store-preview-circle">✍️</div>`;
+else if (itemId === 'theme_cyberpunk') previewCircleHtml = `<div class="store-preview-circle" style="background:#0b001a; border:2px solid #00f0ff;">⚡</div>`;
+else if (itemId === 'theme_royal_gold') previewCircleHtml = `<div class="store-preview-circle" style="background:#12100e; border:2px solid #ffd700;">👑</div>`;
             else if (itemId === 'double_xp') previewCircleHtml = `<div class="store-preview-circle" style="color: #ef4444; font-weight: 900;">2X</div>`;
             else if (itemId === 'hint_5050') previewCircleHtml = `<div class="store-preview-circle">💡</div>`;
             else if (itemId === 'hint_time') previewCircleHtml = `<div class="store-preview-circle">⏱️</div>`;
+            else if (itemId === 'booster_skip') previewCircleHtml = `<div class="store-preview-circle">🚀</div>`;
             else if (itemId === 'freeze') previewCircleHtml = `<div class="store-preview-circle">🛡️</div>`;
-else if (itemId === 'extra_classic_5') previewCircleHtml = `<div class="store-preview-circle">📚</div>`;
-            else if (itemId === 'extra_penalty_5') previewCircleHtml = `<div class="store-preview-circle">⚽</div>`;
 
             let countBadge = '';
             if (itemId === 'hint_5050') countBadge = ` (لديك: ${currentUser.hintsCount || 0})`;
             if (itemId === 'hint_time') countBadge = ` (لديك: ${currentUser.hintTimeCount || 0})`;
-if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraClassicCount || 0})`;
-            if (itemId === 'extra_penalty_5') countBadge = ` (لديك: ${currentUser.extraPenaltyCount || 0})`;
+            if (itemId === 'booster_skip') countBadge = ` (لديك: ${currentUser.skipCount || 0})`;
 
             const priceDisplay = isSale ? 
                 `<div class="store-price-tag"><span class="store-old-price">${item.price}</span> <span>${activePrice} عملة 💸</span> <span class="store-limited-badge">${item.badgeText || 'عرض خاص'}</span></div>` : 
@@ -1657,21 +1715,20 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
             let btnHtml = '';
 
             if (itemId.startsWith('frame_')) {
-        // تنظيف المفتاح لمطابقته بدقة سواء تم حفظه كـ frame_ring_xxx أو ring_xxx
-        const cleanItemId = itemId.replace('frame_', '');
-        const cleanActive = (currentUser.active_frame || '').replace('frame_', '');
-        
-        const isEquipped = (cleanActive === cleanItemId || currentUser.active_frame === itemId);
-        const isOwned = ownedFrames.includes(itemId) || ownedFrames.includes(cleanItemId);
+                const cleanItemId = itemId.replace('frame_', '');
+                const cleanActive = (currentUser.active_frame || '').replace('frame_', '');
+                
+                const isEquipped = (cleanActive === cleanItemId || currentUser.active_frame === itemId);
+                const isOwned = ownedFrames.includes(itemId) || ownedFrames.includes(cleanItemId);
 
-        if (isEquipped) {
-            btnHtml = `<button class="store-btn active-item">مُرتدى الآن ✅</button>`;
-        } else if (isOwned) {
-            btnHtml = `<button class="store-btn owned-item" onclick="equipOwnedFrame('${itemId}')">تفعيل الإطار 🔄</button>`;
-        } else {
-            btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
-        }
-    } else if (itemId.startsWith('hat_')) {
+                if (isEquipped) {
+                    btnHtml = `<button class="store-btn active-item">مُرتدى الآن ✅</button>`;
+                } else if (isOwned) {
+                    btnHtml = `<button class="store-btn owned-item" onclick="equipOwnedFrame('${itemId}')">تفعيل الإطار 🔄</button>`;
+                } else {
+                    btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
+                }
+            } else if (itemId.startsWith('hat_')) {
                 const isEquipped = (currentUser.active_hat === itemId);
                 const isOwned = ownedHats.includes(itemId);
 
@@ -1716,7 +1773,21 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
                 }
             } else if (itemId === 'freeze') {
                 btnHtml = currentUser.has_streak_freeze ? `<button class="store-btn active-item">مُفعل (لديك درع) ✅</button>` : `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
-            } else {
+            }
+else if (itemId.startsWith('theme_')) {
+    const themeKey = itemId.replace('theme_', '');
+    const ownedThemes = currentUser.owned_themes || [];
+    const isOwned = ownedThemes.includes(themeKey);
+    const isActive = (currentUser.active_custom_theme === themeKey);
+
+    if (isActive) {
+        btnHtml = `<button class="store-btn danger-toggle" onclick="toggleCustomTheme('${themeKey}')">إلغاء التفعيل ❌</button>`;
+    } else if (isOwned) {
+        btnHtml = `<button class="store-btn owned-item" onclick="toggleCustomTheme('${themeKey}')">تفعيل المظهر ✨</button>`;
+    } else {
+        btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء الآن 🛍️</button>`;
+    }
+} else {
                 btnHtml = `<button class="store-btn" onclick="directBuyItem('${itemId}', ${activePrice})">شراء +1 🛍️</button>`;
             }
 
@@ -1748,14 +1819,6 @@ if (itemId === 'extra_classic_5') countBadge = ` (لديك: ${currentUser.extraC
             showTopToast(`عذراً، رصيدك غير كافٍ. تحتاج إلى ${cost} عملة!`, 'error');
             return;
         }
-const todayStr = getRealDateString();
-        if (itemId === 'extra_classic_5' || itemId === 'extra_penalty_5') {
-            const currentBuys = (currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0;
-            if (currentBuys >= 2) {
-                showTopToast('وصلت للحد الأقصى لشراء هذه الحزمة اليوم (مرتين فقط)! 🛑', 'error');
-                return; // بيوقف الكود هنا وميخصمش عملات
-            }
-        }
 
         recordUserTransaction(`شراء عنصر من المتجر: ${currentStoreConfig[itemId]?.name || itemId}`, 0, -cost, 'purchase');
 
@@ -1763,12 +1826,12 @@ const todayStr = getRealDateString();
 
         if (itemId.startsWith('frame_') || itemId.startsWith('ring_')) {
             const frameKey = itemId;
-            let owned = currentUser.owned_frames || [];
+            let owned = [...(currentUser.owned_frames || [])];
             if (!owned.includes(frameKey)) owned.push(frameKey);
             updates.owned_frames = owned;
             updates.active_frame = frameKey;
         } else if (itemId.startsWith('hat_')) {
-            let owned = currentUser.owned_hats || [];
+            let owned = [...(currentUser.owned_hats || [])];
             if (!owned.includes(itemId)) owned.push(itemId);
             updates.owned_hats = owned;
             updates.active_hat = itemId;
@@ -1790,81 +1853,169 @@ const todayStr = getRealDateString();
             updates.hintsCount = (currentUser.hintsCount || 0) + 1;
         } else if (itemId === 'hint_time') {
             updates.hintTimeCount = (currentUser.hintTimeCount || 0) + 1;
+        } else if (itemId === 'booster_skip') {
+            updates.skipCount = (currentUser.skipCount || 0) + 1;
         } else if (itemId === 'freeze') {
             updates.has_streak_freeze = true;
-}
-  else if (itemId === 'extra_classic_5') {
-            updates.extraClassicCount = (currentUser.extraClassicCount || 0) + 5;
-            // تسجيل عدد مرات الشراء اليومية
-            updates['last_buy_' + itemId] = todayStr;
-            updates['count_buy_' + itemId] = ((currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0) + 1;
-        } else if (itemId === 'extra_penalty_5') {
-            updates.extraPenaltyCount = (currentUser.extraPenaltyCount || 0) + 5;
-            // تسجيل عدد مرات الشراء اليومية
-            updates['last_buy_' + itemId] = todayStr;
-            updates['count_buy_' + itemId] = ((currentUser['last_buy_' + itemId] === todayStr) ? (currentUser['count_buy_' + itemId] || 0) : 0) + 1;
+} else if (itemId.startsWith('theme_')) {
+            const themeKey = itemId.replace('theme_', '');
+            let owned = [...(currentUser.owned_themes || [])];
+            if (!owned.includes(themeKey)) owned.push(themeKey);
+            updates.owned_themes = owned;
+            updates.active_custom_theme = themeKey;
+            applyUserCustomTheme(themeKey);
         }
 
-        db.ref('users/' + currentUser.phone).update(updates).then(() => {
-            playSuccessSound();
-            shootStars();
-            triggerConfetti();
-            showTopToast(`تم الشراء والتفعيل بنجاح! خصم ${cost} عملة 🛍️✨`, 'success');
-            updateProfileUI();
+        // دمج التعديلات في كائن المستخدم المحلي فوراً
+        Object.assign(currentUser, updates);
+
+        // تحديث الواجهات والمؤثرات فوراً
+        playSuccessSound();
+        shootStars();
+        triggerConfetti();
+        showTopToast(`تم الشراء والتفعيل بنجاح! خصم ${cost} عملة 🛍️✨`, 'success');
+        updateProfileUI();
+
+        // المزامنة مع Firebase في الخلفية
+        db.ref('users/' + currentUser.phone).update(updates).catch(err => {
+            console.error("فشل حفظ الشراء على السيرفر:", err);
+            showTopToast("تعذر مزامنة الشراء مع السيرفر!", "error");
         });
     }
 
-    function toggleFeatureStatus(field, status) {
-        playClickSound();
-        let updates = {};
-        updates[field] = status;
-        db.ref('users/' + currentUser.phone).update(updates).then(() => {
-            showTopToast(status && status !== 'none' ? 'تم تفعيل الميزة بنجاح! ✨' : 'تم إيقاف الميزة بنجاح.', 'info');
-            updateProfileUI();
-        });
+// تطبيق الستايل الخاص بالثيم فورياً على عنصر الـ html
+function applyUserCustomTheme(themeKey) {
+    if (!themeKey || themeKey === 'none' || themeKey === 'default') {
+        document.documentElement.removeAttribute('data-custom-theme');
+        document.body.style.backgroundImage = ''; 
+        localStorage.removeItem('active_custom_theme');
+        return;
     }
 
-    function equipOwnedFrame(frameKey) {
-        playClickSound();
-        // ضمان حفظ المفتاح بالشكل الصحيح سواء كان دائرياً أو فريماً عادياً
-        let fullKey = frameKey;
-        if (!frameKey.startsWith('frame_') && !frameKey.startsWith('ring_')) {
-            fullKey = 'frame_' + frameKey;
+    let activeKey = themeKey;
+    // توحيد اسم الكلاسيك ليتطابق مع المتجر
+    if (activeKey === 'classic_vintage') {
+        activeKey = 'classic';
+    }
+
+    document.documentElement.setAttribute('data-custom-theme', activeKey === 'classic' ? 'classic_vintage' : activeKey);
+    localStorage.setItem('active_custom_theme', activeKey === 'classic' ? 'classic_vintage' : activeKey);
+
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light' || 
+                    document.body.classList.contains('light-mode') ||
+                    window.matchMedia('(prefers-color-scheme: light)').matches;
+
+    const themeBgMap = {
+        'spiderman': 'spiderman-bg.jpg',
+        'doctor_doom': 'doom-bg.jpg',
+        'royal_gold': 'gold-bg.jpg',
+        'classic': 'classic-bg.jpg'
+    };
+
+    const bgImage = themeBgMap[activeKey];
+
+    if (bgImage) {
+        if (isLight) {
+            document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)), url('${bgImage}')`;
+        } else {
+            document.body.style.backgroundImage = `linear-gradient(rgba(7, 13, 29, 0.70), rgba(7, 13, 29, 0.70)), url('${bgImage}')`;
         }
         
-        db.ref('users/' + currentUser.phone + '/active_frame').set(fullKey).then(() => {
-            showTopToast('تم تفعيل وارتداء الإطار بنجاح! ✨', 'success');
-            updateProfileUI();
-        });
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundAttachment = "fixed";
+        document.body.style.backgroundPosition = "center";
+    } else {
+        document.body.style.backgroundImage = '';
+    }
+}
+
+// دالة زرار التفعيل / إلغاء التفعيل للثيمات المملوكة
+function toggleCustomTheme(themeKey) {
+    playClickSound();
+    if (!currentUser) return;
+
+    let nextTheme = (currentUser.active_custom_theme === themeKey) ? 'none' : themeKey;
+    currentUser.active_custom_theme = nextTheme;
+    applyUserCustomTheme(nextTheme);
+
+    showTopToast(nextTheme !== 'none' ? 'تم تفعيل مظهر التطبيق الجديد بنجاح! ✨' : 'تم العودة للمظهر الافتراضي', 'info');
+    renderStoreCatalog();
+
+    db.ref('users/' + currentUser.phone + '/active_custom_theme').set(nextTheme);
+}
+
+    function toggleFeatureStatus(field, status) {
+    playClickSound();
+    let updates = {};
+    updates[field] = status;
+
+    // تحديث محلي لحظي
+    Object.assign(currentUser, updates);
+    showTopToast(status && status !== 'none' ? 'تم تفعيل الميزة بنجاح! ✨' : 'تم إيقاف الميزة بنجاح.', 'info');
+    updateProfileUI();
+
+    // حفظ في السيرفر في الخلفية
+    db.ref('users/' + currentUser.phone).update(updates).catch(err => {
+        console.error("فشل تعديل الحالة:", err);
+    });
+}
+
+    function equipOwnedFrame(frameKey) {
+    playClickSound();
+    let fullKey = frameKey;
+    if (!frameKey.startsWith('frame_') && !frameKey.startsWith('ring_')) {
+        fullKey = 'frame_' + frameKey;
     }
 
-    function equipOwnedHat(hatKey) {
-        playClickSound();
-        db.ref('users/' + currentUser.phone + '/active_hat').set(hatKey).then(() => {
-            showTopToast('تم ارتداء إكسسوار الرأس بنجاح! ✨', 'success');
-            updateProfileUI();
-        });
-    }
+    // تحديث محلي لحظي
+    currentUser.active_frame = fullKey;
+    showTopToast('تم تفعيل وارتداء الإطار بنجاح! ✨', 'success');
+    updateProfileUI();
+
+    // حفظ في السيرفر
+    db.ref('users/' + currentUser.phone + '/active_frame').set(fullKey).catch(err => {
+        console.error("فشل تفعيل الإطار:", err);
+    });
+}
+
+function equipOwnedHat(hatKey) {
+    playClickSound();
+
+    // تحديث محلي لحظي
+    currentUser.active_hat = hatKey;
+    showTopToast('تم ارتداء إكسسوار الرأس بنجاح! ✨', 'success');
+    updateProfileUI();
+
+    // حفظ في السيرفر
+    db.ref('users/' + currentUser.phone + '/active_hat').set(hatKey).catch(err => {
+        console.error("فشل ارتداء الإكسسوار:", err);
+    });
+}
 
     function updateProfileUI() {
         if (currentUser) {
-            const avatarSrc = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png'; 
-            const xp = currentUser.xp || currentUser.points || 0; 
+            // تفعيل وتطبيق الثيم المخصص المحفوظ للطالب
+            if (currentUser.active_custom_theme && typeof applyUserCustomTheme === 'function') {
+                applyUserCustomTheme(currentUser.active_custom_theme);
+            }
+
+            const avatarSrc = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+            const xp = currentUser.xp || currentUser.points || 0;
             const coins = currentUser.coins || 0;
             const rnk = getUserRank(xp);
             const nextXp = getNextLevelXP(xp);
             const progressPercent = Math.min((xp / nextXp) * 100, 100);
             
             const avatarContainer = document.getElementById('profile-avatar-container');
-        if (avatarContainer) {
-            avatarContainer.className = 'profile-avatar';
-            if (currentUser.active_frame && currentUser.active_frame !== 'none') {
-                const cleanKey = currentUser.active_frame.replace('frame_', '');
-                if (['gold', 'fire', 'cyber', 'cosmic'].includes(cleanKey)) {
-                    avatarContainer.classList.add('frame-' + cleanKey);
+            if (avatarContainer) {
+                avatarContainer.className = 'profile-avatar';
+                if (currentUser.active_frame && currentUser.active_frame !== 'none') {
+                    const cleanKey = currentUser.active_frame.replace('frame_', '');
+                    if (['gold', 'fire', 'cyber', 'cosmic'].includes(cleanKey)) {
+                        avatarContainer.classList.add('frame-' + cleanKey);
+                    }
                 }
             }
-        }
 
             const hatContainer = document.getElementById('profile-hat-container');
             if (hatContainer) {
@@ -1880,18 +2031,22 @@ const todayStr = getRealDateString();
             const dispName = document.getElementById('display-name');
             if (dispName) {
                 dispName.innerText = currentUser.name;
-const dispTitle = document.getElementById('display-equipped-title');
-            if (dispTitle) {
-                if (currentUser.active_title && currentUser.active_title !== 'none') {
-                    dispTitle.style.display = 'block';
-                    dispTitle.innerHTML = getTitleBadgeHtml(currentUser.active_title, currentUser.active_title_rarity);
-                } else {
-                    dispTitle.style.display = 'none';
+                const dispTitle = document.getElementById('display-equipped-title');
+                if (dispTitle) {
+                    if (currentUser.active_title && currentUser.active_title !== 'none') {
+                        dispTitle.style.display = 'block';
+                        dispTitle.innerHTML = getTitleBadgeHtml(currentUser.active_title, currentUser.active_title_rarity);
+                    } else {
+                        dispTitle.style.display = 'none';
+                    }
                 }
-            }
                 if (currentUser.has_glow_name) dispName.classList.add('glow-name-effect');
                 else dispName.classList.remove('glow-name-effect');
             }
+
+            // إظهار الـ ID في واجهة البروفايل
+            const idEl = document.getElementById('display-student-id');
+            if (idEl) idEl.innerText = currentUser.student_id || '-----';
 
             const dispBio = document.getElementById('display-bio');
             if (dispBio) {
@@ -1915,27 +2070,29 @@ const dispTitle = document.getElementById('display-equipped-title');
                 document.getElementById('edit-bio-input').value = currentUser.bio || '';
             }
 
-            document.getElementById('sidebar-avatar').src = avatarSrc; 
+            document.getElementById('sidebar-avatar').src = avatarSrc;
             document.getElementById('sidebar-name').innerText = currentUser.name.split(' ').slice(0, 2).join(' ');
-            document.getElementById('sidebar-stats-box').style.display = 'flex'; 
-            document.getElementById('sidebar-badge').innerText = rnk; 
-            document.getElementById('sidebar-points').innerText = xp + ' XP'; 
+            document.getElementById('sidebar-stats-box').style.display = 'flex';
+            document.getElementById('sidebar-badge').innerText = rnk;
+            document.getElementById('sidebar-points').innerText = xp + ' XP';
             document.getElementById('sidebar-logout').style.display = 'flex';
             
             document.getElementById('home-balance-bar').style.display = 'flex';
             document.getElementById('home-xp').innerText = `${xp} XP`;
             document.getElementById('home-coins').innerText = coins;
 
-            document.getElementById('display-avatar-img').src = avatarSrc; 
-            document.getElementById('display-phone').innerText = currentUser.phone; 
+            document.getElementById('display-avatar-img').src = avatarSrc;
+            const phoneEl = document.getElementById('display-phone');
+            if (phoneEl) phoneEl.innerText = currentUser.phone;
+            
             document.getElementById('display-points').innerText = xp;
             document.getElementById('display-coins').innerText = coins;
-            document.getElementById('display-rank-badge').innerText = rnk; 
+            document.getElementById('display-rank-badge').innerText = rnk;
             
             document.getElementById('profile-xp-bar').style.width = `${progressPercent}%`;
             document.getElementById('profile-xp-text').innerText = `${xp} / ${nextXp} XP للترقية`;
 
-            document.getElementById('edit-name-input').value = currentUser.name; 
+            document.getElementById('edit-name-input').value = currentUser.name;
             document.getElementById('edit-avatar-preview').src = avatarSrc;
             
             document.getElementById('sub-view-name-input').value = currentUser.name || '';
@@ -1945,7 +2102,7 @@ const dispTitle = document.getElementById('display-equipped-title');
             selectEditAvatar(avatarSrc, null, true);
             updateStatsUI();
             renderStoreCatalog();
-renderAchievementsTabUI();
+            renderAchievementsTabUI();
 
             if (currentUser.phone === "01061032507") {
                 document.getElementById('sidebar-admin-panel').style.display = 'flex';
@@ -1953,6 +2110,14 @@ renderAchievementsTabUI();
                 document.getElementById('sidebar-admin-panel').style.display = 'none';
             }
         }
+    }
+
+    // دالة نسخ الـ ID للحافظة
+    function copyStudentId() {
+        if (!currentUser || !currentUser.student_id) return;
+        navigator.clipboard.writeText(String(currentUser.student_id)).then(() => {
+            showTopToast(`تم نسخ الـ ID الخاص بك (${currentUser.student_id}) للحافظة! 📋`, 'success');
+        });
     }
 
     function handleProfileClick() { closeSidebar(); if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك'); else showAuthGateDirectly(); }
@@ -2359,21 +2524,6 @@ function loadWalletHistoryUI() {
 // 1. تحميل البيانات مسبقاً وتخزينها محلياً
 let cachedLeaderboardData = JSON.parse(localStorage.getItem('local_top_10') || 'null');
 
-function preloadLeaderboardData() {
-    db.ref('users').orderByChild('xp').limitToLast(10).once('value').then(snapshot => {
-        let usersArr = [];
-        snapshot.forEach(child => {
-            let u = child.val();
-            u.id = child.key;
-            u.xp = u.xp || u.points || 0;
-            usersArr.push(u);
-        });
-        usersArr.reverse();
-        cachedLeaderboardData = usersArr;
-        localStorage.setItem('local_top_10', JSON.stringify(usersArr)); // حفظ في تليفون الطالب
-    }).catch(() => {});
-}
-
 // 2. عرض الليدربورد الذكي
 function renderLeaderboard() {
     const container = document.getElementById('leaderboard-content');
@@ -2504,6 +2654,7 @@ function buildLeaderboardDOM(usersArr, container) {
         playClickSound(); currentActiveSubject = subjectName;
         document.getElementById('selected-subject-label').innerText = 'محتوى مادة: ' + subjectName;
         navigateTo('view-subject-content', subjectName, 'اختر نوع المحتوى');
+        setTimeout(updateAllRedDots, 50); // 👈 إضافة النقطة الحمراء
     }
 
                 function updateBookRewardBadgeUI() {
@@ -2756,28 +2907,28 @@ await db.ref('users/' + currentUser.phone + '/coins').transaction(currentCoins =
 
     async function fetchBattleQuestionsDeck() {
         let pool = [];
+        // 1. إضافة الأسئلة الثابتة
         Object.keys(masterQuestionsBank).forEach(cat => {
             masterQuestionsBank[cat].forEach(q => {
                 pool.push({ q: q.q, a: [...q.a], correct: q.correct, category: cat });
             });
         });
 
-        if (cloudQuestionsCache) {
-            cloudQuestionsCache.forEach(val => pool.push(val));
-        } else {
-            try {
-                const snap = await db.ref('custom_questions').once('value');
-                cloudQuestionsCache = [];
-                if (snap.exists()) {
-                    snap.forEach(c => {
-                        const val = c.val();
-                        if (val && val.q && val.a) {
-                            cloudQuestionsCache.push(val);
-                            pool.push(val);
-                        }
+        // 2. سحب الأسئلة السحابية عبر الكاش الذكي (صفر استهلاك في المرات التالية)
+        try {
+            const cachedCloud = await getQuestionsWithCache('custom_questions');
+            if (cachedCloud && cachedCloud.length > 0) {
+                cachedCloud.forEach(q => {
+                    pool.push({
+                        q: q.q,
+                        a: [...q.a],
+                        correct: q.correct || 0,
+                        category: q.categoryName || 'عام'
                     });
-                }
-            } catch (e) {}
+                });
+            }
+        } catch (e) {
+            console.error("Error loading cached derby questions:", e);
         }
 
         pool = shuffleArray(pool);
@@ -2897,25 +3048,24 @@ function startDerbyBattleByHost() {
         goHomeDirectly();
     }
 
-    let currentMatchQuestions = null; // متغير لحفظ أسئلة المباراة مؤقتاً
+    let currentMatchQuestions = []; // مصفوفة مستقلة للأسئلة أوفلاين
 
-function enterBattleArenaView(roomId) {
-    navigateTo('view-battle-arena', 'ساحة الديربي 1v1', 'مواجهة حية مباشرة');
-    if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
+    function enterBattleArenaView(roomId) {
+        navigateTo('view-battle-arena', 'ساحة الديربي 1v1', 'مواجهة حية مباشرة');
+        if (battleListener) db.ref('battles/' + currentBattleId).off('value', battleListener);
 
-    // 1. قراءة الأسئلة "مرة واحدة فقط" عند دخول الساحة لصفر استهلاك أثناء اللعب
-    db.ref('battles_questions/' + roomId).once('value').then(qSnap => {
-        currentMatchQuestions = qSnap.val() || [];
+        // 1. قراءة الأسئلة مرة واحدة فقط من مسارها الخاص
+        db.ref('battles_questions/' + roomId).once('value').then(qSnap => {
+            currentMatchQuestions = qSnap.val() || [];
 
-        // 2. مراقبة الحالة والنتيجة فقط لحظة بلحظة (حجم بايتات معدود)
-        battleListener = db.ref('battles/' + roomId).on('value', snap => {
-            if (!snap.exists()) return;
-            const room = snap.val();
-            room.questions = currentMatchQuestions; // دمج الأسئلة المخزنة مع حالة الغرفة
-            syncArenaState(room);
+            // 2. مراقبة حركة الغرفة فقط بدون لمس الأسئلة
+            battleListener = db.ref('battles/' + roomId).on('value', snap => {
+                if (!snap.exists()) return;
+                const room = snap.val();
+                syncArenaState(room);
+            });
         });
-    });
-}
+    }
 
 function syncArenaState(room) {
     if (room.status === 'finished') {
@@ -2947,13 +3097,13 @@ function syncArenaState(room) {
     const qIndex = room.currentQIndex || 0;
     document.getElementById('arena-question-counter').innerText = `السؤال ${qIndex + 1} / 10`;
     
-    const currentQ = room.questions[qIndex];
+    // 👈 القراءة مباشرة من currentMatchQuestions بدلاً من كائن room
+    const currentQ = currentMatchQuestions[qIndex];
     if (currentQ) {
         document.getElementById('arena-q-category').innerText = currentQ.category || 'عام';
         document.getElementById('arena-q-text').innerText = currentQ.q;
     }
 
-    // تجهيز السؤال الجديد عند تغير رقم السؤال
     if (document.getElementById('arena-options-list').dataset.currentQ !== String(qIndex)) {
         hasAnsweredCurrentArenaQ = false;
         document.getElementById('arena-p1-status').innerText = 'يفكر... ⏳';
@@ -2961,7 +3111,6 @@ function syncArenaState(room) {
         if (currentQ) renderArenaChoices(currentQ, qIndex, isHost);
     }
 
-    // الانتقال للسؤال التالي بمجرد إجابة الطرفين (مع حماية القفل)
     if (room.player1 && room.player2 && room.player1.answeredCurrent && room.player2.answeredCurrent) {
         if (isHost && !isAdvancingQ) {
             isAdvancingQ = true; 
@@ -3250,12 +3399,17 @@ function checkHallOfFameStatus() {
         await db.ref('users/' + currentUser.phone + '/coins').set((currentUser.coins || 0) + room.stake);
     }
 
-// إرسال الإحصائية للوحة تحكم الإدمن (بواسطة الهوست فقط لمنع التكرار)
-        if (isHost) {
-            recordActivityLog('derby', `انتهت مواجهة ديربي 1v1: [${me.name.split(' ')[0]}] (${me.score}) ضد [${opp.name.split(' ')[0]}] (${opp.score}) ⚔️`);
-        }
-
-        currentBattleId = null;
+    // إرسال الإحصائية للوحة تحكم الأدمن وحذف الغرفة المنتهية لتوفير المساحة
+    if (isHost && currentBattleId) {
+        recordActivityLog('derby', `انتهت مواجهة ديربي 1v1: [${me.name.split(' ')[0]}] (${me.score}) ضد [${opp.name.split(' ')[0]}] (${opp.score}) ⚔️`);
+        
+        // تنظيف الغرفة والأسئلة بعد 10 ثوانٍ لضمان رؤية الطرفين للنتيجة
+        const finishedBattleId = currentBattleId;
+        setTimeout(() => {
+            db.ref('battles/' + finishedBattleId).remove();
+            db.ref('battles_questions/' + finishedBattleId).remove();
+        }, 10000);
+    }
 
     currentBattleId = null;
 }
@@ -3720,12 +3874,12 @@ if (currentUser) {
 
     function switchAdminTab(tabName) {
         playClickSound();
-        ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science'].forEach(t => {
-            const tabBtn = document.getElementById('tab-admin-' + t);
-            const tabSec = document.getElementById('admin-section-' + t);
-            if (tabBtn) tabBtn.classList.remove('active');
-            if (tabSec) tabSec.style.display = 'none';
-        });
+['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game'].forEach(t => {
+    const tabBtn = document.getElementById('tab-admin-' + t);
+    const tabSec = document.getElementById('admin-section-' + t);
+    if (tabBtn) tabBtn.classList.remove('active');
+    if (tabSec) tabSec.style.display = 'none';
+});
         
         const currentBtn = document.getElementById('tab-admin-' + tabName);
         const currentSec = document.getElementById('admin-section-' + tabName);
@@ -3738,8 +3892,25 @@ if (currentUser) {
         if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
         if (tabName === 'quiz' && !loadedAdminTabs.quiz) { loadAdminCustomQuestions(); loadedAdminTabs.quiz = true; }
         if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
-        if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
-        if (tabName === 'science') { loadAdminScienceContent(); }
+    if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
+
+    // 👈 التعديل الصحيح: غلفنا الكود بالشرط ده عشان ميشتغلش غير لما تفتح تبويب المنظم الأكاديمي بس
+    if (tabName === 'academic') {
+        db.ref('academic_tasks').once('value', (snap) => {
+            const select = document.getElementById('adm-cd-task-link');
+            if (!select) return;
+            select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    const t = c.val();
+                    select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
+                });
+            }
+        });
+    }
+
+    if (tabName === 'science') { loadAdminScienceContent(); }
+if (tabName === 'guess-game') { loadAdminGuessCategories(); }
     }
 
     function populateAdminStoreInputs() {
@@ -3831,37 +4002,49 @@ function deleteCustomQuestion(qId) {
 }
 
     function loadAdminData(forceRefresh = false) {
-    if (!forceRefresh && isAdminDataLoaded) { filterAdminUsers(); return; } 
+        const containerUsers = document.getElementById('admin-users-list');
+        const cachedUsers = localStorage.getItem('cached_admin_users');
 
-    const containerUsers = document.getElementById('admin-users-list');
-    const containerCodes = document.getElementById('admin-codes-list');
+        // 1. لو مش ضاغط تحديث وموجود كاش محلي -> اقرأ من التليفون بصفر استهلاك
+        if (!forceRefresh) {
+            if (cachedUsers) {
+                adminAllUsersData = JSON.parse(cachedUsers);
+                renderAdminUsers(adminAllUsersData);
+                isAdminDataLoaded = true;
+            } else {
+                containerUsers.innerHTML = `
+                <div style="text-align: center; padding: 25px 10px;">
+                    <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 12px;">قائمة الطلاب غير محملة محلياً (لتوفير الاستهلاك ⚡)</p>
+                    <button class="btn-submit" style="padding: 8px 18px; width: auto; display: inline-block;" onclick="loadAdminData(true)">تحديث وتحميل الطلاب 🔄</button>
+                </div>`;
+            }
 
-    if(forceRefresh) {
-        containerUsers.innerHTML = '<p style="text-align: center;">جاري التحديث من السيرفر... ⏳</p>';
-        showTopToast('جاري التحديث...', 'info');
-    }
+            const cachedCodes = localStorage.getItem('cached_admin_codes');
+            if (cachedCodes) {
+                renderAdminCodes(JSON.parse(cachedCodes));
+            }
+            return;
+        }
 
-    const cachedUsers = localStorage.getItem('cached_admin_users');
-    if (cachedUsers && !forceRefresh) {
-        adminAllUsersData = JSON.parse(cachedUsers);
-        renderAdminUsers(adminAllUsersData);
-        isAdminDataLoaded = true;
-    } else {
+        // 2. لو ضغطت على زرار التحديث يدوياً (forceRefresh = true) -> اسحب من الفايربيز
+        containerUsers.innerHTML = '<p style="text-align: center; color: var(--text-sub);">جاري التحديث من السيرفر... ⏳</p>';
+        showTopToast('جاري تحديث بيانات الطلاب...', 'info');
+
         db.ref('users').once('value').then((snap) => {
             adminAllUsersData = [];
             snap.forEach(child => { adminAllUsersData.push({ id: child.key, ...child.val() }); });
             adminAllUsersData.sort((a, b) => ((b.xp || b.points || 0) - (a.xp || a.points || 0)));
+            
+            // حفظ نسخة أوفلاين في جهازك
             localStorage.setItem('cached_admin_users', JSON.stringify(adminAllUsersData));
             renderAdminUsers(adminAllUsersData);
             isAdminDataLoaded = true;
-            if(forceRefresh) showTopToast('تم تحديث قائمة الطلاب بنجاح ✅', 'success');
+            showTopToast('تم تحديث قائمة الطلاب بنجاح ✅', 'success');
+        }).catch(() => {
+            showTopToast('حدث خطأ أثناء تحميل بيانات الطلاب!', 'error');
         });
-    }
 
-    const cachedCodes = localStorage.getItem('cached_admin_codes');
-    if (cachedCodes && !forceRefresh) {
-        renderAdminCodes(JSON.parse(cachedCodes));
-    } else {
+        // تحديث الأكواد أيضاً مع التحديث اليدوي
         db.ref('promo_codes').once('value').then((snap) => {
             let codesArr = [];
             snap.forEach(child => { codesArr.push({ code: child.key, ...child.val() }); });
@@ -3869,7 +4052,6 @@ function deleteCustomQuestion(qId) {
             renderAdminCodes(codesArr);
         });
     }
-}
 
     function renderAdminUsers(usersArray) {
         const container = document.getElementById('admin-users-list');
@@ -3887,7 +4069,7 @@ function deleteCustomQuestion(qId) {
                 </div>
                 <div class="admin-item-info">
                     <div class="admin-item-name">${u.name} ${u.is_vip ? '👑' : ''}</div>
-                    <div class="admin-item-sub">${u.phone} | ${u.coins || 0} 💸</div>
+                    <div class="admin-item-sub">${u.phone} | ID: ${u.student_id || 'بدون'} | ${u.coins || 0} 💸</div>
                 </div>
                 <div style="display: flex; gap: 6px; flex-direction: column;">
                     <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.7rem; border-color: var(--accent-highlight); color: var(--accent-highlight);" onclick="openAdminUserDetails('${u.id}')">التفاصيل 👁️</button>
@@ -3930,7 +4112,12 @@ function openAdminUserDetails(userId) {
 
     function filterAdminUsers() {
         const query = document.getElementById('admin-search-user').value.trim().toLowerCase();
-        const filtered = adminAllUsersData.filter(u => u.name.toLowerCase().includes(query) || u.phone.includes(query) || (u.email && u.email.toLowerCase().includes(query)));
+        const filtered = adminAllUsersData.filter(u => 
+            (u.name && u.name.toLowerCase().includes(query)) || 
+            (u.phone && u.phone.includes(query)) || 
+            (u.student_id && String(u.student_id).includes(query)) ||
+            (u.email && u.email.toLowerCase().includes(query))
+        );
         renderAdminUsers(filtered);
     }
 
@@ -4359,18 +4546,6 @@ function markTicketRepliesAsSeen(type) {
         renderAdminCountdowns();
     });
 
-    // تحويل ربط التكليفات في الأدمن لمرة واحدة فقط
-    db.ref('academic_tasks').once('value', (snap) => {
-        const select = document.getElementById('adm-cd-task-link');
-        if (!select) return;
-        select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
-        if (snap.exists()) {
-            snap.forEach(c => {
-                const t = c.val();
-                select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
-            });
-        }
-    });
 }
 
 function renderHomeCountdowns() {
@@ -5035,33 +5210,34 @@ function loadAdminAnalyticsAndLogs(forceRefresh = false) {
     }
 // ================= محرك الإنجازات ومنظومة الألقاب المتدرجة =================
     const defaultAchievementsConfig = {
+        // 1. إنجازات ديربي 1v1
         "derby_10": { title: "مقاتل الديربي", metric: "derby_wins", target: 10, xp: 100, coins: 20, rarity: "common" },
         "derby_50": { title: "سفاح الديربي", metric: "derby_wins", target: 50, xp: 400, coins: 80, rarity: "rare" },
         "derby_100": { title: "جلاد الديربي الأسطوري", metric: "derby_wins", target: 100, xp: 1000, coins: 200, rarity: "mythic" },
 
-        "pen_5": { title: "قناص المرمى", metric: "penalties_scored", target: 5, xp: 100, coins: 20, rarity: "common" },
-        "pen_25": { title: "ساحر الشباك", metric: "penalties_scored", target: 25, xp: 350, coins: 70, rarity: "rare" },
-        "pen_50": { title: "سوبر هاتريك أسطوري", metric: "penalties_scored", target: 50, xp: 800, coins: 150, rarity: "mythic" },
+        // 2. إنجازات تحدي المستويات الـ 50
+        "stars_50": { title: "مغامر المستويات", metric: "total_stars", target: 50, xp: 150, coins: 30, rarity: "common" },
+        "stars_150": { title: "صائد النجوم", metric: "total_stars", target: 150, xp: 450, coins: 90, rarity: "rare" },
+        "stars_300": { title: "سيد المستويات الأسطوري", metric: "total_stars", target: 300, xp: 1200, coins: 250, rarity: "mythic" },
 
+        // 3. إنجازات تحدي اهبد صح 1v1
+        "ehbed_10": { title: "هبيد مبتدئ", metric: "ehbed_wins", target: 10, xp: 100, coins: 20, rarity: "common" },
+        "ehbed_50": { title: "قناص التخمين", metric: "ehbed_wins", target: 50, xp: 400, coins: 80, rarity: "rare" },
+        "ehbed_100": { title: "ملك الهبد الأسطوري", metric: "ehbed_wins", target: 100, xp: 1000, coins: 200, rarity: "mythic" },
+
+        // 4. إنجازات الاختبارات الدراسية بالمحتوى العلمي (الجديد)
+        "exam_5": { title: "طالب مجتهد", metric: "passed_exams_count", target: 5, xp: 120, coins: 25, rarity: "common" },
+        "exam_15": { title: "دحيح الدفعة", metric: "passed_exams_count", target: 15, xp: 400, coins: 85, rarity: "rare" },
+        "exam_30": { title: "البروفيسور الأكاديمي", metric: "passed_exams_count", target: 30, xp: 1000, coins: 220, rarity: "mythic" },
+
+        // 5. إنجازات الاستمرارية وتسجيل الدخول اليومي
         "streak_7": { title: "مداوم نشيط", metric: "daily_streak", target: 7, xp: 80, coins: 15, rarity: "common" },
         "streak_30": { title: "شعلة الاستمرار", metric: "daily_streak", target: 30, xp: 300, coins: 60, rarity: "rare" },
-        "streak_60": { title: "أسطورة الحضور", metric: "daily_streak", target: 60, xp: 750, coins: 150, rarity: "mythic" },
-
-        "quiz_50": { title: "محب المعرفة", metric: "quizCorrect", target: 50, xp: 100, coins: 20, rarity: "common" },
-        "quiz_200": { title: "موسوعة الكلية", metric: "quizCorrect", target: 200, xp: 400, coins: 80, rarity: "rare" },
-        "quiz_500": { title: "المخ البشري الأسطوري", metric: "quizCorrect", target: 500, xp: 1000, coins: 200, rarity: "mythic" }
+        "streak_60": { title: "أسطورة الحضور", metric: "daily_streak", target: 60, xp: 750, coins: 150, rarity: "mythic" }
     };
 
     let activeAchievementsConfig = { ...defaultAchievementsConfig };
 
-    db.ref('achievements_config').once('value', snap => {
-        if (snap.exists()) {
-            activeAchievementsConfig = { ...defaultAchievementsConfig, ...snap.val() };
-        } else {
-            db.ref('achievements_config').set(defaultAchievementsConfig);
-        }
-        renderAchievementsTabUI();
-    });
 
     function getTitleBadgeHtml(titleText, rarity = 'common') {
         if (!titleText || titleText === 'none') return '';
@@ -5070,98 +5246,138 @@ function loadAdminAnalyticsAndLogs(forceRefresh = false) {
     }
 
     function renderAchievementsTabUI() {
-        if (!currentUser) return;
+    if (!currentUser) return;
 
-        const cabinetContainer = document.getElementById('unlocked-titles-cabinet');
-        const countBadge = document.getElementById('cabinet-titles-count');
-        const trackContainer = document.getElementById('achievements-track-list');
+    const cabinetContainer = document.getElementById('unlocked-titles-cabinet');
+    const countBadge = document.getElementById('cabinet-titles-count');
+    const trackContainer = document.getElementById('achievements-track-list');
 
-        if (!cabinetContainer || !trackContainer) return;
+    if (!cabinetContainer || !trackContainer) return;
 
-        const claimedAchievements = currentUser.claimed_achievements || [];
-        const activeEquippedTitle = currentUser.active_title || 'none';
+    // مصفوفة شاملة لجميع المفاتيح الملغاة بصيغتي المفرد والجمع
+    const obsoleteKeys = [
+        'penalties_20', 'penalties_50', 'penalties_100',
+        'penalty_10', 'penalty_20', 'penalty_50', 'penalty_100',
+        'quiz_50', 'quiz_200', 'quiz_500'
+    ];
 
-        let unlockedTitles = [];
-        Object.keys(activeAchievementsConfig).forEach(achId => {
-            if (claimedAchievements.includes(achId)) {
-                unlockedTitles.push({ id: achId, ...activeAchievementsConfig[achId] });
-            }
-        });
+    // حذفها من الكائن النشط والمحلي
+    obsoleteKeys.forEach(k => {
+        delete activeAchievementsConfig[k];
+    });
 
-        if (countBadge) countBadge.innerText = `${unlockedTitles.length} لقب`;
+    // تنظيف أي إنجاز يعتمد على معايير تم إلغاؤها (مثل penalties_scored و quizCorrect القديم)
+    Object.keys(activeAchievementsConfig).forEach(k => {
+        const ach = activeAchievementsConfig[k];
+        if (ach.metric === 'penalties_scored' || (ach.metric === 'quizCorrect' && !k.startsWith('stars_'))) {
+            delete activeAchievementsConfig[k];
+        }
+    });
 
-        if (unlockedTitles.length === 0) {
-            cabinetContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لم تفتح أي ألقاب بعد، أنجز المهام بالأسفل للحصول عليها! 🚀</p>';
-        } else {
-            let cabHtml = '';
-            if (activeEquippedTitle !== 'none') {
-                cabHtml += `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px dashed #ef4444; margin-bottom: 6px;">
-                    <span style="font-size: 0.8rem; color: var(--text-sub);">اللقب الحالي مفعل</span>
-                    <button class="admin-action-btn danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="equipUserTitle('none', 'none')">خلع اللقب ❌</button>
-                </div>`;
-            }
+    const claimedAchievements = currentUser.claimed_achievements || [];
+    const activeEquippedTitle = currentUser.active_title || 'none';
 
-            unlockedTitles.forEach(t => {
-                const isEquipped = (activeEquippedTitle === t.title);
-                cabHtml += `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-card);">
-                    <div>${getTitleBadgeHtml(t.title, t.rarity)}</div>
-                    ${isEquipped ? `
-                        <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 800;">مُرتدى الآن ✅</span>
-                    ` : `
-                        <button class="admin-action-btn" style="padding: 4px 12px; font-size: 0.75rem;" onclick="equipUserTitle('${t.title}', '${t.rarity}')">ارتداء 🎖️</button>
-                    `}
-                </div>`;
-            });
-            cabinetContainer.innerHTML = cabHtml;
+    // حساب نجوم المستويات تلقائياً
+    let totalStarsCalculated = 0;
+    if (currentUser.levels_progress) {
+        for (let k in currentUser.levels_progress) {
+            totalStarsCalculated += (currentUser.levels_progress[k].stars || 0);
+        }
+    }
+    currentUser.total_stars = totalStarsCalculated;
+
+    // حساب عدد الاختبارات الدراسية المكتملة تلقائياً
+    currentUser.passed_exams_count = (currentUser.rewarded_exams || []).length;
+
+    let unlockedTitles = [];
+    Object.keys(activeAchievementsConfig).forEach(achId => {
+        if (claimedAchievements.includes(achId) && !obsoleteKeys.includes(achId)) {
+            unlockedTitles.push({ id: achId, ...activeAchievementsConfig[achId] });
+        }
+    });
+
+    if (countBadge) countBadge.innerText = `${unlockedTitles.length} لقب`;
+
+    if (unlockedTitles.length === 0) {
+        cabinetContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لم تفتح أي ألقاب بعد، أنجز المهام بالأسفل للحصول عليها! 🚀</p>';
+    } else {
+        let cabHtml = '';
+        if (activeEquippedTitle !== 'none') {
+            cabHtml += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px dashed #ef4444; margin-bottom: 6px;">
+                <span style="font-size: 0.8rem; color: var(--text-sub);">اللقب الحالي مفعل</span>
+                <button class="admin-action-btn danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="equipUserTitle('none', 'none')">خلع اللقب ❌</button>
+            </div>`;
         }
 
-        let trackHtml = '';
-        Object.keys(activeAchievementsConfig).forEach(achId => {
-            const ach = activeAchievementsConfig[achId];
-            const currentVal = currentUser[ach.metric] || 0;
-            const targetVal = ach.target;
-            const isCompleted = currentVal >= targetVal;
-            const isClaimed = claimedAchievements.includes(achId);
-
-            const percent = Math.min(Math.round((currentVal / targetVal) * 100), 100);
-
-            let actionBtn = '';
-            if (isClaimed) {
-                actionBtn = `<span class="card-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);">تم الاستلام ✔️</span>`;
-            } else if (isCompleted) {
-                actionBtn = `<button class="btn-action-glow btn-check-task" style="padding: 6px 14px; font-size: 0.8rem;" onclick="claimAchievementReward('${achId}')">استلم اللقب والجوائز 🎁</button>`;
-            } else {
-                actionBtn = `<span style="font-size: 0.75rem; color: var(--text-sub); font-weight: 800;">${currentVal} / ${targetVal}</span>`;
-            }
-
-            let cardStateClass = isClaimed ? 'claimed' : (isCompleted ? 'completed-unclaimed' : '');
-
-            trackHtml += `
-            <div class="achievement-card ${cardStateClass}">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>${getTitleBadgeHtml(ach.title, ach.rarity)}</div>
-                    <div>${actionBtn}</div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
-                    <span style="color: var(--text-sub);">الشرط: ${ach.target} (${getMetricArabicName(ach.metric)})</span>
-                    <span style="color: var(--accent-gold); font-weight: 800;">+${ach.xp} XP | +${ach.coins} 💸</span>
-                </div>
-                <div class="ach-progress-bar-bg">
-                    <div class="ach-progress-bar-fill" style="width: ${percent}%;"></div>
-                </div>
+        unlockedTitles.forEach(t => {
+            const isEquipped = (activeEquippedTitle === t.title);
+            cabHtml += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-card);">
+                <div>${getTitleBadgeHtml(t.title, t.rarity)}</div>
+                ${isEquipped ? `
+                    <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 800;">مُرتدى الآن ✅</span>
+                ` : `
+                    <button class="admin-action-btn" style="padding: 4px 12px; font-size: 0.75rem;" onclick="equipUserTitle('${t.title}', '${t.rarity}')">ارتداء 🎖️</button>
+                `}
             </div>`;
         });
-
-        trackContainer.innerHTML = trackHtml;
+        cabinetContainer.innerHTML = cabHtml;
     }
+
+    let trackHtml = '';
+    Object.keys(activeAchievementsConfig).forEach(achId => {
+        if (obsoleteKeys.includes(achId)) return;
+
+        const ach = activeAchievementsConfig[achId];
+        const currentVal = currentUser[ach.metric] || 0;
+        const targetVal = ach.target;
+        const isCompleted = currentVal >= targetVal;
+        const isClaimed = claimedAchievements.includes(achId);
+
+        const percent = Math.min(Math.round((currentVal / targetVal) * 100), 100);
+
+        let actionBtn = '';
+        if (isClaimed) {
+            actionBtn = `<span class="card-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);">تم الاستلام ✔️</span>`;
+        } else if (isCompleted) {
+            actionBtn = `<button class="btn-action-glow btn-check-task" style="padding: 6px 14px; font-size: 0.8rem;" onclick="claimAchievementReward('${achId}')">استلم اللقب والجوائز 🎁</button>`;
+        } else {
+            actionBtn = `<span style="font-size: 0.75rem; color: var(--text-sub); font-weight: 800;">${currentVal} / ${targetVal}</span>`;
+        }
+
+        let cardStateClass = isClaimed ? 'claimed' : (isCompleted ? 'completed-unclaimed' : '');
+
+        trackHtml += `
+        <div class="achievement-card ${cardStateClass}">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>${getTitleBadgeHtml(ach.title, ach.rarity)}</div>
+                <div>${actionBtn}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                <span style="color: var(--text-sub);">الشرط: ${ach.target} (${getMetricArabicName(ach.metric)})</span>
+                
+                <!-- عرض الـ XP في سطر والعملات تحته مباشرة -->
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                    <span style="color: var(--accent-emerald); font-weight: 800;">+${ach.xp} XP</span>
+                    <span style="color: var(--accent-gold); font-weight: 800;">+${ach.coins} 💸</span>
+                </div>
+            </div>
+            <div class="ach-progress-bar-bg">
+                <div class="ach-progress-bar-fill" style="width: ${percent}%;"></div>
+            </div>
+        </div>`;
+    });
+
+    trackContainer.innerHTML = trackHtml;
+}
 
     function getMetricArabicName(metric) {
         if (metric === 'derby_wins') return 'فوز ديربي 1v1';
-        if (metric === 'penalties_scored') return 'هدف ركلات جزاء';
-        if (metric === 'quizCorrect') return 'إجابة صحيحة';
-        if (metric === 'daily_streak') return 'أيام متتالية';
+        if (metric === 'total_stars') return 'نجمة في المستويات ⭐';
+        if (metric === 'ehbed_wins') return 'فوز اهبد صح 🔢';
+        if (metric === 'passed_exams_count') return 'اختبار دراسي ناجح 🎓';
+        if (metric === 'daily_streak') return 'أيام متتالية 🔥';
         if (metric === 'total_login_days') return 'أيام حضور إجمالية';
         return metric;
     }
@@ -5781,6 +5997,7 @@ function enterEhbedArena() {
         const iconEl = document.getElementById('battle-result-icon');
 
         let xp = 0, coins = 0;
+        let isWon = false;
 
         if (me.score > opp.score) {
             playFlawlessVictorySound(); shootStars(); triggerConfetti();
@@ -5791,6 +6008,7 @@ function enterEhbedArena() {
             xp = room.rewardXP; coins = room.stake * 2;
             rewardText.innerText = `+${coins} عملة 💸 | +${xp} XP ⚡`;
             rewardBox.style.display = 'block';
+            isWon = true;
 
             recordUserTransaction(`فوز في اهبد صح 1v1 ضد المنافس`, xp, coins, 'derby');
         } else if (me.score < opp.score) {
@@ -5813,19 +6031,27 @@ function enterEhbedArena() {
             recordUserTransaction(`تعادل في اهبد صح 1v1 (استرداد)`, 0, 0, 'derby');
         }
 
-        if (coins > 0 || xp > 0) {
-            db.ref('users/' + currentUser.phone).transaction(user => {
-                if(user) { user.xp = (user.xp||user.points||0) + xp; user.points = user.xp; user.coins = (user.coins||0) + coins; }
-                return user;
-            }).then(() => updateProfileUI());
-        }
+        db.ref('users/' + currentUser.phone).transaction(user => {
+            if (user) {
+                user.xp = (user.xp || user.points || 0) + xp;
+                user.points = user.xp;
+                user.coins = (user.coins || 0) + coins;
+                if (isWon) {
+                    user.ehbed_wins = (user.ehbed_wins || 0) + 1;
+                }
+            }
+            return user;
+        }).then(() => {
+            if (isWon) currentUser.ehbed_wins = (currentUser.ehbed_wins || 0) + 1;
+            currentUser.xp = (currentUser.xp || 0) + xp;
+            currentUser.points = currentUser.xp;
+            currentUser.coins = (currentUser.coins || 0) + coins;
+            updateProfileUI();
+        });
 
-// إرسال الإحصائية للوحة تحكم الإدمن
         if (isHost) {
             recordActivityLog('derby', `انتهت مواجهة اهبد صح: [${me.name.split(' ')[0]}] (${me.score}) ضد [${opp.name.split(' ')[0]}] (${opp.score}) 🔢`);
         }
-
-        currentEhbedRoomId = null;
 
         currentEhbedRoomId = null;
     }
@@ -5967,98 +6193,146 @@ function enterEhbedArena() {
         });
     }
 function openTransferModal() {
-        playClickSound();
-        if(!currentUser) return;
-        document.getElementById('transfer-phone-input').value = '';
-        document.getElementById('transfer-amount-input').value = '';
-        document.getElementById('transfer-type-input').value = 'coins'; // الافتراضي عملات
-        openModal('modal-transfer-coins');
+    playClickSound();
+    if (!currentUser) return;
+
+    const idInput = document.getElementById('transfer-id-input');
+    const amountInput = document.getElementById('transfer-amount-input');
+    const typeInput = document.getElementById('transfer-type-input');
+
+    if (idInput) idInput.value = '';
+    if (amountInput) amountInput.value = '';
+    if (typeInput) typeInput.value = 'coins'; // الافتراضي عملات
+
+    openModal('modal-transfer-coins');
+}
+
+    // الحد الأقصى اليومي المسموح بإرساله لنفس الزميل
+const DAILY_LIMIT_PER_USER = 100;
+
+async function executeCoinTransfer() {
+    const idInput = document.getElementById('transfer-id-input');
+    const amountInput = document.getElementById('transfer-amount-input');
+
+    if (!idInput || !amountInput) {
+        showTopToast('حدث خطأ في تحميل نافذة الدعم', 'error');
+        return;
     }
 
-    async function executeCoinTransfer() {
-        playClickSound();
-        const targetPhone = document.getElementById('transfer-phone-input').value.trim();
-        const amount = parseInt(document.getElementById('transfer-amount-input').value);
-        const transferType = document.getElementById('transfer-type-input').value; // 'coins' أو 'xp'
+    const targetStudentId = idInput.value.trim();
+    const amount = parseInt(amountInput.value);
 
-        if (!targetPhone || targetPhone.length < 11 || isNaN(amount) || amount <= 0) {
-            showTopToast('يرجى إدخال رقم هاتف صحيح ومبلغ أكبر من الصفر!', 'error');
-            return;
-        }
+    // التحقق من صحة المدخلات
+    if (!targetStudentId) {
+        showTopToast('يرجى إدخال معرّف الطالب (ID)', 'error');
+        return;
+    }
 
-        if (targetPhone === currentUser.phone) {
-            showTopToast('لا يمكنك التحويل لنفسك يا هندسة!', 'error');
-            return;
-        }
+    if (isNaN(amount) || amount <= 0) {
+        showTopToast('يرجى كتابة عدد عملات صحيح', 'error');
+        return;
+    }
 
-        // تحديد الرصيد الحالي بناءً على نوع التحويل
-        const userBalance = transferType === 'coins' ? (currentUser.coins || 0) : (currentUser.xp || currentUser.points || 0);
-        
-        if (userBalance < amount) {
-            const typeName = transferType === 'coins' ? 'العملات' : 'النقاط (XP)';
-            showTopToast(`رصيدك من ${typeName} غير كافٍ لإتمام التحويل!`, 'error');
-            return;
-        }
+    if ((currentUser.coins || 0) < amount) {
+        showTopToast('رصيدك من العملات لا يكفي لإتمام التحويل', 'error');
+        return;
+    }
 
-        const btn = document.querySelector('#modal-transfer-coins .btn-submit');
-        btn.disabled = true;
-        btn.innerText = 'جاري التحقق والتحويل... ⏳';
+    // تجهيز تاريخ اليوم لفحص العداد
+    const todayStr = typeof getRealDateString === 'function' 
+        ? getRealDateString() 
+        : new Date().toISOString().split('T')[0];
 
-        try {
-            // التأكد من أن المستلم مسجل فعلاً في النظام
-            const receiverSnap = await db.ref('users/' + targetPhone).once('value');
-            if (!receiverSnap.exists()) {
-                showTopToast('هذا الرقم غير مسجل في التطبيق!', 'error');
-                btn.disabled = false; btn.innerText = 'إرسال الدعم 🚀';
-                return;
-            }
+    if (!currentUser.daily_transfers || currentUser.daily_transfers_date !== todayStr) {
+        currentUser.daily_transfers = {};
+        currentUser.daily_transfers_date = todayStr;
+    }
 
-            const receiverData = receiverSnap.val();
-            const receiverName = receiverData.name.split(' ')[0] || 'زميلك';
+    const alreadySent = currentUser.daily_transfers[targetStudentId] || 0;
 
-            // مسار العملات
-            if (transferType === 'coins') {
-                await db.ref('users/' + currentUser.phone + '/coins').transaction(c => (c || 0) - amount);
-                await db.ref('users/' + targetPhone + '/coins').transaction(c => (c || 0) + amount);
-                
-                recordUserTransaction(`تحويل عملات لـ ${receiverName}`, 0, -amount, 'purchase');
-                
-                showTopToast(`تم تحويل ${amount} عملة لـ ${receiverName} بنجاح! 🎉`, 'success');
-            } 
-            // مسار نقاط الخبرة (XP)
-            else {
-                await db.ref('users/' + currentUser.phone).transaction(user => {
-                    if(user) {
-                        let newXp = (user.xp || user.points || 0) - amount;
-                        user.xp = newXp < 0 ? 0 : newXp;
-                        user.points = user.xp;
-                    }
-                    return user;
+    if (alreadySent + amount > DAILY_LIMIT_PER_USER) {
+        const remaining = Math.max(0, DAILY_LIMIT_PER_USER - alreadySent);
+        showTopToast(`الحد الأقصى هو ${DAILY_LIMIT_PER_USER} عملة يومياً لكل طالب. المتبقي لك معه اليوم: ${remaining} عملة.`, 'error');
+        return;
+    }
+
+    showTopToast('جاري التحقق من بيانات الزميل...', 'info');
+
+    try {
+        // البحث عن الطالب في السيرفر باستخدام student_id
+        const snapshot = await db.ref('users')
+            .orderByChild('student_id')
+            .equalTo(Number(targetStudentId))
+            .once('value');
+
+        let targetUserData = null;
+        let targetPhone = null;
+
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                targetPhone = child.key;
+                targetUserData = child.val();
+            });
+        } else {
+            // محاولة مطابقة في حال كان المعرف مخزناً كنص
+            const textSnapshot = await db.ref('users')
+                .orderByChild('student_id')
+                .equalTo(targetStudentId)
+                .once('value');
+            if (textSnapshot.exists()) {
+                textSnapshot.forEach(child => {
+                    targetPhone = child.key;
+                    targetUserData = child.val();
                 });
-                
-                await db.ref('users/' + targetPhone).transaction(user => {
-                    if(user) {
-                        let newXp = (user.xp || user.points || 0) + amount;
-                        user.xp = newXp; user.points = newXp;
-                    }
-                    return user;
-                });
-
-                recordUserTransaction(`تحويل نقاط لـ ${receiverName}`, -amount, 0, 'purchase');
-                
-                showTopToast(`تم تحويل ${amount} XP لـ ${receiverName} بنجاح! ⚡`, 'success');
             }
+        }
 
+        if (!targetUserData || !targetPhone) {
+            showTopToast('لم يتم العثور على طالب بهذا الـ ID', 'error');
+            return;
+        }
+
+        // منع التحويل للنفس
+        if (targetPhone === currentUser.phone || String(targetUserData.student_id) === String(currentUser.student_id)) {
+            showTopToast('لا يمكنك إرسال عملات لحسابك الشخصي!', 'error');
+            return;
+        }
+
+        // 1. خصم العملات وتحديث سجل الراسل
+        currentUser.coins -= amount;
+        currentUser.daily_transfers[targetStudentId] = alreadySent + amount;
+
+        await db.ref('users/' + currentUser.phone).update({
+            coins: currentUser.coins,
+            daily_transfers: currentUser.daily_transfers,
+            daily_transfers_date: currentUser.daily_transfers_date
+        });
+
+        // 2. زيادة العملات للمستلم
+        const updatedTargetCoins = (targetUserData.coins || 0) + amount;
+        await db.ref('users/' + targetPhone).update({
+            coins: updatedTargetCoins
+        });
+
+        // 3. إنهاء وإشعار بالنجاح
+        showTopToast(`تم إرسال ${amount} عملة بنجاح إلى ${targetUserData.name || 'زميلك'}! 🪙`, 'success');
+
+        idInput.value = '';
+        amountInput.value = '';
+
+        if (typeof closeModal === 'function') {
             closeModal('modal-transfer-coins');
-            updateProfileUI(); // تحديث شاشة المرسل لتسميع الخصم فوراً
-            
-        } catch (e) {
-            showTopToast('حدث خطأ بالشبكة، يرجى المحاولة لاحقاً.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'إرسال الدعم 🚀';
         }
+        if (typeof updateProfileUI === 'function') {
+            updateProfileUI();
+        }
+
+    } catch (err) {
+        console.error("Transfer Error:", err);
+        showTopToast('حدث خطأ أثناء الاتصال بالسيرفر، حاول ثانية', 'error');
     }
+}
+
 // ================= المحرك الشامل لمكتبة مهندس الجودة =================
 
 const engAcademyDB = {
@@ -6673,6 +6947,40 @@ function saveAdminBossGeneralConfig() {
     });
 }
 
+function uploadBulkRiskQuestions() {
+    playClickSound();
+    const rawText = document.getElementById('admin-risk-bulk-input').value.trim();
+    if (!rawText) { showTopToast('يرجى لصق الأسئلة أولاً!', 'error'); return; }
+
+    const lines = rawText.split('\n');
+    let addedCount = 0;
+    const updates = {};
+
+    lines.forEach(line => {
+        const parts = line.split('#').map(p => p.trim());
+        if (parts.length === 4) {
+            const [cat, ptsStr, qText, ansText] = parts;
+            const pts = parseInt(ptsStr);
+            if (cat && !isNaN(pts) && qText && ansText) {
+                const newKey = db.ref('risk_questions').push().key;
+                updates[newKey] = { category: cat, points: pts, q: qText, a: ansText };
+                addedCount++;
+            }
+        }
+    });
+
+    if (addedCount === 0) {
+        showTopToast('تأكد من كتابة الصيغة الصحيحة مفصولة بـ #', 'error'); return;
+    }
+
+    db.ref('risk_questions').update(updates).then(() => {
+        document.getElementById('admin-risk-bulk-input').value = '';
+        incrementQuestionsVersion('risk_questions'); // لتحديث الكاش عند كل الطلاب
+        playSuccessSound();
+        showTopToast(`تم رفع (${addedCount}) سؤال ريسك بنجاح! ⚡`, 'success');
+    });
+}
+
 function uploadAdminLevelQuestions() {
     playClickSound();
     const levelNum = parseInt(document.getElementById('adm-upload-lvl-num').value);
@@ -6768,15 +7076,6 @@ if (currentUser) {
     }
 }
 
-function startClassicQuizWithQuestions(questions) {
-    activeQuizQuestions = shuffleArray(questions).slice(0, 10);
-    currentQuizIndex = 0;
-    quizScoreCount = 0;
-    isClassicQuizActive = true;
-    navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
-    renderLevelQuestion();
-}
-
 function generateMockQuestionsForLevel(levelNum, count) {
     let mock = [];
     for(let i=1; i<=count; i++) {
@@ -6790,10 +7089,17 @@ function generateMockQuestionsForLevel(levelNum, count) {
     return mock;
 }
 
-// 4. أسئلة المستوى ومنطق احتساب النجوم
+// متغيرات تتبع استخدام المعززات في سؤال المستوى الحالي
+let levelHint5050Used = false;
+let levelHintTimeUsed = false;
+
+// 4. أسئلة المستوى ومنطق احتساب النجوم والمعززات
 function renderLevelQuestion() {
     isAnswerLocked = false;
     currentQuestionStars = 0;
+    levelHint5050Used = false;
+    levelHintTimeUsed = false;
+
     const container = document.getElementById('quiz-container');
     const qData = activeQuizQuestions[currentQuizIndex];
     
@@ -6802,9 +7108,28 @@ function renderLevelQuestion() {
     let options = shuffleArray([...qData.a]);
     const correctText = qData.a[qData.correct || 0];
     
+    // فحص رصيد الطالب من المعززات الثلاثة
+    const has5050 = currentUser && (currentUser.hintsCount || 0) > 0;
+    const hasTime = currentUser && (currentUser.hintTimeCount || 0) > 0;
+    const hasSkip = currentUser && (currentUser.skipCount || 0) > 0;
+
+    const btn5050Html = has5050 ? 
+        `<button id="btn-lvl-5050" class="admin-action-btn" style="padding: 4px 7px; font-size: 0.72rem;" onclick="useLevelHint5050('${correctText}')">💡 50:50 (${currentUser.hintsCount})</button>` : '';
+
+    const btnTimeHtml = hasTime ? 
+        `<button id="btn-lvl-time" class="admin-action-btn" style="padding: 4px 7px; font-size: 0.72rem;" onclick="useLevelHintTime()">⏱️ +15ث (${currentUser.hintTimeCount})</button>` : '';
+
+    const btnSkipHtml = hasSkip ? 
+        `<button id="btn-lvl-skip" class="admin-action-btn" style="padding: 4px 7px; font-size: 0.72rem; border-color: var(--accent-emerald); color: var(--accent-emerald);" onclick="useLevelSkipQuestion('${correctText}')">🚀 تخطي 3⭐ (${currentUser.skipCount})</button>` : '';
+
     let html = `
-        <div class="section-label" style="justify-content: space-between;">
+        <div class="section-label" style="justify-content: space-between; align-items: center; gap: 4px; flex-wrap: wrap;">
             <span>السؤال ${currentQuizIndex + 1} / 10</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+                ${btn5050Html}
+                ${btnTimeHtml}
+                ${btnSkipHtml}
+            </div>
             <span style="color: var(--accent-gold); font-weight: 800;">نجومك: ${currentLevelStarsEarned} ⭐</span>
         </div>
         <div class="quiz-card">
@@ -6813,7 +7138,7 @@ function renderLevelQuestion() {
             <div id="options-list" style="display: flex; flex-direction: column; gap: 8px;">`;
             
     options.forEach(opt => { 
-        html += `<button class="quiz-option-btn" onclick="handleLevelAnswer(this, '${opt}', '${correctText}')">${opt}</button>`; 
+        html += `<button class="quiz-option-btn level-opt-btn" data-val="${opt}" onclick="handleLevelAnswer(this, '${opt}', '${correctText}')">${opt}</button>`; 
     });
     
     html += `</div>
@@ -6827,6 +7152,101 @@ function renderLevelQuestion() {
         
     container.innerHTML = html; 
     startLevelTimer();
+}
+
+// دالة تفعيل معزز حذف إجابتين في المستويات
+function useLevelHint5050(correctText) {
+    if (isAnswerLocked || levelHint5050Used) return;
+    if (!currentUser || (currentUser.hintsCount || 0) <= 0) {
+        showTopToast('ليس لديك معززات 50:50 متبقية!', 'error');
+        return;
+    }
+
+    playSuccessSound();
+    levelHint5050Used = true;
+    currentUser.hintsCount -= 1;
+    db.ref('users/' + currentUser.phone + '/hintsCount').set(currentUser.hintsCount);
+
+    const btn = document.getElementById('btn-lvl-5050');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = `💡 50:50 (${currentUser.hintsCount})`;
+    }
+
+    const buttons = Array.from(document.querySelectorAll('.level-opt-btn'));
+    const wrongButtons = buttons.filter(b => b.getAttribute('data-val') !== correctText);
+    const toHide = shuffleArray(wrongButtons).slice(0, 2);
+
+    toHide.forEach(b => {
+        b.style.visibility = 'hidden';
+        b.disabled = true;
+    });
+
+    showTopToast('تم حذف خيارين خاطئين بنجاح! 💡', 'info');
+}
+
+// دالة تفعيل معزز زيادة الوقت في المستويات
+function useLevelHintTime() {
+    if (isAnswerLocked || levelHintTimeUsed) return;
+    if (!currentUser || (currentUser.hintTimeCount || 0) <= 0) {
+        showTopToast('ليس لديك معزز وقت إضافي!', 'error');
+        return;
+    }
+
+    playSuccessSound();
+    levelHintTimeUsed = true;
+    timeLeft += 15;
+
+    const timerEl = document.getElementById('quiz-timer');
+    if (timerEl) timerEl.innerHTML = `⏱️ ${timeLeft}`;
+
+    currentUser.hintTimeCount -= 1;
+    db.ref('users/' + currentUser.phone + '/hintTimeCount').set(currentUser.hintTimeCount);
+
+    const btn = document.getElementById('btn-lvl-time');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = `⏱️ +15ث (${currentUser.hintTimeCount})`;
+    }
+
+    showTopToast('تمت إضافة 15 ثانية إضافية للتفكير! ⏱️🔥', 'info');
+}
+
+// دالة تفعيل معزز تخطي السؤال بـ 3 نجوم
+function useLevelSkipQuestion(correctText) {
+    if (isAnswerLocked) return;
+    if (!currentUser || (currentUser.skipCount || 0) <= 0) {
+        showTopToast('ليس لديك رصيد من معزز التخطي!', 'error');
+        return;
+    }
+
+    isAnswerLocked = true;
+    clearInterval(timerInterval);
+    playSuccessSound();
+    shootStars();
+    triggerConfetti();
+
+    currentUser.skipCount -= 1;
+    db.ref('users/' + currentUser.phone + '/skipCount').set(currentUser.skipCount);
+
+    quizScoreCount++;
+    currentQuestionStars = 3;
+    currentLevelStarsEarned += 3;
+
+    // تمييز الإجابة الصحيحة وإيقاف الأزرار
+    document.querySelectorAll('.level-opt-btn').forEach(btn => {
+        if (btn.getAttribute('data-val') === correctText) {
+            btn.classList.add('correct-choice');
+        }
+        btn.disabled = true;
+    });
+
+    const feedbackStars = document.getElementById('question-feedback-stars');
+    feedbackStars.style.display = 'block';
+    feedbackStars.innerHTML = '⭐⭐⭐<br><span style="color:var(--accent-emerald); font-weight:800; font-size:0.85rem;">تم استخدام معزز التخطي بنجاح واحتساب 3 نجوم كاملة! 🚀</span>';
+
+    document.getElementById('next-question-area').style.display = 'block';
+    showTopToast('تم تخطي السؤال بنجاح مع 3 نجوم! 🚀⭐', 'success');
 }
 
 function startLevelTimer() {
@@ -7382,7 +7802,7 @@ function startLevelNode(levelNum, state) {
     let rewards = getLevelRewards(levelNum);
     
     document.getElementById('level-intro-title').innerText = `المستوى ${levelNum}`;
-    document.getElementById('level-intro-rewards').innerText = `المكافأة الكبرى: ${rewards.xp} XP | ${rewards.coins} عملة 💸`;
+    document.getElementById('level-intro-rewards').innerText = `المكافأة الكبرى: ${rewards.xp} نقاط | ${rewards.coins} عملة `;
 
     let totalGlobalStars = 0;
     for(let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
@@ -7623,11 +8043,17 @@ function startDynamicBossDirectly() {
         
         navigateTo('view-subject-detail', currentActiveSubject, typeName);
         if (typeof updateBookRewardBadgeUI === 'function') updateBookRewardBadgeUI();
+        
+        setTimeout(updateAllRedDots, 50); // 👈 إضافة النقطة الحمراء
     }
 
-    function openDynamicContentList(category) {
+function openDynamicContentList(category) {
         if (typeof playClickSound === 'function') playClickSound();
         currentActiveCategory = category;
+
+        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        localStorage.setItem(`seen_marker_${safeKey}_${currentActiveType}_${category}`, Date.now().toString());
+        setTimeout(updateAllRedDots, 50);
         
         let catName = '';
         if (category === 'lectures') catName = currentActiveType === 'theory' ? 'المحاضرات' : 'السكاشن';
@@ -7638,7 +8064,7 @@ function startDynamicBossDirectly() {
         navigateTo('view-dynamic-list', currentActiveSubject, catName);
         
         const container = document.getElementById('dynamic-content-container');
-        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        // 👈 تم مسح السطر المكرر (const safeKey) من هنا لمنع توقف الكود
         const path = `scientific_content/${safeKey}/${currentActiveType}/${category}`;
         const cacheKey = `cache_${safeKey}_${currentActiveType}_${category}`;
         const cachedData = localStorage.getItem(cacheKey);
@@ -7796,27 +8222,67 @@ function startDynamicBossDirectly() {
     }
     // ================= محرك بنك الأسئلة (Study Mode) =================
     let currentBankQuestions = [];
-    function openQBankMode(itemId) {
-        if (typeof playClickSound === 'function') playClickSound();
-        const bankData = window.tempLessonContentStore[itemId];
-        if(!bankData || !bankData.content) return showTopToast('لا توجد أسئلة', 'error');
-        
-        document.getElementById('qbank-title').innerText = bankData.title;
-        currentBankQuestions = parseRawQuestions(bankData.content);
-        
-        // استخراج الأنواع الموجودة فعلياً لعمل أزرار الفلترة
-        const typesPresent = [...new Set(currentBankQuestions.map(q => q.type))];
-        const filterBar = document.getElementById('qbank-filters');
-        let filterHtml = `<button class="qbank-filter-btn active" onclick="renderQBankList('all', this)">الكل</button>`;
-        if(typesPresent.includes('اختر')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اختر', this)">اختر</button>`;
-        if(typesPresent.includes('صح_وخطا')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('صح_وخطا', this)">صح وخطأ</button>`;
-        if(typesPresent.includes('اكمل')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اكمل', this)">أكمل</button>`;
-        if(typesPresent.includes('مقالي')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('مقالي', this)">مقالي</button>`;
-        filterBar.innerHTML = filterHtml;
+    // متغير عام للتحكم في وضع عرض الإجابات
+let isQBankAnswersRevealed = false;
 
-        renderQBankList('all', filterBar.firstElementChild);
-        navigateTo('view-qbank-reader', currentActiveSubject, bankData.title);
+function openQBankMode(itemId) {
+    if (typeof playClickSound === 'function') playClickSound();
+    const bankData = window.tempLessonContentStore[itemId];
+    if(!bankData || !bankData.content) return showTopToast('لا توجد أسئلة', 'error');
+    
+    document.getElementById('qbank-title').innerText = bankData.title;
+    currentBankQuestions = parseRawQuestions(bankData.content);
+    isQBankAnswersRevealed = false; // تصفير الحالة مع كل فتحة جديدة
+    
+    const typesPresent = [...new Set(currentBankQuestions.map(q => q.type))];
+    const filterBar = document.getElementById('qbank-filters');
+    
+    let filterHtml = `<div style="display: flex; gap: 6px; overflow-x: auto; flex: 1;">`;
+    filterHtml += `<button class="qbank-filter-btn active" onclick="renderQBankList('all', this)">الكل</button>`;
+    if(typesPresent.includes('اختر')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اختر', this)">اختر</button>`;
+    if(typesPresent.includes('صح_وخطا')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('صح_وخطا', this)">صح وخطأ</button>`;
+    if(typesPresent.includes('اكمل')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('اكمل', this)">أكمل</button>`;
+    if(typesPresent.includes('مقالي')) filterHtml += `<button class="qbank-filter-btn" onclick="renderQBankList('مقالي', this)">مقالي</button>`;
+    filterHtml += `</div>`;
+
+    // زر تبديل وضع كشف الحل
+    filterHtml += `
+    <button id="btn-toggle-qbank-answers" class="admin-action-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: var(--accent-gold); color: var(--accent-gold); white-space: nowrap; flex-shrink: 0;" onclick="toggleQBankAllAnswers()">
+        👁️ عرض الإجابات
+    </button>`;
+
+    filterBar.innerHTML = filterHtml;
+
+    renderQBankList('all', filterBar.querySelector('.qbank-filter-btn'));
+    navigateTo('view-qbank-reader', currentActiveSubject, bankData.title);
+}
+
+function toggleQBankAllAnswers() {
+    if (typeof playClickSound === 'function') playClickSound();
+    isQBankAnswersRevealed = !isQBankAnswersRevealed;
+    
+    const toggleBtn = document.getElementById('btn-toggle-qbank-answers');
+    if (toggleBtn) {
+        if (isQBankAnswersRevealed) {
+            toggleBtn.innerText = '🔒 وضع التدريب (إخفاء)';
+            toggleBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+            toggleBtn.style.borderColor = '#ef4444';
+            toggleBtn.style.color = '#ef4444';
+            showTopToast('تم تفعيل وضع المراجعة السريعة (جميع الإجابات محلولة) 📖', 'info');
+        } else {
+            toggleBtn.innerText = '👁️ عرض الإجابات';
+            toggleBtn.style.background = 'transparent';
+            toggleBtn.style.borderColor = 'var(--accent-gold)';
+            toggleBtn.style.color = 'var(--accent-gold)';
+            showTopToast('تم العودة لوضع التدريب الفردي 🧠', 'info');
+        }
     }
+
+    // جلب نوع الفلتر النشط حالياً لإعادة الرسم بنفس الفلتر
+    const activeFilterBtn = document.querySelector('.qbank-filter-btn.active');
+    const currentFilter = activeFilterBtn ? activeFilterBtn.innerText.replace(' ', '_') : 'all';
+    renderQBankList(currentFilter === 'الكل' ? 'all' : currentFilter, activeFilterBtn);
+}
 
     function renderQBankList(filterType, btnElem) {
         // تحديث لون الزرار النشط في الفلتر
@@ -7836,7 +8302,7 @@ function startDynamicBossDirectly() {
             
             let interactiveArea = '';
             
-            // 1. لو السؤال (اختر) أو (صح وخطأ) -> اعرضهم كأزرار تفاعلية
+            // 1. لو السؤال (اختر) أو (صح وخطأ)
             if (q.type === 'اختر' || q.type === 'صح_وخطا') {
                 let opts = [q.correct];
                 if(q.opt1) opts.push(q.opt1);
@@ -7846,16 +8312,33 @@ function startDynamicBossDirectly() {
                 
                 let optsHtml = opts.map(opt => {
                     const isCorrect = (opt === q.correct);
+
+                    // إذا كان وضع "عرض الإجابات" مفعلاً
+                    if (isQBankAnswersRevealed) {
+                        const style = isCorrect 
+                            ? 'background: #10b981; border-color: #059669; color: #fff; opacity: 1; font-weight: 800;' 
+                            : 'opacity: 0.45;';
+                        const text = isCorrect ? '✅ ' + opt : opt;
+                        return `<button class="quiz-option-btn" style="text-align: right; pointer-events: none; ${style}">${text}</button>`;
+                    }
+
+                    // وضع التدريب العادي (سؤال تفاعلي)
                     return `<button class="quiz-option-btn" style="text-align: right;" data-correct="${isCorrect}" onclick="checkQBankAns(this)">${opt}</button>`;
                 }).join('');
                 
                 interactiveArea = `<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">${optsHtml}</div>`;
             } 
-            // 2. لو السؤال (أكمل) أو (مقالي) -> اعرض زرار كشف الإجابة فقط
+            // 2. لو السؤال (أكمل) أو (مقالي)
             else {
-                interactiveArea = `
-                <button class="admin-action-btn" style="width: 100%; border-color: var(--border-card); color: var(--text-sub); margin-top: 10px;" onclick="this.nextElementSibling.style.display='block'; this.style.display='none'; if(typeof playClickSound === 'function') playClickSound();">👁️ عرض الإجابة</button>
-                <div class="qbank-ans-box">✅ ${q.correct}</div>`;
+                if (isQBankAnswersRevealed) {
+                    // تظهر الإجابة مباشرة في وضع المراجعة
+                    interactiveArea = `<div class="qbank-ans-box" style="display: block; margin-top: 10px;">✅ ${q.correct}</div>`;
+                } else {
+                    // يظهر زر كشف الإجابة في وضع التدريب
+                    interactiveArea = `
+                    <button class="admin-action-btn" style="width: 100%; border-color: var(--border-card); color: var(--text-sub); margin-top: 10px;" onclick="this.nextElementSibling.style.display='block'; this.style.display='none'; if(typeof playClickSound === 'function') playClickSound();">👁️ عرض الإجابة</button>
+                    <div class="qbank-ans-box">✅ ${q.correct}</div>`;
+                }
             }
             
             html += `
@@ -7871,6 +8354,7 @@ function startDynamicBossDirectly() {
         }
         container.innerHTML = html;
     }
+
 
     // دالة فحص الإجابة داخل بنك الأسئلة (بدون درجات، للتدريب فقط)
     function checkQBankAns(btn) {
@@ -8043,7 +8527,6 @@ function startDynamicBossDirectly() {
             if (uAns.toLowerCase() === q.correct.toLowerCase()) {
                 correctCount++;
             } else {
-                // 💡 تجميع الأخطاء لعرضها للطالب
                 mistakesHtml += `
                 <div class="mistake-card">
                     <div class="mistake-q">${i+1}. ${q.qText}</div>
@@ -8052,9 +8535,11 @@ function startDynamicBossDirectly() {
                 </div>`;
             }
         });
-saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.length, 'exam');
+
+        saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.length, 'exam');
 
         const passRate = correctCount / examActiveQuestions.length;
+        const isPassed = passRate >= 0.5; // معيار النجاح: 50% فما فوق
         const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
         const alreadyRewarded = rewardedExams.includes(examDataCache.id);
         
@@ -8063,8 +8548,7 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
 
         let rewardMsgHtml = '';
 
-        // 💡 منح الجائزة فقط إذا لم يتم استلامها مسبقاً
-        if (!alreadyRewarded) {
+        if (!alreadyRewarded && isPassed) {
             if (currentUser) {
                 currentUser.xp = (currentUser.xp || currentUser.points || 0) + xpReward;
                 currentUser.points = currentUser.xp;
@@ -8072,21 +8556,24 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
                 
                 rewardedExams.push(examDataCache.id);
                 currentUser.rewarded_exams = rewardedExams;
+                currentUser.passed_exams_count = rewardedExams.length;
 
                 db.ref('users/' + currentUser.phone).update({ 
                     xp: currentUser.xp, 
                     points: currentUser.points, 
                     coins: currentUser.coins,
-                    rewarded_exams: rewardedExams
+                    rewarded_exams: rewardedExams,
+                    passed_exams_count: currentUser.passed_exams_count
                 });
-                if(typeof updateProfileUI === 'function') updateProfileUI();
+                if (typeof updateProfileUI === 'function') updateProfileUI();
             }
             rewardMsgHtml = `مكافأة الاختبار: +${xpReward} XP | +${coinsReward} عملة 💸`;
-        } else {
+        } else if (alreadyRewarded) {
             rewardMsgHtml = `لقد حصلت على مكافأة هذا الاختبار مسبقاً (محاولة للتدريب)`;
+        } else {
+            rewardMsgHtml = `لم تجتز نسبة النجاح (50%). حاول مرة أخرى للحصول على المكافأة واحتساب الإنجاز!`;
         }
 
-        // 💡 إعداد وتجهيز شاشة النتيجة
         const circleEl = document.getElementById('exam-score-circle');
         circleEl.innerText = `${correctCount}/${examActiveQuestions.length}`;
         
@@ -8099,7 +8586,7 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
             if (typeof playFlawlessVictorySound === 'function') playFlawlessVictorySound();
             if (typeof triggerConfetti === 'function') triggerConfetti();
         } else if (passRate >= 0.5) {
-            msgEl.innerText = "أداء جيد، راجع أخطاءك بالأسفل لتتحسن! 👍";
+            msgEl.innerText = "أداء جيد، مبروك النجاح واحتساب الاختبار! 👍";
             msgEl.style.color = "var(--accent-gold)";
             circleEl.style.borderColor = "var(--accent-gold)";
             circleEl.style.color = "var(--accent-gold)";
@@ -8123,7 +8610,6 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
             mistakesContainer.innerHTML = '<h4 style="color:#ef4444; margin-bottom:15px; font-size:0.95rem; text-align:center;">مراجعة أخطائك في الاختبار 📝</h4>' + mistakesHtml;
         }
 
-        // إغلاق واجهة الاختبار وفتح شاشة النتيجة بذكاء عشان زرار الرجوع يشتغل صح
         navHistory.pop(); 
         navHistory.push({ viewId: 'view-exam-result', title: 'نتيجة الاختبار', subtitle: 'تقرير الأداء الشامل' });
         showViewSection('view-exam-result');
@@ -8268,6 +8754,7 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
 
         const safeKey = getSafeSubjectKey(subject);
         db.ref(`scientific_content/${safeKey}/${type}/${category}/${finalId}`).update(itemData).then(() => {
+            db.ref(`content_markers/${safeKey}_${type}_${category}`).set(Date.now());
             showTopToast('تم حفظ الكارت بنجاح! ✅', 'success');
             resetScienceAdminForm();
             loadAdminScienceContent();
@@ -8341,6 +8828,9 @@ saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.leng
         else if (type === 'table') snippet = `\n<div style="overflow-x:auto; margin: 15px 0;">\n<table class="haccp-professional-table">\n<tr><th>وجه المقارنة</th><th>أ</th><th>ب</th></tr>\n<tr><td>النقطة 1</td><td>تفاصيل أ</td><td>تفاصيل ب</td></tr>\n</table>\n</div>\n`;
         else if (type === 'reveal') snippet = `\n<div class="reader-accordion-card">\n    <div class="reader-accordion-header" onclick="if(typeof playClickSound==='function')playClickSound(); this.parentElement.classList.toggle('open'); const body = this.nextElementSibling; body.style.display = body.style.display === 'block' ? 'none' : 'block';">\n        <div class="reader-accordion-title">العنوان </div>\n        <div class="reader-accordion-arrow">▼</div>\n    </div>\n    <div class="reader-accordion-body">الشرح</div>\n</div>\n`;
         else if (type === 'mindmap') snippet = `\n<div class="magic-mindmap">\n    <div class="mindmap-node">\n        <div class="mindmap-title">الخطوة الأولى</div>\n        <div class="mindmap-desc">شرح الخطوة الأولى...</div>\n    </div>\n    <div class="mindmap-node">\n        <div class="mindmap-title">الخطوة الثانية</div>\n        <div class="mindmap-desc">شرح الخطوة الثانية...</div>\n    </div>\n</div>\n`;
+else if (type === 'image') {
+    snippet = `\n<div style="text-align: center; margin: 15px 0;">\n    <img src="https://example.com/image.jpg" style="width: 100%; max-width: 450px; border-radius: 14px; border: 1px solid var(--border-card);" alt="شرح">\n    <span style="display: block; font-size: 0.75rem; color: var(--text-sub); margin-top: 5px;">اكتب وصف الصورة هنا...</span>\n</div>\n`;
+}
 
         const startPos = textarea.selectionStart;
         const endPos = textarea.selectionEnd;
@@ -8433,3 +8923,1198 @@ window.addEventListener('appinstalled', () => {
     if(installBtn) installBtn.style.display = 'none';
     deferredPrompt = null;
 });
+
+// ================= محرك تحدي ريسك الشامل (Risk Engine) =================
+let riskMatchData = {
+    t1: { name: '', score: 0, hasTime: true, hasSteal: true },
+    t2: { name: '', score: 0, hasTime: true, hasSteal: true },
+    currentTurn: 1, board: [], activeQ: null, isStealDeclared: false, stealStageActive: false, timer: null, timeLeft: 45,
+    rerollsUsed: 0,
+    validCategoriesPool: [] // لحفظ التصنيفات المتبقية عشان لو حبينا نغير تصنيف
+};
+
+function openRiskSetupModal() {
+    if (typeof playClickSound === 'function') playClickSound();
+    openModal('modal-risk-setup');
+}
+
+async function startRiskMatchAction() {
+    playClickSound();
+    const t1Name = document.getElementById('risk-name-t1').value.trim() || 'الفريق الأول';
+    const t2Name = document.getElementById('risk-name-t2').value.trim() || 'الفريق الثاني';
+
+    riskMatchData.t1 = { name: t1Name, score: 0, hasTime: true, hasSteal: true };
+    riskMatchData.t2 = { name: t2Name, score: 0, hasTime: true, hasSteal: true };
+    riskMatchData.currentTurn = 1;
+    riskMatchData.rerollsUsed = 0;
+
+    showTopToast('جاري تجهيز لوحة الأسئلة... ⏳', 'info');
+
+    // 1. سحب الأسئلة من الكاش الذكي
+    let rawQuestions = await getQuestionsWithCache('risk_questions');
+    if (!rawQuestions || rawQuestions.length === 0) {
+        showTopToast('لا توجد أسئلة كافية في السيرفر، يرجى رفع الأسئلة من لوحة التحكم!', 'error'); 
+        return;
+    }
+
+    // 2. تجميع الأسئلة حسب التصنيفات والنقاط
+    let grouped = {};
+    rawQuestions.forEach(q => {
+        if (!grouped[q.category]) grouped[q.category] = { 5:[], 10:[], 20:[], 40:[] };
+        if (grouped[q.category][q.points]) grouped[q.category][q.points].push(q);
+    });
+
+    // 3. فلترة التصنيفات الصالحة (سؤال من كل وزن على الأقل)
+    let validCats = [];
+    Object.keys(grouped).forEach(cat => {
+        if (grouped[cat][5].length > 0 && grouped[cat][10].length > 0 && grouped[cat][20].length > 0 && grouped[cat][40].length > 0) {
+            validCats.push({ category: cat, data: grouped[cat] });
+        }
+    });
+
+    if (validCats.length < 4) {
+        showTopToast('الأسئلة المتوفرة لا تكفي لعمل 4 تصنيفات كاملة (5،10،20،40)!', 'error'); 
+        return;
+    }
+
+    // 4. نظام منع التكرار الصارم
+    let seenCats = JSON.parse(localStorage.getItem('risk_seen_cats') || '[]');
+    let unseenPool = validCats.filter(c => !seenCats.includes(c.category));
+
+    let selectedCats = [];
+
+    if (unseenPool.length >= 4) {
+        // إذا كان المتبقي 4 أو أكثر، نختار منهم مباشرة
+        unseenPool = shuffleArray(unseenPool);
+        selectedCats = unseenPool.slice(0, 4);
+        riskMatchData.validCategoriesPool = unseenPool.slice(4);
+    } else {
+        // إذا انتهت كل التصنيفات أو تبقى أقل من 4: نأخذ المتبقي أولاً ثم نصفّر ونكمل الباقي
+        let leftovers = [...unseenPool];
+        seenCats = []; // تصفير الذاكرة لبدء دورة جديدة
+        
+        let freshPool = shuffleArray(validCats.filter(c => !leftovers.some(l => l.category === c.category)));
+        let needed = 4 - leftovers.length;
+        
+        selectedCats = [...leftovers, ...freshPool.slice(0, needed)];
+        riskMatchData.validCategoriesPool = freshPool.slice(needed);
+        showTopToast('تم إكمال جميع التصنيفات وتجديد الدورة بالكامل 🔄', 'info');
+    }
+
+    // حفظ كل ما تم اختياره في الذاكرة لمنع ظهوره حتى تنتهي الدورة القادمة
+    selectedCats.forEach(c => {
+        if (!seenCats.includes(c.category)) seenCats.push(c.category);
+    });
+    localStorage.setItem('risk_seen_cats', JSON.stringify(seenCats));
+
+    // 5. بناء اللوحة وبدء الماتش
+    riskMatchData.board = buildRiskColumns(selectedCats);
+    assignRandomDoubleQuestion();
+
+    closeModal('modal-risk-setup');
+    navigateTo('view-risk-game', 'تحدي ريسك', 'مواجهة الفرق مع الحكم');
+    renderRiskScoreboard();
+    renderRiskGrid();
+}
+
+function buildRiskColumns(selectedCatsArray) {
+    let board = [];
+    selectedCatsArray.forEach(catItem => {
+        // نختار سؤال عشوائي من كل وزن
+        let q5 = shuffleArray(catItem.data[5])[0];
+        let q10 = shuffleArray(catItem.data[10])[0];
+        let q20 = shuffleArray(catItem.data[20])[0];
+        let q40 = shuffleArray(catItem.data[40])[0];
+        
+        board.push({
+            category: catItem.category,
+            questions: [
+                { points: 5, q: q5.q, a: q5.a, answered: false, isDouble: false },
+                { points: 10, q: q10.q, a: q10.a, answered: false, isDouble: false },
+                { points: 20, q: q20.q, a: q20.a, answered: false, isDouble: false },
+                { points: 40, q: q40.q, a: q40.a, answered: false, isDouble: false }
+            ]
+        });
+    });
+    return board;
+}
+
+function assignRandomDoubleQuestion() {
+    // تصفير أي دوبل قديم
+    riskMatchData.board.forEach(c => c.questions.forEach(q => q.isDouble = false));
+    
+    // اختيار عشوائي (عمود من 0 لـ 3) و (صف من 0 لـ 3)
+    const randCol = Math.floor(Math.random() * 4);
+    const randRow = Math.floor(Math.random() * 4);
+    riskMatchData.board[randCol].questions[randRow].isDouble = true;
+}
+
+function rerollRiskCategory(colIndex) {
+    const hasAnyQuestionStarted = riskMatchData.board.some(c => c.questions.some(q => q.answered));
+    if (hasAnyQuestionStarted) {
+        showTopToast('لا يمكن تغيير التصنيف بعد بدء المباراة والإجابة على الأسئلة!', 'error'); 
+        return;
+    }
+
+    if (riskMatchData.rerollsUsed >= 1) {
+        showTopToast('لقد استخدمت فرصة تغيير التصنيف الوحيدة المتاحة لك!', 'error'); 
+        return;
+    }
+    if (!riskMatchData.validCategoriesPool || riskMatchData.validCategoriesPool.length === 0) {
+        showTopToast('لا توجد تصنيفات إضافية متاحة حالياً للتغيير.', 'error'); 
+        return;
+    }
+
+    playClickSound();
+    let newCatItem = riskMatchData.validCategoriesPool.pop();
+    
+    let newCol = buildRiskColumns([newCatItem])[0];
+    riskMatchData.board[colIndex] = newCol;
+    riskMatchData.rerollsUsed++;
+
+    // تسجيل التصنيف البديل الجديد في الـ seen_cats حتى لا يظهر مجدداً
+    let seenCats = JSON.parse(localStorage.getItem('risk_seen_cats') || '[]');
+    if (!seenCats.includes(newCatItem.category)) {
+        seenCats.push(newCatItem.category);
+        localStorage.setItem('risk_seen_cats', JSON.stringify(seenCats));
+    }
+
+    let hasDouble = false;
+    riskMatchData.board.forEach(c => c.questions.forEach(q => { if(q.isDouble) hasDouble = true; }));
+    if (!hasDouble) assignRandomDoubleQuestion();
+
+    showTopToast('تم تغيير التصنيف بنجاح 🔄', 'success');
+    renderRiskGrid();
+}
+
+function renderRiskGrid() {
+    const container = document.getElementById('risk-board-container');
+    container.innerHTML = '';
+
+    // التحقق هل بدأت المباراة وتمت الإجابة على أي سؤال في أي تصنيف
+    const hasAnyQuestionStarted = riskMatchData.board.some(c => c.questions.some(q => q.answered));
+
+    riskMatchData.board.forEach((cat, catIdx) => {
+        let colHtml = `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+        
+        // إظهار زر التغيير فقط إذا لم تبدأ المباراة ولم يُستخدم التغيير مسبقاً
+        let rerollBtn = (!hasAnyQuestionStarted && riskMatchData.rerollsUsed === 0) 
+            ? `<button class="admin-action-btn" style="padding: 2px 6px; font-size: 0.65rem; margin-top: 4px;" onclick="rerollRiskCategory(${catIdx})">تغيير 🔄</button>` 
+            : '';
+
+        colHtml += `
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-card); border-radius: 10px; padding: 8px 4px; text-align: center; font-size: 0.7rem; font-weight: 900; color: var(--accent-gold); min-height: 55px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2;">
+            ${cat.category}
+            ${rerollBtn}
+        </div>`;
+
+        cat.questions.forEach((q, qIdx) => {
+            if (q.answered) {
+                colHtml += `<div style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border-card); border-radius: 10px; padding: 12px 0; text-align: center; color: var(--text-sub); opacity: 0.3; font-weight: 900; font-size: 0.9rem;">✓</div>`;
+            } else {
+                colHtml += `<div class="schedule-neo-card" style="padding: 14px 0; border-radius: 12px;" onclick="openRiskQuestion(${catIdx}, ${qIdx})">
+                    <span style="font-size: 1.1rem; font-weight: 900; color: var(--accent-emerald);">${q.points}</span>
+                </div>`;
+            }
+        });
+
+        colHtml += `</div>`;
+        container.innerHTML += colHtml;
+    });
+}
+
+function openRiskQuestion(catIdx, qIdx) {
+    if (typeof playClickSound === 'function') playClickSound();
+    
+    const cat = riskMatchData.board[catIdx];
+    const q = cat.questions[qIdx];
+    
+    // إذا كان دوبل، نضاعف النقاط في المتغير المؤقت فقط
+    let actualPoints = q.isDouble ? q.points * 2 : q.points;
+
+    riskMatchData.activeQ = { catIdx, qIdx, points: actualPoints, qText: q.q, ansText: q.a, catName: cat.category, isDouble: q.isDouble };
+    riskMatchData.isStealDeclared = false;
+    riskMatchData.stealStageActive = false;
+
+    document.getElementById('risk-q-cat-tag').innerText = cat.category;
+    document.getElementById('risk-q-points-tag').innerText = `${actualPoints} نقطة`;
+    document.getElementById('risk-q-text').innerText = q.q;
+
+    // إظهار شارة الدوبل للحكم فقط لو السؤال دوبل
+    const doubleBadge = document.getElementById('risk-double-badge');
+    if (q.isDouble) {
+        doubleBadge.style.display = 'block';
+        if (typeof triggerConfetti === 'function') triggerConfetti();
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+    } else {
+        doubleBadge.style.display = 'none';
+    }
+
+    const ansBox = document.getElementById('risk-q-ans-box');
+    ansBox.style.display = 'none';
+    ansBox.innerText = `✅ ${q.a}`;
+    document.getElementById('btn-risk-reveal-ans').style.display = 'block';
+
+    document.getElementById('risk-steal-banner').style.display = 'none';
+    document.getElementById('risk-steal-resolution-box').style.display = 'none';
+    document.getElementById('risk-scoring-actions').style.display = 'flex';
+
+    const activeTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t1 : riskMatchData.t2;
+    const opponentTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t2 : riskMatchData.t1;
+
+    document.getElementById('btn-risk-use-time').style.display = activeTeam.hasTime ? 'block' : 'none';
+    document.getElementById('btn-risk-use-steal').style.display = opponentTeam.hasSteal ? 'block' : 'none';
+
+    startRiskQuestionTimer(45);
+    openModal('modal-risk-question');
+}
+
+// ====================== استكمال باقي دوال ريسك كما كانت ======================
+function renderRiskScoreboard() {
+    document.getElementById('risk-board-t1-name').innerText = riskMatchData.t1.name;
+    document.getElementById('risk-board-t1-score').innerText = riskMatchData.t1.score;
+    document.getElementById('risk-board-t2-name').innerText = riskMatchData.t2.name;
+    document.getElementById('risk-board-t2-score').innerText = riskMatchData.t2.score;
+    document.getElementById('risk-t1-card-time').style.opacity = riskMatchData.t1.hasTime ? '1' : '0.2';
+    document.getElementById('risk-t1-card-steal').style.opacity = riskMatchData.t1.hasSteal ? '1' : '0.2';
+    document.getElementById('risk-t2-card-time').style.opacity = riskMatchData.t2.hasTime ? '1' : '0.2';
+    document.getElementById('risk-t2-card-steal').style.opacity = riskMatchData.t2.hasSteal ? '1' : '0.2';
+    const turnTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t1.name : riskMatchData.t2.name;
+    const turnColor = riskMatchData.currentTurn === 1 ? 'var(--accent-gold)' : '#3b82f6';
+    document.getElementById('risk-turn-indicator').innerHTML = `الدور الآن على: <span style="color:${turnColor}">${turnTeam}</span> 🎯`;
+}
+
+function startRiskQuestionTimer(seconds) {
+    clearInterval(riskMatchData.timer);
+    riskMatchData.timeLeft = seconds;
+    const timerBox = document.getElementById('risk-q-timer-box');
+    timerBox.innerText = `⏱️ ${riskMatchData.timeLeft}`;
+    timerBox.style.color = 'var(--text-main)';
+
+    riskMatchData.timer = setInterval(() => {
+        riskMatchData.timeLeft--;
+        timerBox.innerText = `⏱️ ${riskMatchData.timeLeft}`;
+        if (riskMatchData.timeLeft <= 10) timerBox.style.color = '#ef4444';
+        if (riskMatchData.timeLeft <= 0) {
+            clearInterval(riskMatchData.timer);
+            if (typeof playErrorSound === 'function') playErrorSound();
+        }
+    }, 1000);
+}
+
+function useRiskExtraTime() {
+    const activeTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t1 : riskMatchData.t2;
+    if (!activeTeam.hasTime) return;
+    if (typeof playSuccessSound === 'function') playSuccessSound();
+    activeTeam.hasTime = false;
+    document.getElementById('btn-risk-use-time').style.display = 'none';
+    renderRiskScoreboard();
+    riskMatchData.timeLeft += 45;
+    document.getElementById('risk-q-timer-box').innerText = `⏱️ ${riskMatchData.timeLeft}`;
+    showTopToast('تم استخدام كارت +45 ثانية إضافية! ⏱️', 'info');
+}
+
+function flagRiskStealIntent() {
+    const opponentTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t2 : riskMatchData.t1;
+    if (!opponentTeam.hasSteal) return;
+    if (typeof playClickSound === 'function') playClickSound();
+    opponentTeam.hasSteal = false; 
+    riskMatchData.isStealDeclared = true;
+    document.getElementById('btn-risk-use-steal').style.display = 'none';
+    document.getElementById('risk-steal-banner').style.display = 'block';
+    renderRiskScoreboard();
+    showTopToast(`فريق [${opponentTeam.name}] طلب سرقة السؤال!`, 'info');
+}
+
+function revealRiskAnswer() {
+    if (typeof playClickSound === 'function') playClickSound();
+    document.getElementById('risk-q-ans-box').style.display = 'block';
+    document.getElementById('btn-risk-reveal-ans').style.display = 'none';
+}
+
+function submitRiskQuestionResult(isCorrect) {
+    clearInterval(riskMatchData.timer);
+    const activeTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t1 : riskMatchData.t2;
+
+    if (isCorrect) {
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+        activeTeam.score += riskMatchData.activeQ.points;
+        closeRiskQuestionModal();
+    } else {
+        if (typeof playErrorSound === 'function') playErrorSound();
+        if (riskMatchData.isStealDeclared) {
+            riskMatchData.stealStageActive = true;
+            document.getElementById('risk-scoring-actions').style.display = 'none';
+            document.getElementById('risk-steal-banner').style.display = 'none';
+            document.getElementById('risk-steal-resolution-box').style.display = 'block';
+            startRiskQuestionTimer(45);
+        } else {
+            closeRiskQuestionModal();
+        }
+    }
+}
+
+function resolveStealResult(stealSuccess) {
+    clearInterval(riskMatchData.timer);
+    const stealingTeam = riskMatchData.currentTurn === 1 ? riskMatchData.t2 : riskMatchData.t1;
+
+    if (stealSuccess) {
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+        stealingTeam.score += riskMatchData.activeQ.points;
+        showTopToast(`سرقة ناجحة! +${riskMatchData.activeQ.points} نقطة لـ ${stealingTeam.name} 🥷`, 'success');
+    } else {
+        if (typeof playErrorSound === 'function') playErrorSound();
+        showTopToast('فشلت محاولة السرقة! ❌', 'error');
+    }
+    closeRiskQuestionModal();
+}
+
+function closeRiskQuestionModal() {
+    clearInterval(riskMatchData.timer);
+    closeModal('modal-risk-question');
+
+    const { catIdx, qIdx } = riskMatchData.activeQ;
+    riskMatchData.board[catIdx].questions[qIdx].answered = true;
+    riskMatchData.currentTurn = riskMatchData.currentTurn === 1 ? 2 : 1;
+
+    renderRiskScoreboard();
+    renderRiskGrid();
+
+    let remaining = 0;
+    riskMatchData.board.forEach(c => c.questions.forEach(q => { if (!q.answered) remaining++; }));
+    if (remaining === 0) setTimeout(endRiskMatchConfirm, 500);
+}
+
+function endRiskMatchConfirm() {
+    clearInterval(riskMatchData.timer);
+    
+    let t1 = riskMatchData.t1;
+    let t2 = riskMatchData.t2;
+
+    const emojiEl = document.getElementById('risk-result-emoji');
+    const titleEl = document.getElementById('risk-result-title');
+    const scoreEl = document.getElementById('risk-result-score');
+    const teamsEl = document.getElementById('risk-result-teams');
+    const banterEl = document.getElementById('risk-result-banter');
+
+    // قوالب الهزار المتغيرة في حالة الفوز
+    const winTemplates = [
+        "اكتساح تام! فريق <b>{W}</b> علم على <b>{L}</b> واداهم درس قاسي في فنون الريسك! 💥",
+        "فريق <b>{W}</b> مسح بفريق <b>{L}</b> الأرض.. هارد لك يا خاسرين، روحوا ذاكروا وتعالوا تاني! 🤣",
+        "لا تراجع ولا استسلام! بس فريق <b>{W}</b> قرر ينهي طموحات <b>{L}</b> بلا رحمة.. فرق مستوى يا جدعان! 🚀",
+        "فريق <b>{W}</b> عمل جلاشة لفريق <b>{L}</b>.. ماتش للتاريخ ونتيجة تقيلة، نشوفكم في المواجهة الجاية! 🏆",
+        "انتهى الدرس! فريق <b>{W}</b> سيطر بالطول والعرض وخلى فريق <b>{L}</b> يلف حوالين نفسه! 🌪️"
+    ];
+
+    let winner, loser;
+
+    if (t1.score > t2.score) {
+        winner = t1; loser = t2;
+    } else if (t2.score > t1.score) {
+        winner = t2; loser = t1;
+    }
+
+    teamsEl.innerText = `${t1.name} (ضد) ${t2.name}`;
+    scoreEl.innerText = `${t1.score} - ${t2.score}`;
+
+    if (winner) {
+        // حالة فوز أحد الفريقين
+        titleEl.innerText = `مبروك يا ${winner.name}! 🎉`;
+        titleEl.style.color = "var(--accent-emerald)";
+        emojiEl.innerText = "🏆";
+        
+        // اختيار قالب عشوائي وتبديل الأسماء
+        const randomBanter = winTemplates[Math.floor(Math.random() * winTemplates.length)];
+        banterEl.innerHTML = randomBanter.replace('{W}', winner.name).replace('{L}', loser.name);
+        
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+        if (typeof triggerConfetti === 'function') triggerConfetti();
+    } else {
+        // حالة التعادل
+        titleEl.innerText = "تعادل أسطوري! 🤝";
+        titleEl.style.color = "var(--accent-gold)";
+        emojiEl.innerText = "⚖️";
+        banterEl.innerHTML = `مفيش حد قدر يحط على التاني! الفريقين طلعوا حبايب ومستواهم متقارب جداً.. لازم ماتش فاصل! 🔥`;
+        
+        if (typeof playSuccessSound === 'function') playSuccessSound();
+    }
+
+    openModal('modal-risk-result');
+}
+
+// دالة لإنهاء الماتش وإغلاق النافذة والعودة للصفحة السابقة
+function finishRiskMatchFully() {
+    if (typeof playClickSound === 'function') playClickSound();
+    closeModal('modal-risk-result');
+    navigateBack();
+}
+
+// ==========================================
+// ====== تحدي تخمين الصورة 📱 ======
+// ==========================================
+let allGuessData = {}; 
+let allCategoryItems = []; // هيشيل كل صور التصنيف ويتحذف منه اللي تلعب لمنع التكرار
+let currentRoundItems = []; // هيشيل الـ 5 صور بتوع الجولة الحالية بس
+let gScore = 0;
+let gIndex = 0;
+
+async function openGuessGame() {
+    navigateTo('view-guess-game', 'تخمين الصورة 📱', 'تحدي الشلة');
+    showGuessScreen('categories');
+
+    const CACHE_KEY = 'cache_guess_game_data';
+    const VERSION_KEY = 'cache_guess_version';
+
+    try {
+        // 1. فحص رقم الإصدار فقط (~20 بايت)
+        const verSnap = await firebase.database().ref('guess_game_version').once('value');
+        const serverVersion = verSnap.val() || 1;
+        const localVersion = parseInt(localStorage.getItem(VERSION_KEY) || '0');
+        const cachedData = localStorage.getItem(CACHE_KEY);
+
+        // 2. إذا كان الإصدار متطابقاً والبيانات موجودة، لا تسحب شيئاً من فايربيز (0 بايت)
+        if (cachedData && localVersion === serverVersion) {
+            allGuessData = JSON.parse(cachedData);
+            renderGuessCats();
+            return;
+        }
+
+        // 3. إذا كان هناك تحديث أو أول فتح، نسحب البيانات لمرة واحدة ونخزنها
+        const snapshot = await firebase.database().ref('guess_game').once('value');
+        allGuessData = snapshot.val() || {};
+        localStorage.setItem(CACHE_KEY, JSON.stringify(allGuessData));
+        localStorage.setItem(VERSION_KEY, serverVersion.toString());
+        renderGuessCats();
+
+    } catch (err) {
+        console.error("خطأ في جلب بيانات التخمين:", err);
+        // في حال عدم وجود اتصال، نفتح من الكاش القديم إن وجد
+        const fallback = localStorage.getItem(CACHE_KEY);
+        if (fallback) {
+            allGuessData = JSON.parse(fallback);
+            renderGuessCats();
+        } else {
+            alert("فشل التحميل، يرجى التأكد من اتصال الإنترنت");
+        }
+    }
+}
+
+function showGuessScreen(screenId) {
+    document.getElementById('guess-categories-screen').style.display = screenId === 'categories' ? 'block' : 'none';
+    document.getElementById('guess-countdown-screen').style.display = screenId === 'countdown' ? 'block' : 'none';
+    document.getElementById('guess-play-screen').style.display = screenId === 'play' ? 'block' : 'none';
+    document.getElementById('guess-result-screen').style.display = screenId === 'result' ? 'block' : 'none';
+}
+
+function renderGuessCats() {
+    const list = document.getElementById('guess-categories-list');
+    if(!list) return;
+    list.innerHTML = '';
+    
+    Object.keys(allGuessData).forEach(cat => {
+        if (Object.keys(allGuessData[cat]).length > 0) {
+            let btn = document.createElement('button');
+            btn.className = 'btn-submit';
+            btn.style.background = 'var(--card-gradient)';
+            btn.style.border = '1px solid var(--accent-emerald)';
+            btn.style.color = 'var(--text-main)';
+            btn.style.padding = '18px 10px';
+            btn.innerText = cat;
+            // لما يختار التصنيف، بننادي دالة تحضير التصنيف
+            btn.onclick = () => selectGuessCategory(cat); 
+            list.appendChild(btn);
+        }
+    });
+}
+
+// 1. خلط المصفوفة عشوائياً
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// 2. التحميل المسبق للصور (Preloading) عشان تظهر في لحظتها
+function preloadImages(items) {
+    items.forEach(item => {
+        if (item.imgUrl && item.imgUrl.trim() !== "") {
+            const img = new Image();
+            img.src = item.imgUrl;
+        }
+    });
+}
+
+// 3. تحضير التصنيف المختار وسحب كل الصور
+function selectGuessCategory(cat) {
+    const itemsObj = allGuessData[cat] || {};
+    // بنسحب كل العناصر ما عدا الترحيبي ونخلطهم عشوائياً
+    allCategoryItems = Object.values(itemsObj).filter(item => item.name !== "عنصر ترحيبي");
+    allCategoryItems = shuffleArray(allCategoryItems);
+    
+    document.getElementById('guess-current-category').innerText = cat;
+    
+    // نبدأ أول جولة
+    startNewGuessRound();
+}
+
+// 4. بدء جولة جديدة (5 صور)
+function startNewGuessRound() {
+    // لو المصفوفة فضيت، يبقى خلصوا كل الصور اللي في التصنيف
+    if (allCategoryItems.length === 0) {
+        alert("عاش يا وحوش! خلصتوا كل الصور اللي في التصنيف ده 🏆");
+        openGuessGame(); // نرجعهم لشاشة التصنيفات
+        return;
+    }
+
+    // نسحب أول 5 صور ونحذفهم من المصفوفة الأساسية (لمنع التكرار)
+    currentRoundItems = allCategoryItems.splice(0, 5);
+    
+    gScore = 0; 
+    gIndex = 0;
+    document.getElementById('guess-score').innerText = gScore;
+
+    // نحمل الـ 5 صور في الخلفية قبل ما الجولة تبدأ
+    preloadImages(currentRoundItems);
+    
+    // نعرض شاشة الفاصل لأول صورة
+    showGuessTransitionScreen();
+}
+
+// 5. شاشة الفاصل الزمني (5 ثواني للتبديل)
+function showGuessTransitionScreen() {
+    showGuessScreen('countdown');
+    
+    let count = 5;
+    document.getElementById('guess-countdown-number').innerText = count;
+    
+    let cntInt = setInterval(() => {
+        count--;
+        if(count > 0) {
+            document.getElementById('guess-countdown-number').innerText = count;
+        } else {
+            clearInterval(cntInt);
+            loadNextGuessWord(); // بعد الـ 5 ثواني نظهر الصورة
+        }
+    }, 1000);
+}
+
+// 6. عرض الصورة والكلمة
+function loadNextGuessWord() {
+    showGuessScreen('play');
+    const currentItem = currentRoundItems[gIndex];
+    document.getElementById('guess-current-word').innerText = currentItem.name;
+    const imgEl = document.getElementById('guess-current-img');
+    
+    if (currentItem.imgUrl && currentItem.imgUrl.trim() !== "") {
+        imgEl.src = currentItem.imgUrl;
+        imgEl.style.display = 'block';
+    } else {
+        imgEl.style.display = 'none';
+    }
+}
+
+// 7. التقليب للسؤال التالي
+function nextGuessWord(isCorrect) {
+    if(isCorrect) {
+        gScore++;
+        document.getElementById('guess-score').innerText = gScore;
+    }
+    
+    gIndex++;
+
+    // هل خلصنا الـ 5 صور بتوع الجولة؟
+    if(gIndex >= currentRoundItems.length) {
+        finishGuessRound();
+    } else {
+        // لو لسه الجولة شغالة، نعرض فاصل الـ 5 ثواني عشان يلفوا الموبايل
+        showGuessTransitionScreen();
+    }
+}
+
+// 8. إنهاء الجولة الحالية
+function finishGuessRound() {
+    showGuessScreen('result');
+    document.getElementById('guess-final-score').innerText = gScore;
+}
+
+// 9. دالة لعب جولة إضافية من نفس التصنيف
+function playAnotherGuessRound() {
+    startNewGuessRound();
+}
+
+// ================= الأدمن =================
+function loadAdminGuessCategories() {
+    firebase.database().ref('guess_game').once('value').then((snapshot) => {
+        const data = snapshot.val() || {};
+        
+        // 1. القائمة المفردة القديمة
+        const select = document.getElementById('admin-guess-cat-select');
+        if(select) {
+            select.innerHTML = '<option value="">اختر التصنيف...</option>';
+            Object.keys(data).forEach(cat => {
+                let opt = document.createElement('option'); opt.value = cat; opt.innerText = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        // 2. القائمة الجماعية الجديدة (نفس الكود عشان تظهر معاهم)
+        const bulkSelect = document.getElementById('admin-bulk-guess-cat-select');
+        if(bulkSelect) {
+            bulkSelect.innerHTML = '<option value="">اختر التصنيف أولاً...</option>';
+            Object.keys(data).forEach(cat => {
+                let opt = document.createElement('option'); opt.value = cat; opt.innerText = cat;
+                bulkSelect.appendChild(opt);
+            });
+        }
+    });
+}
+
+function addNewGuessCategory() {
+    const inputEl = document.getElementById('new-guess-cat-name');
+    const catName = inputEl.value.trim();
+    if(!catName) return alert('اكتب اسم القسم!');
+    
+    firebase.database().ref('guess_game/' + catName).push({ name: "عنصر ترحيبي", imgUrl: "" }).then(() => {
+        alert('تمت إضافة القسم!'); inputEl.value = ''; loadAdminGuessCategories();
+    });
+}
+
+function addGuessItem() {
+    const cat = document.getElementById('admin-guess-cat-select').value;
+    const name = document.getElementById('new-guess-item-name').value.trim();
+    const url = document.getElementById('new-guess-item-url').value.trim();
+    if (!cat || !name) return alert('اختر قسم واكتب اسم!');
+
+    firebase.database().ref('guess_game/' + cat).push({ name: name, imgUrl: url }).then(() => {
+        // زيادة الإصدار تلقائياً لتحديث هواتف الطلاب
+        firebase.database().ref('guess_game_version').transaction(v => (v || 1) + 1);
+        alert('تم الحفظ!');
+        document.getElementById('new-guess-item-name').value = '';
+        document.getElementById('new-guess-item-url').value = '';
+        loadAdminCategoryItems(); 
+    });
+}
+
+function loadAdminCategoryItems() {
+    const cat = document.getElementById('admin-guess-cat-select').value;
+    const list = document.getElementById('admin-guess-items-list');
+    if(!cat) return list.innerHTML = '';
+    
+    list.innerHTML = 'جاري التحميل...';
+    firebase.database().ref('guess_game/' + cat).once('value').then(snapshot => {
+        const items = snapshot.val() || {}; list.innerHTML = '';
+        Object.keys(items).forEach(key => {
+            const item = items[key];
+            if (item.name !== "عنصر ترحيبي") {
+                list.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; background: var(--bg-primary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-card);">
+                        <span>${item.name} ${item.imgUrl ? '🖼️' : ''}</span>
+                        <button onclick="deleteGuessItem('${cat}', '${key}')" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: none; padding: 5px 10px; border-radius: 6px;">حذف</button>
+                    </div>`;
+            }
+        });
+    });
+}
+
+function deleteGuessItem(cat, key) {
+    if (confirm('حذف هذا العنصر نهائياً؟')) {
+        firebase.database().ref(`guess_game/${cat}/${key}`).remove().then(() => {
+            // زيادة الإصدار تلقائياً بعد الحذف
+            firebase.database().ref('guess_game_version').transaction(v => (v || 1) + 1);
+            loadAdminCategoryItems();
+        });
+    }
+}
+
+async function uploadBulkGuessItems() {
+    const catId = document.getElementById('admin-bulk-guess-cat-select').value;
+    const rawText = document.getElementById('admin-bulk-guess-input').value.trim();
+
+    if (!catId) return alert("برجاء اختيار التصنيف أولاً ⚠️");
+    if (!rawText) return alert("برجاء كتابة العناصر بصيغة (الاسم # الرابط) ⚠️");
+
+    const lines = rawText.split('\n');
+    const uploadPromises = [];
+    let validCount = 0;
+
+    lines.forEach(line => {
+        const parts = line.split('#');
+        if (parts.length >= 2) {
+            const name = parts[0].trim();
+            const imageUrl = parts[1].trim();
+
+            if (name && imageUrl) {
+                validCount++;
+                const promise = firebase.database().ref(`guess_game/${catId}`).push({
+                    name: name,
+                    imgUrl: imageUrl,
+                    createdAt: Date.now()
+                });
+                uploadPromises.push(promise);
+            }
+        }
+    });
+
+    if (uploadPromises.length === 0) {
+        return alert("تأكد من الصيغة الصحيحة: الاسم # الرابط ❌");
+    }
+
+    try {
+        // انتظار انتهاء رفع كافة العناصر في السيرفر
+        await Promise.all(uploadPromises);
+
+        // زيادة رقم الإصدار في فايربيز ليتم تحديث هواتف كل الطلاب فوراً
+        await firebase.database().ref('guess_game_version').transaction(v => (v || 1) + 1);
+
+        alert(`تم رفع ${validCount} عنصر بنجاح وتحديث إصدار اللعبة! 🚀`);
+        document.getElementById('admin-bulk-guess-input').value = '';
+
+        if (typeof loadAdminCategoryItems === 'function') {
+            loadAdminCategoryItems();
+        }
+    } catch (err) {
+        console.error(err);
+        alert("حدث خطأ أثناء الرفع للسيرفر");
+    }
+}
+
+// ==========================================
+// ====== تحدي التوقيت الداخلي (الأطوار المتعددة) ======
+// ==========================================
+let currentTimeMode = 'random'; // 'random', 'custom', 'safezone'
+let targetSeconds = 3.0; 
+let startTime = 0;
+let isTimingRunning = false;
+
+// متغيرات طور الـ Safe Zone التراكمي
+let safeZoneLimit = 30.0;
+let safeZoneAccumulated = 0.0;
+let safeZonePlayerCount = 1;
+
+// 1. التبديل بين الأطوار
+function switchTimeMode(mode) {
+    currentTimeMode = mode;
+    isTimingRunning = false;
+
+    // تحديث أزرار التبويب
+    document.querySelectorAll('#view-time-challenge .auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`tab-mode-${mode}`).classList.add('active');
+
+    // تصفير الزر والنتائج
+    const btn = document.getElementById('time-btn');
+    btn.classList.remove('running');
+    btn.innerText = "ابدأ 🚀";
+    document.getElementById('time-result-box').style.visibility = 'hidden';
+
+    // التحكم في العناصر حسب الطور
+    const customBox = document.getElementById('custom-time-input-box');
+    const safeZoneBox = document.getElementById('safezone-status-box');
+    const badgeEl = document.getElementById('time-mode-badge');
+    const labelEl = document.getElementById('time-target-label');
+    const displayEl = document.getElementById('target-time-display');
+
+    if (mode === 'random') {
+        customBox.style.display = 'none';
+        safeZoneBox.style.display = 'none';
+        badgeEl.innerText = "طور العشوائي 🎲";
+        labelEl.innerText = "اضغط بعد مرور:";
+        initNewTimeRound();
+    } 
+    else if (mode === 'custom') {
+        customBox.style.display = 'block';
+        safeZoneBox.style.display = 'none';
+        badgeEl.innerText = "طور التحدي اليدوي 🎯";
+        labelEl.innerText = "الهدف المحدد يدوياً:";
+        targetSeconds = 5.0;
+        displayEl.innerText = "5 ثواني";
+    } 
+    else if (mode === 'safezone') {
+        customBox.style.display = 'none';
+        safeZoneBox.style.display = 'block';
+        badgeEl.innerText = "طور منطقة الأمان (Safe Zone) 💣";
+        labelEl.innerText = "القنبلة هتفرقع بعد:";
+        initSafeZoneRound();
+    }
+}
+
+// 2. توليد أوقات الطور الفردي العشوائي
+function generateTargetTime() {
+    let baseNumber = (Math.random() < 0.90) 
+        ? Math.floor(Math.random() * 10) + 1 
+        : Math.floor(Math.random() * 10) + 11;
+
+    let finalTime = baseNumber;
+    if (Math.random() < 0.15 && baseNumber < 15) finalTime += 0.5;
+    return finalTime;
+}
+
+function initNewTimeRound() {
+    if (currentTimeMode === 'random') {
+        targetSeconds = generateTargetTime();
+        document.getElementById('target-time-display').innerText = `${targetSeconds} ثانية`;
+    }
+}
+
+// 3. ضبط الوقت اليدوي
+function setCustomTargetTime() {
+    const val = parseFloat(document.getElementById('custom-seconds-input').value);
+    if (!val || val <= 0) {
+        showTopToast("اكتب رقم ثواني صحيح يا بطل! ⏱️", "error");
+        return;
+    }
+    targetSeconds = val;
+    document.getElementById('target-time-display').innerText = `${targetSeconds} ثانية`;
+    showTopToast(`تم تثبيت الهدف على ${targetSeconds} ثانية 🎯`, "success");
+}
+
+// 4. تجهيز جولة Safe Zone جديدة
+function initSafeZoneRound() {
+    safeZoneLimit = Math.floor(Math.random() * 36) + 15; 
+    safeZoneAccumulated = 0.0;
+
+    document.getElementById('target-time-display').innerText = `${safeZoneLimit} ثانية`;
+    document.getElementById('safezone-limit-display').innerText = safeZoneLimit;
+}
+
+// 5. الضغط والتحكم بالزر
+function handleTimeClick() {
+    const btn = document.getElementById('time-btn');
+    const resultBox = document.getElementById('time-result-box');
+
+    // الضغطة الأولى: البداية
+    if (!isTimingRunning) {
+        isTimingRunning = true;
+        startTime = performance.now();
+        
+        resultBox.style.visibility = 'hidden';
+        btn.classList.add('running');
+        btn.innerText = (currentTimeMode === 'safezone') ? "وقف واديه للي بعدك! " : "احسب ودوس! ";
+    } 
+    // الضغطة الثانية: الإيقاف
+    else {
+        isTimingRunning = false;
+        const endTime = performance.now();
+        const turnSeconds = parseFloat(((endTime - startTime) / 1000).toFixed(2));
+        
+        btn.classList.remove('running');
+        btn.innerText = "ابدأ 🚀";
+
+        if (currentTimeMode === 'safezone') {
+            handleSafeZoneTurn(turnSeconds);
+        } else {
+            showTimingResults(turnSeconds);
+            if (currentTimeMode === 'random') initNewTimeRound();
+        }
+    }
+}
+
+// معالجة طور الـ Safe Zone التراكمي (أعمى بدون كشف الوقت المحروق)
+function handleSafeZoneTurn(turnSeconds) {
+    safeZoneAccumulated = parseFloat((safeZoneAccumulated + turnSeconds).toFixed(2));
+    
+    const resultBox = document.getElementById('time-result-box');
+    const userScoreEl = document.getElementById('user-time-score');
+    const badgeEl = document.getElementById('time-rank-badge');
+    const subTitleEl = document.getElementById('user-time-subtitle');
+
+    resultBox.style.visibility = 'visible';
+
+    // تم تجاوز الحد (انفجار القنبلة وخسارة اللاعب)
+    if (safeZoneAccumulated >= safeZoneLimit) {
+        // تشغيل الاهتزاز والصوت فوراً
+        triggerBombExplosionEffects();
+
+        subTitleEl.innerText = "فرقعت في إيدك! 💥";
+        userScoreEl.innerText = `${safeZoneAccumulated} ثانية`;
+        
+        badgeEl.innerText = `💥 بوم! الوقت عدا الـ ${safeZoneLimit} ثانية.. أنت الخسران! 😂`;
+        badgeEl.style.background = "rgba(239, 68, 68, 0.25)";
+        badgeEl.style.color = "#ef4444";
+        
+        // إعادة تهيئة جولة جديدة بعد 4 ثوانٍ
+        setTimeout(initSafeZoneRound, 4000);
+    } 
+    // لسه في منطقة الأمان (SAFE)
+    else {
+        subTitleEl.innerText = "النتيجة:";
+        userScoreEl.innerText = `SAFE 🟢`;
+        
+        badgeEl.innerText = "أنت في أمان! جات سليمة.. باصي الموبايل للي بعدك 🔄";
+        badgeEl.style.background = "rgba(16, 185, 129, 0.2)";
+        badgeEl.style.color = "#10b981";
+    }
+}
+
+// تقييم النتيجة للأطوار العادية
+function showTimingResults(actual) {
+    const resultBox = document.getElementById('time-result-box');
+    const userScoreEl = document.getElementById('user-time-score');
+    const badgeEl = document.getElementById('time-rank-badge');
+    const subTitleEl = document.getElementById('user-time-subtitle');
+    
+    resultBox.style.visibility = 'visible';
+    subTitleEl.innerText = "أنت ضغطت بعد:";
+    userScoreEl.innerText = `${actual} ثانية`;
+
+    const diff = Math.abs(actual - targetSeconds);
+
+    if (diff <= 0.08) {
+        badgeEl.innerText = "خارق! ساعة ذرية 🤯🔥";
+        badgeEl.style.background = "rgba(16, 185, 129, 0.2)";
+        badgeEl.style.color = "#10b981";
+    } else if (diff <= 0.25) {
+        badgeEl.innerText = "أسطورة! قريب جداً 🎯";
+        badgeEl.style.background = "rgba(59, 130, 246, 0.2)";
+        badgeEl.style.color = "#3b82f6";
+    } else if (diff <= 0.6) {
+        badgeEl.innerText = "محاولة كويسة، ركز أكتر ⏱️";
+        badgeEl.style.background = "rgba(245, 158, 11, 0.2)";
+        badgeEl.style.color = "#f59e0b";
+    } else {
+        badgeEl.innerText = "بعيد خالص! محتاج تدريب 😴😂";
+        badgeEl.style.background = "rgba(239, 68, 68, 0.2)";
+        badgeEl.style.color = "#ef4444";
+    }
+}
+
+function openTimeChallengeGame() {
+    navigateTo('view-time-challenge', 'الساعة البيولوجية ⏱️', 'تحدي الشلة');
+    switchTimeMode('random');
+}
+// تعريف كائن الصوت الخاص بانفجار السيف زون
+const bombExplodeSound = new Audio('explosion.mp3');
+
+// دالة تشغيل المؤثرات (اهتزاز + صوت)
+function triggerBombExplosionEffects() {
+    if (navigator.vibrate) {
+        navigator.vibrate([300, 100, 500]);
+    }
+
+    if (typeof isMuted === 'undefined' || !isMuted) {
+        bombExplodeSound.currentTime = 0;
+        bombExplodeSound.play().catch(err => {
+            console.log("Audio play error:", err);
+        });
+    }
+}
+
+// ================= محرك النقطة الحمراء (صفر استهلاك داتا) =================
+let globalContentMarkers = {};
+
+function listenToContentMarkers() {
+    db.ref('content_markers').on('value', snap => {
+        globalContentMarkers = snap.val() || {};
+        updateAllRedDots();
+    });
+}
+
+function hasUnseenContent(subKey = null, typ = null, cat = null) {
+    for (let key in globalContentMarkers) {
+        let match = true;
+        if (subKey && !key.startsWith(subKey)) match = false;
+        if (typ && !key.includes(`_${typ}_`)) match = false;
+        if (cat && !key.endsWith(`_${cat}`)) match = false;
+
+        if (match) {
+            const markerTime = globalContentMarkers[key];
+            const lastSeen = localStorage.getItem('seen_marker_' + key) || 0;
+            if (markerTime > parseInt(lastSeen)) return true;
+        }
+    }
+    return false;
+}
+
+function updateAllRedDots() {
+    // 1. النقطة على كارت المحتوى العلمي في الرئيسية
+    const homeCard = document.querySelector('[onclick*="view-term-subjects"]');
+    if (homeCard) {
+        let dot = document.getElementById('home-science-dot');
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.id = 'home-science-dot';
+            dot.style.cssText = 'position:absolute; top:12px; left:12px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+            homeCard.appendChild(dot);
+        }
+        dot.style.display = hasUnseenContent() ? 'block' : 'none';
+    }
+
+    // 2. النقطة على كروت المواد (مع تأمين فحص السمة)
+    document.querySelectorAll('.subject-card').forEach(card => {
+        const onclickAttr = card.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/openSubject\(['"]([^'"]+)['"]\)/);
+            if (match && match[1]) {
+                const safeKey = getSafeSubjectKey(match[1]);
+                let dot = card.querySelector('.subject-dot');
+                if (!dot) {
+                    dot = document.createElement('span'); 
+                    dot.className = 'subject-dot';
+                    dot.style.cssText = 'position:absolute; top:12px; left:12px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                    card.appendChild(dot);
+                }
+                dot.style.display = hasUnseenContent(safeKey) ? 'block' : 'none';
+            }
+        }
+    });
+
+    // 3. النقطة على النظري والعملي والأقسام
+    if (currentActiveSubject) {
+        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        
+        ['theory', 'practical'].forEach(t => {
+            const btn = document.querySelector(`[onclick="openSubjectTypeDetails('${t}')"]`);
+            if (btn) {
+                let dot = btn.querySelector('.type-dot');
+                if (!dot) {
+                    dot = document.createElement('span'); 
+                    dot.className = 'type-dot';
+                    dot.style.cssText = 'position:absolute; top:10px; left:10px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                    btn.style.position = 'relative'; 
+                    btn.appendChild(dot);
+                }
+                dot.style.display = hasUnseenContent(safeKey, t) ? 'block' : 'none';
+            }
+        });
+
+        if (currentActiveType) {
+            ['lectures', 'summaries', 'quizzes'].forEach(c => {
+                const btn = document.querySelector(`[onclick="openDynamicContentList('${c}')"]`);
+                if (btn) {
+                    let dot = btn.querySelector('.cat-dot');
+                    if (!dot) {
+                        dot = document.createElement('span'); 
+                        dot.className = 'cat-dot';
+                        dot.style.cssText = 'position:absolute; top:10px; left:10px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                        btn.style.position = 'relative'; 
+                        btn.appendChild(dot);
+                    }
+                    dot.style.display = hasUnseenContent(safeKey, currentActiveType, c) ? 'block' : 'none';
+                }
+            });
+        }
+    }
+}
+
+// ================= محرك النقطة الحمراء للمحتوى العلمي (المؤمن) =================
+function updateAllRedDots() {
+    const homeCard = document.querySelector('[onclick*="view-term-subjects"]');
+    if (homeCard) {
+        let dot = document.getElementById('home-science-dot');
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.id = 'home-science-dot';
+            dot.style.cssText = 'position:absolute; top:12px; left:12px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+            homeCard.appendChild(dot);
+        }
+        dot.style.display = hasUnseenContent() ? 'block' : 'none';
+    }
+
+    document.querySelectorAll('.subject-card').forEach(card => {
+        const onclickAttr = card.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/openSubject\(['"]([^'"]+)['"]\)/);
+            if (match && match[1]) {
+                const safeKey = getSafeSubjectKey(match[1]);
+                let dot = card.querySelector('.subject-dot');
+                if (!dot) {
+                    dot = document.createElement('span');
+                    dot.className = 'subject-dot';
+                    dot.style.cssText = 'position:absolute; top:12px; left:12px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                    card.appendChild(dot);
+                }
+                dot.style.display = hasUnseenContent(safeKey) ? 'block' : 'none';
+            }
+        }
+    });
+
+    if (currentActiveSubject) {
+        const safeKey = getSafeSubjectKey(currentActiveSubject);
+        
+        ['theory', 'practical'].forEach(t => {
+            const btn = document.querySelector(`[onclick="openSubjectTypeDetails('${t}')"]`);
+            if (btn) {
+                let dot = btn.querySelector('.type-dot');
+                if (!dot) {
+                    dot = document.createElement('span');
+                    dot.className = 'type-dot';
+                    dot.style.cssText = 'position:absolute; top:10px; left:10px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                    btn.style.position = 'relative';
+                    btn.appendChild(dot);
+                }
+                dot.style.display = hasUnseenContent(safeKey, t) ? 'block' : 'none';
+            }
+        });
+
+        if (currentActiveType) {
+            ['lectures', 'summaries', 'quizzes'].forEach(c => {
+                const btn = document.querySelector(`[onclick="openDynamicContentList('${c}')"]`);
+                if (btn) {
+                    let dot = btn.querySelector('.cat-dot');
+                    if (!dot) {
+                        dot = document.createElement('span');
+                        dot.className = 'cat-dot';
+                        dot.style.cssText = 'position:absolute; top:10px; left:10px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+                        btn.style.position = 'relative';
+                        btn.appendChild(dot);
+                    }
+                    dot.style.display = hasUnseenContent(safeKey, currentActiveType, c) ? 'block' : 'none';
+                }
+            });
+        }
+    }
+}
+
+// ================= محرك النقطة الحمراء للمنظم الأكاديمي =================
+let globalAcademicMarkers = {};
+
+function listenToAcademicMarkers() {
+    db.ref('academic_markers').on('value', snap => {
+        globalAcademicMarkers = snap.val() || {};
+        updateAcademicRedDots();
+    });
+}
+
+function hasUnseenAcademicContent(tabKey = null) {
+    if (tabKey) {
+        const markerTime = globalAcademicMarkers[tabKey] || 0;
+        const lastSeen = localStorage.getItem('seen_acad_marker_' + tabKey) || 0;
+        return markerTime > parseInt(lastSeen);
+    }
+    for (let key of ['tasks', 'schedules', 'alerts']) {
+        const markerTime = globalAcademicMarkers[key] || 0;
+        const lastSeen = localStorage.getItem('seen_acad_marker_' + key) || 0;
+        if (markerTime > parseInt(lastSeen)) return true;
+    }
+    return false;
+}
+
+function updateAcademicRedDots() {
+    const acadHomeCard = document.querySelector('[onclick*="openAcademicHub()"]');
+    if (acadHomeCard) {
+        let dot = document.getElementById('home-acad-dot');
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.id = 'home-acad-dot';
+            dot.style.cssText = 'position:absolute; top:12px; left:12px; width:12px; height:12px; background:#ef4444; border-radius:50%; box-shadow:0 0 8px #ef4444; z-index:10;';
+            acadHomeCard.style.position = 'relative'; 
+            acadHomeCard.appendChild(dot);
+        }
+        dot.style.display = hasUnseenAcademicContent() ? 'block' : 'none';
+    }
+
+    ['tasks', 'schedules', 'alerts'].forEach(tab => {
+        const tabBtn = document.getElementById(`tab-acad-${tab}`);
+        if (tabBtn) {
+            let dot = tabBtn.querySelector('.acad-tab-dot');
+            if (!dot) {
+                dot = document.createElement('span');
+                dot.className = 'acad-tab-dot';
+                dot.style.cssText = 'width:8px; height:8px; background:#ef4444; border-radius:50%; display:inline-block; margin-right:4px; box-shadow:0 0 6px #ef4444; vertical-align: middle;';
+                tabBtn.appendChild(dot);
+            }
+            dot.style.display = hasUnseenAcademicContent(tab) ? 'inline-block' : 'none';
+        }
+    });
+}

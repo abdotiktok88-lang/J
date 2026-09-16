@@ -40,6 +40,27 @@
 .eng-path-text h4 { font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
 .eng-path-text p { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; line-height: 1.4; }
 
+/* ================= ضبط اتجاه النصوص المخلطة عربي وإنجليزي ================= */
+#lesson-reader-body, 
+.lesson-content-box,
+.interactive-q-box {
+    unicode-bidi: plaintext;
+    text-align: right;
+    direction: rtl;
+}
+
+/* ضبط نزول السطر التلقائي واتجاه النصوص المختلطة */
+#lesson-reader-body, 
+.lesson-content-box,
+.interactive-q-box,
+.qbank-ans-box,
+.qbank-q-text {
+    unicode-bidi: plaintext;
+    text-align: right;
+    direction: rtl;
+    white-space: pre-line;
+}
+
 /* ستايل الدرس من الداخل */
 .lesson-content-box { background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 16px; padding: 18px; margin-bottom: 16px; line-height: 1.8; font-size: 0.9rem; color: var(--text-main); }
 .lesson-content-box h4 { color: var(--accent-gold); font-size: 1.05rem; font-weight: 900; margin-bottom: 10px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;}
@@ -380,43 +401,315 @@
         .btn-submit { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%); color: #000; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-submit:active { transform: scale(0.97); }
         
-        .profile-header { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 20px; position: relative; overflow: hidden;}
-        
-        .vip-profile-card {
-            /* استبدل التدرج اللوني برابط صورتك الخاصة مع جعلها تغطي الكارت بالكامل */
-            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('vip-bg.jpg') !important;
-            background-size: cover !important;
-            background-position: center !important;
-            border: 2px solid #ffd700 !important;
-            box-shadow: 0 10px 35px rgba(255, 215, 0, 0.3), 0 0 25px rgba(168, 85, 247, 0.25) !important;
-        }
-        .vip-profile-card::after {
-            content: '👑 VIP MEMBER'; position: absolute; top: 12px; right: 12px;
-            background: linear-gradient(135deg, #ffd700, #b38600); color: #000;
-            font-size: 0.68rem; font-weight: 900; padding: 3px 10px; border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
-        }
-        .vip-profile-card .profile-name { color: #ffffff !important; text-shadow: 0 0 12px rgba(255, 215, 0, 0.6) !important; }
-        .vip-profile-card .profile-phone { color: #ffd700 !important; font-weight: 800 !important; }
+        /* ================= كارت البروفايل الحديث المتقارب ================= */
+.profile-header {
+    background: var(--card-gradient);
+    border: 1.5px solid var(--border-card);
+    border-radius: 24px;
+    padding: 22px 18px 18px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
 
-        /* 1. الحاوية الرئيسية يجب أن تكون visible عشان القبعة تظهر فوقها */
-        .avatar-box-wrapper {
-            position: relative; display: inline-flex; align-items: center; justify-content: center;
-            width: 90px; height: 90px; margin: 0 auto 16px;
+/* تجميع الصورة مع النصوص بجوارها */
+.profile-hero-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    direction: rtl;
+}
+
+/* حاوية الأفاتار المرنة */
+.avatar-box-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin: 0;
+}
+
+/* الأفاتار يأخذ أبعاد الحاوية تلقائياً كما في الملف القديم */
+.profile-avatar {
+    width: 100% !important;
+    height: 100% !important;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-gold);
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden !important;
+    padding: 2px;
+    position: relative;
+    z-index: 2;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: block;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: block;
+}
+
+/* ================= إكسسوارات منصة التتويج (الملف القديم) ================= */
+.podium-place .avatar-box-wrapper { 
+    width: 55px !important; 
+    height: 55px !important; 
+    margin: 4px auto 0 !important; 
+}
+.podium-place .hat-grad { top: -12px !important; font-size: 1.4rem !important; }
+.podium-place .hat-crown { top: -14px !important; font-size: 1.5rem !important; }
+.podium-place .hat-bow { top: -6px !important; right: -4px !important; font-size: 1.3rem !important; }
+.podium-place .hat-band { top: 8px !important; height: 7px !important; }
+.podium-place .hat-flowers { top: -8px !important; font-size: 1.4rem !important; }
+.podium-place .hat-cap { top: -10px !important; font-size: 1.4rem !important; }
+.podium-place .hat-horns { top: -12px !important; font-size: 1.4rem !important; }
+.podium-place .hat-headphones { top: -4px !important; font-size: 1.7rem !important; }
+.podium-place .hat-wizard { top: -14px !important; font-size: 1.5rem !important; }
+.podium-place .hat-halo { top: -15px !important; font-size: 1.4rem !important; }
+
+/* ================= إكسسوارات قائمة المتصدرين وقاعة المشاهير ================= */
+.lb-item .avatar-box-wrapper,
+.fame-card .avatar-box-wrapper { 
+    width: 48px !important; 
+    height: 48px !important; 
+    margin: 0 !important; 
+    flex-shrink: 0;
+}
+.lb-item .hat-grad, .fame-card .hat-grad { top: -11px !important; font-size: 1.3rem !important; }
+.lb-item .hat-crown, .fame-card .hat-crown { top: -13px !important; font-size: 1.4rem !important; }
+.lb-item .hat-bow, .fame-card .hat-bow { top: -5px !important; right: -3px !important; font-size: 1.2rem !important; }
+.lb-item .hat-band, .fame-card .hat-band { top: 7px !important; height: 6px !important; }
+.lb-item .hat-flowers, .fame-card .hat-flowers { top: -7px !important; font-size: 1.3rem !important; }
+.lb-item .hat-cap, .fame-card .hat-cap { top: -9px !important; font-size: 1.3rem !important; }
+.lb-item .hat-horns, .fame-card .hat-horns { top: -11px !important; font-size: 1.3rem !important; }
+.lb-item .hat-headphones, .fame-card .hat-headphones { top: -3px !important; font-size: 1.5rem !important; }
+.lb-item .hat-wizard, .fame-card .hat-wizard { top: -11px !important; font-size: 1.4rem !important; }
+.lb-item .hat-halo, .fame-card .hat-halo { top: -13px !important; font-size: 1.3rem !important; }
+
+/* ================= التكبير مخصص لصفحة البروفايل فقط ================= */
+.profile-hero-avatar-side {
+    flex-shrink: 0;
+}
+
+.profile-hero-avatar-side .avatar-box-wrapper {
+    width: 96px !important;
+    height: 96px !important;
+}
+
+.profile-hero-avatar-side .profile-avatar {
+    width: 96px !important;
+    height: 96px !important;
+    border-width: 3px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    padding: 3px;
+}
+
+/* بيانات الطالب بجانب الصورة */
+.profile-hero-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: right;
+    min-width: 0;
+    gap: 4px;
+}
+
+.profile-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--text-main);
+    line-height: 1.2;
+    word-break: break-word;
+    margin-bottom: 0;
+}
+
+.online-indicator-dot {
+    width: 9px;
+    height: 9px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+    flex-shrink: 0;
+}
+
+.profile-badges-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.profile-bio-text {
+    font-size: 0.84rem;
+    color: var(--accent-gold);
+    font-style: italic;
+    font-weight: 800;
+    line-height: 1.4;
+    margin: 2px 0;
+}
+
+.profile-phone {
+    font-size: 0.78rem;
+    color: var(--text-sub);
+    font-weight: 700;
+    direction: ltr;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* شريط التقدم */
+.profile-progress-section {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-card);
+}
+
+.profile-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.xp-progress-wrapper {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    height: 11px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.xp-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-emerald), #34d399);
+    width: 0%;
+    border-radius: 12px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* ضبط إكسسوارات الرأس للمقاس الجديد */
+#profile-hat-container .hat-grad { top: -18px; font-size: 2.3rem; }
+#profile-hat-container .hat-crown { top: -20px; font-size: 2.4rem; }
+#profile-hat-container .hat-bow { top: -10px; right: -6px; font-size: 2rem; }
+#profile-hat-container .hat-band { top: 14px; width: 88%; height: 11px; }
+#profile-hat-container .hat-flowers { top: -14px; font-size: 2.2rem; }
+#profile-hat-container .hat-cap { top: -16px; font-size: 2.2rem; }
+#profile-hat-container .hat-horns { top: -18px; font-size: 2.2rem; }
+#profile-hat-container .hat-headphones { top: -6px; font-size: 2.8rem; }
+#profile-hat-container .hat-wizard { top: -20px; font-size: 2.4rem; }
+#profile-hat-container .hat-halo { top: -22px; font-size: 2.3rem; }
+
+/* كارت الـ VIP */
+.vip-profile-card {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('vip-bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 10px 35px rgba(255, 215, 0, 0.35), 0 0 25px rgba(168, 85, 247, 0.25) !important;
+}
+
+.vip-profile-card::after {
+    content: '👑 VIP MEMBER';
+    position: absolute;
+    bottom: 80px; /* رُفعت لتستقر تماماً فوق السطر المنقط */
+    left: 16px;   /* على الشمال في المساحة الفاضية */
+    background: linear-gradient(135deg, #ffd700, #b38600);
+    color: #000;
+    font-size: 0.68rem;
+    font-weight: 900;
+    padding: 3px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+    z-index: 5;
+}
+
+        .profile-progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
         }
 
-        .profile-avatar { 
-            width: 100%; height: 100%; background: var(--bg-secondary); border: 2px solid var(--accent-gold); 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            overflow: hidden; padding: 4px; position: relative; z-index: 1;
+        .xp-progress-wrapper {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            height: 11px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+            margin-top: 0;
         }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+        .xp-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-emerald), #34d399);
+            width: 0%;
+            border-radius: 12px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
 
         /* إكسسوارات الرأس */
         .hat-accessory {
             position: absolute; z-index: 10; pointer-events: none; display: flex; align-items: center; justify-content: center;
             line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
+
+
+        /* ضبط موضع إكسسوارات الرأس مع المقاس الجديد */
+        #profile-hat-container .hat-accessory {
+            z-index: 10;
+        }
+        #profile-hat-container .hat-grad { top: -20px; font-size: 2.5rem; }
+        #profile-hat-container .hat-crown { top: -22px; font-size: 2.6rem; }
+        #profile-hat-container .hat-bow { top: -12px; right: -8px; font-size: 2.3rem; }
+        #profile-hat-container .hat-band { top: 16px; width: 90%; height: 12px; }
+        #profile-hat-container .hat-flowers { top: -16px; font-size: 2.4rem; }
+        #profile-hat-container .hat-cap { top: -18px; font-size: 2.4rem; }
+        #profile-hat-container .hat-horns { top: -20px; font-size: 2.4rem; }
+        #profile-hat-container .hat-headphones { top: -8px; font-size: 3rem; }
+        #profile-hat-container .hat-wizard { top: -22px; font-size: 2.6rem; }
+        #profile-hat-container .hat-halo { top: -24px; font-size: 2.5rem; }
+
+        /* ضبط الإطار الدائري الخارجي ليلتف حول الحجم الجديد */
+        #profile-avatar-container ~ .avatar-ring-frame,
+        .avatar-box-wrapper .avatar-ring-frame {
+            inset: -10px !important;
+        }
+
 
         .hat-grad { top: -16px; left: 50%; transform: translateX(-50%); font-size: 2.1rem; }
         .hat-crown { top: -18px; left: 50%; transform: translateX(-50%); font-size: 2.2rem; filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.8)); }
@@ -430,29 +723,37 @@
         .hat-halo { top: -20px; left: 50%; transform: translateX(-50%); font-size: 2.1rem; animation: haloFloat 2s infinite alternate; }
         @keyframes haloFloat { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-5px); } }
 
-        .podium-place .avatar-box-wrapper { width: 55px; height: 55px; margin: 4px auto 0; }
-        .podium-place .hat-grad { top: -12px; font-size: 1.4rem; }
-        .podium-place .hat-crown { top: -14px; font-size: 1.5rem; }
-        .podium-place .hat-bow { top: -6px; right: -4px; font-size: 1.3rem; }
-        .podium-place .hat-band { top: 8px; height: 7px; }
-        .podium-place .hat-flowers { top: -8px; font-size: 1.4rem; }
-        .podium-place .hat-cap { top: -10px; font-size: 1.4rem; }
-        .podium-place .hat-horns { top: -12px; font-size: 1.4rem; }
-        .podium-place .hat-headphones { top: -4px; font-size: 1.7rem; }
-        .podium-place .hat-wizard { top: -14px; font-size: 1.5rem; }
-        .podium-place .hat-halo { top: -15px; font-size: 1.4rem; }
-
-        .lb-item .avatar-box-wrapper { width: 45px; height: 45px; margin: 0; flex-shrink: 0; }
-        .lb-item .hat-grad { top: -10px; font-size: 1.2rem; }
-        .lb-item .hat-crown { top: -12px; font-size: 1.3rem; }
-        .lb-item .hat-bow { top: -4px; right: -2px; font-size: 1.1rem; }
-        .lb-item .hat-band { top: 6px; height: 6px; }
-        .lb-item .hat-flowers { top: -6px; font-size: 1.2rem; }
-        .lb-item .hat-cap { top: -8px; font-size: 1.2rem; }
-        .lb-item .hat-horns { top: -10px; font-size: 1.2rem; }
-        .lb-item .hat-headphones { top: -2px; font-size: 1.4rem; }
-        .lb-item .hat-wizard { top: -10px; font-size: 1.3rem; }
-        .lb-item .hat-halo { top: -12px; font-size: 1.2rem; }
+        /* ================= ضبط إكسسوارات منصة التتويج (المراكز 1، 2، 3) ================= */
+        .podium-place .avatar-box-wrapper { 
+            width: 60px !important; 
+            height: 60px !important; 
+            margin: 4px auto 0 !important; 
+        }
+        .podium-place .hat-crown { 
+            top: -18px !important; 
+            font-size: 2.1rem !important; 
+        }
+        .podium-place .hat-grad { 
+            top: -16px !important; 
+            font-size: 2rem !important; 
+        }
+        .podium-place .hat-wizard { 
+            top: -18px !important; 
+            font-size: 2rem !important; 
+        }
+        .podium-place .hat-bow { 
+            top: -8px !important; 
+            right: -4px !important; 
+            font-size: 1.6rem !important; 
+        }
+        .podium-place .hat-cap { 
+            top: -14px !important; 
+            font-size: 1.8rem !important; 
+        }
+        .podium-place .hat-headphones { 
+            top: -6px !important; 
+            font-size: 2.2rem !important; 
+        }
         
         .frame-gold {
             border: 3px solid #ffd700 !important;
@@ -561,9 +862,6 @@
             100% { filter: drop-shadow(0 0 18px #06b6d4); }
         }
 
-        .profile-name { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
-        .profile-bio-text { font-size: 0.85rem; color: var(--accent-gold); font-style: italic; margin-bottom: 10px; font-weight: 700;}
-        .profile-phone { font-size: 0.9rem; color: var(--text-sub); font-weight: 600; margin-bottom: 12px; direction: ltr; }
         
         .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-box { background: var(--card-gradient); border: 1px solid var(--border-card); border-radius: 16px; padding: 16px; text-align: center; }
@@ -623,7 +921,7 @@
         .lb-badge { font-size: 0.75rem; color: var(--text-sub); font-weight: 700; margin-top: 2px; }
         .lb-points { font-size: 1.1rem; font-weight: 900; color: var(--accent-gold); text-align: right; }
 
-        /* قاعة المشاهير (Hall of Fame) */
+/* قاعة المشاهير (Hall of Fame) */
         .fame-banner-btn {
             background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(168, 85, 247, 0.2) 100%);
             border: 1.5px solid var(--accent-gold); border-radius: 18px; padding: 14px 18px;
@@ -758,12 +1056,6 @@
         .rank-row:last-child { border-bottom: none; }
         .rank-row.is-me { color: var(--accent-emerald); font-weight: 800; font-size: 0.85rem; }
 
-        .xp-progress-wrapper {
-            width: 100%; background: var(--bg-primary); border: 1px solid var(--border-card);
-            border-radius: 10px; height: 12px; margin-top: 15px; overflow: hidden; position: relative;
-        }
-        .xp-progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent-emerald), #34d399); width: 0%; transition: width 1s ease-out; }
-        .xp-progress-text { text-align: center; font-size: 0.7rem; color: var(--text-sub); margin-top: 5px; font-weight: 700; }
 
         .store-sub-nav { display: flex; gap: 6px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
         .store-sub-btn {
@@ -1857,9 +2149,323 @@
     z-index: 2;
 }
 
+/* تصميم زرار الساعة البيولوجية النيون */
+.bio-timer-btn {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 4px solid rgba(16, 185, 129, 0.6);
+    background: radial-gradient(circle, #059669 0%, #064e3b 80%, #022c22 100%);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1.7rem;
+    font-weight: 900;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+    animation: pulseBioGreen 2s infinite alternate;
+}
+
+.bio-timer-btn:active {
+    transform: scale(0.92);
+}
+
+/* حالة أثناء الحساب (أحمر نيون متوهج) */
+.bio-timer-btn.running {
+    border-color: rgba(239, 68, 68, 0.8);
+    background: radial-gradient(circle, #dc2626 0%, #991b1b 80%, #450a0a 100%);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.3);
+    animation: pulseBioRed 1s infinite alternate;
+}
+
+@keyframes pulseBioGreen {
+    from { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+    to { box-shadow: 0 0 30px rgba(16, 185, 129, 0.7); }
+}
+
+@keyframes pulseBioRed {
+    from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+    to { box-shadow: 0 0 40px rgba(239, 68, 68, 0.9); }
+}
+
+/* ================= ثيمات المتجر (النسخة النهائية المتوافقة) ================= */
+
+/* --- 1. ثيم السايبر نيون (الوضع الداكن) --- */
+[data-custom-theme="cyberpunk"] {
+    --bg-primary: #0b001a !important;
+    --bg-secondary: rgba(26, 9, 51, 0.95) !important;
+    --border-card: rgba(168, 85, 247, 0.5) !important;
+    --accent-gold: #00f0ff !important;
+    --accent-emerald: #ec4899 !important;
+    --text-main: #f8fafc !important;
+    --text-sub: #cbd5e1 !important;
+    --card-gradient: linear-gradient(145deg, #180033, #0a0017) !important;
+    --accent-highlight: #c084fc !important;
+    --header-bg: rgba(11, 0, 26, 0.95) !important;
+    --nav-bg: rgba(11, 0, 26, 0.98) !important;
+}
+
+/* --- ثيم السايبر نيون (الوضع الفاتح) --- */
+[data-theme="light"][data-custom-theme="cyberpunk"] {
+    --bg-primary: #f3e8ff !important;
+    --bg-secondary: rgba(255, 255, 255, 0.95) !important;
+    --border-card: rgba(168, 85, 247, 0.4) !important;
+    --accent-gold: #7c3aed !important;
+    --accent-emerald: #db2777 !important;
+    --text-main: #3b0764 !important;
+    --text-sub: #6b21a8 !important;
+    --card-gradient: linear-gradient(145deg, #ffffff, #ede9fe) !important;
+    --accent-highlight: #9333ea !important;
+    --header-bg: rgba(243, 232, 255, 0.95) !important;
+    --nav-bg: rgba(243, 232, 255, 0.98) !important;
+}
+
+
+/* --- ثيم الذهب الملكي الفاخر (Royal Gold Metallic) - الوضع الداكن --- */
+[data-custom-theme="royal_gold"] {
+    --bg-primary: #0d0b09 !important;             /* أسود فحمي ملكي عميق جداً كخلفية للمعدن */
+    --bg-secondary: rgba(26, 22, 18, 0.95) !important;
+    --border-card: rgba(212, 175, 55, 0.6) !important; /* حدود ذهبية لامعة */
+    --accent-gold: #ffd700 !important;           /* أصفر ذهبي ساطع وصريح */
+    --accent-emerald: #d4af37 !important;        /* ذهبي معدني غني للـ XP */
+    --text-main: #fffdfa !important;             /* نص أبيض ناصع يعكس بريق الذهب */
+    --text-sub: #e2d9c5 !important;              /* نص فرعي بلون الكتان الملكي الفاخر */
+    --card-gradient: linear-gradient(135deg, #26211a 0%, #12100e 50%, #1f1a14 100%) !important; /* تدرج يحاكي عروق المعدن */
+    --accent-highlight: #f3e5ab !important;      /* لمعة ذهبية فاتحة */
+    --header-bg: rgba(13, 11, 9, 0.95) !important;
+    --nav-bg: rgba(13, 11, 9, 0.98) !important;
+}
+
+/* --- ثيم الذهب الملكي (الوضع الفاتح) --- */
+[data-theme="light"][data-custom-theme="royal_gold"] {
+    --bg-primary: #fbf8ef !important;             /* أبيض عاجي فاخر (Ivory) */
+    --bg-secondary: rgba(255, 255, 255, 0.95) !important;
+    --border-card: rgba(180, 142, 39, 0.5) !important;
+    --accent-gold: #996515 !important;           /* ذهبي عتيق غني وواضح للعين */
+    --accent-emerald: #b8860b !important;        /* لون التبر الهملائي الداكن */
+    --text-main: #2b220d !important;             /* بني داكن ملكي للنصوص */
+    --text-sub: #5c4a1e !important;              /* نص فرعي دافئ */
+    --card-gradient: linear-gradient(135deg, #ffffff 0%, #f7f1df 100%) !important;
+    --accent-highlight: #d4af37 !important;
+    --header-bg: rgba(251, 248, 239, 0.95) !important;
+    --nav-bg: rgba(251, 248, 239, 0.98) !important;
+}
+
+/* ================= ثيمات سبايدر مان، الكلاسيك، ودكتور دوم ================= */
+
+/* --- 1. ثيم سبايدر مان (Spider-Man Ultimate) - الوضع الداكن --- */
+[data-custom-theme="spiderman"] {
+    --bg-primary: #070d1d !important;             /* أزرق ليلي عميق جداً كأنك بتطير فوق نيويورك */
+    --bg-secondary: rgba(15, 23, 42, 0.95) !important;
+    --border-card: rgba(239, 68, 68, 0.7) !important; /* حدود حمراء صارخة */
+    --accent-gold: #ef4444 !important;           /* اللون الأحمر القاني الخاص ببدلة سبايدر مان */
+    --accent-emerald: #38bdf8 !important;        /* الأزرق السماوي الساطع للـ XP */
+    --text-main: #f8fafc !important;
+    --text-sub: #cbd5e1 !important;
+    --card-gradient: linear-gradient(145deg, #172554, #0b132b) !important; /* تدرج أزرق ملكي فخم */
+    --accent-highlight: #f87171 !important;
+    --header-bg: rgba(7, 13, 29, 0.95) !important;
+    --nav-bg: rgba(7, 13, 29, 0.98) !important;
+}
+
+/* --- ثيم سبايدر مان (الوضع الفاتح) --- */
+[data-theme="light"][data-custom-theme="spiderman"] {
+    --bg-primary: #e0f2fe !important;              /* أزرق سماوي فاتح ونظيف */
+    --bg-secondary: rgba(255, 255, 255, 0.95) !important;
+    --border-card: rgba(220, 38, 38, 0.6) !important;
+    --accent-gold: #dc2626 !important;            /* أحمر صريح وقوي */
+    --accent-emerald: #0284c7 !important;         /* أزرق داكن واضح */
+    --text-main: #172554 !important;
+    --text-sub: #1e3a8a !important;
+    --card-gradient: linear-gradient(145deg, #ffffff, #dbeafe) !important;
+    --accent-highlight: #ef4444 !important;
+    --header-bg: rgba(224, 242, 254, 0.95) !important;
+    --nav-bg: rgba(224, 242, 254, 0.98) !important;
+}
+
+/* تعريف متغير الظل الافتراضي لسبايدر مان (الوضع الداكن) */
+[data-custom-theme="spiderman"] {
+    --spiderman-shadow: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.4)); /* ظل أسود خفيف وهادئ */
+}
+
+/* تعديل الظل تلقائياً في الوضع الفاتح */
+[data-theme="light"][data-custom-theme="spiderman"] {
+    --spiderman-shadow: drop-shadow(0 5px 12px rgba(255, 255, 255, 0.6)); /* ظل أبيض ناعم وخفيف في النهاري */
+}
+
+/* ==================================================
+   نظام عناصر البروفايل المعلقة (لكل الثيمات)
+   ================================================== */
+
+/* الخصائص الأساسية المشتركة وتفعيل حركة التأرجح للجميع */
+.theme-hanging-element {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 20px;
+    z-index: 10;
+    pointer-events: none;
+    animation: themeSwingAnim 3s ease-in-out infinite alternate;
+}
+
+/* 1. سبايدر مان (يحتفظ بنفس ظله القديم وحركته) */
+.theme-hanging-element.spiderman-deco {
+    width: 60px;
+    height: 120px;
+    background-image: url('spiderman-hanging.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: var(--spiderman-shadow);
+    animation: themeSwingAnim 3s ease-in-out infinite alternate;
+}
+[data-custom-theme="spiderman"] .spiderman-deco { display: block; }
+
+/* 2. دكتور دوم */
+.theme-hanging-element.doom-deco {
+    width: 70px;
+    height: 90px;
+    background-image: url('doom-mask.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 4px 10px rgba(16, 185, 129, 0.4));
+}
+[data-custom-theme="doctor_doom"] .doom-deco { display: block; }
+
+/* 3. الذهب الملكي */
+.theme-hanging-element.gold-deco {
+    width: 65px;
+    height: 65px;
+    background-image: url('gold-crown.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.5));
+}
+[data-custom-theme="royal_gold"] .gold-deco { display: block; }
+
+/* 4. الكلاسيكي */
+.theme-hanging-element.classic-deco {
+    width: 60px;
+    height: 80px;
+    background-image: url('classic-badge.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+[data-custom-theme="classic"] .classic-deco,
+[data-custom-theme="classic_vintage"] .classic-deco { 
+    display: block; 
+}
+/* حركة أرجوحة ناعمة */
+@keyframes themeSwingAnim {
+    0% { transform: translateY(0px) rotate(0deg); }
+    100% { transform: translateY(6px) rotate(1.5deg); }
+}
+
+
+/* 2. الثيم الكلاسيكي القديم (Classic Vintage) - ألوان خشبية وترابية دافئة */
+[data-custom-theme="classic_vintage"] {
+    --bg-primary: #1c1917 !important;
+    --bg-secondary: rgba(41, 37, 36, 0.95) !important;
+    --border-card: rgba(217, 119, 6, 0.45) !important;
+    --accent-gold: #d97706 !important;
+    --accent-emerald: #b45309 !important;
+    --text-main: #fafaf9 !important;
+    --text-sub: #d6d3d1 !important;
+    --card-gradient: linear-gradient(145deg, #292524, #1c1917) !important;
+    --accent-highlight: #f59e0b !important;
+    --header-bg: rgba(28, 25, 23, 0.95) !important;
+    --nav-bg: rgba(28, 25, 23, 0.98) !important;
+}
+[data-theme="light"][data-custom-theme="classic_vintage"] {
+    --bg-primary: #fef3c7 !important;
+    --bg-secondary: rgba(255, 255, 255, 0.95) !important;
+    --border-card: rgba(180, 83, 9, 0.3) !important;
+    --accent-gold: #92400e !important;
+    --accent-emerald: #b45309 !important;
+    --text-main: #451a03 !important;
+    --text-sub: #78350f !important;
+    --card-gradient: linear-gradient(145deg, #ffffff, #fffbeb) !important;
+    --accent-highlight: #b45309 !important;
+    --header-bg: rgba(254, 243, 199, 0.95) !important;
+    --nav-bg: rgba(254, 243, 199, 0.98) !important;
+}
+
+
+/* 3. ثيم دكتور دوم (Doctor Doom) - أخضر داكن ومعدني فخم */
+[data-custom-theme="doctor_doom"] {
+    --bg-primary: #022c22 !important;
+    --bg-secondary: rgba(6, 78, 59, 0.95) !important;
+    --border-card: rgba(52, 211, 153, 0.45) !important;
+    --accent-gold: #34d399 !important;
+    --accent-emerald: #10b981 !important;
+    --text-main: #f0fdf4 !important;
+    --text-sub: #a7f3d0 !important;
+    --card-gradient: linear-gradient(145deg, #064e3b, #022c22) !important;
+    --accent-highlight: #6ee7b7 !important;
+    --header-bg: rgba(2, 44, 34, 0.95) !important;
+    --nav-bg: rgba(2, 44, 34, 0.98) !important;
+}
+[data-theme="light"][data-custom-theme="doctor_doom"] {
+    --bg-primary: #d1fae5 !important;
+    --bg-secondary: rgba(255, 255, 255, 0.95) !important;
+    --border-card: rgba(5, 150, 105, 0.3) !important;
+    --accent-gold: #047857 !important;
+    --accent-emerald: #065f46 !important;
+    --text-main: #022c22 !important;
+    --text-sub: #064e3b !important;
+    --card-gradient: linear-gradient(145deg, #ffffff, #ecfdf5) !important;
+    --accent-highlight: #10b981 !important;
+    --header-bg: rgba(209, 250, 229, 0.95) !important;
+    --nav-bg: rgba(209, 250, 229, 0.98) !important;
+}
+
 </style>
 </head>
 <body>
+
+<!-- شاشة النهاية التجريبية -->
+<div id="grand-finale-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999999; background: #090d16; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px 16px 60px; box-sizing: border-box;">
+    <div style="max-width: 580px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div style="text-align: center; padding: 20px 10px 10px;">
+            <div style="font-size: 3.8rem; display: inline-block; filter: drop-shadow(0 6px 15px rgba(245, 158, 11, 0.35)); margin-bottom: 12px;">🚀</div>
+            <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 12px; letter-spacing: -0.5px;">انتهت الفترة التجريبية بنجاح</h1>
+            <p style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.9; margin: 0 auto; opacity: 0.95;">
+                شكراً لكل حد شارك معانا في تجربة النسخة المبدئية من التطبيق.<br>
+                التطبيق الآن مغلق مؤقتًا لإجراء صيانة وتطوير شامل، عشان نرجع لكم بنسخة نهائية أقوى وأسرع تليق بيكم، وتستوعب المحتوى العلمي كامل خلال الترم.
+            </p>
+        </div>
+        <div style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 20px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
+                <span style="font-size: 1.2rem;">⏳</span>
+                <span style="color: var(--accent-emerald); font-size: 1rem; font-weight: 900;">موعد الإطلاق الرسمي القادم</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; direction: ltr;" id="finale-countdown"></div>
+        </div>
+        <div id="feedback-section" style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 22px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: right;">
+            <div style="text-align: center; margin-bottom: 18px;">
+                <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 6px;">رأيك يهمنا في النسخة الجديدة 💡</h3>
+                <p style="font-size: 0.82rem; color: var(--text-sub); font-weight: 600; margin: 0;">شاركنا تقييمك، إيه اللي عجبك، نقاط الضعف، واقتراحاتك للأقسام والاضافات القادمة.</p>
+            </div>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px 10px; margin-bottom: 16px; text-align: center;">
+                <div style="color: var(--accent-gold); font-size: 0.82rem; font-weight: 800; margin-bottom: 8px;">كم نجمة يستحقها التطبيق؟</div>
+                <div style="font-size: 2.2rem; direction: ltr; display: flex; justify-content: center; gap: 8px;" id="star-rating-box">
+                    <span class="fb-star" data-val="1" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="2" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="3" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="4" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                    <span class="fb-star" data-val="5" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 14px;">
+                <textarea id="finale-feedback-text" class="form-input" rows="4" placeholder="اكتب إيه اللي عجبك، المشاكل اللي واجهتك، ومقترحاتك للتطوير..." style="resize: none; line-height: 1.6; font-size: 0.9rem;"></textarea>
+            </div>
+            <button id="btn-submit-feedback" class="btn-submit" style="margin: 0;" onclick="submitFinaleFeedback()">إرسال التقييم للمطور 📤</button>
+        </div>
+        <div id="feedback-success-msg" style="display: none; text-align: center; color: var(--accent-emerald); font-weight: 800; font-size: 0.95rem; padding: 18px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--accent-emerald); border-radius: 16px;">
+            تم استلام رسالتك بنجاح يا هندسة.. شكراً جداً لوقتك ودعمك! ❤️
+        </div>
+    </div>
+</div>
 
     <!-- طبقة الأشكال والرموز المتطايرة -->
     <!-- طبقة أيقونات علوم الأغذية والكيمياء الطافية -->
@@ -1939,7 +2545,7 @@
         </div>
     </div>
 
-    <!-- نافذة إعداد ديربي الدفعة 1v1 -->
+        <!-- نافذة إعداد ديربي الدفعة 1v1 -->
     <div id="modal-derby-setup" class="modal-overlay">
         <div class="modal-box" style="max-width: 420px; text-align: right;">
             <button class="btn-close-modal" onclick="closeModal('modal-derby-setup')">×</button>
@@ -2285,39 +2891,7 @@
         </div>
     </div>
 
-    <!-- نافذة اختيار طور تحدي المعلومات (بنظام السلايدر والكروت المصورة) -->
-    <div id="quiz-rules-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 440px; text-align: right;">
-            <button class="btn-close-modal" onclick="closeModal('quiz-rules-modal')">×</button>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <span style="font-size: 1.8rem;">🧠</span>
-                <h3 style="color: var(--accent-gold); margin: 0;">تحدي المعلومات (فردي)</h3>
-            </div>
-            <p style="font-size: 0.82rem; color: var(--text-sub); margin-bottom: 12px;">اسحب لاختيار نظام التحدي واضغط للانطلاق فوراً:</p>
-
-            <div class="derby-carousel-container" style="margin-bottom: 15px;">
-                <!-- 1. الطور الكلاسيكي -->
-                <div class="quiz-tier-slide tier-classic" onclick="startActualQuiz()">
-                    <div class="derby-tier-title-text">تحدي العباقرة 📚</div>
-                    <div class="derby-tier-badge-cost">الكلاسيكي</div>
-                    <div class="derby-tier-badge-reward">🎯 الإجابة الصح: +5 XP و +2 💸</div>
-                    <div style="font-size: 0.68rem; color: #cbd5e1; margin-top: 2px;"> الخمسة صح: بونص +10 XP و +5 عملات 🏆</div>
-                </div>
-
-                <!-- 2. طور ركلات الجزاء -->
-                <div class="quiz-tier-slide tier-penalty" onclick="openPenaltySelectionFlow()">
-                    <div class="derby-tier-title-text">ركلات الجزاء ⚽🎯</div>
-                    <div class="derby-tier-badge-cost">G O A T</div>
-<div class="derby-tier-badge-reward">4 صح من 5 : هدف + 50 XP و 15💸</div>
-                    <div style="font-size: 0.68rem; color: #fca5a5; margin-top: 2px;">لو غلطت في أكثر من سؤال : مينص 15 XP</div>
-                </div>
-            </div>
-
-            <div id="quiz-modal-daily-counter" style="font-size: 0.78rem; color: var(--accent-gold); font-weight: 800; text-align: center;"></div>
-        </div>
-    </div>
-
-    <div id="quiz-result-modal" class="modal-overlay">
+        <div id="quiz-result-modal" class="modal-overlay">
         <div class="modal-box" id="result-modal-box">
             <img id="result-img" src="https://img.icons8.com/fluency/96/trophy.png" style="width: 80px; height: 80px; margin-bottom: 12px;" alt="Result">
             <h3 id="result-title" style="font-size: 1.6rem; margin-bottom: 15px;">خلصت المعركة يا دولي!</h3>
@@ -2390,16 +2964,16 @@
             <div class="section-label">الأقسام الرئيسية</div>
             <div class="eng-bento-grid">
                 
-                <!-- 1. المنظم الأكاديمي (يمين) -->
+                <!-- 1. المنظم الأكاديمي (نصف يمين) -->
                 <div class="eng-bento-card" style="--theme-color: #10b981;" onclick="openAcademicHub()">
                     <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-emerald); margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
                         <img src="https://img.icons8.com/fluency/96/diploma.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
                     <h3 style="color: var(--accent-emerald);">المنظم الأكاديمي</h3>
-                    <p>التكليفات والجداول والتنبيهات</p>
+                    <p>التاسكات والجداول والتنبيهات</p>
                 </div>
 
-                <!-- 2. مواد الترم (شمال) -->
+                <!-- 2. المحتوى العلمي (نصف شمال) -->
                 <div class="eng-bento-card" style="--theme-color: #3b82f6;" onclick="navigateTo('view-term-subjects', 'مواد الترم الأول', 'اختر المادة الدراسية')">
                     <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
                         <img src="https://img.icons8.com/fluency/96/books.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
@@ -2408,62 +2982,25 @@
                     <p>كل ما يخص الدراسة</p>
                 </div>
 
-                <!-- 3. تحدي المعلومات (عريض كامل) -->
-                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b;" onclick="openLevelsMap()">
-                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0;">
-                        <img src="https://img.icons8.com/fluency/96/brain.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <!-- 3. التحديات والترفيه (كارت جديد عرض كامل) -->
+                <div class="eng-bento-card bento-large" style="--theme-color: #a855f7; border: 1.5px solid var(--border-card);" onclick="openChallengesHub()">
+                    <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 8px; flex-shrink: 0;">
+                        <img src="https://img.icons8.com/fluency/96/controller.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
                     </div>
                     <div>
-                        <h3 style="color: #f59e0b;">تحدي المعلومات (فردي)</h3>
-                        <p>اختبر معلوماتك العامة وزود نقاطك</p>
+                        <h3 style="color: #c084fc;">التحديات والترفيه 🎮</h3>
+                        <p style="font-size: 0.8rem; margin-top: 4px;">مسابقات، ألعاب، وتحديات أونلاين</p>
                     </div>
                 </div>
 
-                <!-- 4. ديربي الدفعة (يمين) -->
-                <div class="eng-bento-card" style="--theme-color: #ef4444; background: linear-gradient(145deg, rgba(35, 20, 45, 0.95), rgba(15, 10, 20, 0.95)); border: 1.5px solid #ef4444;" onclick="openDerbySetupModal()">
-                    <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
-                        <img src="https://img.icons8.com/fluency/96/battle.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                <!-- 4. مهندس جودة؟ (مربع كامل يتكيف مع الثيم) -->
+                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b; background: var(--card-gradient); border: 2px solid var(--border-card); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.1);" onclick="openEngineerHub()">
+                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; margin-bottom: 20px; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 10px;">
+                        <img src="https://img.icons8.com/fluency/96/briefcase.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">
                     </div>
-                    <h3 style="color: #ffd700;">ديربي 1v1</h3>
-                    <p>المواجهة المباشرة</p>
-                </div>
-
-                <!-- 5. اهبد صح (شمال) -->
-                <div class="eng-bento-card" style="--theme-color: #c084fc; background: linear-gradient(145deg, rgba(45, 20, 60, 0.95), rgba(20, 10, 30, 0.95)); border: 1.5px solid #a855f7;" onclick="openEhbedSetupModal()">
-                    <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
-                        <img src="https://img.icons8.com/fluency/96/question.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                    </div>
-                    <h3 style="color: #c084fc;">اهبد صح</h3>
-                    <p>التخمين الأقرب يفوز</p>
-                </div>
-
-                <!-- 6. الاختبارات (يمين فوق) -->
-                <div class="eng-bento-card" style="--theme-color: #06b6d4;" onclick="showTopToast('قسم الاختبارات وبنوك الأسئلة قيد التجهيز الآن، سيتم إضافته قريباً!', 'info')">
-                    <div class="card-icon" style="background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
-                        <img src="https://img.icons8.com/fluency/96/test-passed.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                    </div>
-                    <h3 style="color: #06b6d4;">إختبارات</h3>
-                    <p>نماذج وتدريبات</p>
-                </div>
-
-                <!-- 7. مهندس جودة (طويل شمال يمتد لأسفل) -->
-                <div class="eng-bento-card bento-tall" style="--theme-color: #f59e0b; background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); border: 1.5px solid #f59e0b;" onclick="openEngineerHub()">
-                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; margin-bottom: 15px; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
-                        <img src="https://img.icons8.com/fluency/96/briefcase.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                    </div>
-                    <h3 style="color: #f59e0b; font-size: 1.15rem; margin-bottom: 6px;">مهندس جودة؟</h3>
-                    <p style="font-size: 0.8rem; line-height: 1.6;">دليلك لتعلم الجودة ومحاكاة المصانع</p>
-                    <span class="badge-soon-feature" style="position: relative; left: auto; top: auto; display: inline-block; margin-top: 15px;">قريباً 🔥</span>
-                </div>
-
-                <!-- 8. المفاجآت (يمين تحت الاختبارات) -->
-                <div class="eng-bento-card" style="--theme-color: #818cf8; border-color: var(--accent-highlight);" onclick="showTopToast('مفاجآت ضخمة وأدوات مذهلة هتتفتح مع بداية الدراسة.. خليك جاهز! 🔥', 'info')">
-                    <span class="badge-soon-feature" style="left: 10px; top: 10px; padding: 2px 6px; font-size: 0.6rem;">قريباً</span>
-                    <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); border-color: var(--accent-highlight); margin-bottom: 12px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 6px;">
-                        <img src="https://img.icons8.com/fluency/96/rocket.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-                    </div>
-                    <h3 style="color: var(--accent-highlight);">المفاجآت</h3>
-                    <p>حلويات هتنزل</p>
+                    <h3 style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 900; margin-bottom: 8px;">مهندس جودة؟</h3>
+                    <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; max-width: 85%;">دليلك الشامل لتعلم الجودة ومحاكاة المصانع من الصفر</p>
+                    <span class="badge-soon-feature" style="position: relative; left: auto; top: auto; display: inline-block; margin-top: 20px; font-size: 0.85rem; padding: 6px 14px;">قريباً 🔥</span>
                 </div>
 
             </div>
@@ -2473,11 +3010,101 @@
             </div>
         </div>
 
+<!-- شاشة مركز التحديات والترفيه -->
+        <div id="view-challenges-hub" class="view-section">
+            
+            <div class="section-label">تحديات أونلاين (فردي) 👤</div>
+            <div class="grid-cards" style="margin-bottom: 25px;">
+                <!-- تحدي المعلومات (المستويات) -->
+                <div class="app-card" onclick="openLevelsMap()" style="border-color: rgba(245, 158, 11, 0.5);">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b;"><img src="https://img.icons8.com/fluency/96/brain.png"></div>
+                        <div class="card-text">
+                            <h3 style="color: #f59e0b;">خريطة المستويات 🗺️</h3>
+                            <p>تحدي المعلومات وجمع النجوم الفردي</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #f59e0b;">←</div>
+                </div>
+                <!-- مساحة جاهزة لإضافة ألعاب أوفلاين فردي مستقبلاً هنا -->
+            </div>
+
+            <div class="section-label">تحديات أونلاين (أكثر من لاعب) 👥</div>
+            <div class="grid-cards" style="margin-bottom: 25px;">
+                <!-- ديربي الدفعة 1v1 -->
+                <div class="app-card" onclick="openDerbySetupModal()" style="border-color: rgba(239, 68, 68, 0.5);">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444;"><img src="https://img.icons8.com/fluency/96/battle.png"></div>
+                        <div class="card-text">
+                            <h3 style="color: #ef4444;">ديربي 1v1 ⚔️</h3>
+                            <p>مواجهة الأسئلة المباشرة مع زملائك</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #ef4444;">←</div>
+                </div>
+
+                <!-- اهبد صح -->
+                <div class="app-card" onclick="openEhbedSetupModal()" style="border-color: rgba(168, 85, 247, 0.5);">
+                    <div class="card-info">
+                        <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); border-color: #a855f7;"><img src="https://img.icons8.com/fluency/96/question.png"></div>
+                        <div class="card-text">
+                            <h3 style="color: #c084fc;">اهبد صح 🔢</h3>
+                            <p>لعبة تخمين الأرقام، الأقرب يفوز</p>
+                        </div>
+                    </div>
+                    <div class="card-arrow" style="color: #c084fc;">←</div>
+                </div>
+                <!-- مساحة جاهزة لإضافة تحديات متعددة أوفلاين/أونلاين مستقبلاً هنا -->
+            </div>
+
+<div class="section-label">تحديات أوفلاين (شلة وتجمعات) 📱</div>
+<div class="grid-cards" style="margin-bottom: 25px;">
+    <div class="app-card" onclick="openRiskSetupModal()" style="border-color: rgba(245, 158, 11, 0.5);">
+        <div class="card-info">
+            <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-gold);">
+                <img src="https://img.icons8.com/fluency/96/flash-on.png">
+            </div>
+            <div class="card-text">
+                <h3 style="color: var(--accent-gold);">تحدي ريسك ⚡</h3>
+                <p>هتريسك ولا هتلعب عالمضمون؟</p>
+            </div>
+        </div>
+        <div class="card-arrow" style="color: var(--accent-gold);">←</div>
+    </div>
+
+    <div class="app-card" onclick="openGuessGame()" style="border-color: rgba(16, 185, 129, 0.5);">
+        <div class="card-info">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-emerald);">
+                <span style="font-size: 24px;">📱</span>
+            </div>
+            <div class="card-text">
+                <h3 style="color: var(--accent-emerald);">تحدي تخمين الصورة</h3>
+                <p>لعبة الشلة.. مين هيخمن أسرع؟</p>
+            </div>
+        </div>
+        <div class="card-arrow" style="color: var(--accent-emerald);">></div>
+    </div>
+
+    <div class="app-card" onclick="openTimeChallengeGame()" style="border-color: rgba(59, 130, 246, 0.5);">
+        <div class="card-info">
+            <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); border-color: #3b82f6;">
+                <span style="font-size: 24px;">⏱️</span>
+            </div>
+            <div class="card-text">
+                <h3 style="color: #3b82f6;">تحدي الوقت ⏱️</h3>
+                <p>اضبط الثانية بالمللي بدون ساعة!</p>
+            </div>
+        </div>
+        <div class="card-arrow" style="color: #3b82f6;">></div>
+    </div>
+</div>
+</div>
+
         <!-- قسم المنظم الأكاديمي الشامل -->
         <div id="view-academic-hub" class="view-section">
             <div class="auth-tabs" style="margin-bottom: 18px;">
                 <button class="auth-tab-btn active" id="tab-acad-tasks" onclick="switchAcademicTab('tasks')">
-                    <img src="https://img.icons8.com/fluency/48/todo-list.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> التكليفات
+                    <img src="https://img.icons8.com/fluency/48/todo-list.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> التاسكات
                 </button>
                 <button class="auth-tab-btn" id="tab-acad-schedules" onclick="switchAcademicTab('schedules')">
                     <img src="https://img.icons8.com/fluency/48/calendar.png" style="width: 18px; vertical-align: middle; margin-left: 4px;"> الجداول
@@ -2492,9 +3119,9 @@
 
             <!-- 1. تبويب التكليفات -->
             <div id="acad-sub-tasks">
-                <div class="section-label">📋 التكليفات والمهام المطلوبة</div>
+                <div class="section-label">📋 التاسكات المطلوبة</div>
                 <div id="acad-tasks-list">
-                    <p style="text-align: center; color: var(--text-sub); margin-top: 20px;">جاري تحميل التكليفات...</p>
+                    <p style="text-align: center; color: var(--text-sub); margin-top: 20px;">جاري تحميل التاسكات...</p>
                 </div>
             </div>
 
@@ -2554,7 +3181,7 @@
             </div>
         </div>
 
-        <!-- واجهة قاعة المشاهير (Hall of Fame 🏛️) -->
+<!-- واجهة قاعة المشاهير (Hall of Fame 🏛️) -->
         <div id="view-hall-of-fame" class="view-section">
             <div class="auth-card" style="text-align: center; padding: 20px 14px; margin-bottom: 18px; border-color: var(--accent-gold);">
                 <img src="https://img.icons8.com/fluency/96/trophy.png" style="width: 64px; height: 64px; margin-bottom: 8px;" alt="Trophy">
@@ -2839,23 +3466,64 @@
             </div>
 
             <!-- تبويب البروفايل الأساسي -->
-            <div id="prof-section-main">
-                <div class="profile-header" id="main-profile-header-card">
-                    <div class="avatar-box-wrapper">
-                        <div id="profile-hat-container"></div>
-                        <div class="profile-avatar" id="profile-avatar-container"><img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar"></div>
+<div id="prof-section-main">
+    <div class="profile-header" id="main-profile-header-card" style="position: relative; overflow: visible;">
+    
+    <!-- عناصر الثيمات الجمالية في البروفايل -->
+    <div class="theme-hanging-element spiderman-deco"></div>
+    <div class="theme-hanging-element doom-deco"></div>
+    <div class="theme-hanging-element gold-deco"></div>
+    <div class="theme-hanging-element classic-deco"></div>
+
+        <!-- الصف العلوي: الصورة يميناً والبيانات متصلة بها يساراً -->
+        <div class="profile-hero-row">
+            
+            <!-- الصورة والإكسسوارات (أولاً من جهة اليمين) -->
+            <div class="profile-hero-avatar-side">
+                <div class="avatar-box-wrapper">
+                    <div id="profile-hat-container"></div>
+                    <div class="profile-avatar" id="profile-avatar-container">
+                        <img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar">
                     </div>
-                    <div class="profile-name" id="display-name">اسم الطالب</div>
-<div id="display-equipped-title" style="margin-bottom: 6px; display: none;"></div>
-                    <div id="display-bio" class="profile-bio-text" style="display: none;"></div>
-                    <div class="card-badge" id="display-rank-badge" style="display: inline-block; margin-bottom: 8px;">🌱 مبتدئ</div>
-                    <div class="profile-phone" id="display-phone">01000000000</div>
-                    
-                    <div class="xp-progress-wrapper">
-                        <div class="xp-progress-bar" id="profile-xp-bar"></div>
-                    </div>
-                    <div class="xp-progress-text" id="profile-xp-text">0 / 500 XP للترقية</div>
                 </div>
+            </div>
+
+        <!-- البيانات والنصوص (بجوار الصورة مباشرة) -->
+        <div class="profile-hero-info">
+            <div class="profile-name-row">
+                <div class="profile-name" id="display-name">اسم الطالب</div>
+                <span class="online-indicator-dot"></span>
+            </div>
+
+            <!-- الشارات: الرتبة واللقب متجاورين -->
+            <div class="profile-badges-line">
+                <span class="card-badge" id="display-rank-badge" style="margin: 0;">🌱 مبتدئ</span>
+                <span id="display-equipped-title" style="display: none; margin: 0;"></span>
+            </div>
+
+            <!-- البايو -->
+            <div id="display-bio" class="profile-bio-text" style="display: none;"></div>
+
+            <!-- معرف الطالب والنسخ -->
+<div class="profile-phone" style="display: flex; align-items: center; gap: 6px;">
+    <span style="color: var(--accent-gold); font-weight: 900;">ID:</span>
+    <span id="display-student-id" style="color: var(--text-main); font-weight: 800; letter-spacing: 1px;">-----</span>
+    <button type="button" class="admin-action-btn" style="padding: 2px 6px; font-size: 0.65rem; border-radius: 6px;" onclick="copyStudentId()">نسخ 📋</button>
+</div>
+        </div>
+    </div>
+
+    <!-- شريط التقدم بالأسفل ممتد بعرض الكارت -->
+    <div class="profile-progress-section">
+        <div class="profile-progress-meta">
+            <span style="color: var(--text-sub);">التقدم نحو الترقية</span>
+            <span id="profile-xp-text" style="color: var(--accent-emerald);">0 / 500 XP</span>
+        </div>
+        <div class="xp-progress-wrapper">
+            <div class="xp-progress-bar" id="profile-xp-bar"></div>
+        </div>
+    </div>
+</div>
 
                 <div class="stats-container">
                     <div class="stat-box"><div class="stat-value" id="display-points" style="color: var(--accent-emerald);">100</div><div class="stat-label">نقاط الخبرة XP</div></div>
@@ -2863,13 +3531,39 @@
                 </div>
 
                 <div class="grid-cards">
+                    <!-- 1. تعديل الملف الشخصي -->
                     <div class="app-card" onclick="navigateTo('view-edit-profile', 'تعديل البيانات', 'تحديث ملفك الشخصي والبايو')">
-                        <div class="card-info"><div class="card-icon"><img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit"></div><div class="card-text"><h3>تعديل الملف الشخصي</h3><p>تغيير الاسم، البايو والصورة الرمزية</p></div></div>
+                        <div class="card-info">
+                            <div class="card-icon"><img src="https://img.icons8.com/fluency/96/edit-user-male.png" alt="Edit"></div>
+                            <div class="card-text">
+                                <h3>تعديل الملف الشخصي</h3>
+                                <p>تغيير الاسم، البايو والصورة الرمزية</p>
+                            </div>
+                        </div>
                         <div class="card-arrow">←</div>
                     </div>
 
+                    <!-- 2. كارت الإحصائيات الجديد -->
+                    <div class="app-card" onclick="navigateTo('view-stats', 'إحصائياتي', 'ملخص الأداء والمستوى'); updateNavState('nav-stats');">
+                        <div class="card-info">
+                            <div class="card-icon"><img src="https://img.icons8.com/fluency/96/bullish.png" alt="Stats"></div>
+                            <div class="card-text">
+                                <h3>إحصائياتك وأداؤك</h3>
+                                <p>سلسلة الأيام، دقة الإجابات وسجل الاختبارات</p>
+                            </div>
+                        </div>
+                        <div class="card-arrow">←</div>
+                    </div>
+
+                    <!-- 3. تسجيل الخروج -->
                     <div class="app-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="logoutUser()">
-                        <div class="card-info"><div class="card-icon" style="background: rgba(239, 68, 68, 0.1);"><img src="https://img.icons8.com/fluency/96/exit.png" alt="Logout"></div><div class="card-text"><h3 style="color: #ef4444;">تسجيل الخروج</h3><p>تسجيل الخروج من هذا الجهاز</p></div></div>
+                        <div class="card-info">
+                            <div class="card-icon" style="background: rgba(239, 68, 68, 0.1);"><img src="https://img.icons8.com/fluency/96/exit.png" alt="Logout"></div>
+                            <div class="card-text">
+                                <h3 style="color: #ef4444;">تسجيل الخروج</h3>
+                                <p>تسجيل الخروج من هذا الجهاز</p>
+                            </div>
+                        </div>
                         <div class="card-arrow" style="color: #ef4444;">←</div>
                     </div>
                 </div>
@@ -3184,6 +3878,8 @@
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
                 <button class="auth-tab-btn" id="tab-admin-codes" onclick="switchAdminTab('codes')">الأكواد</button>
                 <button class="auth-tab-btn" id="tab-admin-ehbed-quiz" onclick="switchAdminTab('ehbed-quiz')">أسئلة اهبد 🔢</button>
+<button class="auth-tab-btn" id="tab-admin-risk-quiz" onclick="switchAdminTab('risk-quiz')">أسئلة ريسك ⚡</button>
+<button class="auth-tab-btn" id="tab-admin-guess-game" onclick="switchAdminTab('guess-game')">تخمين الصورة 📱</button>
                 <button class="auth-tab-btn" id="tab-admin-levels-sys" onclick="switchAdminTab('levels-sys')">تحدي المستويات 🗺️</button>
                 <button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">أكاديمية الجودة 💼</button>
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
@@ -3191,8 +3887,8 @@
 
             <!-- تبويب الطلاب -->
             <div id="admin-section-users">
-                <div class="form-group"><input type="text" id="admin-search-user" class="form-input" placeholder="بحث بالاسم أو رقم الهاتف..." onkeyup="filterAdminUsers()"></div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="form-group"><input type="text" id="admin-search-user" class="form-input" placeholder="بحث بالاسم أو رقم الهاتف أو الـ ID..." onkeyup="filterAdminUsers()"></div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div class="section-label" style="margin: 0;">قائمة الطلاب المسجلين</div>
                     <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadAdminData(true)">تحديث</button>
                 </div>
@@ -3226,9 +3922,10 @@
                     <div class="form-group"><input type="text" id="adm-ach-title" class="form-input" placeholder="اسم اللقب"></div>
                     <div class="form-group">
                         <select id="adm-ach-metric" class="form-input" style="background: var(--bg-primary);">
-                            <option value="derby_wins">⚔️ فوز ديربي</option>
-                            <option value="penalties_scored">⚽ أهداف جزاء</option>
-                            <option value="quizCorrect">🧠 إجابات صحيحة</option>
+                            <option value="derby_wins">⚔️ فوز ديربي 1v1</option>
+                            <option value="total_stars">⭐ نجوم المستويات</option>
+                            <option value="ehbed_wins">🔢 فوز اهبد صح</option>
+                            <option value="passed_exams_count">🎓 اختبارات دراسية ناجحة</option>
                             <option value="daily_streak">🔥 أيام متتالية</option>
                             <option value="total_login_days">📅 أيام كلية</option>
                         </select>
@@ -3268,12 +3965,12 @@
                 </div>
                 <!-- التكليفات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة تكليف 📝</h3>
+                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة تاسك 📝</h3>
                     <div class="form-group"><input type="text" id="adm-task-subject" class="form-input" placeholder="اسم المادة"></div>
-                    <div class="form-group"><input type="text" id="adm-task-title" class="form-input" placeholder="عنوان التكليف"></div>
+                    <div class="form-group"><input type="text" id="adm-task-title" class="form-input" placeholder="عنوان التاسك"></div>
                     <div class="form-group"><input type="datetime-local" id="adm-task-deadline" class="form-input" style="color-scheme: dark;"></div>
                     <div class="form-group"><input type="url" id="adm-task-url" class="form-input" placeholder="رابط الملف" dir="ltr"></div>
-                    <button class="btn-submit" onclick="adminPublishTask()">نشر التكليف 🚀</button>
+                    <button class="btn-submit" onclick="adminPublishTask()">نشر تاسك 🚀</button>
                 </div>
                 <!-- الإعلانات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
@@ -3283,14 +3980,17 @@
                     <div class="form-group"><input type="url" id="adm-alert-url" class="form-input" placeholder="رابط" dir="ltr"></div>
                     <button class="btn-submit" onclick="adminPublishCollegeAlert()">نشر 📢</button>
                 </div>
-                <!-- قاعة المشاهير -->
-                <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); text-align: center;">قاعة المشاهير 🏛️</h3>
+
+<!-- 🏛️ كارت تحكم قاعة المشاهير الجديد -->
+                <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 8px; text-align: center;">إدارة قاعة المشاهير 🏛️</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">اقفل أو افتح القسم للطلاب بشكل فوري</p>
                     <div style="display: flex; gap: 10px;">
-                        <button id="btn-lock-fame" class="btn-submit" style="background: #ef4444; color: #fff;" onclick="setHallOfFameLockStatus(true)">قفل 🔒</button>
-                        <button id="btn-unlock-fame" class="btn-submit" style="background: #10b981; color: #fff;" onclick="setHallOfFameLockStatus(false)">فتح 🔓</button>
+                        <button id="btn-lock-fame" class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff;" onclick="setHallOfFameLockStatus(true)">قفل القسم 🔒</button>
+                        <button id="btn-unlock-fame" class="btn-submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" onclick="setHallOfFameLockStatus(false)">فتح القسم 🔓</button>
                     </div>
                 </div>
+
 <!-- لوحة المتصدرين -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
                     <h3 style="color: var(--accent-gold); text-align: center;">لوحة المتصدرين 🏆</h3>
@@ -3319,6 +4019,8 @@
                     <div class="form-group">
                         <select id="admin-store-item-select" class="form-input" style="background: var(--bg-primary);" onchange="populateAdminStoreInputs()">
                             <option value="frame_gold">إطار ذهبي</option><option value="frame_fire">إطار ناري</option>
+<option value="theme_cyberpunk">🎨 ثيم السايبر نيون (Cyberpunk)</option>
+    <option value="theme_royal_gold">👑 ثيم الذهب الملكي (Royal Gold)</option>
                             <option value="extra_classic_5">محاولات كلاسيك</option><option value="double_xp">مضاعف XP</option>
                         </select>
                     </div>
@@ -3415,6 +4117,68 @@
                 <div class="section-label">الأكواد المتاحة</div>
                 <div id="admin-codes-list"></div>
             </div>
+
+<!-- تبويب رفع أسئلة ريسك -->
+<div id="admin-section-risk-quiz" style="display: none;">
+    <div class="auth-card" style="padding: 18px;">
+        <h3 style="color: var(--accent-gold); text-align: center;">رفع أسئلة ريسك ⚡</h3>
+        <p style="font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">
+            الصيغة: التصنيف # النقاط(5/10/20/40) # السؤال # الإجابة
+        </p>
+        <div class="form-group">
+            <textarea id="admin-risk-bulk-input" class="form-input" rows="8" placeholder="مثال:
+كرة قدم ⚽ # 5 # كم عدد لاعبي الفريق؟ # 11 لاعب
+كرة قدم ⚽ # 10 # من فاز بكأس العالم 2022؟ # الأرجنتين"></textarea>
+        </div>
+        <button class="btn-submit" onclick="uploadBulkRiskQuestions()">رفع الأسئلة للسحابة 🚀</button>
+    </div>
+</div>
+
+<!-- تبويب تخمين الصورة -->
+<div id="admin-section-guess-game" style="display: none;">
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: var(--accent-emerald); text-align: center;">إضافة تصنيف جديد 🎯</h3>
+        <div class="form-group"><input type="text" id="new-guess-cat-name" class="form-input" placeholder="اسم التصنيف"></div>
+        <button class="btn-submit" style="background: var(--accent-emerald); color: #000;" onclick="addNewGuessCategory()">إضافة قسم 🚀</button>
+    </div>
+
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: var(--accent-emerald); text-align: center;">إضافة محتوى 🖼️</h3>
+        <div class="form-group">
+            <select id="admin-guess-cat-select" onchange="loadAdminCategoryItems()" class="form-input" style="background: var(--bg-primary);">
+                <option value="">اختر التصنيف أولاً...</option>
+            </select>
+        </div>
+        <div class="form-group"><input type="text" id="new-guess-item-name" class="form-input" placeholder="الاسم (مثال: محمد صلاح)"></div>
+        <div class="form-group"><input type="url" id="new-guess-item-url" class="form-input" placeholder="رابط الصورة (اختياري)" dir="ltr"></div>
+        <button class="btn-submit" style="background: var(--accent-gold); color: #000;" onclick="addGuessItem()">حفظ العنصر 💾</button>
+    </div>
+
+    <div class="auth-card" style="padding: 18px;">
+        <h3 style="color: var(--accent-emerald); text-align: center;">إدارة العناصر 🗑️</h3>
+        <div id="admin-guess-items-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+
+<!-- قسم الرفع الجماعي لعناصر تخمين الصورة -->
+<div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+    <h3 style="color: var(--accent-gold); text-align: center;">رفع جماعي للعناصر 🚀</h3>
+    <p style="font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">
+        اختر التصنيف، ثم اكتب كل عنصر في سطر بالصيغة دي: <br>
+        <b style="color: #fff;">اسم العنصر # رابط الصورة</b>
+    </p>
+    <div class="form-group">
+        <select id="admin-bulk-guess-cat-select" class="form-input" style="background: var(--bg-primary);">
+            <option value="">اختر التصنيف أولاً...</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <textarea id="admin-bulk-guess-input" class="form-input" rows="6" placeholder="محمد صلاح # https://i.ibb.co/.../salah.jpg
+ليونيل ميسي # https://i.ibb.co/.../messi.jpg" dir="ltr" style="text-align: right;"></textarea>
+    </div>
+    <button class="btn-submit" style="background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%); color: #000;" onclick="uploadBulkGuessItems()">رفع الكل للسحابة 📤</button>
+</div>
+
+</div>
 
             <!-- تبويب اهبد صح -->
             <div id="admin-section-ehbed-quiz" style="display: none;">
@@ -3569,6 +4333,7 @@
                             <button class="admin-action-btn" onclick="insertScienceBlock('note')">ملحوظة 💡</button>
                             <button class="admin-action-btn" onclick="insertScienceBlock('warning')">تحذير ⚠️</button>
                             <button class="admin-action-btn" onclick="insertScienceBlock('def')">تعريف 📘</button>
+<button type="button" class="admin-action-btn" style="border-color: #ec4899; color: #ec4899;" onclick="insertScienceBlock('image')">صورة توضيحية 🖼️</button>
                             <button class="admin-action-btn" style="border-color: #a855f7; color: #a855f7;" onclick="insertScienceBlock('interactive')">سؤال تفاعلي ❓</button>
                             <button class="admin-action-btn" style="border-color: #f59e0b; color: #f59e0b;" onclick="insertScienceBlock('mcq')">اختبر نفسك 🎯</button>
 <button class="admin-action-btn" style="border-color: #10b981; color: #10b981;" onclick="insertScienceBlock('reveal')">كارت مخفي 🃏</button>
@@ -3732,7 +4497,6 @@
 <!-- واجهة بنك الأسئلة (Study Mode) -->
         <div id="view-qbank-reader" class="view-section" style="display: none;">
             <div class="lab-sub-header" style="margin-bottom: 15px; justify-content: center; position: relative;">
-                <button class="btn-back-lab" style="position: absolute; left: 0;" onclick="navigateBack()">↩ رجوع</button>
                 <h2 id="qbank-title" style="color: var(--accent-gold); font-size: 1.1rem; margin: 0; text-align: center;">بنك الأسئلة</h2>
             </div>
             <!-- شريط الفلترة الذكي -->
@@ -3759,8 +4523,7 @@
                 <button id="btn-exam-prev" class="admin-action-btn" style="flex: 1;" onclick="examNavigate(-1)">⬅️ السابق</button>
                 <button id="btn-exam-next" class="admin-action-btn" style="flex: 1; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="examNavigate(1)">التالي ➡️</button>
             </div>
-            <button id="btn-exam-submit" class="btn-submit" style="margin-top: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; display: none;" onclick="submitFinalExam()">تسليم الاختبار 🏁</button>
-        </div>
+            <button id="btn-exam-submit" class="btn-submit" style="margin-top: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; display: none;" onclick="submitFinalExam()">تسليم الاختبار</button>
         </div>
 <!-- واجهة نتيجة الاختبار التفصيلية -->
         <div id="view-exam-result" class="view-section" style="display: none;">
@@ -3794,27 +4557,27 @@
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-            <!-- صلاح -->
-            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #10b981;" onclick="launchPenaltyMode('salah', 'محمد صلاح', 'salah.png')">
-                <img src="salah.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(16,185,129,0.1); margin-bottom: 6px;">
-                <h4 style="font-size: 0.85rem;">صلاح 🇪🇬</h4>
-                <p style="font-size: 0.68rem; color: #10b981 !important;">فخر العرب</p>
-            </div>
+    <!-- صلاح -->
+    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #10b981;" onclick="launchPenaltyMode('salah', 'محمد صلاح', 'salah.png')">
+        <img src="salah.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(16,185,129,0.1); margin-bottom: 6px;">
+        <h4 style="font-size: 0.85rem;">صلاح 🇪🇬</h4>
+        <p style="font-size: 0.68rem; color: #10b981 !important;">فخر العرب</p>
+    </div>
 
-            <!-- ميسي -->
-            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #00f0ff;" onclick="launchPenaltyMode('messi', 'ليونيل ميسي', 'https://images.fotmob.com/image_resources/playerimages/30981.png')">
-                <img src="https://images.fotmob.com/image_resources/playerimages/30981.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(0,240,255,0.1); margin-bottom: 6px;">
-                <h4 style="font-size: 0.85rem;">ميسي 🇦🇷</h4>
-                <p style="font-size: 0.68rem; color: #00f0ff !important;">الـ GOAT</p>
-            </div>
+    <!-- ميسي -->
+    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #00f0ff;" onclick="launchPenaltyMode('messi', 'ليونيل ميسي', 'messi.png')">
+        <img src="messi.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(0,240,255,0.1); margin-bottom: 6px;">
+        <h4 style="font-size: 0.85rem;">ميسي 🇦🇷</h4>
+        <p style="font-size: 0.68rem; color: #00f0ff !important;">الـ GOAT</p>
+    </div>
 
-            <!-- رونالدو -->
-            <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #ef4444;" onclick="launchPenaltyMode('ronaldo', 'كريستيانو رونالدو', 'https://images.fotmob.com/image_resources/playerimages/30893.png')">
-                <img src="https://images.fotmob.com/image_resources/playerimages/30893.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(239,68,68,0.1); margin-bottom: 6px;">
-                <h4 style="font-size: 0.85rem;">رونالدو 🇵🇹</h4>
-                <p style="font-size: 0.68rem; color: #ef4444 !important;">الدون</p>
-            </div>
-        </div>
+    <!-- رونالدو -->
+    <div class="schedule-neo-card" style="padding: 12px 6px; border-color: #ef4444;" onclick="launchPenaltyMode('ronaldo', 'كريستيانو رونالدو', 'ronaldo.png')">
+        <img src="ronaldo.png" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: rgba(239,68,68,0.1); margin-bottom: 6px;">
+        <h4 style="font-size: 0.85rem;">رونالدو 🇵🇹</h4>
+        <p style="font-size: 0.68rem; color: #ef4444 !important;">الدون</p>
+    </div>
+</div>
 
         <button class="btn-submit" onclick="navigateBack()">رجوع ⬅️</button>
     </div>
@@ -4189,118 +4952,324 @@
     </div>
 </div>
 
-</div> 
-
-    <!-- شريط التنقل السفلي الثابت -->
-    <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
-        <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">
-            <img src="https://img.icons8.com/fluency/96/home.png" alt="Home">
-            <span>الرئيسية</span>
-        </a>
-        <a class="nav-item" id="nav-stats" onclick="navigateTo('view-stats', 'إحصائياتي', 'ملخص الأداء والمستوى'); updateNavState('nav-stats');">
-            <img src="https://img.icons8.com/fluency/96/bullish.png" alt="Stats">
-            <span>إحصائياتي</span>
-        </a>
-        <a class="nav-item" id="nav-leaderboard" onclick="openLeaderboard(); updateNavState('nav-leaderboard');">
-            <img src="https://img.icons8.com/fluency/96/trophy.png" alt="Leaderboard">
-            <span>المتصدرون</span>
-        </a>
-        <a class="nav-item" id="nav-profile" onclick="handleProfileClick(); updateNavState('nav-profile');">
-            <img src="https://img.icons8.com/fluency/96/user-male-circle.png" alt="Profile">
-            <span>البروفايل</span>
-        </a>
-    </nav>
-
-<!-- نافذة تحويل العملات والنقاط (الدعم) -->
-    <div id="modal-transfer-coins" class="modal-overlay">
-        <div class="modal-box" style="max-width: 400px; text-align: right;">
-            <button class="btn-close-modal" onclick="closeModal('modal-transfer-coins')">×</button>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span style="font-size: 1.8rem;">🤝</span>
-                <h3 style="color: var(--accent-gold); margin: 0;">دعم زميل (تحويل رصيد)</h3>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">أدخل رقم هاتف زميلك المسجل لتحويل العملات أو نقاط الخبرة (XP) من رصيدك إليه فوراً.</p>
-            
-            <div class="form-group">
-                <label>رقم هاتف المستلم</label>
-                <input type="tel" id="transfer-phone-input" class="form-input" placeholder="010XXXXXXXX" dir="ltr" style="text-align: right;">
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>نوع التحويل</label>
-                    <select id="transfer-type-input" class="form-input" style="background: var(--bg-primary);">
-                        <option value="coins">💸 عملات (Coins)</option>
-                        <option value="xp">⚡ نقاط (XP)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>المبلغ / العدد</label>
-                    <input type="number" id="transfer-amount-input" class="form-input" placeholder="مثال: 50" style="text-align: center; font-weight: 900; font-size: 1.1rem; color: var(--accent-gold);">
+<!-- شاشة لوحة الحكم الرئيسية لتحدي ريسك -->
+<div id="view-risk-game" class="view-section">
+    <div class="auth-card" style="padding: 14px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="text-align: center; width: 45%;">
+                <h4 id="risk-board-t1-name" style="font-size: 0.95rem; margin-bottom: 4px; color: var(--accent-gold);">الفريق الأول</h4>
+                <div id="risk-board-t1-score" style="font-size: 1.8rem; font-weight: 900; color: var(--text-main);">0</div>
+                <div style="display: flex; gap: 4px; justify-content: center; margin-top: 6px;">
+                    <span id="risk-t1-card-time" class="pill-badge badge-subject" style="font-size: 0.65rem; padding: 2px 6px;">⏱️ +45</span>
+                    <span id="risk-t1-card-steal" class="pill-badge badge-subject" style="font-size: 0.65rem; padding: 2px 6px;">🥷 سرقة</span>
                 </div>
             </div>
-            
-            <button class="btn-submit" onclick="executeCoinTransfer()">إرسال الدعم 🚀</button>
+            <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-emerald);">VS</div>
+            <div style="text-align: center; width: 45%;">
+                <h4 id="risk-board-t2-name" style="font-size: 0.95rem; margin-bottom: 4px; color: #3b82f6;">الفريق الثاني</h4>
+                <div id="risk-board-t2-score" style="font-size: 1.8rem; font-weight: 900; color: var(--text-main);">0</div>
+                <div style="display: flex; gap: 4px; justify-content: center; margin-top: 6px;">
+                    <span id="risk-t2-card-time" class="pill-badge badge-subject" style="font-size: 0.65rem; padding: 2px 6px;">⏱️ +45</span>
+                    <span id="risk-t2-card-steal" class="pill-badge badge-subject" style="font-size: 0.65rem; padding: 2px 6px;">🥷 سرقة</span>
+                </div>
+            </div>
+        </div>
+        <div id="risk-turn-indicator" style="text-align: center; margin-top: 10px; font-size: 0.85rem; font-weight: 800; color: var(--accent-gold); border-top: 1px dashed var(--border-card); padding-top: 8px;">
+            الدور الآن على: الفريق الأول 🎯
+        </div>
+    </div>
+    <div id="risk-board-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;"></div>
+    <button class="admin-action-btn danger" style="width: 100%; padding: 12px; font-size: 0.9rem;" onclick="endRiskMatchConfirm()">إنهاء المباراة وتحديد الفائز 🏁</button>
+</div>
+
+<!-- شاشة تحدي الساعة البيولوجية المتعدد الأطوار -->
+<div id="view-time-challenge" class="view-section" style="text-align: center;">
+    <div class="auth-card" style="border-color: var(--accent-gold); min-height: 520px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;">
+        
+        <!-- شريط اختيار الطور العلوي -->
+        <div style="width: 100%;">
+            <div class="auth-tabs" style="margin-bottom: 12px; gap: 4px;">
+                <button class="auth-tab-btn active" id="tab-mode-random" onclick="switchTimeMode('random')">🎲 عشوائي</button>
+                <button class="auth-tab-btn" id="tab-mode-custom" onclick="switchTimeMode('custom')">🎯 رقم يدوي</button>
+                <button class="auth-tab-btn" id="tab-mode-safezone" onclick="switchTimeMode('safezone')">💣 Safe Zone</button>
+            </div>
+
+            <!-- معلومات الطور والهدف -->
+            <div id="time-mode-header">
+                <span id="time-mode-badge" class="card-badge" style="background: rgba(212,175,55,0.15); color: var(--accent-gold); font-size: 0.85rem; padding: 4px 12px;">طور العشوائي 🎲</span>
+                <h2 id="time-target-label" style="color: var(--text-main); margin-top: 10px; font-size: 1.2rem;">اضغط بعد مرور:</h2>
+                <h1 id="target-time-display" style="font-size: 2.8rem; color: var(--accent-gold); margin: 4px 0; font-weight: 900;">3.00 ثانية</h1>
+            </div>
+
+            <!-- مدخلات الطور اليدوي -->
+            <div id="custom-time-input-box" style="display: none; margin-top: 8px;">
+                <div style="display: flex; justify-content: center; gap: 8px;">
+                    <input type="number" id="custom-seconds-input" class="form-input" placeholder="اكتب الثواني (مثلاً: 5)" style="width: 160px; text-align: center; font-size: 1.1rem; font-weight: 900; color: var(--accent-gold);">
+                    <button class="btn-submit" style="width: auto; padding: 10px 18px; margin: 0;" onclick="setCustomTargetTime()">تثبيت 🎯</button>
+                </div>
+            </div>
+
+            <!-- مؤشرات طور الـ Safe Zone الجماعي -->
+            <div id="safezone-status-box" style="display: none; margin-top: 6px; background: rgba(239,68,68,0.1); border: 1px dashed #ef4444; border-radius: 12px; padding: 10px;">
+                <div style="font-size: 0.95rem; color: #ef4444; font-weight: 800;">حد الانفجار: <span id="safezone-limit-display" style="color: #fff; font-size: 1.15rem;">30</span> ثانية 💣</div>
+                <div style="font-size: 0.8rem; color: var(--text-sub); margin-top: 4px;">الوقت بيتحسب في السر.. دوس وباصي الموبايل 🤫</div>
+            </div>
+        </div> <!-- قفل شريط الأطوار العلوي -->
+
+        <!-- زر التحدي النيون في المنتصف -->
+        <div style="width: 100%; display: flex; justify-content: center; margin: 20px 0;">
+            <button id="time-btn" class="bio-timer-btn" onclick="handleTimeClick()">
+                ابدأ 🚀
+            </button>
+        </div>
+
+        <!-- منطقة النتيجة والتقييم -->
+        <div id="time-result-box" style="visibility: hidden; width: 100%; border-top: 1px dashed var(--border-card); padding-top: 12px;">
+            <div id="user-time-subtitle" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 3px;">أنت ضغطت بعد:</div>
+            <div id="user-time-score" style="font-size: 2.1rem; font-weight: 900; color: var(--text-main);">0.00 ثانية</div>
+            <div id="time-rank-badge" style="display: inline-block; margin-top: 6px; padding: 5px 14px; border-radius: 20px; font-weight: bold; font-size: 0.95rem;">-</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- شاشة تحدي تخمين الصورة المدمجة -->
+<div id="view-guess-game" class="view-section">
+    <!-- شاشة اختيار التصنيفات -->
+    <div id="guess-categories-screen">
+        <div class="auth-card" style="text-align: center; border-color: var(--accent-emerald); margin-bottom: 20px;">
+            <span style="font-size: 3.5rem; display: block; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(16,185,129,0.4));">📱</span>
+            <h3 style="color: var(--accent-emerald); margin-bottom: 8px;">تحدي تخمين الصورة</h3>
+            <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6;">اختار التصنيف، لف الموبايل، وحاول تخمن الصورة عن طريق أسئلتك!</p>
+            <button class="admin-action-btn" style="margin-top: 15px; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="openModal('modal-guess-rules')">📜 قواعد اللعب</button>
+        </div>
+        <div class="section-label">🎯 اختار تصنيف اللعب:</div>
+        <div id="guess-categories-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;"></div>
+    </div>
+
+    <!-- شاشة العد التنازلي -->
+    <div id="guess-countdown-screen" style="display: none;">
+        <div class="auth-card" style="text-align: center; height: 320px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #ef4444;">
+            <div style="font-size: 4rem; animation: pulseLevel 1s infinite;">📱🔄</div>
+            <h3 style="color: #ef4444; margin-top: 15px; font-size: 1.3rem;">لف الموبايل فوراً!</h3>
+            <div id="guess-countdown-number" style="font-size: 4.5rem; font-weight: 900; color: var(--accent-emerald); margin-top: 10px;">5</div>
         </div>
     </div>
 
-<!-- شاشة النهاية التجريبية (Full Page Redesign) -->
-<div id="grand-finale-screen" style="display: none; position: fixed; inset: 0; z-index: 999999; background: radial-gradient(circle at top center, rgba(99, 102, 241, 0.15) 0%, var(--bg-primary) 70%); overflow-y: auto; padding: 24px 16px 50px;">
-    
-    <div style="max-width: 580px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
-        
-        <!-- رأس الصفحة ورسالة النهاية -->
-        <div style="text-align: center; padding: 20px 10px 10px;">
-            <div style="font-size: 3.8rem; display: inline-block; filter: drop-shadow(0 6px 15px rgba(245, 158, 11, 0.35)); margin-bottom: 12px;">🚀</div>
-            <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 12px; letter-spacing: -0.5px;">انتهت الفترة التجريبية بنجاح</h1>
-            <p style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; line-height: 1.9; margin: 0 auto; opacity: 0.95;">
-                شكراً لكل حد شارك معانا في تجربة النسخة المبدئية من التطبيق.<br>
-                التطبيق الآن مغلق مؤقتًا لإجراء صيانة وتطوير شامل، عشان نرجع لكم بنسخة نهائية أقوى وأسرع تليق بيكم، وتستوعب المحتوى العلمي كامل خلال الترم.
-            </p>
-        </div>
-
-        <!-- كارت العداد التنازلي الشامل -->
-        <div style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 20px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: center;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px;">
-                <span style="font-size: 1.2rem;">⏳</span>
-                <span style="color: var(--accent-emerald); font-size: 1rem; font-weight: 900;">موعد الإطلاق الرسمي القادم</span>
+    <!-- شاشة اللعب الفعلية (مكبرة لأقصى حجم متجاوب) -->
+    <div id="guess-play-screen" style="display: none;">
+        <div class="auth-card" style="border-color: var(--accent-gold); max-width: 520px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; padding: 12px; min-height: 80vh; justify-content: space-between;">
+            
+            <!-- الشريط العلوي -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;">
+                <span id="guess-current-category" class="card-badge" style="background: rgba(212,175,55,0.15); color: var(--accent-gold); font-size: 0.85rem; padding: 4px 10px;">التصنيف</span>
+                <span class="card-badge" style="background: rgba(16,185,129,0.15); color: var(--accent-emerald); font-size: 1rem; padding: 4px 12px;">النقاط: <span id="guess-score">0</span></span>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; direction: ltr;" id="finale-countdown">
-                <!-- سيتم حقن العداد هنا -->
+            <!-- منطقة عرض الصورة والكلمة الموسعة -->
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 100%; flex-grow: 1; padding: 4px 0;">
+                <img id="guess-current-img" src="" style="width: 100%; max-height: 52vh; min-height: 280px; object-fit: contain; border-radius: 16px; margin-bottom: 10px; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4); background: rgba(0,0,0,0.2);">
+                <h1 id="guess-current-word" style="font-size: 1.85rem; font-weight: 900; color: var(--text-main); margin: 4px 0; line-height: 1.2;">الكلمة</h1>
+            </div>
+
+            <!-- أزرار التحكم -->
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-submit" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; font-size: 1.1rem; padding: 14px; border-radius: 12px;" onclick="nextGuessWord(false)">تخطي ⏭️</button>
+                <button class="btn-submit" style="flex: 1.5; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-size: 1.2rem; padding: 14px; border-radius: 12px;" onclick="nextGuessWord(true)">صح ✅</button>
             </div>
         </div>
+    </div>
 
-        <!-- قسم الفيدباك والتقييم -->
-        <div id="feedback-section" style="background: var(--card-gradient); border: 1.5px solid var(--border-card); border-radius: 20px; padding: 22px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); text-align: right;">
-            <div style="text-align: center; margin-bottom: 18px;">
-                <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 6px;">رأيك يهمنا في النسخة الجديدة 💡</h3>
-                <p style="font-size: 0.82rem; color: var(--text-sub); font-weight: 600; margin: 0;">شاركنا تقييمك، إيه اللي عجبك، نقاط الضعف، واقتراحاتك للأقسام والاضافات القادمة.</p>
+    <!-- شاشة النهاية -->
+    <div id="guess-result-screen" style="display: none;">
+        <div class="auth-card" style="text-align: center; padding: 30px 18px; border-color: var(--accent-emerald); max-width: 450px; margin: 0 auto;">
+            <div style="font-size: 4rem; margin-bottom: 10px;">🏆</div>
+            <h2 style="color: var(--accent-gold); margin-bottom: 8px; font-size: 1.5rem;">عاش يا وحوش!</h2>
+            <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 15px;">قدرتوا تخمنوا إجابات صحيحة بمجموع:</p>
+            <div style="font-size: 3rem; font-weight: 900; color: var(--accent-emerald); margin-bottom: 20px;"><span id="guess-final-score">0</span></div>
+            <button class="btn-submit" style="width: 100%; margin-bottom: 10px;" onclick="playAnotherGuessRound()">لعب جولة تانية 🔄</button>
+            <button class="admin-action-btn" style="width: 100%; padding: 12px;" onclick="goHomeDirectly()">العودة للرئيسية 🏠</button>
+        </div>
+    </div>
+</div> <!-- نهاية container الرئيسي -->
+
+<!-- شريط التنقل السفلي الثابت (خارج الـ container) -->
+<nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
+    <a class="nav-item active" id="nav-home" onclick="goHomeDirectly()">
+        <img src="https://img.icons8.com/fluency/96/home.png" alt="Home">
+        <span>الرئيسية</span>
+    </a>
+    <a class="nav-item" id="nav-stats" onclick="navigateTo('view-stats', 'إحصائياتي', 'ملخص الأداء والمستوى'); updateNavState('nav-stats');">
+        <img src="https://img.icons8.com/fluency/96/bullish.png" alt="Stats">
+        <span>إحصائياتي</span>
+    </a>
+    <a class="nav-item" id="nav-leaderboard" onclick="openLeaderboard(); updateNavState('nav-leaderboard');">
+        <img src="https://img.icons8.com/fluency/96/trophy.png" alt="Leaderboard">
+        <span>المتصدرون</span>
+    </a>
+    <a class="nav-item" id="nav-profile" onclick="handleProfileClick(); updateNavState('nav-profile');">
+        <img src="https://img.icons8.com/fluency/96/user-male-circle.png" alt="Profile">
+        <span>البروفايل</span>
+    </a>
+</nav>
+
+<!-- نافذة تحويل العملات (الدعم) -->
+<div id="modal-transfer-coins" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: right;">
+        <button class="btn-close-modal" onclick="closeModal('modal-transfer-coins')">×</button>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span style="font-size: 1.8rem;">🤝</span>
+            <h3 style="color: var(--accent-gold); margin: 0;">دعم زميل (تحويل عملات)</h3>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">
+            أدخل ID زميلك لتحويل العملات من رصيدك إليه فوراً (الحد الأقصى 100 عملة يومياً لكل زميل).
+        </p>
+        <div class="form-group">
+            <label>معرّف الطالب (ID)</label>
+            <input type="number" id="transfer-id-input" class="form-input" placeholder="اكتب ID زميلك (مثال: 48201)" dir="rtl" style="text-align: center; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">
+        </div>
+        <div class="form-group">
+            <label>عدد العملات (Coins 🪙)</label>
+            <input type="number" id="transfer-amount-input" class="form-input" placeholder="مثال: 50" style="text-align: center; font-weight: 900; font-size: 1.1rem; color: var(--accent-gold);">
+        </div>
+        <button class="btn-submit" onclick="executeCoinTransfer()">إرسال الدعم 🚀</button>
+    </div>
+</div>
+
+
+
+<!-- نافذة تجهيز مباراة ريسك -->
+<div id="modal-risk-setup" class="modal-overlay">
+    <div class="modal-box" style="max-width: 420px; text-align: right;">
+        <button class="btn-close-modal" onclick="closeModal('modal-risk-setup')">×</button>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.8rem;">⚡</span>
+                <h3 style="color: var(--accent-gold); margin: 0;">تحدي ريسك (مواجهة الفرق)</h3>
             </div>
-            
-            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 14px; padding: 14px 10px; margin-bottom: 16px; text-align: center;">
-                <div style="color: var(--accent-gold); font-size: 0.82rem; font-weight: 800; margin-bottom: 8px;">كم نجمة يستحقها التطبيق؟</div>
-                <div style="font-size: 2.2rem; direction: ltr; display: flex; justify-content: center; gap: 8px;" id="star-rating-box">
-                    <span class="fb-star" data-val="1" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
-                    <span class="fb-star" data-val="2" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
-                    <span class="fb-star" data-val="3" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
-                    <span class="fb-star" data-val="4" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
-                    <span class="fb-star" data-val="5" style="filter: grayscale(1) opacity(0.35); cursor: pointer; transition: 0.2s;">⭐</span>
+            <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem; border-color: var(--accent-emerald); color: var(--accent-emerald);" onclick="openModal('modal-risk-rules')">📜 قواعد التحدي</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 15px;">اللعبة مخصصة للتجمعات مع حكم ماسك التليفون. كل فريق معاه كارت سرقة وكارت +45 ثانية مرة واحدة فقط.</p>
+        <div class="form-group">
+            <label>اسم الفريق الأول (اليمين)</label>
+            <input type="text" id="risk-name-t1" class="form-input" value="الفريق الأول" style="text-align: right;">
+        </div>
+        <div class="form-group">
+            <label>اسم الفريق الثاني (اليسار)</label>
+            <input type="text" id="risk-name-t2" class="form-input" value="الفريق الثاني" style="text-align: right;">
+        </div>
+        <button class="btn-submit" onclick="startRiskMatchAction()">بدء المباراة 🚀</button>
+    </div>
+</div>
+
+<!-- نافذة شرح قواعد تحدي ريسك -->
+<div id="modal-risk-rules" class="modal-overlay">
+    <div class="modal-box" style="max-width: 430px; text-align: right;">
+        <button class="btn-close-modal" onclick="closeModal('modal-risk-rules')">×</button>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;">
+            <span style="font-size: 1.6rem;">⚡</span>
+            <h3 style="color: var(--accent-gold); margin: 0; font-size: 1.1rem;">دليل الواجهة وقواعد ريسك</h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.84rem; color: var(--text-main); line-height: 1.6; max-height: 60vh; overflow-y: auto;">
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px;">
+                <b style="color: var(--accent-gold);">📱 شرح واجهة اللعبة وشبكة الأسئلة:</b>
+                <div style="color: var(--text-sub); margin-top: 3px;">
+                    • <b>اللوحة (4×4):</b> بتعرض 4 أعمدة لتصنيفات مختلفة، وكل عمود فيه أزرار النقاط (5، 10، 20، 40).<br>
+                    • <b>شريط النتائج العلوي:</b> بيوضح نقاط كل فريق، مين عليه الدور حالياً، وحالة كروت المساعدة المتبقية.<br>
+                    • <b>دور الحكم:</b> الهاتف يظل مع الحكم دائماً؛ الفريق بيختار <b>التصنيف ومستوى النقاط</b> بس، والحكم يضغط على الزرار ويقرأ السؤال لأنكم مابتكونوش عارفين السؤال مسبقاً!
                 </div>
             </div>
-            
-            <div class="form-group" style="margin-bottom: 14px;">
-                <textarea id="finale-feedback-text" class="form-input" rows="4" placeholder="اكتب إيه اللي عجبك، المشاكل اللي واجهتك، ومقترحاتك للتطوير..." style="resize: none; line-height: 1.6; font-size: 0.9rem;"></textarea>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px;">
+                <b style="color: #ef4444;">⚖️ آلية الريسك واللعب عالمضمون:</b>
+                <div style="color: var(--text-sub); margin-top: 3px;">
+                    • <b>(5 و 10 نقاط):</b> أسئلة سهلة ومضمونة تبني بيها سكور بأمان.<br>
+                    • <b>(20 و 40 نقطة):</b> ريسك ومخاطرة؛ أسئلة صعبة لو حلتوها هتقلبوا الماتش، ولو غلطتوا المنافس يقدر يسرق نقاطها!
+                </div>
             </div>
-            
-            <button id="btn-submit-feedback" class="btn-submit" style="margin: 0;" onclick="submitFinaleFeedback()">إرسال التقييم للمطور 📤</button>
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px;">
+                <b style="color: var(--accent-emerald);">⏱️ الوقت وكروت المساعدة (مرة واحدة فقط):</b>
+                <div style="color: var(--text-sub); margin-top: 3px;">
+                    • <b>الوقت:</b> 45 ثانية للتفكير لكل سؤال.<br>
+                    • <b>كارت الوقت (+45s):</b> يمنح فريقك 45 ثانية إضافية.<br>
+                    • <b>كارت السرقة (Steal):</b> يتيح لك سرقة نقاط السؤال لو المنافس غلط.<br>
+                    • <b>سؤال الدوبل (x2):</b> سؤال عشوائي مخفي بتتدبلر نقاطه!
+                </div>
+            </div>
         </div>
+        <button class="btn-submit" style="margin-top: 14px; padding: 10px;" onclick="closeModal('modal-risk-rules')">فهمت الواجهة والقواعد.. جاهز للعب 🚀</button>
+    </div>
+</div>
 
-        <!-- رسالة التأكيد بعد الإرسال -->
-        <div id="feedback-success-msg" style="display: none; text-align: center; color: var(--accent-emerald); font-weight: 800; font-size: 0.95rem; padding: 18px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid var(--accent-emerald); border-radius: 16px;">
-            تم استلام رسالتك بنجاح يا هندسة.. شكراً جداً لوقتك ودعمك! ❤️
+<!-- نافذة عرض السؤال للحكم -->
+<div id="modal-risk-question" class="modal-overlay">
+    <div class="modal-box" style="max-width: 440px; text-align: right;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span id="risk-q-cat-tag" class="pill-badge badge-subject">التصنيف</span>
+            <div id="risk-q-timer-box" class="quiz-timer-box" style="margin: 0; font-size: 1.1rem; padding: 2px 10px;">⏱️ 45</div>
+            <span id="risk-q-points-tag" class="pill-badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.85rem; font-weight: 900;">40 نقطة</span>
         </div>
+        <div id="risk-double-badge" style="display: none; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; padding: 10px; border-radius: 12px; text-align: center; font-weight: 900; font-size: 1.2rem; margin-bottom: 15px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); animation: pulseLevel 1s infinite;">
+            🎉 سؤال الدوبل! النقاط مضاعفة (x2) 🤩
+        </div>
+        <div id="risk-help-actions" style="display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 1px dashed var(--border-card); padding-bottom: 10px;">
+            <button id="btn-risk-use-time" class="admin-action-btn" style="flex: 1; font-size: 0.75rem;" onclick="useRiskExtraTime()">⏱️ إضافة +45 ثانية</button>
+            <button id="btn-risk-use-steal" class="admin-action-btn" style="flex: 1; font-size: 0.75rem; border-color: #a855f7; color: #a855f7;" onclick="flagRiskStealIntent()">🥷 طلب سرقة من المنافس</button>
+        </div>
+        <div id="risk-steal-banner" style="display: none; background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; border-radius: 8px; padding: 6px; text-align: center; color: #c084fc; font-size: 0.78rem; font-weight: 800; margin-bottom: 10px;">
+            ⚠️ تم حجز طلب سرقة من المنافس في حال إخفاق الفريق الحالي!
+        </div>
+        <h3 id="risk-q-text" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); margin-bottom: 15px;">نص السؤال هنا...</h3>
+        <div style="margin-bottom: 20px;">
+            <button id="btn-risk-reveal-ans" class="admin-action-btn" style="width: 100%; border-color: var(--border-card); color: var(--text-sub);" onclick="revealRiskAnswer()">👁️ كشف الإجابة الصحيحة للحكم</button>
+            <div id="risk-q-ans-box" class="qbank-ans-box" style="display: none; margin-top: 8px;">
+                الإجابة الصحيحة هنا...
+            </div>
+        </div>
+        <div id="risk-scoring-actions" style="display: flex; gap: 10px;">
+            <button class="btn-submit" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; margin: 0;" onclick="submitRiskQuestionResult(true)">إجابة صحيحة ✔️</button>
+            <button class="btn-submit" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #fff; margin: 0;" onclick="submitRiskQuestionResult(false)">إجابة خاطئة ❌</button>
+        </div>
+        <div id="risk-steal-resolution-box" style="display: none; margin-top: 15px; border-top: 1px solid var(--border-card); padding-top: 12px; text-align: center;">
+            <h4 style="color: #c084fc; font-size: 0.9rem; margin-bottom: 8px;">مرحلة السرقة: دور المنافس الآن للحل 🎯</h4>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-submit" style="flex: 1; background: #10b981; color: #fff; margin: 0;" onclick="resolveStealResult(true)">السرقة نجحت ✔️</button>
+                <button class="btn-submit" style="flex: 1; background: #ef4444; color: #fff; margin: 0;" onclick="resolveStealResult(false)">السرقة فشلت ❌</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- نافذة قواعد تخمين الصورة -->
+<div id="modal-guess-rules" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: right;">
+        <button class="btn-close-modal" onclick="closeModal('modal-guess-rules')">×</button>
+        <h3 style="color: var(--accent-emerald); margin-bottom: 15px; text-align: center;">📜 قواعد التحدي</h3>
+        <ul style="color: var(--text-main); line-height: 1.8; margin-bottom: 20px; padding-right: 20px; font-size: 0.9rem;">
+            <li>تقدر تلعب التحدي دا بشكل فردي أو زوجي.</li>
+            <li>اختار انت والمنافس نفس التصنيف وكل واحد يلف تليفونه ناحية التاني من غير ما يشوف الصورة اللي معاه وابدأوا اسألوا بعض أسئلة إجابتها (أيوة/لأ) بالدور عشان تخمن الصورة اللي معاك (ممنوع تكرار الأسئلة).</li>
+            <li>الجولة خمس صور، اللي يخمن صورته صح الأول يضغط صح والتاني يضغط تخطي.</li>
+            <li>ممكن تلعب التحدي دا فردي بحيث تفتح تليفون واحد وتختار التصنيف وتشوف الصورة وتحاول تمثل الحاجة دي لأصحابك واللي يعرفها الأول يكسب.</li>
+
+        </ul>
+        <button class="btn-submit" style="width: 100%; background: var(--accent-emerald); color: #000;" onclick="closeModal('modal-guess-rules')">فهمت، يلا بينا</button>
+    </div>
+</div>
+
+<!-- نافذة النتيجة النهائية لتحدي ريسك -->
+<div id="modal-risk-result" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px; text-align: center; padding: 25px 15px;">
+        <div id="risk-result-emoji" style="font-size: 3.5rem; margin-bottom: 10px; animation: popIn 0.5s ease-out;">🏆</div>
+        <h2 id="risk-result-title" style="color: var(--accent-gold); margin-bottom: 5px; font-size: 1.6rem;">نهاية التحدي!</h2>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-card); border-radius: 15px; padding: 15px; margin: 15px 0;">
+            <div id="risk-result-score" style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); letter-spacing: 2px;">
+                0 - 0
+            </div>
+            <div id="risk-result-teams" style="font-size: 0.85rem; color: var(--text-sub); margin-top: 5px;">
+                الفريق الأول ضد الفريق الثاني
+            </div>
+        </div>
+        <p id="risk-result-banter" style="font-size: 1rem; color: var(--text-main); line-height: 1.6; margin-bottom: 20px; font-weight: 700;"></p>
+        <button class="btn-submit" onclick="finishRiskMatchFully()" style="font-size: 1rem;">العودة للرئيسية 🏠</button>
     </div>
 </div>
 
