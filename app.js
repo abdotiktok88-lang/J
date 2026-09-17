@@ -10436,141 +10436,214 @@ function deleteAdminNotification(id) {
 }
 
 // =========================================================
-// منظومة كارت الاقتباسات والمعلومات الديناميكي
+// منظومة كارت الاقتباسات والمعلومات الديناميكي المحدثة
 // =========================================================
-
 let appQuotesList = [];
-let currentQuoteIndex = 0;
+let currentQuoteActiveIndex = 0;
 let quoteAutoSlideTimer = null;
+let quoteScrollDebounceTimer = null;
+let editingQuoteId = null;
 
-// تحميل الجمل من الكاش أولاً ثم المزامنة
 function initDynamicQuotesFeed() {
+    // 1. القراءة من الكاش
     const cached = localStorage.getItem('local_app_quotes');
     if (cached) {
         try {
             appQuotesList = JSON.parse(cached);
-            if (appQuotesList.length > 0) renderCurrentQuote();
+            if (Array.isArray(appQuotesList) && appQuotesList.length > 0) {
+                renderQuotesTrackContent();
+            }
         } catch(e) {}
     }
 
-    // المزامنة مع Firebase
+    // 2. المزامنة المباشرة مع Firebase
     db.ref('daily_quotes').on('value', snap => {
         appQuotesList = [];
         if (snap.exists()) {
             snap.forEach(c => {
                 appQuotesList.push({ id: c.key, ...c.val() });
             });
-            appQuotesList.reverse(); // من الأحدث للأقدم
+            appQuotesList.reverse();
+            localStorage.setItem('local_app_quotes', JSON.stringify(appQuotesList));
+        } else {
+            localStorage.removeItem('local_app_quotes');
         }
 
-        localStorage.setItem('local_app_quotes', JSON.stringify(appQuotesList));
-        if (appQuotesList.length > 0) {
-            renderCurrentQuote();
-            startQuotesAutoTimer();
-        } else {
-            // جملة افتراضية لو فارغة
-            document.getElementById('quote-card-cat').innerText = 'عبرة وحكمة';
-            document.getElementById('quote-card-title').innerText = 'تيسير وتوفيق';
-            document.getElementById('quote-card-text').innerText = 'إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ التَّيْسِيرَ عَلَى النَّاسِ، فَيَسِّرْ عَلَيْهِمْ.';
-        }
+        renderQuotesTrackContent();
+        startQuotesAutoTimer();
     });
 }
 
-function renderCurrentQuote(direction = 'next') {
-    if (!appQuotesList || appQuotesList.length === 0) return;
-    if (currentQuoteIndex >= appQuotesList.length) currentQuoteIndex = 0;
-
-    const bodyEl = document.querySelector('.quote-center-body');
-    const catEl = document.getElementById('quote-card-cat');
-    const iconEl = document.getElementById('quote-card-icon');
-    const titleEl = document.getElementById('quote-card-title');
-    const textEl = document.getElementById('quote-card-text');
+// ريندر المحتوى الداخلي فقط
+function renderQuotesTrackContent() {
+    const track = document.getElementById('quote-carousel-track');
     const dotsContainer = document.getElementById('quote-card-dots');
+    if (!track) return;
 
-    if (!catEl || !textEl) return;
-
-    // 1. خروج العنصر الحالي في الاتجاه المطلوب
-    if (bodyEl) {
-        bodyEl.className = direction === 'next' ? 'quote-center-body slide-out-left' : 'quote-center-body slide-in-right';
+    if (!appQuotesList || appQuotesList.length === 0) {
+        updateQuoteHeaderInfo('عبرة وحكمة', '🌱');
+        track.innerHTML = `
+            <div class="quote-content-slide" onclick="openAllQuotesArchiveView()">
+                <div class="quote-item-title">تيسير وتوفيق</div>
+                <div class="quote-item-text">إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ التَّيْسِيرَ عَلَى النَّاسِ، فَيَسِّرْ عَلَيْهِمْ.</div>
+            </div>`;
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
     }
 
-    setTimeout(() => {
-        const item = appQuotesList[currentQuoteIndex];
+    let trackHtml = '';
+    appQuotesList.forEach((item, idx) => {
+        trackHtml += `
+        <div class="quote-content-slide" onclick="openAllQuotesArchiveView()">
+            ${item.title ? `<div class="quote-item-title">${item.title}</div>` : ''}
+            <div class="quote-item-text">${item.text || ''}</div>
+        </div>`;
+    });
 
-        let icon = '💡';
-        if (item.category === 'عبرة وحكمة') icon = '🌱';
-        else if (item.category === 'اقتباس') icon = '💬';
-        else if (item.category === 'معلومة عامة') icon = '🌍';
-        else if (item.category === 'راجع معايا') icon = '📝';
-
-        catEl.innerText = item.category || 'معلومة';
-        iconEl.innerText = icon;
-
-        if (item.title && item.title.trim() !== '') {
-            titleEl.style.display = 'block';
-            titleEl.innerText = item.title;
-        } else {
-            titleEl.style.display = 'none';
-        }
-
-        textEl.innerText = item.text || '';
-
-        // تحديث النقاط
-        if (dotsContainer) {
-            let dotsHtml = '';
-            const total = Math.min(appQuotesList.length, 10);
-            for (let i = 0; i < total; i++) {
-                dotsHtml += `<span class="q-dot ${i === currentQuoteIndex ? 'active' : ''}" onclick="goToQuoteIndex(${i}, event)"></span>`;
-            }
-            dotsContainer.innerHTML = dotsHtml;
-        }
-
-        // 2. تموضع النص الجديد من الجهة المقابلة قبل الظهور
-        if (bodyEl) {
-            bodyEl.style.transition = 'none';
-            bodyEl.className = direction === 'next' ? 'quote-center-body slide-in-right' : 'quote-center-body slide-out-left';
-
-            // 3. تحريك النص الجديد نحو المنتصف
-            requestAnimationFrame(() => {
-                bodyEl.style.transition = '';
-                bodyEl.className = 'quote-center-body slide-active';
-            });
-        }
-    }, 280);
+    track.innerHTML = trackHtml;
+    selectQuoteByIndex(0, false);
 }
 
-function goToQuoteIndex(idx, event) {
-    if (event) event.stopPropagation();
-    const direction = idx >= currentQuoteIndex ? 'next' : 'prev';
-    currentQuoteIndex = idx;
-    renderCurrentQuote(direction);
+// تحديث رأس الكارت (التصنيف والأيقونة) ليتوافق مع الكلام المعروض
+function updateQuoteHeaderInfo(category, customIcon) {
+    const catEl = document.getElementById('quote-card-cat');
+    const iconEl = document.getElementById('quote-card-icon');
+    if (!catEl || !iconEl) return;
+
+    let icon = customIcon || '💡';
+    if (!customIcon) {
+        if (category === 'عبرة وحكمة') icon = '🌱';
+        else if (category === 'اقتباس') icon = '💬';
+        else if (category === 'معلومة عامة') icon = '🌍';
+        else if (category === 'راجع معايا') icon = '📝';
+    }
+
+    catEl.innerText = category || 'معلومة';
+    iconEl.innerText = icon;
+}
+
+// متابعة حركة التمرير باليد
+function onQuoteTrackScroll() {
+    const track = document.getElementById('quote-carousel-track');
+    if (!track) return;
+
+    clearTimeout(quoteScrollDebounceTimer);
+    quoteScrollDebounceTimer = setTimeout(() => {
+        const slides = track.querySelectorAll('.quote-content-slide');
+        if (!slides || slides.length === 0) return;
+
+        let closestIndex = 0;
+        let minDistance = Infinity;
+        const trackRect = track.getBoundingClientRect();
+        const trackCenter = trackRect.left + trackRect.width / 2;
+
+        slides.forEach((slide, idx) => {
+            const rect = slide.getBoundingClientRect();
+            const slideCenter = rect.left + rect.width / 2;
+            const dist = Math.abs(trackCenter - slideCenter);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestIndex = idx;
+            }
+        });
+
+        if (closestIndex !== currentQuoteActiveIndex && closestIndex < appQuotesList.length) {
+            currentQuoteActiveIndex = closestIndex;
+            updateQuoteHeaderInfo(appQuotesList[closestIndex].category);
+            updateQuoteDotsUI(closestIndex);
+        }
+    }, 40);
+}
+
+// التنقل البرمجي لشريحة معينة
+function selectQuoteByIndex(index, smooth = true) {
+    if (!appQuotesList || appQuotesList.length === 0) return;
+    if (index >= appQuotesList.length) index = 0;
+
+    const track = document.getElementById('quote-carousel-track');
+    if (track) {
+        const slides = track.querySelectorAll('.quote-content-slide');
+        if (slides && slides[index]) {
+            slides[index].scrollIntoView({
+                behavior: smooth ? 'smooth' : 'auto',
+                inline: 'center',
+                block: 'nearest'
+            });
+        }
+    }
+
+    currentQuoteActiveIndex = index;
+    updateQuoteHeaderInfo(appQuotesList[index].category);
+    updateQuoteDotsUI(index);
     startQuotesAutoTimer();
 }
 
+// نظام نافذة الـ 5 نقاط
+function updateQuoteDotsUI(activeIndex) {
+    const dotsContainer = document.getElementById('quote-card-dots');
+    if (!dotsContainer || !appQuotesList || appQuotesList.length <= 1) {
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
+    }
+
+    const total = appQuotesList.length;
+    let dotsHtml = '';
+
+    if (total <= 5) {
+        for (let i = 0; i < total; i++) {
+            dotsHtml += `<span class="q-dot ${i === activeIndex ? 'active' : ''}" onclick="selectQuoteByIndex(${i})"></span>`;
+        }
+    } else {
+        let start = Math.max(0, activeIndex - 2);
+        let end = Math.min(total - 1, start + 4);
+
+        if (end - start < 4) {
+            start = Math.max(0, end - 4);
+        }
+
+        for (let i = start; i <= end; i++) {
+            let extraClass = '';
+            if (i === start && start > 0) extraClass = 'edge-small';
+            if (i === end && end < total - 1) extraClass = 'edge-small';
+
+            dotsHtml += `<span class="q-dot ${i === activeIndex ? 'active' : ''} ${extraClass}" onclick="selectQuoteByIndex(${i})"></span>`;
+        }
+    }
+
+    dotsContainer.innerHTML = dotsHtml;
+}
+
+// المؤقت التلقائي كل 45 ثانية
 function startQuotesAutoTimer() {
     if (quoteAutoSlideTimer) clearInterval(quoteAutoSlideTimer);
     quoteAutoSlideTimer = setInterval(() => {
         if (appQuotesList.length > 1) {
-            currentQuoteIndex = (currentQuoteIndex + 1) % appQuotesList.length;
-            renderCurrentQuote('next');
+            const nextIdx = (currentQuoteActiveIndex + 1) % appQuotesList.length;
+            selectQuoteByIndex(nextIdx, true);
         }
     }, 45000);
 }
 
-function copyCurrentQuote(event) {
+// نسخ الكارت المعروض حالياً
+function copyCurrentActiveQuote(event) {
     if (event) event.stopPropagation();
     if (!appQuotesList || appQuotesList.length === 0) return;
-    const item = appQuotesList[currentQuoteIndex];
+    const item = appQuotesList[currentQuoteActiveIndex];
+    if (!item) return;
+
     const fullText = (item.title ? item.title + '\n' : '') + item.text;
     navigator.clipboard.writeText(fullText).then(() => {
         showTopToast('تم نسخ النص للحافظة بنجاح 📋', 'success');
     });
 }
 
-function shareCurrentQuote(event) {
+// مشاركة الكارت المعروض حالياً
+function shareCurrentActiveQuote(event) {
     if (event) event.stopPropagation();
     if (!appQuotesList || appQuotesList.length === 0) return;
-    const item = appQuotesList[currentQuoteIndex];
+    const item = appQuotesList[currentQuoteActiveIndex];
+    if (!item) return;
+
     const fullText = (item.title ? `*${item.title}*\n` : '') + item.text + '\n\n— تطبيق علوم الأغذية 🎓';
     if (navigator.share) {
         navigator.share({ title: item.title || 'مشاركة عبارة', text: fullText }).catch(() => {});
@@ -10579,74 +10652,45 @@ function shareCurrentQuote(event) {
     }
 }
 
-function openAllQuotesModal(event) {
-    if (event) event.stopPropagation();
-    const modalList = document.getElementById('modal-quotes-list');
-    if (!modalList) return;
+// الانتقال إلى واجهة الأرشيف المستقلة
+function openAllQuotesArchiveView() {
+    const listEl = document.getElementById('archive-quotes-list');
+    if (!listEl) return;
 
     if (!appQuotesList || appQuotesList.length === 0) {
-        modalList.innerHTML = '<p style="text-align:center; color:var(--text-sub);">لا توجد جمل مضافة حالياً.</p>';
-        openModal('modal-all-quotes');
+        listEl.innerHTML = '<p style="text-align:center; color:var(--text-sub); padding:20px;">لا توجد عناصر مضافة حالياً.</p>';
+        navigateTo('view-quotes-archive', 'أرشيف الاقتباسات', 'استعراض جميع النصوص');
         return;
     }
 
     let html = '';
     appQuotesList.forEach((q, idx) => {
         html += `
-        <div class="acad-glass-card" style="margin-bottom:0; padding:12px 14px; text-align:right;" onclick="goToQuoteIndex(${idx}); closeModal('modal-all-quotes');">
+        <div class="acad-glass-card" style="margin-bottom:0; padding:14px 16px; cursor:pointer;" onclick="selectQuoteByIndex(${idx}); navigateBack();">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span class="pill-badge badge-subject" style="font-size:0.75rem;">${q.category}</span>
-                <span style="font-size:0.7rem; color:var(--text-sub);">${new Date(q.createdAt || Date.now()).toLocaleDateString('ar-EG')}</span>
+                <span class="pill-badge badge-subject" style="font-size:0.75rem;">${q.category || 'عام'}</span>
+                <span style="font-size:0.7rem; color:var(--text-sub);">${q.createdAt ? new Date(q.createdAt).toLocaleDateString('ar-EG') : ''}</span>
             </div>
-            ${q.title ? `<div style="font-family:'Amiri',serif; font-size:1.15rem; font-weight:700; color:var(--accent-gold); margin-bottom:4px;">${q.title}</div>` : ''}
-            <p style="font-size:0.85rem; color:var(--text-main); margin:0; line-height:1.6; font-weight:600;">${q.text}</p>
+            ${q.title ? `<div style="font-family:'Uthmanic', 'Amiri', serif; font-size:1.15rem; font-weight:700; color:#38bdf8; margin-bottom:4px;">${q.title}</div>` : ''}
+            <div style="font-size:0.88rem; color:var(--text-main); line-height:1.65; font-weight:600; white-space:pre-line;">${q.text || ''}</div>
         </div>`;
     });
 
-    modalList.innerHTML = html;
-    openModal('modal-all-quotes');
+    listEl.innerHTML = html;
+    navigateTo('view-quotes-archive', 'أرشيف الاقتباسات', 'استعراض جميع النصوص');
 }
 
-// ================= دوال الأدمن =================
-
+// ================= دوال الأدمن (إضافة / تعديل / حذف) =================
 function toggleCustomQuoteCatInput(val) {
     const group = document.getElementById('adm-custom-cat-group');
     if (group) group.style.display = (val === 'custom') ? 'block' : 'none';
 }
 
-function adminSaveNewQuote() {
-    playClickSound();
-    const catSelect = document.getElementById('adm-quote-cat-select').value;
-    const customCat = document.getElementById('adm-quote-custom-cat').value.trim();
-    const finalCat = (catSelect === 'custom') ? (customCat || 'عام') : catSelect;
-    
-    const title = document.getElementById('adm-quote-title').value.trim();
-    const text = document.getElementById('adm-quote-text').value.trim();
-
-    if (!text) {
-        showTopToast('يرجى كتابة نص الجملة أو الاقتباس أولاً!', 'error');
-        return;
-    }
-
-    const newQuote = {
-        category: finalCat,
-        title: title,
-        text: text,
-        createdAt: Date.now()
-    };
-
-    db.ref('daily_quotes').push(newQuote).then(() => {
-        showTopToast('تم النشر في الواجهة بنجاح! 🚀', 'success');
-        document.getElementById('adm-quote-title').value = '';
-        document.getElementById('adm-quote-text').value = '';
-        document.getElementById('adm-quote-custom-cat').value = '';
-        loadAdminQuotesList();
-    });
-}
-
 function loadAdminQuotesList() {
     const list = document.getElementById('admin-quotes-list');
     if (!list) return;
+
+    list.innerHTML = '<p style="text-align:center; color:var(--text-sub);">جاري تحميل النصوص... ⏳</p>';
 
     db.ref('daily_quotes').once('value', snap => {
         if (!snap.exists()) {
@@ -10659,10 +10703,13 @@ function loadAdminQuotesList() {
             const item = child.val();
             const id = child.key;
             html += `
-            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <span class="card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold);">${item.category}</span>
-                    <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.72rem;" onclick="adminDeleteQuote('${id}')">حذف 🗑️</button>
+                    <span class="card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold);">${item.category || 'عام'}</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="admin-action-btn" style="padding: 2px 8px; font-size: 0.72rem;" onclick="adminEditQuote('${id}', '${encodeURIComponent(item.category || '')}', '${encodeURIComponent(item.title || '')}', '${encodeURIComponent(item.text || '')}')">تعديل ✏️</button>
+                        <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.72rem;" onclick="adminDeleteQuote('${id}')">حذف 🗑️</button>
+                    </div>
                 </div>
                 ${item.title ? `<div style="font-weight:900; color:var(--accent-emerald); font-size:0.9rem;">${item.title}</div>` : ''}
                 <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">${item.text}</div>
@@ -10672,9 +10719,107 @@ function loadAdminQuotesList() {
     });
 }
 
+function adminEditQuote(id, cat, title, text) {
+    editingQuoteId = id;
+    const decodedCat = decodeURIComponent(cat);
+    const decodedTitle = decodeURIComponent(title);
+    const decodedText = decodeURIComponent(text);
+
+    const catSelect = document.getElementById('adm-quote-cat-select');
+    const customGroup = document.getElementById('adm-custom-cat-group');
+    const customCatInput = document.getElementById('adm-quote-custom-cat');
+    const titleInput = document.getElementById('adm-quote-title');
+    const textInput = document.getElementById('adm-quote-text');
+
+    let found = false;
+    if (catSelect) {
+        for (let opt of catSelect.options) {
+            if (opt.value === decodedCat) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            catSelect.value = decodedCat;
+            if (customGroup) customGroup.style.display = 'none';
+        } else {
+            catSelect.value = 'custom';
+            if (customGroup) customGroup.style.display = 'block';
+            if (customCatInput) customCatInput.value = decodedCat;
+        }
+    }
+
+    if (titleInput) titleInput.value = decodedTitle;
+    if (textInput) textInput.value = decodedText;
+
+    const submitBtn = document.querySelector('#admin-section-quotes .btn-submit');
+    if (submitBtn) {
+        submitBtn.innerText = 'حفظ التعديلات ✅';
+        submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        submitBtn.style.color = '#fff';
+    }
+
+    const formCard = document.querySelector('#admin-section-quotes .auth-card');
+    if (formCard) formCard.scrollIntoView({ behavior: 'smooth' });
+}
+
+function adminSaveNewQuote() {
+    playClickSound();
+    const catSelect = document.getElementById('adm-quote-cat-select').value;
+    const customCat = document.getElementById('adm-quote-custom-cat').value.trim();
+    const finalCat = (catSelect === 'custom') ? (customCat || 'عام') : catSelect;
+
+    const title = document.getElementById('adm-quote-title').value.trim();
+    const text = document.getElementById('adm-quote-text').value.trim();
+
+    if (!text) {
+        showTopToast('يرجى كتابة نص الجملة أو الاقتباس أولاً!', 'error');
+        return;
+    }
+
+    const quoteData = {
+        category: finalCat,
+        title: title,
+        text: text,
+        createdAt: Date.now()
+    };
+
+    if (editingQuoteId) {
+        db.ref('daily_quotes/' + editingQuoteId).update(quoteData).then(() => {
+            showTopToast('تم تعديل النص بنجاح ✅', 'success');
+            resetQuoteAdminForm();
+            loadAdminQuotesList();
+        });
+    } else {
+        db.ref('daily_quotes').push(quoteData).then(() => {
+            showTopToast('تم النشر في الواجهة بنجاح! 🚀', 'success');
+            resetQuoteAdminForm();
+            loadAdminQuotesList();
+        });
+    }
+}
+
+function resetQuoteAdminForm() {
+    editingQuoteId = null;
+    document.getElementById('adm-quote-title').value = '';
+    document.getElementById('adm-quote-text').value = '';
+    document.getElementById('adm-quote-custom-cat').value = '';
+    document.getElementById('adm-quote-cat-select').selectedIndex = 0;
+
+    const customGroup = document.getElementById('adm-custom-cat-group');
+    if (customGroup) customGroup.style.display = 'none';
+
+    const submitBtn = document.querySelector('#admin-section-quotes .btn-submit');
+    if (submitBtn) {
+        submitBtn.innerText = 'نشر في الواجهة 🚀';
+        submitBtn.style.background = '';
+        submitBtn.style.color = '';
+    }
+}
+
 function adminDeleteQuote(id) {
     playErrorSound();
-    if (confirm('هل تريد حذف هذه الجملة نهائياً من العرض؟')) {
+    if (confirm('هل تريد حذف هذه الجملة نهائياً؟')) {
         db.ref('daily_quotes/' + id).remove().then(() => {
             showTopToast('تم الحذف بنجاح 🗑️', 'info');
             loadAdminQuotesList();
