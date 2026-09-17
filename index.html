@@ -1030,17 +1030,106 @@
         .nav-item.active { color: var(--accent-gold); }
         .nav-item.active img { filter: grayscale(0%) opacity(1); transform: translateY(-1px); }
         
-        .home-top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--card-gradient); border: 1px solid var(--border-card);
-            border-radius: 16px; padding: 12px 16px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        .balance-item { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 0.95rem; }
-        .balance-item img { width: 22px; height: 22px; }
-        .xp-text { color: var(--accent-emerald); }
-        .coin-text { color: var(--accent-gold); }
+       /* ================= كروت الرصيد المصغرة (أيقونات مدمجة بالداخل) ================= */
+.home-balance-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+    width: 100%;
+}
 
-        .personal-rank-card {
+.balance-card-modern {
+    position: relative;
+    border-radius: 14px;
+    padding: 0 12px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card-gradient);
+    border: 1.5px solid var(--border-card);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.balance-card-modern.xp-card {
+    border-color: rgba(6, 182, 212, 0.3);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.06) 0%, var(--bg-secondary) 100%);
+}
+
+.balance-card-modern.coin-card {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, var(--bg-secondary) 100%);
+}
+
+.balance-card-val-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.balance-val-text {
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.xp-val {
+    color: var(--accent-emerald);
+}
+
+.coin-val {
+    color: var(--accent-gold);
+}
+
+.double-xp-pill {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 5px;
+}
+
+/* أيقونة داخلية مدمجة بحجم متناسق */
+.balance-inner-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+    flex-shrink: 0;
+}
+
+.balance-card-modern:hover .balance-pop-icon {
+    transform: scale(1.15) rotate(8deg);
+}
+
+.balance-card-modern:hover .balance-big-icon {
+    transform: scale(1.12) rotate(6deg);
+}
+
+/* وهج جمالي خلفي خفيف في الزاوية */
+.balance-card-modern::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    filter: blur(16px);
+    pointer-events: none;
+    opacity: 0.35;
+}
+
+.xp-card::before {
+    background: var(--accent-emerald);
+}
+
+.coin-card::before {
+    background: var(--accent-gold);
+}
+                .personal-rank-card {
             background: var(--card-gradient); border: 1px solid var(--accent-emerald);
             border-radius: 12px; padding: 8px 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
@@ -2414,27 +2503,20 @@
     --nav-bg: rgba(209, 250, 229, 0.98) !important;
 }
 
-/* ================= كارت الاقتباسات والمعلومات الديناميكي المحدث ================= */
+/* ================= كارت الاقتباسات (إطار ثابت + محتوى كاروسيل لمس) ================= */
 .dynamic-quote-card {
     background: var(--card-gradient);
     border: 1.5px solid var(--border-card);
     border-radius: 20px;
-    padding: 14px 18px 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    padding: 14px 16px 12px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* سحب المحتوى للأعلى بدلاً من توزيعه على الأطراف */
-    gap: 8px; /* مسافة متناسقة ومضبوطة بين الصفوف */
-    min-height: 150px; /* تقليل الارتفاع الأدنى لشد الكارت */
+    justify-content: flex-start;
+    gap: 8px;
+    min-height: 155px;
     position: relative;
-    cursor: pointer;
-    overflow: hidden;
-    transition: transform 0.2s ease, border-color 0.2s ease;
     margin-bottom: 20px;
-}
-.dynamic-quote-card:active {
-    transform: scale(0.98);
-    border-color: var(--accent-gold);
+    box-shadow: none !important;
 }
 
 .quote-top-row {
@@ -2450,9 +2532,6 @@
     font-size: 0.85rem;
     font-weight: 800;
     color: var(--accent-gold);
-}
-.quote-tag-badge i, .quote-tag-badge span.tag-icon {
-    font-size: 1.15rem;
 }
 .quote-actions-icons {
     display: flex;
@@ -2474,83 +2553,73 @@
     color: var(--accent-gold);
 }
 
-/* الحاوية الخارجية الثابتة التي تقطع الزيادات */
-.quote-center-wrapper {
-    overflow: hidden;
+/* شريط تمرير المحتوى الداخلي باللمس */
+.quote-content-carousel-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     width: 100%;
-    margin: 4px 0 8px 0;
+    margin: 2px 0;
+    padding-bottom: 4px;
+}
+.quote-content-carousel-track::-webkit-scrollbar {
+    display: none;
 }
 
-/* الحاوية الداخلية المتحركة أفقياً */
-.quote-center-body {
+/* شريحة الكلام فقط */
+.quote-content-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
     text-align: center;
     display: flex;
     flex-direction: column;
     gap: 4px;
     justify-content: center;
-    width: 100%;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease;
+    box-sizing: border-box;
+    cursor: pointer;
+    user-select: none;
 }
 
-/* كلاسات الانزلاق يميناً ويساراً */
-.quote-center-body.slide-out-left {
-    transform: translateX(-40px);
-    opacity: 0;
-}
-.quote-center-body.slide-in-right {
-    transform: translateX(40px);
-    opacity: 0;
-}
-.quote-center-body.slide-active {
-    transform: translateX(0);
-    opacity: 1;
+/* العنوان العثماني: مقاس مصغر وأنيق وبدون توهج نيون */
+.quote-item-title {
+    font-family: 'Uthmanic', 'Amiri', serif !important;
+    font-size: 1.35rem !important;
+    font-weight: 700;
+    color: #38bdf8 !important;
+    line-height: 1.5;
+    margin-bottom: 2px;
+    text-shadow: none !important;
 }
 
+/* النص بخط كايرو */
+.quote-item-text {
+    font-family: 'Cairo', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.65;
+    white-space: pre-line;
+    text-shadow: none !important;
+}
+
+/* ================= النقاط التفاعلية (نافذة الـ 5 نقاط) ================= */
 .quote-dots-pagination {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    margin-top: auto; /* دفع النقاط لأسفل الكارت بلطف */
+    margin-top: auto;
 }
-.quote-center-body.fade-out {
-    opacity: 0;
-    transform: translateY(-8px);
-}
-.quote-center-body.fade-in {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* العنوان: خط مخصص ولون مميز ثابت في النهاري والليلي */
-/* العنوان: الخط المخصص الجديد مع تكبير الحجم */
-.quote-item-title {
-    font-family: 'Uthmanic', 'Amiri', serif !important;
-    font-size: 1.85rem !important; /* تكبير حجم الخط ليكون واضحاً وبارزاً */
-    font-weight: 700;
-    color: #38bdf8 !important;
-    line-height: 1.6;
-    text-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
-    margin-bottom: 4px;
-}
-
-/* النص: بخط التطبيق الافتراضي (Cairo) بحجم متناسق ومريح للقراءة */
-.quote-item-text {
-    font-family: 'Cairo', sans-serif !important;
-    font-size: 0.95rem !important;
-    font-weight: 700;
-    color: var(--text-main);
-    line-height: 1.7;
-    white-space: pre-line;
-}
-
 .q-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 [data-theme="light"] .q-dot {
@@ -2559,10 +2628,18 @@
 }
 .q-dot.active {
     background: var(--accent-emerald) !important;
-    width: 22px;
-    border-radius: 10px;
+    width: 18px;
+    border-radius: 8px;
     border: none;
-    box-shadow: 0 0 10px var(--accent-emerald);
+    box-shadow: none !important;
+}
+.q-dot.edge-small {
+    transform: scale(0.65);
+    opacity: 0.4;
+}
+.q-dot.edge-tiny {
+    transform: scale(0.35);
+    opacity: 0.15;
 }
 
 @font-face {
@@ -2571,6 +2648,7 @@
     font-weight: normal;
     font-style: normal;
 }
+
 
 </style>
 </head>
@@ -3106,22 +3184,43 @@
         <!-- سيتم حقن كروت الإشعارات هنا -->
     </div>
 </div>
+
+<!-- واجهة أرشيف الاقتباسات والمعلومات (شاشة مستقلة) -->
+<div id="view-quotes-archive" class="view-section">
+    <div class="auth-card" style="text-align: center; padding: 20px 14px; margin-bottom: 16px; border-color: var(--accent-gold);">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">📚</span>
+        <h3 style="color: var(--accent-gold); margin-bottom: 4px;">أرشيف المعلومات والاقتباسات</h3>
+        <p style="font-size: 0.82rem; color: var(--text-sub); margin: 0;">جميع الحكم والفوائد المحفوظة بالتطبيق</p>
+    </div>
+
+    <div class="section-label">📋 جميع العناصر المحفوظة</div>
+    <div id="archive-quotes-list" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- يتم حقن الكروت هنا -->
+    </div>
+</div>
         
         <!-- المستوى الأول: الواجهة الرئيسية -->
         <div id="view-home" class="view-section active">
             
-            <!-- شريط الرصيد العلوي -->
-            <div id="home-balance-bar" class="home-top-bar" style="display: none;">
-                <div class="balance-item">
-                    <img src="https://img.icons8.com/fluency/96/star.png" alt="XP">
-                    <span id="home-xp" class="xp-text">0 XP</span>
-                    <span id="home-double-xp-badge" style="display: none; background: #ef4444; color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 900; margin-right: 4px;">2X XP 🔥</span>
-                </div>
-                <div class="balance-item">
-                    <img src="https://img.icons8.com/fluency/96/coins.png" alt="Coins">
-                    <span id="home-coins" class="coin-text">0</span>
-                </div>
-            </div>
+            <!-- شريط الرصيد المصغر والنظيف -->
+<div id="home-balance-bar" class="home-balance-grid" style="display: none;">
+    <!-- 1. كارت نقاط الخبرة XP -->
+    <div class="balance-card-modern xp-card">
+        <div class="balance-card-val-row">
+            <span id="home-xp" class="balance-val-text xp-val">0 XP</span>
+            <span id="home-double-xp-badge" class="double-xp-pill" style="display: none;">2X 🔥</span>
+        </div>
+        <img src="https://img.icons8.com/fluency/96/star.png" class="balance-inner-icon" alt="XP">
+    </div>
+
+    <!-- 2. كارت العملات Coins -->
+    <div class="balance-card-modern coin-card">
+        <div class="balance-card-val-row">
+            <span id="home-coins" class="balance-val-text coin-val">0</span>
+        </div>
+        <img src="https://img.icons8.com/fluency/96/coins.png" class="balance-inner-icon" alt="Coins">
+    </div>
+</div>
 
 <button id="custom-install-btn" class="btn-submit" style="display: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; margin-bottom: 20px; font-size: 1rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
                 ⬇️ تثبيت التطبيق على هاتفك 
@@ -3166,34 +3265,31 @@
                 </div>
 </div> <!-- 👈 هذا القفل المفقود لشبكة eng-bento-grid يجب إضافته هنا -->
 
-               <!-- كارت الاقتباسات والمعلومات المتجدد تلقائياً كل 60 ثانية -->
-<div class="dynamic-quote-card" id="dynamic-quote-card" onclick="openAllQuotesModal(event)">
+              <!-- كارت الاقتباسات (إطار وبادج ثابتان + محتوى منزلق باللمس) -->
+<div class="dynamic-quote-card" id="dynamic-quote-card">
     <div class="quote-top-row">
-        <!-- التصنيف والأيقونة يميناً -->
-        <div class="quote-tag-badge">
-            <span class="tag-icon" id="quote-card-icon">💡</span>
-            <span id="quote-card-cat">معلومة عالسريع</span>
+        <!-- التصنيف والأيقونة يميناً (يتم تحديثهما مع تمرير الكلام) -->
+        <div class="quote-tag-badge" onclick="openAllQuotesArchiveView()">
+            <span class="tag-icon" id="quote-card-icon">🌱</span>
+            <span id="quote-card-cat">عبرة وحكمة</span>
         </div>
         <!-- أزرار النسخ والمشاركة يساراً -->
         <div class="quote-actions-icons">
-            <button class="btn-quote-action" title="مشاركة" onclick="shareCurrentQuote(event)">
+            <button class="btn-quote-action" title="مشاركة" onclick="shareCurrentActiveQuote(event)">
                 <i class="ti ti-share"></i>
             </button>
-            <button class="btn-quote-action" title="نسخ" onclick="copyCurrentQuote(event)">
+            <button class="btn-quote-action" title="نسخ" onclick="copyCurrentActiveQuote(event)">
                 <i class="ti ti-copy"></i>
             </button>
         </div>
     </div>
 
-  <!-- غلاف الكاروسيل الأفقي -->
-    <div class="quote-center-wrapper">
-        <div class="quote-center-body slide-active">
-            <div class="quote-item-title" id="quote-card-title"></div>
-            <div class="quote-item-text" id="quote-card-text">جاري تحميل الإلهام والمعلومات... ⏳</div>
-        </div>
+    <!-- ممر النصوص الداخلي فقط هو القابل للسحب باليد -->
+    <div class="quote-content-carousel-track" id="quote-carousel-track" onscroll="onQuoteTrackScroll()">
+        <!-- سيتم توليد شرائح النصوص فقط هنا ديناميكياً -->
     </div>
 
-    <!-- نقاط التبديل في الأسفل -->
+    <!-- نقاط التبديل بالأسفل -->
     <div class="quote-dots-pagination" id="quote-card-dots"></div>
 </div>
 
@@ -5531,19 +5627,6 @@
         </div>
         <p id="risk-result-banter" style="font-size: 1rem; color: var(--text-main); line-height: 1.6; margin-bottom: 20px; font-weight: 700;"></p>
         <button class="btn-submit" onclick="finishRiskMatchFully()" style="font-size: 1rem;">العودة للرئيسية 🏠</button>
-    </div>
-</div>
-
-<!-- نافذة استعراض جميع الجمل الحالية -->
-<div id="modal-all-quotes" class="modal-overlay">
-    <div class="modal-box" style="max-width: 480px; text-align: right; max-height: 85vh;">
-        <button class="btn-close-modal" onclick="closeModal('modal-all-quotes')">×</button>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;">
-            <span style="font-size: 1.6rem;">📚</span>
-            <h3 style="color: var(--accent-gold); margin: 0; font-size: 1.15rem;">أرشيف المعلومات والاقتباسات</h3>
-        </div>
-        <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 15px;">استعرض كل الجمل والحكم والمعلومات الموجودة حالياً بالتطبيق:</p>
-        <div id="modal-quotes-list" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 60vh; padding-left: 4px;"></div>
     </div>
 </div>
 
