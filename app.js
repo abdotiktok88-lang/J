@@ -47,6 +47,8 @@ document.addEventListener("DOMContentLoaded", () => {
         listenToCountdowns();
         if (typeof listenToContentMarkers === 'function') listenToContentMarkers();
 if (typeof listenToAcademicMarkers === 'function') listenToAcademicMarkers();
+listenToAppNotifications();
+initDynamicQuotesFeed();
     }
 });
 
@@ -885,10 +887,21 @@ applyUserCustomTheme(localStorage.getItem('active_custom_theme'));
         return;
     }
     
-    // الخروج الآمن بدون خصم وإيقاف التايمر
+    // فحص ما إذا كان المستخدم قادماً بالفعل من شاشة التحدي الحية
+    const currentView = navHistory[navHistory.length - 1]?.viewId;
+    const isInsideQuizScreen = ['view-quiz-game', 'view-penalty-arena', 'view-boss-bomb', 'view-boss-monster'].includes(currentView);
+
     if (isClassicQuizActive || isPenaltyGameActive || isLevelBossActive) {
         pauseAllActiveTimers();
-        showTopToast('تم إيقاف التحدي مؤقتاً ⏸️. يمكنك العودة لاستكماله لاحقاً بدون خسارة.', 'info');
+        
+        // حفظ تقدم جلسة المستوى في الـ LocalStorage لمنع ضياعها عند الخروج أو التحديث
+        saveActiveQuizSession();
+        
+        // إظهار التنبيه فقط إذا كان الخروج من داخل شاشة التحدي نفسها
+        if (isInsideQuizScreen) {
+            showTopToast('تم إيقاف التحدي مؤقتاً ⏸️. يمكنك العودة لاستكماله لاحقاً بدون خسارة.', 'info');
+        }
+        
         playClickSound();
         navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
         showViewSection('view-home');
@@ -897,6 +910,7 @@ applyUserCustomTheme(localStorage.getItem('active_custom_theme'));
         return;
     }
 
+    // التنقل الطبيعي في حالة عدم وجود أي تحدٍ نشط
     playClickSound();
     navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
     showViewSection('view-home');
@@ -904,7 +918,7 @@ applyUserCustomTheme(localStorage.getItem('active_custom_theme'));
     updateNavState('nav-home');
 }
 
-    function navigateTo(viewId, title, subtitle) {
+        function navigateTo(viewId, title, subtitle) {
         playClickSound();
         showViewSection(viewId);
         navHistory.push({ viewId, title, subtitle });
@@ -931,6 +945,7 @@ applyUserCustomTheme(localStorage.getItem('active_custom_theme'));
     // الخروج الآمن عند الرجوع
     if (isClassicQuizActive || isPenaltyGameActive || isLevelBossActive) {
         pauseAllActiveTimers();
+saveActiveQuizSession(); // حفظ الجلسة هنا أيضاً
         showTopToast('تم إيقاف التحدي مؤقتاً ⏸️. يمكنك العودة لاستكماله لاحقاً.', 'info');
         playBackSound();
         window.history.back(); 
@@ -3873,28 +3888,29 @@ if (currentUser) {
     let isAdminDataLoaded = false;
 
     function switchAdminTab(tabName) {
-        playClickSound();
-['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game'].forEach(t => {
-    const tabBtn = document.getElementById('tab-admin-' + t);
-    const tabSec = document.getElementById('admin-section-' + t);
-    if (tabBtn) tabBtn.classList.remove('active');
-    if (tabSec) tabSec.style.display = 'none';
-});
-        
-        const currentBtn = document.getElementById('tab-admin-' + tabName);
-        const currentSec = document.getElementById('admin-section-' + tabName);
-        
-        if (currentBtn) currentBtn.classList.add('active');
-        if (currentSec) currentSec.style.display = 'block';
+    playClickSound();
+    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs'].forEach(t => {
+        const tabBtn = document.getElementById('tab-admin-' + t);
+        const tabSec = document.getElementById('admin-section-' + t);
+        if (tabBtn) tabBtn.classList.remove('active');
+        if (tabSec) tabSec.style.display = 'none';
+    });
+    
+    const currentBtn = document.getElementById('tab-admin-' + tabName);
+    const currentSec = document.getElementById('admin-section-' + tabName);
+    
+    if (currentBtn) currentBtn.classList.add('active');
+    if (currentSec) currentSec.style.display = 'block';
 
-        if (tabName === 'analytics' && !loadedAdminTabs.analytics) { loadAdminAnalyticsAndLogs(); loadedAdminTabs.analytics = true; }
-        if (tabName === 'tickets' && !loadedAdminTabs.tickets) { loadAdminTickets(); loadedAdminTabs.tickets = true; }
-        if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
-        if (tabName === 'quiz' && !loadedAdminTabs.quiz) { loadAdminCustomQuestions(); loadedAdminTabs.quiz = true; }
-        if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
+    if (tabName === 'analytics' && !loadedAdminTabs.analytics) { loadAdminAnalyticsAndLogs(); loadedAdminTabs.analytics = true; }
+    if (tabName === 'tickets' && !loadedAdminTabs.tickets) { loadAdminTickets(); loadedAdminTabs.tickets = true; }
+    if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
+    if (tabName === 'quiz' && !loadedAdminTabs.quiz) { loadAdminCustomQuestions(); loadedAdminTabs.quiz = true; }
+    if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
     if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
+    if (tabName === 'notifs') { loadAdminNotificationsHistory(); }
+if (tabName === 'quotes') { loadAdminQuotesList(); }
 
-    // 👈 التعديل الصحيح: غلفنا الكود بالشرط ده عشان ميشتغلش غير لما تفتح تبويب المنظم الأكاديمي بس
     if (tabName === 'academic') {
         db.ref('academic_tasks').once('value', (snap) => {
             const select = document.getElementById('adm-cd-task-link');
@@ -3910,8 +3926,8 @@ if (currentUser) {
     }
 
     if (tabName === 'science') { loadAdminScienceContent(); }
-if (tabName === 'guess-game') { loadAdminGuessCategories(); }
-    }
+    if (tabName === 'guess-game') { loadAdminGuessCategories(); }
+}
 
     function populateAdminStoreInputs() {
         const select = document.getElementById('admin-store-item-select');
@@ -7314,6 +7330,10 @@ function handleLevelAnswer(buttonElem, selectedAns, correctAns) {
 function proceedToNextLevelQuestion() { 
     playClickSound(); 
     currentQuizIndex++; 
+    
+    // حفظ التقدم ورقم السؤال الجديد فوراً لمنع ضياعه لو حدث ريفريش
+    saveActiveQuizSession(); 
+
     if (currentQuizIndex < 10) {
         renderLevelQuestion(); 
     } else {
@@ -7324,6 +7344,9 @@ function proceedToNextLevelQuestion() {
 function checkBossEligibility() {
     isClassicQuizActive = false;
     clearInterval(timerInterval);
+
+    // مسح الجلسة المؤقتة لأن المستوى انتهى بالفعل (عشان يرجع الزرار لوضعه الطبيعي)
+    clearActiveQuizSession();
 
     let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
     let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
@@ -7342,7 +7365,7 @@ function checkBossEligibility() {
     const starsDisplay = document.getElementById('total-stars-display');
     if (starsDisplay) starsDisplay.innerText = totalGlobalStars;
 
-    // 👈 التعديل السحري: لو الزعيم مهزوم أصلاً، نقفل ونرجع الخريطة فوراً
+    // لو الزعيم مهزوم أصلاً، نقفل ونرجع الخريطة فوراً
     if (oldData.boss_defeated) {
         goHomeDirectly(true);
         if (currentLevelStarsEarned > (oldData.stars || 0)) {
@@ -7352,7 +7375,7 @@ function checkBossEligibility() {
             showTopToast(`جمعت ${currentLevelStarsEarned}⭐، رقمك القياسي ${oldData.stars}⭐ لم يتأثر.`, 'info');
         }
         setTimeout(() => openLevelsMap(), 500);
-        return; // بنوقف التنفيذ هنا عشان ميروحش للزعيم
+        return;
     }
 
     // لو لسه مخلصش الزعيم يكمل العادي:
@@ -7813,32 +7836,37 @@ function startLevelNode(levelNum, state) {
     let bossWarning = document.getElementById('level-boss-warning'); 
     let hasPlayedCurrentLevel = (lvlData.stars !== undefined);
 
+    // فحص الجلسة المعلقة (سواء في الذاكرة أو بعد التحديث من الكاش)
+    const savedSession = getActiveQuizSession();
+    const hasPausedSession = (savedSession && savedSession.level === levelNum && savedSession.currentIndex < 10) ||
+                             (isClassicQuizActive && !isLevelBossActive && currentLevelPlaying === levelNum && currentQuizIndex < 10);
+
     if (lvlData.boss_defeated) {
         if(bossWarning) bossWarning.style.display = 'none'; 
         if(btnDirectBoss) btnDirectBoss.style.display = 'none';
         if(btnStartQuiz) {
-            btnStartQuiz.style.background = 'rgba(255, 255, 255, 0.05)';
-            btnStartQuiz.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-            btnStartQuiz.style.color = 'var(--text-main)';
-            btnStartQuiz.innerText = 'تحسين النجوم (-15 عملة) 🔄';
+            btnStartQuiz.style.background = hasPausedSession ? 'linear-gradient(135deg, #00c853 0%, #007e33 100%)' : 'rgba(255, 255, 255, 0.05)';
+            btnStartQuiz.style.border = hasPausedSession ? 'none' : '1px solid rgba(255, 255, 255, 0.2)';
+            btnStartQuiz.style.color = hasPausedSession ? '#fff' : 'var(--text-main)';
+            btnStartQuiz.innerText = hasPausedSession ? 'استئناف التحدي ⏯️' : 'تحسين النجوم (-15 عملة) 🔄';
         }
     } else if (totalGlobalStars >= reqStarsForNext && !lvlData.boss_defeated && hasPlayedCurrentLevel) {
         if(bossWarning) bossWarning.style.display = 'block'; 
         if(btnDirectBoss) btnDirectBoss.style.display = 'block';
         if(btnStartQuiz) {
-            btnStartQuiz.style.background = 'rgba(255, 255, 255, 0.05)';
-            btnStartQuiz.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-            btnStartQuiz.style.color = 'var(--text-main)';
-            btnStartQuiz.innerText = 'تحسين النجوم (-15 عملة) 🔄';
+            btnStartQuiz.style.background = hasPausedSession ? 'linear-gradient(135deg, #00c853 0%, #007e33 100%)' : 'rgba(255, 255, 255, 0.05)';
+            btnStartQuiz.style.border = hasPausedSession ? 'none' : '1px solid rgba(255, 255, 255, 0.2)';
+            btnStartQuiz.style.color = hasPausedSession ? '#fff' : 'var(--text-main)';
+            btnStartQuiz.innerText = hasPausedSession ? 'استئناف التحدي ⏯️' : 'تحسين النجوم (-15 عملة) 🔄';
         }
     } else {
         if(bossWarning) bossWarning.style.display = 'block'; 
         if(btnDirectBoss) btnDirectBoss.style.display = 'none';
         if(btnStartQuiz) {
-            btnStartQuiz.style.background = 'linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%)';
+            btnStartQuiz.style.background = hasPausedSession ? 'linear-gradient(135deg, #00c853 0%, #007e33 100%)' : 'linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%)';
             btnStartQuiz.style.border = 'none';
-            btnStartQuiz.style.color = '#000';
-            btnStartQuiz.innerText = hasPlayedCurrentLevel ? 'تحسين النجوم (-15 عملة) 🔄' : 'بدء التحدي 🚀';
+            btnStartQuiz.style.color = hasPausedSession ? '#fff' : '#000';
+            btnStartQuiz.innerText = hasPausedSession ? 'استئناف التحدي ⏯️' : (hasPlayedCurrentLevel ? 'تحسين النجوم (-15 عملة) 🔄' : 'بدء التحدي 🚀');
         }
     }
     openModal('modal-level-intro');
@@ -7847,14 +7875,36 @@ function startLevelNode(levelNum, state) {
 async function confirmStartLevel() {
     closeModal('modal-level-intro');
     
+    const savedSession = getActiveQuizSession();
+
+    // 1. التحقق من الاستئناف من الذاكرة الحية (داخل التطبيق)
     if (isClassicQuizActive && !isLevelBossActive && currentLevelPlaying === pendingLevelStart && activeQuizQuestions && activeQuizQuestions.length > 0 && currentQuizIndex < 10) {
         showTopToast(`جاري استكمال مستوى ${currentLevelPlaying} 🚀`, 'success');
         navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
-        if (!isAnswerLocked) resumeLevelTimer();
+        if (!isAnswerLocked && typeof resumeLevelTimer === 'function') resumeLevelTimer();
         return;
     }
 
-    // التحقق من رسوم التحسين (خصم 15 عملة)
+    // 2. الاستئناف بعد الـ Refresh أو الخروج وإعادة الفتح
+    if (savedSession && savedSession.level === pendingLevelStart && savedSession.questions && savedSession.currentIndex < 10) {
+        showTopToast(`جاري استئناف محاولتك في مستوى ${savedSession.level} ⏯️`, 'success');
+        currentLevelPlaying = savedSession.level;
+        activeQuizQuestions = savedSession.questions;
+        currentQuizIndex = savedSession.currentIndex;
+        quizScoreCount = savedSession.score || 0;
+        currentLevelStarsEarned = savedSession.starsEarned || 0;
+        isClassicQuizActive = true;
+        isLevelBossActive = false;
+        
+        navigateTo('view-quiz-game', `مستوى ${currentLevelPlaying}`, 'تحدي المعلومات');
+        renderLevelQuestion();
+        return;
+    }
+
+    // إذا كانت جلسة جديدة، يتم مسح أي جلسة معلقة قديمة
+    clearActiveQuizSession();
+
+    // التحقق من رسوم التحسين (خصم 15 عملة) للبدء الجديد فقط
     let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
     let hasPlayedCurrentLevel = (userLevels[pendingLevelStart] && userLevels[pendingLevelStart].stars !== undefined);
     
@@ -7872,7 +7922,7 @@ async function confirmStartLevel() {
     currentLevelPlaying = pendingLevelStart;
     currentLevelStarsEarned = 0;
     
-    // نظام الكاش (لاستهلاك صفر نت في المرات القادمة)
+    // نظام الكاش للأسئلة
     const cacheKey = `cached_level_${currentLevelPlaying}_classic`;
     const cachedData = localStorage.getItem(cacheKey);
 
@@ -7896,7 +7946,7 @@ async function confirmStartLevel() {
                 showTopToast(`عذراً، الأسئلة المرفوعة ${questions.length} فقط (مطلوب 10)!`, 'error');
                 return;
             }
-            localStorage.setItem(cacheKey, JSON.stringify(questions)); // حفظ في جهاز الطالب
+            localStorage.setItem(cacheKey, JSON.stringify(questions));
             startClassicQuizWithQuestions(questions);
         }).catch(e => {
             showTopToast('حدث خطأ بالشبكة أثناء جلب الأسئلة.', 'error');
@@ -8023,6 +8073,34 @@ function startDynamicBossDirectly() {
         console.log("Error loading direct boss questions:", e);
         showTopToast('خطأ في جلب أسئلة الزعيم!', 'error');
     });
+}
+
+// دوال إدارة جلسة التحدي المعلق
+function saveActiveQuizSession() {
+    if (!isClassicQuizActive || isLevelBossActive || !activeQuizQuestions || activeQuizQuestions.length === 0) return;
+    const sessionData = {
+        level: currentLevelPlaying,
+        questions: activeQuizQuestions,
+        currentIndex: currentQuizIndex,
+        score: quizScoreCount,
+        starsEarned: currentLevelStarsEarned,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('active_level_quiz_session', JSON.stringify(sessionData));
+}
+
+function getActiveQuizSession() {
+    try {
+        const raw = localStorage.getItem('active_level_quiz_session');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) {
+        return null;
+    }
+}
+
+function clearActiveQuizSession() {
+    localStorage.removeItem('active_level_quiz_session');
 }
 
 // ================= محرك عرض المحتوى للطالب =================
@@ -10117,4 +10195,489 @@ function updateAcademicRedDots() {
             dot.style.display = hasUnseenAcademicContent(tab) ? 'inline-block' : 'none';
         }
     });
+}
+
+// ================= محرك الإشعارات الذكي (استهلاك صفر داتا) =================
+let cachedNotificationsList = [];
+
+// استدعاء المراقبة برقم الإصدار فقط (خفيف جداً)
+function listenToAppNotifications() {
+    db.ref('settings/notifications_version').on('value', async (snap) => {
+        const serverVersion = snap.val() || 1;
+        const localVersion = localStorage.getItem('local_notif_version');
+        const localData = localStorage.getItem('local_notifications_data');
+
+        // لو رقم الإصدار متطابق والداتا متخزنة محلياً، لا يسحب من السيرفر نهائياً
+        if (localData && String(localVersion) === String(serverVersion)) {
+            cachedNotificationsList = JSON.parse(localData);
+            updateNotificationsBadgeUI();
+            return;
+        }
+
+        // لو نزل إشعار جديد أو أول مرة يفتح، نسحب آخر 20 إشعار فقط لمرة واحدة
+        try {
+            const notifsSnap = await db.ref('app_notifications').limitToLast(20).once('value');
+            let list = [];
+            if (notifsSnap.exists()) {
+                notifsSnap.forEach(child => {
+                    list.push({ id: child.key, ...child.val() });
+                });
+            }
+            list.reverse(); // من الأحدث للأقدم
+            cachedNotificationsList = list;
+            localStorage.setItem('local_notifications_data', JSON.stringify(list));
+            localStorage.setItem('local_notif_version', serverVersion);
+            updateNotificationsBadgeUI();
+        } catch (e) {
+            console.error("Error loading notifications:", e);
+        }
+    });
+}
+
+// حساب عدد الإشعارات التي لم يرها الطالب وتحديث رقم البادج
+function updateNotificationsBadgeUI() {
+    const badge = document.getElementById('notif-unread-badge');
+    if (!badge) return;
+
+    const seenIds = JSON.parse(localStorage.getItem('seen_notif_ids') || '[]');
+    // استخراج الإشعارات غير المقروءة
+    const unreadList = cachedNotificationsList.filter(n => !seenIds.includes(n.id));
+    const unreadCount = unreadList.length;
+
+    if (unreadCount > 0) {
+        badge.innerText = unreadCount > 9 ? '+9' : unreadCount;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// فتح شاشة الإشعارات وتحديد الكل كمقروء محلياً
+function openNotificationsCenter() {
+    if (typeof playClickSound === 'function') playClickSound();
+    navigateTo('view-notifications', 'مركز الإشعارات 🔔', 'التنبيهات والتحديثات الجديدة');
+    renderNotificationsListDOM();
+
+    // حفظ جميع المعرفات الحالية كمقروءة فوراً في جهاز الطالب
+    const allIds = cachedNotificationsList.map(n => n.id);
+    localStorage.setItem('seen_notif_ids', JSON.stringify(allIds));
+    
+    // إخفاء العداد فوراً
+    const badge = document.getElementById('notif-unread-badge');
+    if (badge) badge.style.display = 'none';
+}
+
+// بناء كروت الإشعارات في الواجهة
+function renderNotificationsListDOM() {
+    const container = document.getElementById('notifications-container');
+    if (!container) return;
+
+    if (cachedNotificationsList.length === 0) {
+        container.innerHTML = `
+        <div class="acad-glass-card" style="text-align: center; padding: 30px 15px;">
+            <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">📭</span>
+            <p style="color: var(--text-sub); font-weight: 800;">لا توجد إشعارات جديدة حالياً.</p>
+        </div>`;
+        return;
+    }
+
+    let html = '';
+    cachedNotificationsList.forEach(n => {
+        const dateStr = n.timestamp ? new Date(n.timestamp).toLocaleString('ar-EG', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'الآن';
+
+        html += `
+        <div class="acad-glass-card" style="margin-bottom: 0; padding: 14px; text-align: right;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="color: var(--accent-gold); font-size: 0.95rem; font-weight: 900;">🔔 ${n.title}</span>
+                <span style="font-size: 0.72rem; color: var(--text-sub); font-weight: 700;">${dateStr}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.6; margin: 0 0 8px 0; font-weight: 600;">${n.body}</p>
+            ${n.url ? `
+                <button class="btn-action-glow btn-download-file" style="padding: 5px 12px; font-size: 0.75rem;" onclick="window.open('${n.url}', '_blank')">
+                    فتح الرابط المرفق 🔗
+                </button>
+            ` : ''}
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// ================= إدارة الإشعارات (لوحة الأدمن) =================
+
+// عرض الإشعارات السابقة في لوحة الأدمن
+function loadAdminNotificationsHistory() {
+    const container = document.getElementById('admin-notifs-history-list');
+    if (!container) return;
+
+    container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">جاري تحميل الإشعارات... ⏳</p>';
+
+    db.ref('app_notifications').limitToLast(30).once('value', (snap) => {
+        if (!snap.exists()) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">لا توجد إشعارات سابقة حتى الآن.</p>';
+            return;
+        }
+
+        let list = [];
+        snap.forEach(child => {
+            list.push({ id: child.key, ...child.val() });
+        });
+        list.reverse(); // من الأحدث للأقدم
+
+        let html = '';
+        list.forEach(n => {
+            const dateStr = n.timestamp ? new Date(n.timestamp).toLocaleString('ar-EG', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'حديث';
+
+            const safeTitle = (n.title || '').replace(/'/g, "\\'");
+            const safeBody = (n.body || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+            const safeUrl = (n.url || '').replace(/'/g, "\\'");
+
+            html += `
+            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <span style="color: var(--accent-gold); font-weight: 900; font-size: 0.95rem;">🔔 ${n.title}</span>
+                    <span style="font-size: 0.72rem; color: var(--text-sub);">${dateStr}</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-main); margin: 0; line-height: 1.5;">${n.body}</p>
+                ${n.url ? `<a href="${n.url}" target="_blank" style="font-size: 0.75rem; color: var(--accent-emerald); text-decoration: underline;">🔗 رابط المرفق</a>` : ''}
+                
+                <div style="display: flex; gap: 8px; width: 100%; justify-content: flex-end; border-top: 1px dashed var(--border-card); padding-top: 8px; margin-top: 4px;">
+                    <button class="admin-action-btn" style="padding: 4px 12px; font-size: 0.75rem;" onclick="editAdminNotification('${n.id}', '${safeTitle}', '${safeBody}', '${safeUrl}')">تعديل ✏️</button>
+                    <button class="admin-action-btn danger" style="padding: 4px 12px; font-size: 0.75rem;" onclick="deleteAdminNotification('${n.id}')">حذف 🗑️</button>
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    });
+}
+
+// تجهيز الحقول للتعديل
+function editAdminNotification(id, title, body, url) {
+    if (typeof playClickSound === 'function') playClickSound();
+
+    document.getElementById('adm-notif-id').value = id;
+    document.getElementById('adm-notif-title').value = title;
+    document.getElementById('adm-notif-body').value = body;
+    document.getElementById('adm-notif-url').value = url;
+
+    document.getElementById('adm-notif-form-title').innerText = 'تعديل الإشعار ✏️';
+    document.getElementById('btn-save-notif').innerText = 'حفظ التعديلات ✅';
+    document.getElementById('btn-cancel-notif').style.display = 'block';
+
+    window.scrollTo({ top: document.getElementById('adm-notif-title').offsetTop - 100, behavior: 'smooth' });
+}
+
+// إلغاء التعديل والرجوع لحالة النشر الجديد
+function cancelEditNotification() {
+    document.getElementById('adm-notif-id').value = '';
+    document.getElementById('adm-notif-title').value = '';
+    document.getElementById('adm-notif-body').value = '';
+    document.getElementById('adm-notif-url').value = '';
+
+    document.getElementById('adm-notif-form-title').innerText = 'نشر إشعار جديد للطلاب 🔔';
+    document.getElementById('btn-save-notif').innerText = 'نشر الإشعار للجميع 🚀';
+    document.getElementById('btn-cancel-notif').style.display = 'none';
+}
+
+// نشر أو حفظ تعديل الإشعار
+function adminPublishNotification() {
+    if (typeof playClickSound === 'function') playClickSound();
+    const editId = document.getElementById('adm-notif-id').value.trim();
+    const title = document.getElementById('adm-notif-title').value.trim();
+    const body = document.getElementById('adm-notif-body').value.trim();
+    const url = document.getElementById('adm-notif-url').value.trim();
+
+    if (!title || !body) {
+        showTopToast('يرجى كتابة العنوان وتفاصيل الإشعار!', 'error');
+        return;
+    }
+
+    const notifData = {
+        title,
+        body,
+        url: url || '',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    if (editId) {
+        // حالة التعديل
+        db.ref('app_notifications/' + editId).update(notifData).then(() => {
+            db.ref('settings/notifications_version').transaction(v => (v || 1) + 1);
+            showTopToast('تم تعديل الإشعار بنجاح! ✏️✨', 'success');
+            cancelEditNotification();
+            loadAdminNotificationsHistory();
+        });
+    } else {
+        // حالة نشر إشعار جديد
+        db.ref('app_notifications').push(notifData).then(() => {
+            db.ref('settings/notifications_version').transaction(v => (v || 1) + 1);
+            showTopToast('تم إرسال الإشعار للجميع بنجاح! 🔔🚀', 'success');
+            cancelEditNotification();
+            loadAdminNotificationsHistory();
+        });
+    }
+}
+
+// حذف الإشعار
+function deleteAdminNotification(id) {
+    if (typeof playClickSound === 'function') playClickSound();
+    if (!confirm('هل تريد حذف هذا الإشعار نهائياً؟')) return;
+
+    db.ref('app_notifications/' + id).remove().then(() => {
+        db.ref('settings/notifications_version').transaction(v => (v || 1) + 1);
+        showTopToast('تم حذف الإشعار بنجاح 🗑️', 'info');
+        loadAdminNotificationsHistory();
+    });
+}
+
+// =========================================================
+// منظومة كارت الاقتباسات والمعلومات الديناميكي
+// =========================================================
+
+let appQuotesList = [];
+let currentQuoteIndex = 0;
+let quoteAutoSlideTimer = null;
+
+// تحميل الجمل من الكاش أولاً ثم المزامنة
+function initDynamicQuotesFeed() {
+    const cached = localStorage.getItem('local_app_quotes');
+    if (cached) {
+        try {
+            appQuotesList = JSON.parse(cached);
+            if (appQuotesList.length > 0) renderCurrentQuote();
+        } catch(e) {}
+    }
+
+    // المزامنة مع Firebase
+    db.ref('daily_quotes').on('value', snap => {
+        appQuotesList = [];
+        if (snap.exists()) {
+            snap.forEach(c => {
+                appQuotesList.push({ id: c.key, ...c.val() });
+            });
+            appQuotesList.reverse(); // من الأحدث للأقدم
+        }
+
+        localStorage.setItem('local_app_quotes', JSON.stringify(appQuotesList));
+        if (appQuotesList.length > 0) {
+            renderCurrentQuote();
+            startQuotesAutoTimer();
+        } else {
+            // جملة افتراضية لو فارغة
+            document.getElementById('quote-card-cat').innerText = 'عبرة وحكمة';
+            document.getElementById('quote-card-title').innerText = 'تيسير وتوفيق';
+            document.getElementById('quote-card-text').innerText = 'إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ التَّيْسِيرَ عَلَى النَّاسِ، فَيَسِّرْ عَلَيْهِمْ.';
+        }
+    });
+}
+
+function renderCurrentQuote(direction = 'next') {
+    if (!appQuotesList || appQuotesList.length === 0) return;
+    if (currentQuoteIndex >= appQuotesList.length) currentQuoteIndex = 0;
+
+    const bodyEl = document.querySelector('.quote-center-body');
+    const catEl = document.getElementById('quote-card-cat');
+    const iconEl = document.getElementById('quote-card-icon');
+    const titleEl = document.getElementById('quote-card-title');
+    const textEl = document.getElementById('quote-card-text');
+    const dotsContainer = document.getElementById('quote-card-dots');
+
+    if (!catEl || !textEl) return;
+
+    // 1. خروج العنصر الحالي في الاتجاه المطلوب
+    if (bodyEl) {
+        bodyEl.className = direction === 'next' ? 'quote-center-body slide-out-left' : 'quote-center-body slide-in-right';
+    }
+
+    setTimeout(() => {
+        const item = appQuotesList[currentQuoteIndex];
+
+        let icon = '💡';
+        if (item.category === 'عبرة وحكمة') icon = '🌱';
+        else if (item.category === 'اقتباس') icon = '💬';
+        else if (item.category === 'معلومة عامة') icon = '🌍';
+        else if (item.category === 'راجع معايا') icon = '📝';
+
+        catEl.innerText = item.category || 'معلومة';
+        iconEl.innerText = icon;
+
+        if (item.title && item.title.trim() !== '') {
+            titleEl.style.display = 'block';
+            titleEl.innerText = item.title;
+        } else {
+            titleEl.style.display = 'none';
+        }
+
+        textEl.innerText = item.text || '';
+
+        // تحديث النقاط
+        if (dotsContainer) {
+            let dotsHtml = '';
+            const total = Math.min(appQuotesList.length, 10);
+            for (let i = 0; i < total; i++) {
+                dotsHtml += `<span class="q-dot ${i === currentQuoteIndex ? 'active' : ''}" onclick="goToQuoteIndex(${i}, event)"></span>`;
+            }
+            dotsContainer.innerHTML = dotsHtml;
+        }
+
+        // 2. تموضع النص الجديد من الجهة المقابلة قبل الظهور
+        if (bodyEl) {
+            bodyEl.style.transition = 'none';
+            bodyEl.className = direction === 'next' ? 'quote-center-body slide-in-right' : 'quote-center-body slide-out-left';
+
+            // 3. تحريك النص الجديد نحو المنتصف
+            requestAnimationFrame(() => {
+                bodyEl.style.transition = '';
+                bodyEl.className = 'quote-center-body slide-active';
+            });
+        }
+    }, 280);
+}
+
+function goToQuoteIndex(idx, event) {
+    if (event) event.stopPropagation();
+    const direction = idx >= currentQuoteIndex ? 'next' : 'prev';
+    currentQuoteIndex = idx;
+    renderCurrentQuote(direction);
+    startQuotesAutoTimer();
+}
+
+function startQuotesAutoTimer() {
+    if (quoteAutoSlideTimer) clearInterval(quoteAutoSlideTimer);
+    quoteAutoSlideTimer = setInterval(() => {
+        if (appQuotesList.length > 1) {
+            currentQuoteIndex = (currentQuoteIndex + 1) % appQuotesList.length;
+            renderCurrentQuote('next');
+        }
+    }, 45000);
+}
+
+function copyCurrentQuote(event) {
+    if (event) event.stopPropagation();
+    if (!appQuotesList || appQuotesList.length === 0) return;
+    const item = appQuotesList[currentQuoteIndex];
+    const fullText = (item.title ? item.title + '\n' : '') + item.text;
+    navigator.clipboard.writeText(fullText).then(() => {
+        showTopToast('تم نسخ النص للحافظة بنجاح 📋', 'success');
+    });
+}
+
+function shareCurrentQuote(event) {
+    if (event) event.stopPropagation();
+    if (!appQuotesList || appQuotesList.length === 0) return;
+    const item = appQuotesList[currentQuoteIndex];
+    const fullText = (item.title ? `*${item.title}*\n` : '') + item.text + '\n\n— تطبيق علوم الأغذية 🎓';
+    if (navigator.share) {
+        navigator.share({ title: item.title || 'مشاركة عبارة', text: fullText }).catch(() => {});
+    } else {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+    }
+}
+
+function openAllQuotesModal(event) {
+    if (event) event.stopPropagation();
+    const modalList = document.getElementById('modal-quotes-list');
+    if (!modalList) return;
+
+    if (!appQuotesList || appQuotesList.length === 0) {
+        modalList.innerHTML = '<p style="text-align:center; color:var(--text-sub);">لا توجد جمل مضافة حالياً.</p>';
+        openModal('modal-all-quotes');
+        return;
+    }
+
+    let html = '';
+    appQuotesList.forEach((q, idx) => {
+        html += `
+        <div class="acad-glass-card" style="margin-bottom:0; padding:12px 14px; text-align:right;" onclick="goToQuoteIndex(${idx}); closeModal('modal-all-quotes');">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="pill-badge badge-subject" style="font-size:0.75rem;">${q.category}</span>
+                <span style="font-size:0.7rem; color:var(--text-sub);">${new Date(q.createdAt || Date.now()).toLocaleDateString('ar-EG')}</span>
+            </div>
+            ${q.title ? `<div style="font-family:'Amiri',serif; font-size:1.15rem; font-weight:700; color:var(--accent-gold); margin-bottom:4px;">${q.title}</div>` : ''}
+            <p style="font-size:0.85rem; color:var(--text-main); margin:0; line-height:1.6; font-weight:600;">${q.text}</p>
+        </div>`;
+    });
+
+    modalList.innerHTML = html;
+    openModal('modal-all-quotes');
+}
+
+// ================= دوال الأدمن =================
+
+function toggleCustomQuoteCatInput(val) {
+    const group = document.getElementById('adm-custom-cat-group');
+    if (group) group.style.display = (val === 'custom') ? 'block' : 'none';
+}
+
+function adminSaveNewQuote() {
+    playClickSound();
+    const catSelect = document.getElementById('adm-quote-cat-select').value;
+    const customCat = document.getElementById('adm-quote-custom-cat').value.trim();
+    const finalCat = (catSelect === 'custom') ? (customCat || 'عام') : catSelect;
+    
+    const title = document.getElementById('adm-quote-title').value.trim();
+    const text = document.getElementById('adm-quote-text').value.trim();
+
+    if (!text) {
+        showTopToast('يرجى كتابة نص الجملة أو الاقتباس أولاً!', 'error');
+        return;
+    }
+
+    const newQuote = {
+        category: finalCat,
+        title: title,
+        text: text,
+        createdAt: Date.now()
+    };
+
+    db.ref('daily_quotes').push(newQuote).then(() => {
+        showTopToast('تم النشر في الواجهة بنجاح! 🚀', 'success');
+        document.getElementById('adm-quote-title').value = '';
+        document.getElementById('adm-quote-text').value = '';
+        document.getElementById('adm-quote-custom-cat').value = '';
+        loadAdminQuotesList();
+    });
+}
+
+function loadAdminQuotesList() {
+    const list = document.getElementById('admin-quotes-list');
+    if (!list) return;
+
+    db.ref('daily_quotes').once('value', snap => {
+        if (!snap.exists()) {
+            list.innerHTML = '<p style="text-align:center; color:var(--text-sub);">لا توجد عناصر مضافة حتى الآن.</p>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(child => {
+            const item = child.val();
+            const id = child.key;
+            html += `
+            <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <span class="card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold);">${item.category}</span>
+                    <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.72rem;" onclick="adminDeleteQuote('${id}')">حذف 🗑️</button>
+                </div>
+                ${item.title ? `<div style="font-weight:900; color:var(--accent-emerald); font-size:0.9rem;">${item.title}</div>` : ''}
+                <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">${item.text}</div>
+            </div>`;
+        });
+        list.innerHTML = html;
+    });
+}
+
+function adminDeleteQuote(id) {
+    playErrorSound();
+    if (confirm('هل تريد حذف هذه الجملة نهائياً من العرض؟')) {
+        db.ref('daily_quotes/' + id).remove().then(() => {
+            showTopToast('تم الحذف بنجاح 🗑️', 'info');
+            loadAdminQuotesList();
+        });
+    }
 }

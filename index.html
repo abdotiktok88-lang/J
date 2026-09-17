@@ -401,27 +401,25 @@
         .btn-submit { width: 100%; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%); color: #000; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-submit:active { transform: scale(0.97); }
         
-        /* ================= كارت البروفايل الحديث المتقارب ================= */
+        /* ================= كارت البروفايل الحديث المنسق ================= */
 .profile-header {
     background: var(--card-gradient);
     border: 1.5px solid var(--border-card);
     border-radius: 24px;
-    padding: 22px 18px 18px;
-    margin-bottom: 20px;
+    padding: 16px 14px 14px;
+    margin-bottom: 16px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
 }
 
-/* تجميع الصورة مع النصوص بجوارها */
 .profile-hero-row {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 16px;
+    gap: 12px;
     direction: rtl;
 }
 
-/* حاوية الأفاتار المرنة */
 .avatar-box-wrapper {
     position: relative;
     display: inline-flex;
@@ -432,7 +430,6 @@
     margin: 0;
 }
 
-/* الأفاتار يأخذ أبعاد الحاوية تلقائياً كما في الملف القديم */
 .profile-avatar {
     width: 100% !important;
     height: 100% !important;
@@ -456,15 +453,7 @@
     display: block;
 }
 
-.profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover !important;
-    border-radius: 50% !important;
-    display: block;
-}
-
-/* ================= إكسسوارات منصة التتويج (الملف القديم) ================= */
+/* إكسسوارات منصة التتويج */
 .podium-place .avatar-box-wrapper { 
     width: 55px !important; 
     height: 55px !important; 
@@ -481,7 +470,7 @@
 .podium-place .hat-wizard { top: -14px !important; font-size: 1.5rem !important; }
 .podium-place .hat-halo { top: -15px !important; font-size: 1.4rem !important; }
 
-/* ================= إكسسوارات قائمة المتصدرين وقاعة المشاهير ================= */
+/* إكسسوارات قائمة المتصدرين وقاعة المشاهير */
 .lb-item .avatar-box-wrapper,
 .fame-card .avatar-box-wrapper { 
     width: 48px !important; 
@@ -500,22 +489,22 @@
 .lb-item .hat-wizard, .fame-card .hat-wizard { top: -11px !important; font-size: 1.4rem !important; }
 .lb-item .hat-halo, .fame-card .hat-halo { top: -13px !important; font-size: 1.3rem !important; }
 
-/* ================= التكبير مخصص لصفحة البروفايل فقط ================= */
+/* ضبط أبعاد الصورة في البروفايل */
 .profile-hero-avatar-side {
     flex-shrink: 0;
 }
 
 .profile-hero-avatar-side .avatar-box-wrapper {
-    width: 96px !important;
-    height: 96px !important;
+    width: 72px !important;
+    height: 72px !important;
 }
 
 .profile-hero-avatar-side .profile-avatar {
-    width: 96px !important;
-    height: 96px !important;
-    border-width: 3px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    padding: 3px;
+    width: 72px !important;
+    height: 72px !important;
+    border-width: 2.5px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    padding: 2px;
 }
 
 /* بيانات الطالب بجانب الصورة */
@@ -526,64 +515,70 @@
     align-items: flex-start;
     text-align: right;
     min-width: 0;
-    gap: 4px;
+    gap: 3px;
 }
 
 .profile-name-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .profile-name {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     font-weight: 900;
     color: var(--text-main);
     line-height: 1.2;
     word-break: break-word;
-    margin-bottom: 0;
 }
 
 .online-indicator-dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     background: #10b981;
     border-radius: 50%;
-    box-shadow: 0 0 8px #10b981;
+    box-shadow: 0 0 6px #10b981;
     flex-shrink: 0;
 }
 
 .profile-badges-line {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
-    margin-top: 2px;
+    margin: 2px 0;
+}
+
+.profile-badges-line .card-badge,
+.profile-badges-line .title-badge {
+    font-size: 0.68rem !important;
+    padding: 2px 7px !important;
 }
 
 .profile-bio-text {
-    font-size: 0.84rem;
+    font-size: 0.76rem;
     color: var(--accent-gold);
     font-style: italic;
-    font-weight: 800;
-    line-height: 1.4;
+    font-weight: 700;
+    line-height: 1.35;
     margin: 2px 0;
 }
 
 .profile-phone {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     color: var(--text-sub);
     font-weight: 700;
     direction: ltr;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    margin-top: 2px;
 }
 
 /* شريط التقدم */
 .profile-progress-section {
-    margin-top: 18px;
-    padding-top: 14px;
+    margin-top: 14px;
+    padding-top: 12px;
     border-top: 1px dashed var(--border-card);
 }
 
@@ -592,7 +587,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 6px;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 800;
 }
 
@@ -601,7 +596,7 @@
     background: var(--bg-primary);
     border: 1px solid var(--border-card);
     border-radius: 12px;
-    height: 11px;
+    height: 10px;
     overflow: hidden;
     position: relative;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
@@ -616,19 +611,19 @@
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
 }
 
-/* ضبط إكسسوارات الرأس للمقاس الجديد */
-#profile-hat-container .hat-grad { top: -18px; font-size: 2.3rem; }
-#profile-hat-container .hat-crown { top: -20px; font-size: 2.4rem; }
-#profile-hat-container .hat-bow { top: -10px; right: -6px; font-size: 2rem; }
-#profile-hat-container .hat-band { top: 14px; width: 88%; height: 11px; }
-#profile-hat-container .hat-flowers { top: -14px; font-size: 2.2rem; }
-#profile-hat-container .hat-cap { top: -16px; font-size: 2.2rem; }
-#profile-hat-container .hat-horns { top: -18px; font-size: 2.2rem; }
-#profile-hat-container .hat-headphones { top: -6px; font-size: 2.8rem; }
-#profile-hat-container .hat-wizard { top: -20px; font-size: 2.4rem; }
-#profile-hat-container .hat-halo { top: -22px; font-size: 2.3rem; }
+/* ضبط إكسسوارات الرأس لحجم 72px */
+#profile-hat-container .hat-grad { top: -14px !important; font-size: 1.8rem !important; }
+#profile-hat-container .hat-crown { top: -16px !important; font-size: 1.9rem !important; }
+#profile-hat-container .hat-bow { top: -8px !important; right: -5px !important; font-size: 1.6rem !important; }
+#profile-hat-container .hat-band { top: 10px !important; width: 88% !important; height: 9px !important; }
+#profile-hat-container .hat-flowers { top: -11px !important; font-size: 1.7rem !important; }
+#profile-hat-container .hat-cap { top: -13px !important; font-size: 1.7rem !important; }
+#profile-hat-container .hat-horns { top: -14px !important; font-size: 1.7rem !important; }
+#profile-hat-container .hat-headphones { top: -5px !important; font-size: 2.2rem !important; }
+#profile-hat-container .hat-wizard { top: -16px !important; font-size: 1.9rem !important; }
+#profile-hat-container .hat-halo { top: -17px !important; font-size: 1.8rem !important; }
 
-/* كارت الـ VIP */
+/* كارت الـ VIP والشارة بالزاوية */
 .vip-profile-card {
     background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('vip-bg.jpg') !important;
     background-size: cover !important;
@@ -638,17 +633,17 @@
 }
 
 .vip-profile-card::after {
-    content: '👑 VIP MEMBER';
+    content: '👑 VIP';
     position: absolute;
-    bottom: 80px; /* رُفعت لتستقر تماماً فوق السطر المنقط */
-    left: 16px;   /* على الشمال في المساحة الفاضية */
+    top: 12px;
+    left: 12px;
     background: linear-gradient(135deg, #ffd700, #b38600);
     color: #000;
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 900;
-    padding: 3px 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+    padding: 2px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
     z-index: 5;
 }
 
@@ -2419,6 +2414,164 @@
     --nav-bg: rgba(209, 250, 229, 0.98) !important;
 }
 
+/* ================= كارت الاقتباسات والمعلومات الديناميكي المحدث ================= */
+.dynamic-quote-card {
+    background: var(--card-gradient);
+    border: 1.5px solid var(--border-card);
+    border-radius: 20px;
+    padding: 14px 18px 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* سحب المحتوى للأعلى بدلاً من توزيعه على الأطراف */
+    gap: 8px; /* مسافة متناسقة ومضبوطة بين الصفوف */
+    min-height: 150px; /* تقليل الارتفاع الأدنى لشد الكارت */
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    margin-bottom: 20px;
+}
+.dynamic-quote-card:active {
+    transform: scale(0.98);
+    border-color: var(--accent-gold);
+}
+
+.quote-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.quote-tag-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+}
+.quote-tag-badge i, .quote-tag-badge span.tag-icon {
+    font-size: 1.15rem;
+}
+.quote-actions-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-quote-action {
+    background: transparent;
+    border: none;
+    color: var(--text-sub);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: color 0.2s, transform 0.2s;
+}
+.btn-quote-action:active {
+    transform: scale(0.85);
+    color: var(--accent-gold);
+}
+
+/* الحاوية الخارجية الثابتة التي تقطع الزيادات */
+.quote-center-wrapper {
+    overflow: hidden;
+    width: 100%;
+    margin: 4px 0 8px 0;
+}
+
+/* الحاوية الداخلية المتحركة أفقياً */
+.quote-center-body {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+    width: 100%;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease;
+}
+
+/* كلاسات الانزلاق يميناً ويساراً */
+.quote-center-body.slide-out-left {
+    transform: translateX(-40px);
+    opacity: 0;
+}
+.quote-center-body.slide-in-right {
+    transform: translateX(40px);
+    opacity: 0;
+}
+.quote-center-body.slide-active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.quote-dots-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: auto; /* دفع النقاط لأسفل الكارت بلطف */
+}
+.quote-center-body.fade-out {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+.quote-center-body.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* العنوان: خط مخصص ولون مميز ثابت في النهاري والليلي */
+/* العنوان: الخط المخصص الجديد مع تكبير الحجم */
+.quote-item-title {
+    font-family: 'Uthmanic', 'Amiri', serif !important;
+    font-size: 1.85rem !important; /* تكبير حجم الخط ليكون واضحاً وبارزاً */
+    font-weight: 700;
+    color: #38bdf8 !important;
+    line-height: 1.6;
+    text-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
+    margin-bottom: 4px;
+}
+
+/* النص: بخط التطبيق الافتراضي (Cairo) بحجم متناسق ومريح للقراءة */
+.quote-item-text {
+    font-family: 'Cairo', sans-serif !important;
+    font-size: 0.95rem !important;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.q-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+[data-theme="light"] .q-dot {
+    background: rgba(15, 23, 42, 0.25);
+    border: 1px solid rgba(15, 23, 42, 0.15);
+}
+.q-dot.active {
+    background: var(--accent-emerald) !important;
+    width: 22px;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 0 10px var(--accent-emerald);
+}
+
+@font-face {
+    font-family: 'Uthmanic';
+    src: url('uthmanic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 </style>
 </head>
 <body>
@@ -2928,12 +3081,31 @@
             </div>
         </div>
         <div class="header-controls">
+<button id="btn-notifications-toggle" class="btn-theme" style="position: relative;" onclick="openNotificationsCenter()" title="الإشعارات">
+    <span>🔔</span>
+    <!-- بادج العداد الأحمر -->
+    <span id="notif-unread-badge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 900; border-radius: 50%; min-width: 17px; height: 17px; line-height: 17px; text-align: center; border: 1.5px solid var(--bg-primary); box-shadow: 0 0 6px rgba(239,68,68,0.8);">0</span>
+</button>
             <button id="btn-theme-toggle" class="btn-theme" onclick="toggleTheme()" title="تبديل الوضع"><span id="theme-icon">☀️</span></button>
             <button id="btn-back" class="btn-back-arrow" onclick="navigateBack()" title="رجوع">‹</button>
         </div>
     </header> 
 
     <div class="container">
+
+<!-- واجهة مركز الإشعارات -->
+<div id="view-notifications" class="view-section">
+    <div class="auth-card" style="margin-bottom: 16px; padding: 18px; text-align: center; border-color: var(--accent-gold);">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🔔</span>
+        <h3 style="color: var(--accent-gold); margin-bottom: 4px;">مركز التنبيهات والإشعارات</h3>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">آخر التحديثات والإضافات الخاصة بالتطبيق والدراسة</p>
+    </div>
+
+    <div class="section-label">📋 جميع الإشعارات</div>
+    <div id="notifications-container" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- سيتم حقن كروت الإشعارات هنا -->
+    </div>
+</div>
         
         <!-- المستوى الأول: الواجهة الرئيسية -->
         <div id="view-home" class="view-section active">
@@ -2992,18 +3164,38 @@
                         <p style="font-size: 0.8rem; margin-top: 4px;">مسابقات، ألعاب، وتحديات أونلاين</p>
                     </div>
                 </div>
+</div> <!-- 👈 هذا القفل المفقود لشبكة eng-bento-grid يجب إضافته هنا -->
 
-                <!-- 4. مهندس جودة؟ (مربع كامل يتكيف مع الثيم) -->
-                <div class="eng-bento-card bento-large" style="--theme-color: #f59e0b; background: var(--card-gradient); border: 2px solid var(--border-card); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.1);" onclick="openEngineerHub()">
-                    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; margin-bottom: 20px; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 10px;">
-                        <img src="https://img.icons8.com/fluency/96/briefcase.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">
-                    </div>
-                    <h3 style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 900; margin-bottom: 8px;">مهندس جودة؟</h3>
-                    <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; max-width: 85%;">دليلك الشامل لتعلم الجودة ومحاكاة المصانع من الصفر</p>
-                    <span class="badge-soon-feature" style="position: relative; left: auto; top: auto; display: inline-block; margin-top: 20px; font-size: 0.85rem; padding: 6px 14px;">قريباً 🔥</span>
-                </div>
+               <!-- كارت الاقتباسات والمعلومات المتجدد تلقائياً كل 60 ثانية -->
+<div class="dynamic-quote-card" id="dynamic-quote-card" onclick="openAllQuotesModal(event)">
+    <div class="quote-top-row">
+        <!-- التصنيف والأيقونة يميناً -->
+        <div class="quote-tag-badge">
+            <span class="tag-icon" id="quote-card-icon">💡</span>
+            <span id="quote-card-cat">معلومة عالسريع</span>
+        </div>
+        <!-- أزرار النسخ والمشاركة يساراً -->
+        <div class="quote-actions-icons">
+            <button class="btn-quote-action" title="مشاركة" onclick="shareCurrentQuote(event)">
+                <i class="ti ti-share"></i>
+            </button>
+            <button class="btn-quote-action" title="نسخ" onclick="copyCurrentQuote(event)">
+                <i class="ti ti-copy"></i>
+            </button>
+        </div>
+    </div>
 
-            </div>
+  <!-- غلاف الكاروسيل الأفقي -->
+    <div class="quote-center-wrapper">
+        <div class="quote-center-body slide-active">
+            <div class="quote-item-title" id="quote-card-title"></div>
+            <div class="quote-item-text" id="quote-card-text">جاري تحميل الإلهام والمعلومات... ⏳</div>
+        </div>
+    </div>
+
+    <!-- نقاط التبديل في الأسفل -->
+    <div class="quote-dots-pagination" id="quote-card-dots"></div>
+</div>
 
             <div class="inspirational-quote">
                 إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ <span class="highlight-word">التَّيْسِيرَ</span> عَلَى النَّاسِ، <span class="highlight-word">فَيَسِّرْ</span> عَلَيْهِمْ، فَإِنَّكَ وَاللَّهِ لَا تَدْرِي مَا تَفْعَلُ بِكَ <span class="highlight-word">دَعْوَةٌ صَادِقَةٌ</span> مِنْ أَحَدِهِمْ، فَرُبَّمَا كَانَ مِنْ بَيْنِهِمْ مَنْ لَوْ أَقْسَمَ عَلَى اللَّهِ <span class="highlight-word">لَأَبَرَّهُ</span>!
@@ -3869,6 +4061,8 @@
             <div class="auth-tabs">
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
                 <button class="auth-tab-btn" id="tab-admin-analytics" onclick="switchAdminTab('analytics')">📊 الإحصائيات</button>
+<button class="auth-tab-btn" id="tab-admin-notifs" onclick="switchAdminTab('notifs')">الإشعارات 🔔</button>
+<button class="auth-tab-btn" id="tab-admin-quotes" onclick="switchAdminTab('quotes')"> الاقتباسات📜</button>
                 <button class="auth-tab-btn" id="tab-admin-achievements" onclick="switchAdminTab('achievements')">🎖️ الإنجازات</button>
                 <button class="auth-tab-btn" id="tab-admin-academic" onclick="switchAdminTab('academic')">المنظم الأكاديمي 🎓</button>
                 <button class="auth-tab-btn" id="tab-admin-store" onclick="switchAdminTab('store')">إدارة المتجر 🏷️</button>
@@ -3884,6 +4078,73 @@
                 <button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">أكاديمية الجودة 💼</button>
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
             </div>
+
+<!-- تبويب إدارة الاقتباسات والمعلومات -->
+<div id="admin-section-quotes" style="display: none;">
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 12px;">إضافة نص / معلومة جديدة 📜</h3>
+
+        <div class="form-group">
+            <label>اختر التصنيف</label>
+            <select id="adm-quote-cat-select" class="form-input" style="background: var(--bg-primary);" onchange="toggleCustomQuoteCatInput(this.value)">
+                <option value="معلومة عالسريع">💡 معلومة عالسريع</option>
+                <option value="معلومة عامة">🌍 معلومة عامة</option>
+                <option value="راجع معايا">📝 راجع معايا</option>
+                <option value="اقتباس">💬 اقتباس</option>
+                <option value="عبرة وحكمة">🌱 عبرة وحكمة</option>
+                <option value="custom">➕ كتابة تصنيف جديد من عندي...</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="adm-custom-cat-group" style="display: none;">
+            <label>التصنيف المخصص</label>
+            <input type="text" id="adm-quote-custom-cat" class="form-input" placeholder="اكتب اسم التصنيف الجديد...">
+        </div>
+
+        <div class="form-group">
+            <label>العنوان (اختياري)</label>
+            <input type="text" id="adm-quote-title" class="form-input" placeholder="مثال: آية وعبرة / نصيحة ذهبية...">
+        </div>
+
+        <div class="form-group">
+            <label>النص / العبارة</label>
+            <textarea id="adm-quote-text" class="form-input" rows="4" placeholder="اكتب نص الجملة أو الاقتباس هنا..." style="font-family: inherit; line-height: 1.6;"></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="adminSaveNewQuote()">نشر في الواجهة 🚀</button>
+    </div>
+
+    <div class="section-label">📋 جميع النصوص المحفوظة</div>
+    <div id="admin-quotes-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+</div>
+
+<!-- تبويب إرسال الإشعارات للأدمن -->
+    <div id="admin-section-notifs" style="display: none;">
+        <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+            <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 12px;" id="adm-notif-form-title">نشر إشعار جديد للطلاب 🔔</h3>
+            <input type="hidden" id="adm-notif-id">
+            <div class="form-group">
+                <label>عنوان الإشعار</label>
+                <input type="text" id="adm-notif-title" class="form-input" placeholder="مثال: تم إضافة أسئلة جديدة في بنك الجبن">
+            </div>
+            <div class="form-group">
+                <label>تفاصيل الإشعار</label>
+                <textarea id="adm-notif-body" class="form-input" rows="3" placeholder="اكتب تفاصيل التحديث أو التنبيه هنا..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>رابط خارجي / انتقال (اختياري)</label>
+                <input type="url" id="adm-notif-url" class="form-input" placeholder="https://..." dir="ltr">
+            </div>
+            <button class="btn-submit" id="btn-save-notif" onclick="adminPublishNotification()">نشر الإشعار للجميع 🚀</button>
+            <button class="admin-action-btn danger" id="btn-cancel-notif" style="width: 100%; margin-top: 8px; padding: 8px; display: none;" onclick="cancelEditNotification()">إلغاء التعديل 🔄</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="section-label" style="margin: 0;">الإشعارات السابقة</div>
+            <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="loadAdminNotificationsHistory()">تحديث القائمة 🔄</button>
+        </div>
+        <div id="admin-notifs-history-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
 
             <!-- تبويب الطلاب -->
             <div id="admin-section-users">
@@ -5270,6 +5531,19 @@
         </div>
         <p id="risk-result-banter" style="font-size: 1rem; color: var(--text-main); line-height: 1.6; margin-bottom: 20px; font-weight: 700;"></p>
         <button class="btn-submit" onclick="finishRiskMatchFully()" style="font-size: 1rem;">العودة للرئيسية 🏠</button>
+    </div>
+</div>
+
+<!-- نافذة استعراض جميع الجمل الحالية -->
+<div id="modal-all-quotes" class="modal-overlay">
+    <div class="modal-box" style="max-width: 480px; text-align: right; max-height: 85vh;">
+        <button class="btn-close-modal" onclick="closeModal('modal-all-quotes')">×</button>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px dashed var(--border-card); padding-bottom: 8px;">
+            <span style="font-size: 1.6rem;">📚</span>
+            <h3 style="color: var(--accent-gold); margin: 0; font-size: 1.15rem;">أرشيف المعلومات والاقتباسات</h3>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 15px;">استعرض كل الجمل والحكم والمعلومات الموجودة حالياً بالتطبيق:</p>
+        <div id="modal-quotes-list" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 60vh; padding-left: 4px;"></div>
     </div>
 </div>
 
