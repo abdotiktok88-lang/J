@@ -382,55 +382,105 @@ function renderTasksToDOM(tasksObj, list) {
         renderHomeCountdowns(); // تحديث فوري لحذف أو إعادة إظهار المؤقت في الواجهة الرئيسية
     }
 
-    function viewScheduleInApp(secKey, secName) {
-        playClickSound();
-        document.getElementById('schedule-view-title').innerText = `جدول ${secName}`;
-        const container = document.getElementById('schedule-viewer-container');
-        
-        navigateTo('view-schedule-detail', `جدول ${secName}`, 'الجدول الأسبوعي المعتمد');
+    async function viewScheduleInApp(secKey, secTitle) {
+    const container = document.getElementById('schedule-viewer-container');
+    const titleEl = document.getElementById('schedule-view-title');
+    if (titleEl) titleEl.innerText = 'جدول ' + secTitle;
 
-        // 1. فحص وجود نسخة مخزنة أوفلاين للجدول أولاً
-        const cachedImg = localStorage.getItem('cached_schedule_' + secKey);
-        if (cachedImg) {
-            renderScheduleImage(container, cachedImg, secName);
+    navigateTo('view-schedule-detail', 'جدول ' + secTitle, 'عرض جدول السكشن');
+
+    const offlineImgData = localStorage.getItem('offline_schedule_img_' + secKey);
+    const cachedUrl = localStorage.getItem('cached_schedule_' + secKey);
+
+    if (offlineImgData) {
+        renderScheduleImage(container, offlineImgData, secTitle);
+        checkAndUpdateScheduleIfOnline(secKey, secTitle, container);
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="text-align: center; padding: 30px 10px;">
+            <div style="font-size: 2.2rem; animation: pulseLevel 1s infinite;">⏳</div>
+            <p style="color: var(--accent-gold); font-weight: 800; margin-top: 10px;">جاري تحميل الجدول وتثبيته على هاتفك...</p>
+        </div>
+    `;
+
+    try {
+        // تم تصحيح database إلى db
+        const snap = await db.ref('schedules_config/' + secKey).once('value');
+        const onlineUrl = snap.val();
+
+        if (onlineUrl && onlineUrl.trim() !== '') {
+            localStorage.setItem('cached_schedule_' + secKey, onlineUrl);
+            saveImageForOfflineUse(onlineUrl, secKey, secTitle, container);
         } else {
-            container.innerHTML = `
-                <img src="https://img.icons8.com/fluency/96/sand-timer.png" style="width: 50px; height: 50px; margin-bottom: 8px;">
-                <p style="color: var(--text-sub); font-size: 0.85rem;">جاري فحص حالة الجدول...</p>
-            `;
+            showEmptySchedulePlaceholder(container);
         }
+    } catch (err) {
+        if (cachedUrl) {
+            renderScheduleImage(container, cachedUrl, secTitle);
+        } else {
+            showEmptySchedulePlaceholder(container);
+        }
+    }
+}
 
-        // 2. فحص السحابة لجلب التحديث وحفظه أوفلاين
-        db.ref('schedules/' + secKey).once('value').then(snap => {
-            if (snap.exists() && snap.val()) {
-                const imgUrl = snap.val();
-                
-                // حفظ الرابط وتحويله لكاش محلي للعمل أوفلاين
-                localStorage.setItem('cached_schedule_' + secKey, imgUrl);
-                renderScheduleImage(container, imgUrl, secName);
-            } else if (!cachedImg) {
-                container.innerHTML = `
-                    <img src="https://img.icons8.com/fluency/96/calendar.png" style="width: 65px; height: 65px; margin-bottom: 10px;">
-                    <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
-                    <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسمياً هنا فور اعتماده ⏳</p>
-                `;
-            }
-        }).catch(() => {
-            // في حال عدم وجود إنترنت تماماً، يظل الكاش معروضاً
-            if (!cachedImg) {
-                container.innerHTML = `
-                    <p style="color: #ef4444; font-weight: bold; font-size: 0.85rem;">أنت غير متصل بالإنترنت ولم يتم حفظ الجدول مسبقاً.</p>
-                `;
-            }
+function checkAndUpdateScheduleIfOnline(secKey, secTitle, container) {
+    if (!navigator.onLine) return;
+    // تم تصحيح database إلى db
+    db.ref('schedules_config/' + secKey).once('value').then(snap => {
+        const latestUrl = snap.val();
+        const currentCachedUrl = localStorage.getItem('cached_schedule_' + secKey);
+        if (latestUrl && latestUrl !== currentCachedUrl) {
+            localStorage.setItem('cached_schedule_' + secKey, latestUrl);
+            saveImageForOfflineUse(latestUrl, secKey, secTitle, container);
+        }
+    }).catch(() => {});
+}
+
+function showEmptySchedulePlaceholder(container) {
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px 10px;">
+            <img src="https://img.icons8.com/fluency/96/calendar.png" style="width: 65px; height: 65px; margin-bottom: 10px;" alt="Calendar">
+            <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
+            <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسمياً هنا فور اعتماده ⏳</p>
+        </div>
+    `;
+}
+
+function saveImageForOfflineUse(url, secKey, secTitle, container) {
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                const base64data = reader.result;
+                try {
+                    // حفظ ملف الصورة الفعلي في ذاكرة التخزين
+                    localStorage.setItem('offline_schedule_img_' + secKey, base64data);
+                } catch (e) {
+                    console.warn("حجم الصورة كبير على localStorage، سيتم الاعتماد على الكاش الافتراضي");
+                }
+                renderScheduleImage(container, base64data, secTitle);
+            };
+            reader.readAsDataURL(blob);
+        })
+        .catch(() => {
+            // لو كان هناك حظر CORS للتحويل، نعرض الصورة برابطها العادي
+            renderScheduleImage(container, url, secTitle);
         });
-    }
+}
 
-    function renderScheduleImage(container, imgUrl, secName) {
-        container.innerHTML = `
-            <img src="${imgUrl}" style="width: 100%; border-radius: 12px; max-height: 70vh; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" alt="${secName}" onerror="this.onerror=null;">
-            <button class="btn-action-glow btn-download-file" style="margin-top: 12px; width: 100%;" onclick="window.open('${imgUrl}', '_blank')">🔍 عرض الصورة بحجم كامل</button>
-        `;
-    }
+    function renderScheduleImage(container, src, title) {
+    container.innerHTML = `
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <img src="${src}" alt="${title}" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); background: var(--bg-primary);">
+            <div style="margin-top: 12px; display: flex; gap: 8px; width: 100%;">
+                <a href="${src}" download="${title}.jpg" class="admin-action-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 10px; border-color: var(--accent-emerald); color: var(--accent-emerald);">حفظ في الاستوديو 💾</a>
+            </div>
+        </div>
+    `;
+}
 
     function loadAcademicAlerts() {
         const list = document.getElementById('acad-alerts-list');
@@ -536,7 +586,8 @@ function renderTasksToDOM(tasksObj, list) {
         showTopToast('يرجى إدخال الرابط أولاً!', 'error');
         return;
     }
-    db.ref('schedules/' + sec).set(url).then(() => {
+    // تم تصحيح المسار ليكون schedules_config
+    db.ref('schedules_config/' + sec).set(url).then(() => {
         db.ref('academic_markers/schedules').set(Date.now());
         showTopToast('تم حفظ وتحديث الجدول بنجاح! 🗓️', 'success');
         document.getElementById('adm-schedule-url').value = '';
@@ -611,25 +662,25 @@ function renderTasksToDOM(tasksObj, list) {
     // ================= إعدادات المتجر =================
     const defaultStorePrices = {
 "theme_spiderman": { 
-            price: 320, 
+            price: 700, 
             name: "ثيم سبايدر مان 🕷️", 
             category: "profile", 
-            desc: "مظهر الأبطال الخارقين بتدرجات الأحمر والأزرق المميزة" 
+            desc: "أبطال خارقين" 
         },
         "theme_classic_vintage": { 
-            price: 250, 
+            price: 600, 
             name: "الثيم الكلاسيكي القديم 📜", 
             category: "profile", 
-            desc: "ألوان ترابية ودافئة تمنح التطبيق طابعاً أثرياً فخماً" 
+            desc: "فخم" 
         },
         "theme_doctor_doom": { 
-            price: 350, 
+            price: 700, 
             name: "ثيم دكتور دوم 🟢", 
             category: "profile", 
-            desc: "مظهر سيادة الشر المطلق بألوان الأخضر الداكن والمعدني" 
+            desc: "الباشا اللي هينفخ الأفنجرز" 
         },
-"theme_cyberpunk": { price: 300, name: "ثيم السايبر نيون ⚡", category: "profile", desc: "ألوان نيون RGB، سيان ووردي لجميع واجهات التطبيق" },
-        "theme_royal_gold": { price: 350, name: "ثيم الذهب الملكي 👑", category: "profile", desc: "مظهر ملكي فخم باللون الأسود والذهب الخالص للتطبيق بالكامل" },
+"theme_cyberpunk": { price: 450, name: "ثيم السايبر نيون ⚡", category: "profile", desc: "عصري" },
+        "theme_royal_gold": { price: 400, name: "ثيم الذهب الملكي 👑", category: "profile", desc: "تحسه عدس مش دهب" },
         "frame_gold": { price: 150, name: "إطار ذهبي ملكي ✨", category: "frames", desc: "إطار مذهب متوهج للبروفايل" },
         "frame_fire": { price: 200, name: "إطار ناري متوهج 🔥", category: "frames", desc: "لهب متوهج ومتحرك حول صورتك" },
         "frame_cyber": { price: 220, name: "إطار سايبر نيون ⚡", category: "frames", desc: "تأثير نيون أزرق وبنفسجي لافت" },
@@ -2021,6 +2072,13 @@ function equipOwnedHat(hatKey) {
             const nextXp = getNextLevelXP(xp);
             const progressPercent = Math.min((xp / nextXp) * 100, 100);
             
+            // 1. تحقق صارم من تفعيل ميزة الـ VIP لإخفاء الشارة فوراً إذا لم تكن مفعلة
+            const isVipActive = (currentUser.is_vip === true || currentUser.is_vip === 'true');
+            const vipBadgeEl = document.getElementById('pro-vip-badge-tag');
+            if (vipBadgeEl) {
+                vipBadgeEl.style.display = isVipActive ? 'inline-flex' : 'none';
+            }
+
             const avatarContainer = document.getElementById('profile-avatar-container');
             if (avatarContainer) {
                 avatarContainer.className = 'profile-avatar';
@@ -2037,10 +2095,14 @@ function equipOwnedHat(hatKey) {
                 hatContainer.innerHTML = getHatHtml(currentUser.active_hat) + getAvatarFrameOverlayHtml(currentUser.active_frame);
             }
 
+            // 2. تطبيق ستايل كارت VIP فقط للمشتركين الفعليين
             const profileCard = document.getElementById('main-profile-header-card');
             if (profileCard) {
-                if (currentUser.is_vip) profileCard.classList.add('vip-profile-card');
-                else profileCard.classList.remove('vip-profile-card');
+                if (isVipActive) {
+                    profileCard.classList.add('vip-profile-card');
+                } else {
+                    profileCard.classList.remove('vip-profile-card');
+                }
             }
 
             const dispName = document.getElementById('display-name');
@@ -2125,14 +2187,6 @@ function equipOwnedHat(hatKey) {
                 document.getElementById('sidebar-admin-panel').style.display = 'none';
             }
         }
-    }
-
-    // دالة نسخ الـ ID للحافظة
-    function copyStudentId() {
-        if (!currentUser || !currentUser.student_id) return;
-        navigator.clipboard.writeText(String(currentUser.student_id)).then(() => {
-            showTopToast(`تم نسخ الـ ID الخاص بك (${currentUser.student_id}) للحافظة! 📋`, 'success');
-        });
     }
 
     function handleProfileClick() { closeSidebar(); if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك'); else showAuthGateDirectly(); }
@@ -3889,7 +3943,7 @@ if (currentUser) {
 
     function switchAdminTab(tabName) {
     playClickSound();
-    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs'].forEach(t => {
+['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes'].forEach(t => {
         const tabBtn = document.getElementById('tab-admin-' + t);
         const tabSec = document.getElementById('admin-section-' + t);
         if (tabBtn) tabBtn.classList.remove('active');
@@ -6898,58 +6952,87 @@ if (localLevelsCfg) {
     } catch(e) {}
 }
 
-// 2. فحص السحابة بهدوء وتحديث الكاش المحلي
-db.ref('levels_config').once('value').then(snap => {
+// 1. الاستماع المباشر للسحابة وتحديث الكاش المحلي فورياً
+db.ref('levels_config').on('value', snap => {
     if (snap.exists()) {
         const data = snap.val();
         localStorage.setItem('local_levels_config', JSON.stringify(data));
         if (data.levels) globalLevelsConfig = data.levels;
         if (data.boss) globalBossConfig = data.boss;
+        // تحديث خريطة المستويات فوراً إذا كانت مفتوحة
+        if (typeof renderLevelsGridUI === 'function') renderLevelsGridUI();
     }
 });
 
+// 2. دالة جلب النجوم المطلوبة للمستوى (تعتمد حصرياً على ما تحفظه أنت)
 function getLevelReqStars(level) {
-    if (level === 1) return 0; 
-    if (globalLevelsConfig[level] && globalLevelsConfig[level].reqStars !== undefined) {
+    if (level === 1) return 0;
+    if (globalLevelsConfig && globalLevelsConfig[level] && globalLevelsConfig[level].reqStars !== undefined) {
         return parseInt(globalLevelsConfig[level].reqStars);
     }
-    return (level - 1) * 20; 
+    // قيمة افتراضية ثابتة فقط إذا لم تكن قد حددت قيمة بنفسك بعد
+    return (level - 1) * 20;
 }
 
+// 3. دالة جلب مكافآت المستوى (XP والعملات التي تحددها أنت فقط)
 function getLevelRewards(level) {
-    if (globalLevelsConfig[level]) {
+    if (globalLevelsConfig && globalLevelsConfig[level]) {
         return {
-            xp: parseInt(globalLevelsConfig[level].rewardXP) || 0,
-            coins: parseInt(globalLevelsConfig[level].rewardCoins) || 0
+            xp: globalLevelsConfig[level].rewardXP !== undefined ? parseInt(globalLevelsConfig[level].rewardXP) : 0,
+            coins: globalLevelsConfig[level].rewardCoins !== undefined ? parseInt(globalLevelsConfig[level].rewardCoins) : 0
         };
     }
-    let xp = Math.round(10 + ((1500 - 10) / 49) * (level - 1));
-    let coins = Math.round(2 + ((500 - 2) / 49) * (level - 1));
-    return { xp, coins };
+    // قيم افتراضية ثابتة بدون معادلات تغير الأرقام عشوائياً
+    return { xp: 50, coins: 10 };
 }
 
 // 2. دوال لوحة تحكم الأدمن
 function loadAdminSingleLevelConfig() {
     const lvl = parseInt(document.getElementById('adm-specific-lvl').value);
     if (!lvl || lvl < 1 || lvl > 50) return;
-    const currentReq = getLevelReqStars(lvl);
-    const currentRew = getLevelRewards(lvl);
-    document.getElementById('adm-specific-stars').value = currentReq;
-    document.getElementById('adm-specific-xp').value = currentRew.xp;
-    document.getElementById('adm-specific-coins').value = currentRew.coins;
+
+    // جلب القيم من السيرفر مباشرة لتفادي أي تضارب
+    db.ref(`levels_config/levels/${lvl}`).once('value').then(snap => {
+        if (snap.exists()) {
+            const data = snap.val();
+            document.getElementById('adm-specific-stars').value = data.reqStars !== undefined ? data.reqStars : 0;
+            document.getElementById('adm-specific-xp').value = data.rewardXP !== undefined ? data.rewardXP : 0;
+            document.getElementById('adm-specific-coins').value = data.rewardCoins !== undefined ? data.rewardCoins : 0;
+        } else {
+            // لو المستوى لسه لم يتم حفظ بيانات مخصصة له
+            document.getElementById('adm-specific-stars').value = getLevelReqStars(lvl);
+            const rew = getLevelRewards(lvl);
+            document.getElementById('adm-specific-xp').value = rew.xp;
+            document.getElementById('adm-specific-coins').value = rew.coins;
+        }
+    });
 }
 
 function saveAdminSingleLevelConfig() {
     playClickSound();
     const lvl = parseInt(document.getElementById('adm-specific-lvl').value);
-    if (!lvl || lvl < 1 || lvl > 50) { showTopToast('يرجى اختيار مستوى صحيح (1-50)', 'error'); return; }
+    if (!lvl || lvl < 1 || lvl > 50) { 
+        showTopToast('يرجى اختيار مستوى صحيح (1-50)', 'error'); 
+        return; 
+    }
 
     const reqStars = parseInt(document.getElementById('adm-specific-stars').value) || 0;
     const rewardXP = parseInt(document.getElementById('adm-specific-xp').value) || 0;
     const rewardCoins = parseInt(document.getElementById('adm-specific-coins').value) || 0;
 
-    db.ref(`levels_config/levels/${lvl}`).set({ reqStars, rewardXP, rewardCoins }).then(() => {
-        showTopToast(`تم حفظ إعدادات المستوى ${lvl} بنجاح! هتسمع عند الكل فوراً ✅`, 'success');
+    const levelData = { reqStars, rewardXP, rewardCoins };
+
+    // تثبيت محلي فوري
+    if (!globalLevelsConfig) globalLevelsConfig = {};
+    globalLevelsConfig[lvl] = levelData;
+    localStorage.setItem('local_levels_config', JSON.stringify({ levels: globalLevelsConfig, boss: globalBossConfig }));
+
+    // حفظ في Firebase Realtime Database
+    db.ref(`levels_config/levels/${lvl}`).set(levelData).then(() => {
+        showTopToast(`تم تثبيت إعدادات المستوى ${lvl} بنجاح! ولن تتغير بعد الآن ✅`, 'success');
+        if (typeof renderLevelsGridUI === 'function') renderLevelsGridUI();
+    }).catch(err => {
+        showTopToast('حدث خطأ أثناء الحفظ بالسيرفر!', 'error');
     });
 }
 
@@ -10444,67 +10527,91 @@ let quoteAutoSlideTimer = null;
 let quoteScrollDebounceTimer = null;
 let editingQuoteId = null;
 
+// نصوص افتراضية تظهر فوراً لضمان عدم بقاء الكارت فارغاً تحت أي ظرف
+const defaultQuotesFallback = [
+    {
+        category: 'عبرة وحكمة',
+        title: 'تيسير وتوفيق',
+        text: 'إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ التَّيْسِيرَ عَلَى النَّاسِ، فَيَسِّرْ عَلَيْهِمْ.'
+    },
+    {
+        category: 'معلومة عامة',
+        title: 'سلامة الغذاء',
+        text: 'نظام الهاسب (HACCP) هو نظام وقائي لضمان سلامة الغذاء من البداية وحتى المنتج النهائي.'
+    }
+];
+
 function initDynamicQuotesFeed() {
-    // 1. القراءة من الكاش
+    // 1. عرض فوري إما من الكاش المحلي أو من المحتوى الافتراضي فور فتح التطبيق
     const cached = localStorage.getItem('local_app_quotes');
     if (cached) {
         try {
-            appQuotesList = JSON.parse(cached);
-            if (Array.isArray(appQuotesList) && appQuotesList.length > 0) {
-                renderQuotesTrackContent();
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                appQuotesList = parsed;
+            } else {
+                appQuotesList = [...defaultQuotesFallback];
             }
-        } catch(e) {}
+        } catch(e) {
+            appQuotesList = [...defaultQuotesFallback];
+        }
+    } else {
+        appQuotesList = [...defaultQuotesFallback];
     }
 
-    // 2. المزامنة المباشرة مع Firebase
-    db.ref('daily_quotes').on('value', snap => {
-        appQuotesList = [];
-        if (snap.exists()) {
-            snap.forEach(c => {
-                appQuotesList.push({ id: c.key, ...c.val() });
-            });
-            appQuotesList.reverse();
-            localStorage.setItem('local_app_quotes', JSON.stringify(appQuotesList));
-        } else {
-            localStorage.removeItem('local_app_quotes');
-        }
+    // رسم المحتوى فوراً واستعادة آخر شريحة كان واقف عندها الطالب
+    renderQuotesTrackContent();
 
-        renderQuotesTrackContent();
-        startQuotesAutoTimer();
-    });
+    // 2. المزامنة المباشرة مع Firebase في الخلفية
+    try {
+        db.ref('daily_quotes').on('value', snap => {
+            if (snap.exists()) {
+                let fetched = [];
+                snap.forEach(c => {
+                    fetched.push({ id: c.key, ...c.val() });
+                });
+                fetched.reverse();
+                appQuotesList = fetched;
+                localStorage.setItem('local_app_quotes', JSON.stringify(appQuotesList));
+            }
+            renderQuotesTrackContent();
+            startQuotesAutoTimer();
+        });
+    } catch(err) {
+        console.log("Firebase Quotes Error:", err);
+    }
 }
 
-// ريندر المحتوى الداخلي فقط
+// ريندر المحتوى الداخلي واستعادة مكان الوقوف السابق
 function renderQuotesTrackContent() {
     const track = document.getElementById('quote-carousel-track');
     const dotsContainer = document.getElementById('quote-card-dots');
     if (!track) return;
 
     if (!appQuotesList || appQuotesList.length === 0) {
-        updateQuoteHeaderInfo('عبرة وحكمة', '🌱');
-        track.innerHTML = `
-            <div class="quote-content-slide" onclick="openAllQuotesArchiveView()">
-                <div class="quote-item-title">تيسير وتوفيق</div>
-                <div class="quote-item-text">إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ التَّيْسِيرَ عَلَى النَّاسِ، فَيَسِّرْ عَلَيْهِمْ.</div>
-            </div>`;
-        if (dotsContainer) dotsContainer.innerHTML = '';
-        return;
+        appQuotesList = [...defaultQuotesFallback];
     }
 
     let trackHtml = '';
     appQuotesList.forEach((item, idx) => {
         trackHtml += `
-        <div class="quote-content-slide" onclick="openAllQuotesArchiveView()">
+        <div class="quote-content-slide" data-index="${idx}" onclick="openAllQuotesArchiveView()">
             ${item.title ? `<div class="quote-item-title">${item.title}</div>` : ''}
             <div class="quote-item-text">${item.text || ''}</div>
         </div>`;
     });
 
     track.innerHTML = trackHtml;
-    selectQuoteByIndex(0, false);
+
+    // استعادة آخر شريحة كان المستخدم واقف عندها من ذاكرة الهاتف
+    let savedIndex = parseInt(localStorage.getItem('last_active_quote_index')) || 0;
+    if (savedIndex >= appQuotesList.length) savedIndex = 0;
+
+    // التمرير مباشرة للشريحة المحفوظة بدون أنيميشن بطيء عند أول فتحة
+    selectQuoteByIndex(savedIndex, false);
 }
 
-// تحديث رأس الكارت (التصنيف والأيقونة) ليتوافق مع الكلام المعروض
+// تحديث رأس الكارت (التصنيف والأيقونة)
 function updateQuoteHeaderInfo(category, customIcon) {
     const catEl = document.getElementById('quote-card-cat');
     const iconEl = document.getElementById('quote-card-icon');
@@ -10516,64 +10623,61 @@ function updateQuoteHeaderInfo(category, customIcon) {
         else if (category === 'اقتباس') icon = '💬';
         else if (category === 'معلومة عامة') icon = '🌍';
         else if (category === 'راجع معايا') icon = '📝';
+        else if (category === 'معلومة عالسريع') icon = '⚡';
     }
 
     catEl.innerText = category || 'معلومة';
     iconEl.innerText = icon;
 }
 
-// متابعة حركة التمرير باليد
+// متابعة حركة التمرير باللمس على الموبايل وحفظ الموضع تلقائياً
 function onQuoteTrackScroll() {
     const track = document.getElementById('quote-carousel-track');
     if (!track) return;
 
     clearTimeout(quoteScrollDebounceTimer);
     quoteScrollDebounceTimer = setTimeout(() => {
-        const slides = track.querySelectorAll('.quote-content-slide');
-        if (!slides || slides.length === 0) return;
+        const slideWidth = track.clientWidth;
+        if (!slideWidth) return;
 
-        let closestIndex = 0;
-        let minDistance = Infinity;
-        const trackRect = track.getBoundingClientRect();
-        const trackCenter = trackRect.left + trackRect.width / 2;
-
-        slides.forEach((slide, idx) => {
-            const rect = slide.getBoundingClientRect();
-            const slideCenter = rect.left + rect.width / 2;
-            const dist = Math.abs(trackCenter - slideCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestIndex = idx;
-            }
-        });
+        const scrollOffset = Math.abs(track.scrollLeft);
+        const closestIndex = Math.round(scrollOffset / slideWidth);
 
         if (closestIndex !== currentQuoteActiveIndex && closestIndex < appQuotesList.length) {
             currentQuoteActiveIndex = closestIndex;
+            
+            // 👈 حفظ رقم الشريحة الحالية محلياً فوراً
+            localStorage.setItem('last_active_quote_index', closestIndex);
+            
             updateQuoteHeaderInfo(appQuotesList[closestIndex].category);
             updateQuoteDotsUI(closestIndex);
         }
-    }, 40);
+    }, 60);
 }
 
-// التنقل البرمجي لشريحة معينة
+// التنقل البرمجي لشريحة معينة مع حفظ الترتيب
 function selectQuoteByIndex(index, smooth = true) {
     if (!appQuotesList || appQuotesList.length === 0) return;
     if (index >= appQuotesList.length) index = 0;
 
     const track = document.getElementById('quote-carousel-track');
     if (track) {
-        const slides = track.querySelectorAll('.quote-content-slide');
-        if (slides && slides[index]) {
-            slides[index].scrollIntoView({
-                behavior: smooth ? 'smooth' : 'auto',
-                inline: 'center',
-                block: 'nearest'
-            });
-        }
+        const slideWidth = track.clientWidth;
+        const scrollDirection = document.dir === 'rtl' ? -1 : 1;
+        track.scrollTo({
+            left: index * slideWidth * scrollDirection,
+            behavior: smooth ? 'smooth' : 'auto'
+        });
     }
 
     currentQuoteActiveIndex = index;
-    updateQuoteHeaderInfo(appQuotesList[index].category);
+    
+    // 👈 حفظ الشريحة في ذاكرة الهاتف
+    localStorage.setItem('last_active_quote_index', index);
+
+    if (appQuotesList[index]) {
+        updateQuoteHeaderInfo(appQuotesList[index].category);
+    }
     updateQuoteDotsUI(index);
     startQuotesAutoTimer();
 }
@@ -10613,18 +10717,18 @@ function updateQuoteDotsUI(activeIndex) {
     dotsContainer.innerHTML = dotsHtml;
 }
 
-// المؤقت التلقائي كل 45 ثانية
+// المؤقت التلقائي للتمرير
 function startQuotesAutoTimer() {
     if (quoteAutoSlideTimer) clearInterval(quoteAutoSlideTimer);
     quoteAutoSlideTimer = setInterval(() => {
-        if (appQuotesList.length > 1) {
+        if (appQuotesList && appQuotesList.length > 1) {
             const nextIdx = (currentQuoteActiveIndex + 1) % appQuotesList.length;
             selectQuoteByIndex(nextIdx, true);
         }
     }, 45000);
 }
 
-// نسخ الكارت المعروض حالياً
+// نسخ الكارت المعروض حالياً مع معالجة آمنة للموبايل
 function copyCurrentActiveQuote(event) {
     if (event) event.stopPropagation();
     if (!appQuotesList || appQuotesList.length === 0) return;
@@ -10632,9 +10736,24 @@ function copyCurrentActiveQuote(event) {
     if (!item) return;
 
     const fullText = (item.title ? item.title + '\n' : '') + item.text;
-    navigator.clipboard.writeText(fullText).then(() => {
-        showTopToast('تم نسخ النص للحافظة بنجاح 📋', 'success');
-    });
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullText).then(() => {
+            showTopToast('تم نسخ النص للحافظة بنجاح 📋', 'success');
+        }).catch(() => fallbackCopyText(fullText));
+    } else {
+        fallbackCopyText(fullText);
+    }
+}
+
+function fallbackCopyText(text) {
+    const tempInput = document.createElement('textarea');
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    showTopToast('تم نسخ النص للحافظة بنجاح 📋', 'success');
 }
 
 // مشاركة الكارت المعروض حالياً
@@ -10664,15 +10783,14 @@ function openAllQuotesArchiveView() {
     }
 
     let html = '';
-    appQuotesList.forEach((q, idx) => {
+    appQuotesList.forEach(item => {
         html += `
-        <div class="acad-glass-card" style="margin-bottom:0; padding:14px 16px; cursor:pointer;" onclick="selectQuoteByIndex(${idx}); navigateBack();">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span class="pill-badge badge-subject" style="font-size:0.75rem;">${q.category || 'عام'}</span>
-                <span style="font-size:0.7rem; color:var(--text-sub);">${q.createdAt ? new Date(q.createdAt).toLocaleDateString('ar-EG') : ''}</span>
+        <div class="acad-glass-card" style="margin-bottom: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="pill-badge badge-subject">${item.category || 'معلومة'}</span>
             </div>
-            ${q.title ? `<div style="font-family:'Uthmanic', 'Amiri', serif; font-size:1.15rem; font-weight:700; color:#38bdf8; margin-bottom:4px;">${q.title}</div>` : ''}
-            <div style="font-size:0.88rem; color:var(--text-main); line-height:1.65; font-weight:600; white-space:pre-line;">${q.text || ''}</div>
+            ${item.title ? `<h4 style="color: var(--accent-gold); font-size: 1rem; margin-bottom: 6px;">${item.title}</h4>` : ''}
+            <p style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6; white-space: pre-line;">${item.text || ''}</p>
         </div>`;
     });
 

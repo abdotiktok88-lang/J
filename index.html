@@ -83,20 +83,73 @@
 .scenario-btn { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-card); border-radius: 10px; color: var(--accent-gold); font-weight: 800; cursor: pointer; transition: 0.3s; }
 .scenario-btn:hover { background: rgba(212, 175, 55, 0.15); border-color: var(--accent-gold); }
 .scenario-ans { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-card); color: var(--accent-emerald); font-weight: 800; font-size: 0.85rem; }
-/* تأثير الاسم المتوهج واللامع */
-        .glow-name-effect {
-            background: linear-gradient(90deg, #ffd700, #ff8c00, #ff007f, #00f0ff, #ffd700) !important;
-            background-size: 300% 300% !important;
-            -webkit-background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
-            animation: glowTextAnim 4s ease infinite !important;
-            font-weight: 900 !important;
-        }
-        @keyframes glowTextAnim { 
-            0% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-            100% { background-position: 0% 50%; } 
-        }
+/* ================= تأثير الاسم النيوني المستقبلي (بدون أصفر) ================= */
+.glow-name-effect {
+    /* تدرج نيون كهربائي بارد: سيان، أزرق ملكي، وردي نيون، وبنفسجي */
+    background: linear-gradient(120deg, #00f0ff 0%, #3b82f6 30%, #ec4899 65%, #a855f7 100%) !important;
+    background-size: 250% auto !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px !important;
+    position: relative !important;
+    display: inline-block !important;
+    
+    /* حركة انسيابية للألوان وهالة نيون باردة */
+    animation: ultraCoolNeonFlow 3.5s linear infinite alternate, textCoolNeonBreath 2s ease-in-out infinite alternate !important;
+}
+
+/* حركة تدفق الألوان السلسة */
+@keyframes ultraCoolNeonFlow {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+/* هالة نيون مشعة باردة وخالية تماماً من الأصفر */
+@keyframes textCoolNeonBreath {
+    0% {
+        filter: drop-shadow(0 0 3px rgba(0, 240, 255, 0.75)) 
+                drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 5px rgba(236, 72, 153, 0.85)) 
+                drop-shadow(0 0 12px rgba(168, 85, 247, 0.6))
+                drop-shadow(0 0 18px rgba(0, 240, 255, 0.55));
+    }
+    100% {
+        filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.9)) 
+                drop-shadow(0 0 10px rgba(168, 85, 247, 0.7))
+                drop-shadow(0 0 20px rgba(59, 130, 246, 0.55));
+    }
+}
+
+/* ================= ضبط الاسم المتوهج تلقائياً في الوضع الفاتح ================= */
+[data-theme="light"] .glow-name-effect {
+    /* ألوان مشبعة وداكنة للمظهر النهاري: أزرق نيلي، فوشيا غامق، وبنفسجي ملكي */
+    background: linear-gradient(120deg, #0284c7 0%, #1d4ed8 30%, #be185d 65%, #6b21a8 100%) !important;
+    background-size: 250% auto !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    animation: ultraCoolNeonFlow 3.5s linear infinite alternate, textLightModeGlow 2s ease-in-out infinite alternate !important;
+}
+
+/* توهج داكن مركز ومحدد يعطي بروز وتباين عالي ضد الخلفية البيضاء */
+@keyframes textLightModeGlow {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(2, 132, 199, 0.8)) 
+                drop-shadow(0 0 5px rgba(29, 78, 216, 0.45));
+    }
+    50% {
+        filter: drop-shadow(0 0 3px rgba(190, 24, 93, 0.85)) 
+                drop-shadow(0 0 8px rgba(107, 33, 168, 0.5))
+                drop-shadow(0 0 12px rgba(2, 132, 199, 0.35));
+    }
+    100% {
+        filter: drop-shadow(0 0 2px rgba(29, 78, 216, 0.9)) 
+                drop-shadow(0 0 6px rgba(107, 33, 168, 0.6))
+                drop-shadow(0 0 10px rgba(190, 24, 93, 0.4));
+    }
+}
 
         /* بطاقة المتصدرين المتحركة في القائمة */
         .lb-item.animated-top-card {
@@ -630,21 +683,6 @@
     background-position: center !important;
     border: 2px solid #ffd700 !important;
     box-shadow: 0 10px 35px rgba(255, 215, 0, 0.35), 0 0 25px rgba(168, 85, 247, 0.25) !important;
-}
-
-.vip-profile-card::after {
-    content: '👑 VIP';
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: linear-gradient(135deg, #ffd700, #b38600);
-    color: #000;
-    font-size: 0.62rem;
-    font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-    z-index: 5;
 }
 
         .profile-progress-meta {
@@ -2387,23 +2425,23 @@
     display: none;
     position: absolute;
     top: 0;
-    left: 20px;
+    left: 14px !important;
+    right: auto !important;
     z-index: 10;
     pointer-events: none;
     animation: themeSwingAnim 3s ease-in-out infinite alternate;
 }
 
 /* 1. سبايدر مان (يحتفظ بنفس ظله القديم وحركته) */
-.theme-hanging-element.spiderman-deco {
+[data-custom-theme="spiderman"] .theme-hanging-element.spiderman-deco {
+    display: block !important;
     width: 60px;
-    height: 120px;
+    height: 125px;
     background-image: url('spiderman-hanging.png');
     background-size: contain;
     background-repeat: no-repeat;
     filter: var(--spiderman-shadow);
-    animation: themeSwingAnim 3s ease-in-out infinite alternate;
 }
-[data-custom-theme="spiderman"] .spiderman-deco { display: block; }
 
 /* 2. دكتور دوم */
 .theme-hanging-element.doom-deco {
@@ -2556,23 +2594,26 @@
 /* شريط تمرير المحتوى الداخلي باللمس */
 .quote-content-carousel-track {
     display: flex;
-    gap: 16px;
+    gap: 0; /* إلغاء الـ gap واستخدام العرض الكامل للشريحة لمنع أخطاء المقاسات على الموبايل */
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; /* تفعيل اللمس السلس للهواتف */
     scroll-behavior: smooth;
     width: 100%;
     margin: 2px 0;
     padding-bottom: 4px;
+    touch-action: pan-x; /* السماح بالتمرير الأفقي فقط باللمس */
 }
+
 .quote-content-carousel-track::-webkit-scrollbar {
     display: none;
 }
 
-/* شريحة الكلام فقط */
 .quote-content-slide {
     flex: 0 0 100%;
+    min-width: 100%;
     scroll-snap-align: center;
+    scroll-snap-stop: always;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -2649,6 +2690,67 @@
     font-style: normal;
 }
 
+/* ================= خلفيات كارت البروفايل المخصصة (تتفاعل تلقائياً مع الداكن والفاتح) ================= */
+
+/* 1. ثيم سبايدر مان */
+[data-custom-theme="spiderman"] .profile-header {
+    background: linear-gradient(135deg, rgba(7, 13, 29, 0.75), rgba(23, 37, 84, 0.85)), url('profile-spiderman.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+[data-theme="light"][data-custom-theme="spiderman"] .profile-header {
+    background: linear-gradient(135deg, rgba(224, 242, 254, 0.70), rgba(186, 230, 253, 0.80)), url('profile-spiderman.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* 2. ثيم الذهب الملكي */
+[data-custom-theme="royal_gold"] .profile-header {
+    background: linear-gradient(135deg, rgba(13, 11, 9, 0.60), rgba(38, 33, 26, 0.60)), url('profile-gold.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+[data-theme="light"][data-custom-theme="royal_gold"] .profile-header {
+    background: linear-gradient(135deg, rgba(251, 248, 239, 0.60), rgba(247, 241, 223, 0.60)), url('profile-gold.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* 3. ثيم دكتور دوم */
+[data-custom-theme="doctor_doom"] .profile-header {
+    background: linear-gradient(135deg, rgba(2, 44, 34, 0.70), rgba(6, 78, 59, 0.80)), url('profile-doom.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+[data-theme="light"][data-custom-theme="doctor_doom"] .profile-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70), rgba(248, 250, 252, 0.80)), url('profile-doom.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* 4. ثيم السايبر نيون */
+[data-custom-theme="cyberpunk"] .profile-header {
+    background: linear-gradient(135deg, rgba(11, 0, 26, 0.70), rgba(26, 9, 51, 0.80)), url('profile-cyber.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+[data-theme="light"][data-custom-theme="cyberpunk"] .profile-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70), rgba(243, 232, 255, 0.80)), url('profile-cyber.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* 5. الثيم الكلاسيكي القديم */
+[data-custom-theme="classic_vintage"] .profile-header {
+    background: linear-gradient(135deg, rgba(28, 25, 23, 0.70), rgba(41, 37, 36, 0.80)), url('profile-classic.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+[data-theme="light"][data-custom-theme="classic_vintage"] .profile-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.70), rgba(254, 243, 199, 0.80)), url('profile-classic.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
 
 </style>
 </head>
@@ -3308,7 +3410,7 @@
                     <div class="card-info">
                         <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b;"><img src="https://img.icons8.com/fluency/96/brain.png"></div>
                         <div class="card-text">
-                            <h3 style="color: #f59e0b;">خريطة المستويات 🗺️</h3>
+                            <h3 style="color: #f59e0b;">تحدي المعلومات 🗺️</h3>
                             <p>تحدي المعلومات وجمع النجوم الفردي</p>
                         </div>
                     </div>
@@ -3367,7 +3469,7 @@
             </div>
             <div class="card-text">
                 <h3 style="color: var(--accent-emerald);">تحدي تخمين الصورة</h3>
-                <p>لعبة الشلة.. مين هيخمن أسرع؟</p>
+                <p>مين هيخمن أسرع؟</p>
             </div>
         </div>
         <div class="card-arrow" style="color: var(--accent-emerald);">></div>
@@ -3465,7 +3567,7 @@
                     <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">الجدول غير متاح حالياً</h4>
                     <p style="color: var(--text-sub); font-size: 0.8rem;">سيتم إتاحة جدول هذا السكشن رسميًا هنا فور اعتماده ⏳</p>
                 </div>
-                <button class="btn-submit" onclick="navigateBack()">الرجوع للمنظم ⬅️</button>
+                <button class="btn-submit" onclick="navigateBack()">الرجوع للمنظم</button>
             </div>
         </div>
 
@@ -3753,65 +3855,70 @@
                 <button class="auth-tab-btn" id="tab-prof-badges" onclick="switchProfileTab('badges')">الإنجازات</button>
             </div>
 
-            <!-- تبويب البروفايل الأساسي -->
-<div id="prof-section-main">
-    <div class="profile-header" id="main-profile-header-card" style="position: relative; overflow: visible;">
-    
-    <!-- عناصر الثيمات الجمالية في البروفايل -->
-    <div class="theme-hanging-element spiderman-deco"></div>
-    <div class="theme-hanging-element doom-deco"></div>
-    <div class="theme-hanging-element gold-deco"></div>
-    <div class="theme-hanging-element classic-deco"></div>
+                <!-- تبويب البروفايل الأساسي -->
+            <div id="prof-section-main">
+                <div class="profile-header" id="main-profile-header-card" style="position: relative; overflow: visible; padding: 20px 16px 14px;">
+                
+                    <!-- عناصر الثيمات الجمالية المعلقة (تستقر في أقصى اليسار بالأعلى) -->
+                    <div class="theme-hanging-element spiderman-deco"></div>
+                    <div class="theme-hanging-element doom-deco"></div>
+                    <div class="theme-hanging-element gold-deco"></div>
+                    <div class="theme-hanging-element classic-deco"></div>
 
-        <!-- الصف العلوي: الصورة يميناً والبيانات متصلة بها يساراً -->
-        <div class="profile-hero-row">
-            
-            <!-- الصورة والإكسسوارات (أولاً من جهة اليمين) -->
-            <div class="profile-hero-avatar-side">
-                <div class="avatar-box-wrapper">
-                    <div id="profile-hat-container"></div>
-                    <div class="profile-avatar" id="profile-avatar-container">
-                        <img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar">
+                    <!-- الحاوية الرئيسية: توزيع رأسي مريح من اليمين -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; text-align: right; width: 100%;">
+                        
+                        <!-- 1. كتلة الصورة (أعلى اليمين بدون شارة VIP فوقها) -->
+                        <div class="profile-hero-avatar-side" style="position: relative; margin-top: 14px; margin-bottom: 8px;">
+                            <div class="avatar-box-wrapper" style="width: 65px; height: 65px; margin: 0;">
+                                <div id="profile-hat-container"></div>
+                                <div class="profile-avatar" id="profile-avatar-container" style="width: 65px !important; height: 65px !important; border-width: 2.5px !important;">
+                                    <img id="display-avatar-img" src="https://img.icons8.com/fluency/96/user-male.png" alt="Avatar">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. الاسم مباشرة تحت الصورة على اليمين -->
+                        <div class="profile-name-row" style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <div class="profile-name" id="display-name" style="font-size: 1.05rem; font-weight: 900; line-height: 1.2;">اسم الطالب</div>
+                            <span class="online-indicator-dot" style="width: 7px; height: 7px;"></span>
+                        </div>
+
+                        <!-- 3. الشارات: الرتبة واللقب تحت الاسم -->
+                        <div class="profile-badges-line" style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 4px;">
+                            <span class="card-badge" id="display-rank-badge" style="margin: 0; font-size: 0.65rem !important; padding: 2px 7px !important;">🌱 مبتدئ</span>
+                            <span id="display-equipped-title" style="display: none; margin: 0; font-size: 0.65rem !important; padding: 2px 7px !important;"></span>
+                        </div>
+
+                        <!-- 4. البايو (الحالة الشخصية) -->
+                        <div id="display-bio" class="profile-bio-text" style="display: none; font-size: 0.76rem; line-height: 1.35; margin-bottom: 5px;"></div>
+
+                        <!-- 5. معرف الطالب (ID) وزر النسخ -->
+                        <div class="profile-phone" style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <span style="color: var(--accent-gold); font-weight: 900; font-size: 0.72rem;">ID:</span>
+                            <span id="display-student-id" style="color: var(--text-main); font-weight: 800; font-size: 0.78rem; letter-spacing: 0.5px;">-----</span>
+                            <button type="button" class="admin-action-btn" style="padding: 1px 6px; font-size: 0.62rem; border-radius: 5px;" onclick="copyStudentId()">نسخ 📋</button>
+                        </div>
+
+                    </div>
+
+                    <!-- 6. شريط التقدم بالأسفل مع شارة الـ VIP في أقصى الشمال بالأسفل -->
+                    <div class="profile-progress-section" style="margin-top: 8px; padding-top: 10px; position: relative;">
+                        
+                        <!-- شارة الـ VIP في أقصى الشمال بالأسفل فوق شريط التقدم مباشرة -->
+                        <div id="pro-vip-badge-tag" style="display: none; position: absolute; bottom: 50px; left: 0px; background: linear-gradient(135deg, #ffd700, #ff9900); color: #000; font-weight: 900; font-size: 0.6rem; padding: 2px 8px; border-radius: 8px; z-index: 15; box-shadow: 0 2px 6px rgba(0,0,0,0.4); align-items: center; gap: 3px;">
+                            <span>👑</span> <span>VIP</span>
+                        </div>
+
+                        <div class="profile-progress-meta" style="margin-bottom: 5px; font-size: 0.72rem;">
+                            <span style="color: var(--text-sub);">التقدم نحو الترقية</span>
+                            <span id="profile-xp-text" style="color: var(--accent-emerald);">0 / 500 XP</span>
+                        </div>
+                        <div class="xp-progress-wrapper" style="height: 8px;">
+                            <div class="xp-progress-bar" id="profile-xp-bar"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-        <!-- البيانات والنصوص (بجوار الصورة مباشرة) -->
-        <div class="profile-hero-info">
-            <div class="profile-name-row">
-                <div class="profile-name" id="display-name">اسم الطالب</div>
-                <span class="online-indicator-dot"></span>
-            </div>
-
-            <!-- الشارات: الرتبة واللقب متجاورين -->
-            <div class="profile-badges-line">
-                <span class="card-badge" id="display-rank-badge" style="margin: 0;">🌱 مبتدئ</span>
-                <span id="display-equipped-title" style="display: none; margin: 0;"></span>
-            </div>
-
-            <!-- البايو -->
-            <div id="display-bio" class="profile-bio-text" style="display: none;"></div>
-
-            <!-- معرف الطالب والنسخ -->
-<div class="profile-phone" style="display: flex; align-items: center; gap: 6px;">
-    <span style="color: var(--accent-gold); font-weight: 900;">ID:</span>
-    <span id="display-student-id" style="color: var(--text-main); font-weight: 800; letter-spacing: 1px;">-----</span>
-    <button type="button" class="admin-action-btn" style="padding: 2px 6px; font-size: 0.65rem; border-radius: 6px;" onclick="copyStudentId()">نسخ 📋</button>
-</div>
-        </div>
-    </div>
-
-    <!-- شريط التقدم بالأسفل ممتد بعرض الكارت -->
-    <div class="profile-progress-section">
-        <div class="profile-progress-meta">
-            <span style="color: var(--text-sub);">التقدم نحو الترقية</span>
-            <span id="profile-xp-text" style="color: var(--accent-emerald);">0 / 500 XP</span>
-        </div>
-        <div class="xp-progress-wrapper">
-            <div class="xp-progress-bar" id="profile-xp-bar"></div>
-        </div>
-    </div>
-</div>
 
                 <div class="stats-container">
                     <div class="stat-box"><div class="stat-value" id="display-points" style="color: var(--accent-emerald);">100</div><div class="stat-label">نقاط الخبرة XP</div></div>
@@ -4073,24 +4180,84 @@
             </div>
         </div>
 
-        <!-- واجهة الأسئلة الشائعة -->
+        <!-- واجهة الأسئلة الشائعة المحدثة والشاملة -->
         <div id="view-faq" class="view-section">
-            <div class="section-label">أهم الأسئلة المتكررة</div>
+            <div class="section-label">أهم الأسئلة المتكررة ودليل التطبيق</div>
+            
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">كيف يمكنني تحميل مذكرات المقررات؟ <span>▼</span></div>
-                <div class="faq-answer">ادخل على قسم "مواد الترم الأول" من الصفحة الرئيسية، اختر المادة ثم حدد (نظري أو عملي) واضغط على بطاقة التحميل ليتم تنزيل ملف الـ PDF مباشرة على هاتفك.</div>
+                <div class="faq-question" onclick="toggleFaq(this)">كيف يمكنني تحميل مذكرات المقررات والكتب؟ <span>▼</span></div>
+                <div class="faq-answer">ادخل على قسم "المحتوى العلمي" من الشاشة الرئيسية، اختر المادة الدراسية ثم حدد (نظري أو عملي). ستجد كارت كتاب المقرر بالأعلى؛ اضغط عليه ليتم تنزيل ملف الـ PDF مباشرة على هاتفك مع إضافة مكافأة XP مجانية في حسابك لأول مرة.</div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">ما هي فائدة النقاط والعملات؟ <span>▼</span></div>
-                <div class="faq-answer">النقاط (XP) ترفع رتبتك في لوحة المتصدرين وتفتح لك آفاق المنافسة، والعملات (Coins) تتيح لك شراء الفريمات والإكسسوارات وباقات الـ VIP وتجميد السلسلة من المتجر!</div>
+                <div class="faq-question" onclick="toggleFaq(this)">ما هو الفرق بين نقاط الخبرة (XP) والعملات (Coins)؟ <span>▼</span></div>
+                <div class="faq-answer">
+                    • <b>نقاط الخبرة (XP):</b> هي المقياس الأكاديمي لمستواك؛ تزيد بحل الأسئلة، الاختبارات، وإنجاز التكليفات، وهي المسؤولة عن رفع رتبتك والتصنيف في لوحة المتصدرين وقاعة المشاهير.<br>
+                    • <b>العملات (Coins):</b> هي المكافأة النقدية التي تجمعها من الفوز في التحديات والمسابقات، وتستخدمها في شراء الفريمات، الثيمات، المعززات من المتجر، أو تحويلها ودعم زملائك.
+                </div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">كيف أحصل على أكواد الهدايا والشحن؟ <span>▼</span></div>
-                <div class="faq-answer">يتم نشر أكواد الهدايا في جروب الدفعة وفي المناسبات، يمكنك كتابة الكود داخل خانة "شحن كود مكافأة" في القائمة الجانبية للحصول على نقاط فورية.</div>
+                <div class="faq-question" onclick="toggleFaq(this)">كيف تعمل مواجهات الديربي واهبد صح 1v1؟ <span>▼</span></div>
+                <div class="faq-answer">
+                    • <b>ديربي 1v1:</b> تنشئ غرفة وتحدد رسوم التحدي، ثم تشارك الكود المكون من حروف وأرقام مع زميلك. عند بدء المواجهة، تُطرح 10 أسئلة متزامنة؛ الأسرع في الإجابة الصحيحة يحصل على نقاط مضاعفة والفائز يحصد ضعف العملات وXP التحدي.<br>
+                    • <b>اهبد صح:</b> لعبة تخمين رقمية بحتة من 5 جولات؛ صاحب التخمين الأقرب للرقم الصحيح يفوز بالجولة، ومن يجمع النقاط الأعلى يفوز برهان المواجهة.
+                </div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">نسيت كلمة المرور، ماذا أفعل؟ <span>▼</span></div>
-                <div class="faq-answer">إذا كنت قد قمت بإضافة بريدك الإلكتروني في الإعدادات، يمكنك استخدام خيار استرجاع كلمة المرور أو التواصل مباشرة مع المطور عبر واتساب لإعادة تعيينها.</div>
+                <div class="faq-question" onclick="toggleFaq(this)">ما هو نظام خريطة المستويات الـ 50 وعقوبة الزعيم؟ <span>▼</span></div>
+                <div class="faq-answer">الخريطة تحتوي على 50 مستوى متدرج الصعوبة. كل مستوى يتطلب جمع حد أدنى من النجوم لفتحه وهزيمة زعيم المستوى السابق. إذا خسرت أمام الزعيم، يدخل المستوى في فترة راحة إجبارية (Cooldown) لمدة 12 ساعة، ويمكنك تخطيها فوراً بالدفع من رصيد العملات.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف أحصل على الألقاب والإنجازات (نظام PUBG)؟ <span>▼</span></div>
+                <div class="faq-answer">ادخل على البروفايل ثم تبويب "الإنجازات"؛ ستجد شروطاً محددة (مثل عدد مرات الفوز بالديربي، أو جمع نجوم المستويات، أو عدد أيام الاستمرارية). فور تحقيق الشرط، اضغط على زر الاستلام وارتدِ اللقب ليظهر مرافقاً لاسمك في الليدربورد والبروفايل.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف أحمي سلسلة الدخول اليومي (Daily Streak) من الضياع؟ <span>▼</span></div>
+                <div class="faq-answer">عند فتح التطبيق يومياً تحصل على مكافأة متصاعدة ومكافأة كبرى في اليوم السابع. لحماية سلسلتك إذا نسيت تسجيل الدخول يوماً، يمكنك شراء أداة "تجميد السلسلة (Streak Freeze)" من المتجر لتعمل كدرع واقٍ يحفظ أيامك تلقائياً.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف أقوم بتحويل العملات لزميلي (ادعم صاحبك)؟ <span>▼</span></div>
+                <div class="faq-answer">من القائمة الجانبية (Sidebar) اضغط على "ادعم صاحبك"، ثم أدخل معرّف الطالب (Student ID) الخاص بزميلك وعدد العملات. الحد الأقصى للتحويل هو 100 عملة يومياً لكل طالب منعاً للتلاعب.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">كيف تعمل الجداول الأسبوعية بدون إنترنت (Offline)؟ <span>▼</span></div>
+                <div class="faq-answer">بمجرد فتح جدول سكشنك لمرة واحدة فقط أثناء توفر اتصال بالإنترنت، يقوم التطبيق بتخزينه تلقائياً في ذاكرة هاتفك. بعد ذلك يمكنك فتح ومراجعة الجدول في أي وقت بدون استهلاك للإنترنت، مع تحديثه تلقائياً في الخلفية فور اعتماد جدول جديد من الإدارة.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">نسيت كلمة المرور أو رقم الهاتف، ماذا أفعل؟ <span>▼</span></div>
+                <div class="faq-answer">إذا قمت بربط بريدك الإلكتروني سابقاً، يمكنك الضغط على "نسيت كلمة المرور" لاستلام رابط إعادة التعيين على Gmail فوراً. إذا واجهتك مشكلة في الوصول لحسابك، يمكنك مراسلة المطور مباشرة عبر واتساب من صفحة الإعدادات لاسترجاع حسابك.</div>
+            </div>
+        </div>
+
+        <!-- واجهة شروط وسياسة الاستخدام المحدثة -->
+        <div id="view-terms" class="view-section">
+            <div class="auth-card" style="text-align: right; line-height: 1.9; font-size: 0.88rem;">
+                <h3 style="text-align: center; color: var(--accent-gold); margin-bottom: 15px;">شروط وسياسة الاستخدام 📜</h3>
+                
+                <p><b>1. الهوية والهدف الأكاديمي:</b><br>
+                هذا التطبيق مبادرة طلابية غير ربحية موجهة حصرياً لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان بكلية الزراعة - جامعة سوهاج (الدفعة 28)، بهدف تنظيم التكليفات وتيسير الوصول للمحتوى العلمي وتعزيز روح التنافس الشريف.</p>
+                
+                <p><b>2. الآداب العامة والبيانات الشخصية:</b><br>
+                يلتزم الطالب بالتسجيل باسمه الحقيقي أو المألوف، ويُحظر تماماً كتابة أسماء، بايو، أو رسائل تحتوي على عبارات غير لائقة، أو تعصب، أو تلميحات سياسية أو شخصية مسيئة. يحق للإدارة حظر أي حساب مخالف فوراً.</p>
+
+                <p><b>3. النزاهة في التحديات والمسابقات:</b><br>
+                يُمنع منعاً باتاً استغلال أي ثغرات برمجية أو استخدام برامج وسيطة لتعديل رصيد النقاط (XP)، العملات، أو النجوم. تخضع جميع سجلات التحديات لتدقيق دوري، وأي تلاعب يترتب عليه تصفير الرصيد والحرمان من لوحة المتصدرين.</p>
+
+                <p><b>4. حقوق المواد العلمية والمذكرات:</b><br>
+                كافة الكتب، المذكرات، والأسئلة المرفوعة داخل المنصة مخصصة للمنفعة والمذاكرة الشخصية لطلاب الكلية فقط، ولا يجوز نسخها أو إعادة تداولها لأغراض تجارية أو خارج إطار الدراسة الجامعية.</p>
+
+                <p><b>5. ضوابط تحويل العملات واستخدام الأكواد:</b><br>
+                نظام دعم العملات مخصص لتشجيع الزملاء ومحدد بـ 100 عملة كحد أقصى يومياً لكل حساب، ويُمنع تداول العملات أو بيعها بمقابل مالي خارجي. كما أن أكواد الهدايا تخضع لسياسة الصلاحية (فردية أو جماعية) وتُستخدم لمرة واحدة.</p>
+
+                <p><b>6. الصيانة والتحديثات المستمرة:</b><br>
+                يحق لإدارة التطبيق إجراء صيانة دورية، تعديل أنظمة المكافآت، أو إغلاق بعض الأقسام مؤقتاً لتطوير المحتوى العلمي ورفع كفاءة السيرفر بما يخدم صالح جميع الطلاب.</p>
             </div>
         </div>
 
@@ -4141,16 +4308,6 @@
     </div>
 </div>
 
-        <!-- واجهة شروط الاستخدام -->
-        <div id="view-terms" class="view-section">
-            <div class="auth-card" style="text-align: right; line-height: 1.8; font-size: 0.9rem;">
-                <h3 style="text-align: center; color: var(--accent-gold); margin-bottom: 15px;">شروط وسياسة الاستخدام 📜</h3>
-                <p>1. هذا التطبيق مخصص وموجه لطلاب برنامج علوم وتكنولوجيا الأغذية والألبان بكلية الزراعة - جامعة سوهاج.</p>
-                <p>2. يُحظر استخدام أسماء أو بايو غير لائق في الحسابات الشخصية أو إرسال بلاغات وهمية في لوحة الإدارة.</p>
-                <p>3. المواد العلمية والمذكرات المرفوعة هي للمنفعة الدراسية والأكاديمية الشخصية فقط ولا يجوز استغلالها تجارياً.</p>
-                <p>4. يحق لإدارة التطبيق إيقاف أو تعديل نقاط الحسابات في حال ثبوت التلاعب في التحديات أو الأكواد البرمجية.</p>
-            </div>
-        </div>
 
         <!-- لوحة التحكم (Admin Panel) -->
         <div id="view-admin-panel" class="view-section">
@@ -4877,8 +5034,8 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 15px; gap: 10px;">
-                <button id="btn-exam-prev" class="admin-action-btn" style="flex: 1;" onclick="examNavigate(-1)">⬅️ السابق</button>
-                <button id="btn-exam-next" class="admin-action-btn" style="flex: 1; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="examNavigate(1)">التالي ➡️</button>
+                <button id="btn-exam-prev" class="admin-action-btn" style="flex: 1;" onclick="examNavigate(-1)">السابق</button>
+                <button id="btn-exam-next" class="admin-action-btn" style="flex: 1; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="examNavigate(1)">التالي</button>
             </div>
             <button id="btn-exam-submit" class="btn-submit" style="margin-top: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; display: none;" onclick="submitFinalExam()">تسليم الاختبار</button>
         </div>
@@ -4886,7 +5043,7 @@
         <div id="view-exam-result" class="view-section" style="display: none;">
             <div class="auth-card" style="text-align: center; padding: 30px 15px;">
                 <div class="exam-result-header">
-                    <h2 style="color: var(--text-main); margin-bottom: 10px;">نتيجة الاختبار 📊</h2>
+                    <h2 style="color: var(--text-main); margin-bottom: 10px;">نتيجة الاختبار</h2>
                     <div id="exam-score-circle" class="exam-score-circle">0/0</div>
                     <p id="exam-result-msg" style="font-size: 0.95rem; color: var(--text-sub); font-weight: 700;"></p>
                     <div id="exam-reward-box" style="margin-top: 15px; padding: 10px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; border: 1px dashed var(--accent-gold); color: var(--accent-gold); font-weight: 900; display: none;"></div>
@@ -4908,7 +5065,7 @@
 <div id="view-penalty-select" class="view-section">
     <div class="auth-card" style="text-align: center; padding: 22px 16px;">
         <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">⚽🎯</span>
-        <h3 style="color: var(--accent-gold); margin-bottom: 6px;">تحدي ركلات الجزاء ⚽</h3>
+        <h3 style="color: var(--accent-gold); margin-bottom: 6px;">تحدي ركلات الجزاء</h3>
         <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 18px;">
             اختر نجمك المفضل لسداد ركلة الجزاء نحو الشباك:
         </p>
@@ -4936,7 +5093,7 @@
     </div>
 </div>
 
-        <button class="btn-submit" onclick="navigateBack()">رجوع ⬅️</button>
+        <button class="btn-submit" onclick="navigateBack()">رجوع</button>
     </div>
 </div>
 
@@ -5502,7 +5659,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 1.8rem;">⚡</span>
-                <h3 style="color: var(--accent-gold); margin: 0;">تحدي ريسك (مواجهة الفرق)</h3>
+                <h3 style="color: var(--accent-gold); margin: 0;">تحدي ريسك</h3>
             </div>
             <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem; border-color: var(--accent-emerald); color: var(--accent-emerald);" onclick="openModal('modal-risk-rules')">📜 قواعد التحدي</button>
         </div>
