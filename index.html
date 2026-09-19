@@ -3816,7 +3816,16 @@
             <div class="section-label" style="margin-top: 20px;">آخر الاختبارات والتحديات</div>
             <div id="local-stats-history-list" style="display: flex; flex-direction: column; gap: 10px;">
                 <!-- سيتم حقن سجل التليفون هنا -->
+            </div> <!-- 👈 هنا القفلة الصحيحة لسجل الاختبارات -->
+
+            <!-- بنك الأخطاء يبدأ هنا في مساحة مستقلة -->
+            <div class="section-label" style="margin-top: 25px; color: #ef4444;">بنك أخطاء الاختبارات</div>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 10px;">لمراجعة الأسئلة التي أخطأت بها في الاختبارات الدراسية.</p>
+            <div id="local-mistakes-history-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- سيتم حقن الأخطاء هنا -->
             </div>
+            <button class="admin-action-btn danger" style="width: 100%; margin-top: 15px; padding: 10px;" onclick="clearLocalMistakes()">تنظيف بنك الأخطاء 🗑️</button>
+            
         </div>
 
         <!-- شاشة الحسابات -->
@@ -4330,7 +4339,41 @@
                 <button class="auth-tab-btn" id="tab-admin-levels-sys" onclick="switchAdminTab('levels-sys')">تحدي المستويات 🗺️</button>
                 <button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">أكاديمية الجودة 💼</button>
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
+<button class="auth-tab-btn" id="tab-admin-roles" onclick="switchAdminTab('roles')">إدارة الصلاحيات 🛡️</button>
             </div>
+
+<!-- تبويب إدارة الصلاحيات (للمطور فقط) -->
+<div id="admin-section-roles" style="display: none;">
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-highlight);">
+        <h3 style="color: var(--accent-highlight); text-align: center; margin-bottom: 8px;">إدارة المساعدين 🛡️</h3>
+        <p style="font-size: 0.8rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">أدخل ID الطالب وحدد الأقسام المسموح له بإدارتها</p>
+        
+        <div class="form-group">
+            <input type="number" id="adm-role-id" class="form-input" placeholder="رقم ID الطالب (مثال: 12345)" style="text-align: center; font-weight: 900; font-size: 1.1rem; color: var(--accent-gold);">
+        </div>
+        
+        <div class="form-group" style="text-align: right; margin-bottom: 20px;">
+            <label style="color: var(--accent-emerald);">الصلاحيات الممنوحة:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; direction: rtl; font-size: 0.85rem; color: var(--text-main); background: var(--bg-primary); padding: 12px; border-radius: 12px; border: 1px solid var(--border-card);" id="adm-roles-checkboxes">
+                <label><input type="checkbox" value="notifs"> الإشعارات 🔔</label>
+                <label><input type="checkbox" value="quotes"> الاقتباسات 📜</label>
+                <label><input type="checkbox" value="quiz"> الكلاسيك 🧠</label>
+                <label><input type="checkbox" value="ehbed-quiz"> اهبد صح 🔢</label>
+                <label><input type="checkbox" value="risk-quiz"> ريسك ⚡</label>
+                <label><input type="checkbox" value="guess-game"> تخمين 📱</label>
+                <label><input type="checkbox" value="levels-sys"> المستويات 🗺️</label>
+                <label><input type="checkbox" value="science"> المحتوى 📚</label>
+                <label><input type="checkbox" value="academic"> المنظم 🎓</label>
+                <label><input type="checkbox" value="tickets"> الشكاوى 📩</label>
+                <label><input type="checkbox" value="broadcast"> رسائل البث 📢</label>
+            </div>
+        </div>
+        <button class="btn-submit" style="background: var(--accent-highlight); color: #fff;" onclick="assignAdminRoles()">حفظ الصلاحيات للمساعد ✅</button>
+    </div>
+    
+    <div class="section-label">المساعدين الحاليين في التطبيق</div>
+    <div id="admin-roles-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+</div>
 
 <!-- تبويب إدارة الاقتباسات والمعلومات -->
 <div id="admin-section-quotes" style="display: none;">
@@ -4556,15 +4599,33 @@
             </div>
 
             <!-- تبويب رسائل البث -->
-            <div id="admin-section-broadcast" style="display: none;">
-                <div class="auth-card" style="padding: 18px;">
-                    <h3 style="color: var(--text-main); text-align: center;">إرسال رسالة منبثقة 📢</h3>
-                    <div class="form-group"><input type="text" id="admin-broadcast-title" class="form-input" placeholder="العنوان"></div>
-                    <div class="form-group"><textarea id="admin-broadcast-body" class="form-input" rows="3" placeholder="النص"></textarea></div>
-                    <button class="btn-submit" onclick="publishBroadcastAlert()">نشر 🚀</button>
-                    <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="clearBroadcastAlert()">حذف 🗑️</button>
-                </div>
-            </div>
+<div id="admin-section-broadcast" style="display: none;">
+    <!-- كارت رسالة البث للكل (موجود عندك بالفعل) -->
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: var(--text-main); text-align: center;">إرسال رسالة منبثقة للجميع 📢</h3>
+        <div class="form-group"><input type="text" id="admin-broadcast-title" class="form-input" placeholder="العنوان"></div>
+        <div class="form-group"><textarea id="admin-broadcast-body" class="form-input" rows="3" placeholder="النص"></textarea></div>
+        <button class="btn-submit" onclick="publishBroadcastAlert()">نشر 🚀</button>
+        <button class="admin-action-btn danger" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="clearBroadcastAlert()">حذف 🗑️</button>
+    </div>
+
+    <!-- كارت الرسالة الخاصة (بالهدايا) -->
+    <div class="auth-card" style="padding: 18px; border-color: var(--accent-emerald);">
+        <h3 style="color: var(--accent-emerald); text-align: center;">رسالة خاصة أو هدية 👤🎁</h3>
+        <p style="font-size: 0.8rem; color: var(--text-sub); text-align: center; margin-bottom: 15px;">رسالة منبثقة للطالب المحدد (مع إمكانية إرفاق هدية)</p>
+        <div class="form-group"><input type="text" id="admin-private-target" class="form-input" placeholder="رقم الهاتف أو ID الطالب" style="text-align: center; font-weight: bold;"></div>
+        <div class="form-group"><input type="text" id="admin-private-title" class="form-input" placeholder="عنوان الرسالة (مثال: تعويض مشكلة / هدية تفوق)"></div>
+        <div class="form-group"><textarea id="admin-private-body" class="form-input" rows="3" placeholder="نص الرسالة..."></textarea></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <input type="number" id="admin-private-xp" class="form-input" placeholder="XP ⚡ (اختياري)">
+            <input type="number" id="admin-private-coins" class="form-input" placeholder="عملات 💸 (اختياري)">
+        </div>
+
+        <button class="btn-submit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" onclick="sendPrivateAlertAdmin()">إرسال الرسالة والهدية 📨</button>
+    </div>
+    </div>
+
 
             <!-- تبويب روابط الكتب -->
             <div id="admin-section-books" style="display: none;">
@@ -5784,6 +5845,26 @@
         </div>
         <p id="risk-result-banter" style="font-size: 1rem; color: var(--text-main); line-height: 1.6; margin-bottom: 20px; font-weight: 700;"></p>
         <button class="btn-submit" onclick="finishRiskMatchFully()" style="font-size: 1rem;">العودة للرئيسية 🏠</button>
+    </div>
+</div>
+
+<!-- نافذة الرسالة الخاصة/الهدية للطالب -->
+<div id="modal-personal-alert" class="modal-overlay">
+    <div class="modal-box" style="max-width: 380px; text-align: center; border-color: var(--accent-emerald);">
+        <span id="personal-alert-emoji" style="font-size: 3.5rem; display: block; margin-bottom: 10px;">📩</span>
+        <h3 id="personal-alert-title" style="color: var(--accent-emerald); margin-bottom: 10px;">رسالة من الإدارة</h3>
+        <p id="personal-alert-body" style="color: var(--text-main); font-size: 0.95rem; font-weight: 700; line-height: 1.7; margin-bottom: 15px; white-space: pre-line;">نص الرسالة</p>
+        
+        <!-- صندوق الهدية (يظهر فقط لو فيه هدية مبعوتة) -->
+        <div id="personal-alert-rewards-box" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px dashed var(--accent-emerald); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
+            <div style="font-size: 0.8rem; color: var(--text-main); font-weight: bold; margin-bottom: 8px;">مرفق مع الرسالة هدية لك:</div>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <span id="personal-alert-xp-badge" class="card-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); font-size: 0.9rem; display: none;">0 XP ⚡</span>
+                <span id="personal-alert-coins-badge" class="card-badge" style="background: rgba(212, 175, 55, 0.2); color: var(--accent-gold); font-size: 0.9rem; display: none;">0 عملة 💸</span>
+            </div>
+        </div>
+
+        <button id="btn-personal-alert-action" class="btn-submit" style="background: var(--accent-emerald); color: #000; width: 100%;">حسناً، فهمت ✔️</button>
     </div>
 </div>
 

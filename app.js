@@ -1246,6 +1246,7 @@ let hasCheckedDailyLoginSession = false;
 
                     updateProfileUI();
                     initUserTicketRepliesListener();
+listenToPersonalAlerts();
 
                     if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                         goHomeDirectly();
@@ -1395,28 +1396,26 @@ let hasCheckedDailyLoginSession = false;
     }
 
     function updateStatsUI() {
-        if (!currentUser) return;
-        document.getElementById('stat-total-days').innerText = currentUser.total_login_days || '0';
-        document.getElementById('stat-max-streak').innerText = (currentUser.daily_streak || '0') + ' 🔥';
-        
-        const played = currentUser.quizPlayed || 0;
-        const correct = currentUser.quizCorrect || 0;
-        const totalQuestionsAnswered = played * 5;
-        const accuracy = totalQuestionsAnswered > 0 ? Math.round((correct / totalQuestionsAnswered) * 100) : 0;
-        
-        document.getElementById('stat-quiz-played').innerText = played;
-        document.getElementById('stat-quiz-correct').innerText = correct;
-        document.getElementById('stat-quiz-accuracy').innerText = `${accuracy}% 🎯`;
+    if (!currentUser) return;
+    document.getElementById('stat-total-days').innerText = currentUser.total_login_days || '0';
+    document.getElementById('stat-max-streak').innerText = (currentUser.daily_streak || '0') + ' 🔥';
+    
+    const played = currentUser.quizPlayed || 0;
+    const correct = currentUser.quizCorrect || 0;
+    const totalQuestionsAnswered = played * 5;
+    const accuracy = totalQuestionsAnswered > 0 ? Math.round((correct / totalQuestionsAnswered) * 100) : 0;
+    
+    document.getElementById('stat-quiz-played').innerText = played;
+    document.getElementById('stat-quiz-correct').innerText = correct;
+    document.getElementById('stat-quiz-accuracy').innerText = `${accuracy}% 🎯`;
 
-        // 💡 جلب السجل المحلي وعرضه بدون أي طلبات للسيرفر
-        const historyContainer = document.getElementById('local-stats-history-list');
-        if (historyContainer) {
-            const localHistory = JSON.parse(localStorage.getItem('my_detailed_stats') || '[]');
-            if (localHistory.length === 0) {
-                historyContainer.innerHTML = '<div class="eng-bento-card" style="padding: 15px; text-align: center;"><p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">لم تقم بإجراء أي اختبارات حتى الآن.</p></div>';
-                return;
-            }
-            
+    // 💡 1. جلب السجل المحلي وعرضه بدون أي طلبات للسيرفر
+    const historyContainer = document.getElementById('local-stats-history-list');
+    if (historyContainer) {
+        const localHistory = JSON.parse(localStorage.getItem('my_detailed_stats') || '[]');
+        if (localHistory.length === 0) {
+            historyContainer.innerHTML = '<div class="eng-bento-card" style="padding: 15px; text-align: center;"><p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">لم تقم بإجراء أي اختبارات حتى الآن.</p></div>';
+        } else {
             let histHtml = '';
             localHistory.forEach(item => {
                 const passRate = item.score / item.total;
@@ -1440,6 +1439,31 @@ let hasCheckedDailyLoginSession = false;
             historyContainer.innerHTML = histHtml;
         }
     }
+
+    // 💡 2. جلب الأخطاء المحلية وعرضها في قسم "بنك الأخطاء"
+    const mistakesContainer = document.getElementById('local-mistakes-history-list');
+    if (mistakesContainer) {
+        const localMistakes = JSON.parse(localStorage.getItem('my_exam_mistakes') || '[]');
+        if (localMistakes.length === 0) {
+            mistakesContainer.innerHTML = '<div class="eng-bento-card" style="padding: 15px; text-align: center;"><p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">ممتاز! لا توجد أخطاء مسجلة حالياً 🎉.</p></div>';
+        } else {
+            let mistHtml = '';
+            localMistakes.forEach(m => {
+                mistHtml += `
+                <div class="mistake-card" style="background: var(--bg-secondary); border: 1px solid var(--border-card); border-right: 4px solid #ef4444; border-radius: 12px; padding: 12px; margin-bottom: 8px; text-align: right;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.7rem; color: var(--text-sub); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 6px;">${m.subject} - ${m.examTitle}</span>
+                        <span style="font-size: 0.65rem; color: var(--text-sub);">${m.date}</span>
+                    </div>
+                    <div class="mistake-q" style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">${m.qText}</div>
+                    <div class="mistake-user-ans" style="font-size: 0.75rem; color: #ef4444; text-decoration: line-through; margin-bottom: 2px;">إجابتك: ${m.uAns}</div>
+                    <div class="mistake-correct-ans" style="font-size: 0.8rem; color: #10b981; font-weight: 900;">التصحيح: ${m.correct} ✅</div>
+                </div>`;
+            });
+            mistakesContainer.innerHTML = mistHtml;
+        }
+    }
+}
 
     // ================= تسجيل الخروج والدخول =================
     function logoutUser() {
@@ -2059,135 +2083,122 @@ function equipOwnedHat(hatKey) {
 }
 
     function updateProfileUI() {
-        if (currentUser) {
-            // تفعيل وتطبيق الثيم المخصص المحفوظ للطالب
-            if (currentUser.active_custom_theme && typeof applyUserCustomTheme === 'function') {
-                applyUserCustomTheme(currentUser.active_custom_theme);
-            }
+    if (currentUser) {
+        if (currentUser.active_custom_theme && typeof applyUserCustomTheme === 'function') {
+            applyUserCustomTheme(currentUser.active_custom_theme);
+        }
 
-            const avatarSrc = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
-            const xp = currentUser.xp || currentUser.points || 0;
-            const coins = currentUser.coins || 0;
-            const rnk = getUserRank(xp);
-            const nextXp = getNextLevelXP(xp);
-            const progressPercent = Math.min((xp / nextXp) * 100, 100);
-            
-            // 1. تحقق صارم من تفعيل ميزة الـ VIP لإخفاء الشارة فوراً إذا لم تكن مفعلة
-            const isVipActive = (currentUser.is_vip === true || currentUser.is_vip === 'true');
-            const vipBadgeEl = document.getElementById('pro-vip-badge-tag');
-            if (vipBadgeEl) {
-                vipBadgeEl.style.display = isVipActive ? 'inline-flex' : 'none';
-            }
+        const avatarSrc = currentUser.avatar || 'https://img.icons8.com/fluency/96/user-male.png';
+        const xp = currentUser.xp || currentUser.points || 0;
+        const coins = currentUser.coins || 0;
+        const rnk = getUserRank(xp);
+        const nextXp = getNextLevelXP(xp);
+        const progressPercent = Math.min((xp / nextXp) * 100, 100);
+        
+        const isVipActive = (currentUser.is_vip === true || currentUser.is_vip === 'true');
+        const vipBadgeEl = document.getElementById('pro-vip-badge-tag');
+        if (vipBadgeEl) vipBadgeEl.style.display = isVipActive ? 'inline-flex' : 'none';
 
-            const avatarContainer = document.getElementById('profile-avatar-container');
-            if (avatarContainer) {
-                avatarContainer.className = 'profile-avatar';
-                if (currentUser.active_frame && currentUser.active_frame !== 'none') {
-                    const cleanKey = currentUser.active_frame.replace('frame_', '');
-                    if (['gold', 'fire', 'cyber', 'cosmic'].includes(cleanKey)) {
-                        avatarContainer.classList.add('frame-' + cleanKey);
-                    }
+        const avatarContainer = document.getElementById('profile-avatar-container');
+        if (avatarContainer) {
+            avatarContainer.className = 'profile-avatar';
+            if (currentUser.active_frame && currentUser.active_frame !== 'none') {
+                const cleanKey = currentUser.active_frame.replace('frame_', '');
+                if (['gold', 'fire', 'cyber', 'cosmic'].includes(cleanKey)) {
+                    avatarContainer.classList.add('frame-' + cleanKey);
                 }
-            }
-
-            const hatContainer = document.getElementById('profile-hat-container');
-            if (hatContainer) {
-                hatContainer.innerHTML = getHatHtml(currentUser.active_hat) + getAvatarFrameOverlayHtml(currentUser.active_frame);
-            }
-
-            // 2. تطبيق ستايل كارت VIP فقط للمشتركين الفعليين
-            const profileCard = document.getElementById('main-profile-header-card');
-            if (profileCard) {
-                if (isVipActive) {
-                    profileCard.classList.add('vip-profile-card');
-                } else {
-                    profileCard.classList.remove('vip-profile-card');
-                }
-            }
-
-            const dispName = document.getElementById('display-name');
-            if (dispName) {
-                dispName.innerText = currentUser.name;
-                const dispTitle = document.getElementById('display-equipped-title');
-                if (dispTitle) {
-                    if (currentUser.active_title && currentUser.active_title !== 'none') {
-                        dispTitle.style.display = 'block';
-                        dispTitle.innerHTML = getTitleBadgeHtml(currentUser.active_title, currentUser.active_title_rarity);
-                    } else {
-                        dispTitle.style.display = 'none';
-                    }
-                }
-                if (currentUser.has_glow_name) dispName.classList.add('glow-name-effect');
-                else dispName.classList.remove('glow-name-effect');
-            }
-
-            // إظهار الـ ID في واجهة البروفايل
-            const idEl = document.getElementById('display-student-id');
-            if (idEl) idEl.innerText = currentUser.student_id || '-----';
-
-            const dispBio = document.getElementById('display-bio');
-            if (dispBio) {
-                if (currentUser.can_edit_bio && currentUser.bio && currentUser.bio.trim() !== '') {
-                    dispBio.style.display = 'block';
-                    dispBio.innerText = `"${currentUser.bio}"`;
-                } else {
-                    dispBio.style.display = 'none';
-                }
-            }
-
-            const dXpBadge = document.getElementById('home-double-xp-badge');
-            if (dXpBadge) {
-                const isDoubleActive = currentUser.double_xp_until && currentUser.double_xp_until > Date.now();
-                dXpBadge.style.display = isDoubleActive ? 'inline-block' : 'none';
-            }
-
-            const groupBio = document.getElementById('group-edit-bio');
-            if (groupBio) {
-                groupBio.style.display = (currentUser.owned_bio || currentUser.can_edit_bio) ? 'block' : 'none';
-                document.getElementById('edit-bio-input').value = currentUser.bio || '';
-            }
-
-            document.getElementById('sidebar-avatar').src = avatarSrc;
-            document.getElementById('sidebar-name').innerText = currentUser.name.split(' ').slice(0, 2).join(' ');
-            document.getElementById('sidebar-stats-box').style.display = 'flex';
-            document.getElementById('sidebar-badge').innerText = rnk;
-            document.getElementById('sidebar-points').innerText = xp + ' XP';
-            document.getElementById('sidebar-logout').style.display = 'flex';
-            
-            document.getElementById('home-balance-bar').style.display = 'flex';
-            document.getElementById('home-xp').innerText = `${xp} XP`;
-            document.getElementById('home-coins').innerText = coins;
-
-            document.getElementById('display-avatar-img').src = avatarSrc;
-            const phoneEl = document.getElementById('display-phone');
-            if (phoneEl) phoneEl.innerText = currentUser.phone;
-            
-            document.getElementById('display-points').innerText = xp;
-            document.getElementById('display-coins').innerText = coins;
-            document.getElementById('display-rank-badge').innerText = rnk;
-            
-            document.getElementById('profile-xp-bar').style.width = `${progressPercent}%`;
-            document.getElementById('profile-xp-text').innerText = `${xp} / ${nextXp} XP للترقية`;
-
-            document.getElementById('edit-name-input').value = currentUser.name;
-            document.getElementById('edit-avatar-preview').src = avatarSrc;
-            
-            document.getElementById('sub-view-name-input').value = currentUser.name || '';
-            document.getElementById('sub-view-phone-input').value = currentUser.phone || '';
-            document.getElementById('sub-view-email-input').value = currentUser.email || '';
-
-            selectEditAvatar(avatarSrc, null, true);
-            updateStatsUI();
-            renderStoreCatalog();
-            renderAchievementsTabUI();
-
-            if (currentUser.phone === "01061032507") {
-                document.getElementById('sidebar-admin-panel').style.display = 'flex';
-            } else {
-                document.getElementById('sidebar-admin-panel').style.display = 'none';
             }
         }
+
+        const hatContainer = document.getElementById('profile-hat-container');
+        if (hatContainer) hatContainer.innerHTML = getHatHtml(currentUser.active_hat) + getAvatarFrameOverlayHtml(currentUser.active_frame);
+
+        const profileCard = document.getElementById('main-profile-header-card');
+        if (profileCard) {
+            if (isVipActive) profileCard.classList.add('vip-profile-card');
+            else profileCard.classList.remove('vip-profile-card');
+        }
+
+        const dispName = document.getElementById('display-name');
+        if (dispName) {
+            dispName.innerText = currentUser.name;
+            const dispTitle = document.getElementById('display-equipped-title');
+            if (dispTitle) {
+                if (currentUser.active_title && currentUser.active_title !== 'none') {
+                    dispTitle.style.display = 'block';
+                    dispTitle.innerHTML = getTitleBadgeHtml(currentUser.active_title, currentUser.active_title_rarity);
+                } else {
+                    dispTitle.style.display = 'none';
+                }
+            }
+            if (currentUser.has_glow_name) dispName.classList.add('glow-name-effect');
+            else dispName.classList.remove('glow-name-effect');
+        }
+
+        const idEl = document.getElementById('display-student-id');
+        if (idEl) idEl.innerText = currentUser.student_id || '-----';
+
+        const dispBio = document.getElementById('display-bio');
+        if (dispBio) {
+            if (currentUser.can_edit_bio && currentUser.bio && currentUser.bio.trim() !== '') {
+                dispBio.style.display = 'block';
+                dispBio.innerText = `"${currentUser.bio}"`;
+            } else {
+                dispBio.style.display = 'none';
+            }
+        }
+
+        const dXpBadge = document.getElementById('home-double-xp-badge');
+        if (dXpBadge) dXpBadge.style.display = (currentUser.double_xp_until && currentUser.double_xp_until > Date.now()) ? 'inline-block' : 'none';
+
+        const groupBio = document.getElementById('group-edit-bio');
+        if (groupBio) {
+            groupBio.style.display = (currentUser.owned_bio || currentUser.can_edit_bio) ? 'block' : 'none';
+            document.getElementById('edit-bio-input').value = currentUser.bio || '';
+        }
+
+        document.getElementById('sidebar-avatar').src = avatarSrc;
+        document.getElementById('sidebar-name').innerText = currentUser.name.split(' ').slice(0, 2).join(' ');
+        document.getElementById('sidebar-stats-box').style.display = 'flex';
+        document.getElementById('sidebar-badge').innerText = rnk;
+        document.getElementById('sidebar-points').innerText = xp + ' XP';
+        document.getElementById('sidebar-logout').style.display = 'flex';
+        
+        document.getElementById('home-balance-bar').style.display = 'flex';
+        document.getElementById('home-xp').innerText = `${xp} XP`;
+        document.getElementById('home-coins').innerText = coins;
+
+        document.getElementById('display-avatar-img').src = avatarSrc;
+        const phoneEl = document.getElementById('display-phone');
+        if (phoneEl) phoneEl.innerText = currentUser.phone;
+        
+        document.getElementById('display-points').innerText = xp;
+        document.getElementById('display-coins').innerText = coins;
+        document.getElementById('display-rank-badge').innerText = rnk;
+        
+        document.getElementById('profile-xp-bar').style.width = `${progressPercent}%`;
+        document.getElementById('profile-xp-text').innerText = `${xp} / ${nextXp} XP للترقية`;
+
+        document.getElementById('edit-name-input').value = currentUser.name;
+        document.getElementById('edit-avatar-preview').src = avatarSrc;
+        
+        document.getElementById('sub-view-name-input').value = currentUser.name || '';
+        document.getElementById('sub-view-phone-input').value = currentUser.phone || '';
+        document.getElementById('sub-view-email-input').value = currentUser.email || '';
+
+        selectEditAvatar(avatarSrc, null, true);
+        updateStatsUI();
+        renderStoreCatalog();
+        renderAchievementsTabUI();
+
+        // 👈 التعديل السحري هنا: لو أنت المطور الأساسي أو لو معاك صلاحيات مساعد أدمن، يظهرلك الزرار
+        if (currentUser.phone === "01061032507" || (currentUser.admin_roles && currentUser.admin_roles.length > 0)) {
+            document.getElementById('sidebar-admin-panel').style.display = 'flex';
+        } else {
+            document.getElementById('sidebar-admin-panel').style.display = 'none';
+        }
     }
+}
 
     function handleProfileClick() { closeSidebar(); if (currentUser) navigateTo('view-profile', 'الملف الشخصي', 'بيانات حسابك'); else showAuthGateDirectly(); }
 
@@ -3928,22 +3939,56 @@ if (currentUser) {
     let adminAllUsersData = [];
 
     function openAdminPanel() {
-        playClickSound();
-        if(currentUser && currentUser.phone === "01061032507") {
-            navigateTo('view-admin-panel', 'لوحة التحكم', 'إدارة التطبيق والمستخدمين والمتجر');
-            loadAdminData();
-            populateAdminStoreInputs();
-        } else {
-            showTopToast('عذراً، هذه الصفحة مخصصة لمدير التطبيق فقط.', 'error');
-        }
+    playClickSound();
+    
+    // التحقق المزدوج للأمان
+    if (currentUser && (currentUser.phone === "01061032507" || (currentUser.admin_roles && currentUser.admin_roles.length > 0))) {
+        navigateTo('view-admin-panel', 'لوحة التحكم', 'إدارة التطبيق والأقسام');
+        
+        const isMaster = (currentUser.phone === "01061032507");
+        const myRoles = currentUser.admin_roles || [];
+        const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles'];
+        
+        let firstAllowedTab = null;
+
+        // إظهار وإخفاء الزراير بناءً على الصلاحية
+        allTabs.forEach(t => {
+            const tabBtn = document.getElementById('tab-admin-' + t);
+            if (tabBtn) {
+                // الأدمن الأساسي يشوف كله، المساعد يشوف اللي معاه صلاحيته بس
+                if (isMaster || myRoles.includes(t)) {
+                    tabBtn.style.display = 'inline-flex';
+                    if (!firstAllowedTab && t !== 'roles') firstAllowedTab = t; // حفظ أول تبويب مسموح لفتحه تلقائياً
+                } else {
+                    tabBtn.style.display = 'none';
+                }
+            }
+        });
+
+        // زرار الصلاحيات (Roles) للأدمن الأساسي فقططط
+        const rolesTabBtn = document.getElementById('tab-admin-roles');
+        if (rolesTabBtn) rolesTabBtn.style.display = isMaster ? 'inline-flex' : 'none';
+
+        loadAdminData();
+        populateAdminStoreInputs();
+        
+        // فتح أول قسم متاح للمساعد تلقائياً عشان ميفتحلوش صفحة بيضا
+        switchAdminTab(isMaster ? 'users' : firstAllowedTab);
+
+    } else {
+        showTopToast('عذراً، لا تملك صلاحية الدخول لهذه الصفحة.', 'error');
     }
+}
 
     let loadedAdminTabs = {}; // ذاكرة ذكية لمنع التحميل المتكرر
     let isAdminDataLoaded = false;
 
     function switchAdminTab(tabName) {
+    if(!tabName) return; // حماية
     playClickSound();
-['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes'].forEach(t => {
+    
+    // ضفنا 'roles' للمصفوفة
+    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles'].forEach(t => {
         const tabBtn = document.getElementById('tab-admin-' + t);
         const tabSec = document.getElementById('admin-section-' + t);
         if (tabBtn) tabBtn.classList.remove('active');
@@ -3956,6 +4001,7 @@ if (currentUser) {
     if (currentBtn) currentBtn.classList.add('active');
     if (currentSec) currentSec.style.display = 'block';
 
+    // تحميل الداتا الخاصة بكل قسم
     if (tabName === 'analytics' && !loadedAdminTabs.analytics) { loadAdminAnalyticsAndLogs(); loadedAdminTabs.analytics = true; }
     if (tabName === 'tickets' && !loadedAdminTabs.tickets) { loadAdminTickets(); loadedAdminTabs.tickets = true; }
     if (tabName === 'achievements' && !loadedAdminTabs.achievements) { renderAdminAchievementsList(); loadedAdminTabs.achievements = true; }
@@ -3963,24 +4009,122 @@ if (currentUser) {
     if (tabName === 'ehbed-quiz' && !loadedAdminTabs.ehbed) { loadAdminEhbedQuestions(); loadedAdminTabs.ehbed = true; }
     if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
     if (tabName === 'notifs') { loadAdminNotificationsHistory(); }
-if (tabName === 'quotes') { loadAdminQuotesList(); }
+    if (tabName === 'quotes') { if(typeof loadAdminQuotesList === 'function') loadAdminQuotesList(); }
+    if (tabName === 'roles') { loadSubAdminsList(); } // 👈 سحب قائمة المساعدين
 
     if (tabName === 'academic') {
         db.ref('academic_tasks').once('value', (snap) => {
             const select = document.getElementById('adm-cd-task-link');
             if (!select) return;
-            select.innerHTML = '<option value="none">بدون ربط (مؤقت عام - يظهر للجميع دائماً)</option>';
+            select.innerHTML = '<option value="none">بدون ربط (مؤقت عام)</option>';
             if (snap.exists()) {
-                snap.forEach(c => {
-                    const t = c.val();
-                    select.innerHTML += `<option value="${c.key}">تكليف: ${t.subject} - ${t.title}</option>`;
-                });
+                snap.forEach(c => { select.innerHTML += `<option value="${c.key}">تكليف: ${c.val().subject} - ${c.val().title}</option>`; });
             }
         });
     }
 
     if (tabName === 'science') { loadAdminScienceContent(); }
     if (tabName === 'guess-game') { loadAdminGuessCategories(); }
+}
+
+// ================= محرك إضافة وإزالة المساعدين (جديد) =================
+const roleNamesAr = {
+    'notifs': 'الإشعارات 🔔', 'quotes': 'الاقتباسات 📜', 'quiz': 'الكلاسيك 🧠', 'ehbed-quiz': 'اهبد صح 🔢',
+    'risk-quiz': 'ريسك ⚡', 'levels-sys': 'المستويات 🗺️', 'science': 'المحتوى العلمي 📚',
+    'academic': 'المنظم الأكاديمي 🎓', 'tickets': 'الشكاوى 📩', 'users': 'الطلاب 👥', 
+    'analytics': 'الإحصائيات 📊', 'store': 'المتجر 🏷️', 'broadcast': 'رسائل البث 📢', 
+    'books': 'روابط الكتب 📥', 'codes': 'الأكواد 🎁', 'achievements': 'الإنجازات 🎖️', 
+    'guess-game': 'تخمين الصورة 📱', 'academy': 'أكاديمية الجودة 💼'
+};
+
+async function assignAdminRoles() {
+    playClickSound();
+    const idInput = document.getElementById('adm-role-id').value.trim();
+    if (!idInput) return showTopToast('يرجى كتابة ID الطالب أولاً!', 'error');
+
+    // تجميع الأقسام اللي انت علمت عليها صح
+    const checkboxes = document.querySelectorAll('#adm-roles-checkboxes input[type="checkbox"]:checked');
+    const selectedRoles = Array.from(checkboxes).map(cb => cb.value);
+
+    showTopToast('جاري الفحص والحفظ... ⏳', 'info');
+
+    try {
+        // البحث عن المستخدم بالـ ID
+        const snapshot = await db.ref('users').orderByChild('student_id').equalTo(Number(idInput)).once('value');
+        if (!snapshot.exists()) return showTopToast('لم يتم العثور على طالب بهذا الـ ID!', 'error');
+
+        let targetPhone = Object.keys(snapshot.val())[0];
+        
+        if (targetPhone === "01061032507") return showTopToast('لا يمكن تعديل صلاحيات المطور الأساسي!', 'error');
+
+        if (selectedRoles.length === 0) {
+            // سحب الصلاحيات لو مفيش ولا مربع متعلم
+            await db.ref('users/' + targetPhone + '/admin_roles').remove();
+            showTopToast('تم سحب جميع الصلاحيات من الطالب ورجوعه لحالة عادية', 'info');
+        } else {
+            // حفظ الصلاحيات المحددة
+            await db.ref('users/' + targetPhone + '/admin_roles').set(selectedRoles);
+            showTopToast('تم ترقية الطالب لمساعد وحفظ الصلاحيات بنجاح ✅', 'success');
+        }
+        
+        // تفريغ الحقول وإعادة التحميل
+        document.getElementById('adm-role-id').value = '';
+        document.querySelectorAll('#adm-roles-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        loadAdminData(true); // تحديث بيانات كل الطلاب
+        setTimeout(loadSubAdminsList, 1000); // تحديث قائمة المساعدين
+
+    } catch(err) {
+        showTopToast('حدث خطأ في الاتصال!', 'error');
+    }
+}
+
+function loadSubAdminsList() {
+    const container = document.getElementById('admin-roles-list');
+    if(!container) return;
+    
+    // بنسحب من الداتا اللي متحملة أصلاً في لوحة الأدمن
+    if(adminAllUsersData.length === 0) {
+         container.innerHTML = '<p style="text-align:center;">جاري جلب البيانات... اضغط تحديث من قائمة الطلاب.</p>';
+         return;
+    }
+
+    // استخراج الطلاب اللي معاهم أي صلاحية أدمن ومخفيين من المطور
+    const subAdmins = adminAllUsersData.filter(u => u.admin_roles && u.admin_roles.length > 0 && u.phone !== "01061032507");
+    
+    if (subAdmins.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--text-sub);">لا يوجد مساعدين حالياً.</p>';
+        return;
+    }
+
+    let html = '';
+    subAdmins.forEach(admin => {
+        // تحويل أسماء الصلاحيات الإنجليزية لعربي عشان تبقى واضحة
+        const rolesAr = admin.admin_roles.map(r => roleNamesAr[r] || r).join('، '); 
+        
+        html += `
+        <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px; border-color: var(--accent-highlight);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <span style="color: var(--accent-highlight); font-weight: 900; font-size: 0.95rem;">🛡️ ${admin.name}</span>
+                <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="removeSubAdmin('${admin.phone}')">سحب الصلاحيات ❌</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-sub);">ID: ${admin.student_id} | هاتف: ${admin.phone}</div>
+            <div style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 4px; line-height: 1.6; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 8px; width: 100%;">
+                <b>مسؤول عن:</b> ${rolesAr}
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function removeSubAdmin(phone) {
+    playErrorSound();
+    if(confirm('هل أنت متأكد من سحب جميع الصلاحيات من هذا المساعد؟')) {
+        db.ref('users/' + phone + '/admin_roles').remove().then(() => {
+            showTopToast('تم إزالة المساعد ورجوعه لطالب عادي.', 'info');
+            loadAdminData(true); 
+            setTimeout(loadSubAdminsList, 1500);
+        });
+    }
 }
 
     function populateAdminStoreInputs() {
@@ -8682,6 +8826,7 @@ function toggleQBankAllAnswers() {
         clearInterval(examGlobalTimerInt);
         let correctCount = 0;
         let mistakesHtml = '';
+        let currentMistakesToSave = []; // مصفوفة لجمع الأخطاء
         
         examActiveQuestions.forEach((q, i) => {
             const uAns = examUserAnswers[i] || '';
@@ -8694,8 +8839,23 @@ function toggleQBankAllAnswers() {
                     <div class="mistake-user-ans">إجابتك: ${uAns === '' ? 'لم يتم الإجابة ⏳' : uAns}</div>
                     <div class="mistake-correct-ans">التصحيح: ${q.correct} ✅</div>
                 </div>`;
+                
+                // حفظ الخطأ للمراجعة في الإحصائيات
+                currentMistakesToSave.push({
+                    subject: currentActiveSubject,
+                    examTitle: examDataCache.title,
+                    qText: q.qText,
+                    uAns: uAns === '' ? 'لم يجب' : uAns,
+                    correct: q.correct,
+                    date: new Date().toLocaleDateString('ar-EG')
+                });
             }
         });
+
+        // لو فيه أخطاء، ابعتها تتحفظ في الهاتف
+        if (currentMistakesToSave.length > 0) {
+            saveLocalExamMistakes(currentMistakesToSave);
+        }
 
         saveLocalQuizHistory(examDataCache.title, correctCount, examActiveQuestions.length, 'exam');
 
@@ -8775,20 +8935,6 @@ function toggleQBankAllAnswers() {
         navHistory.push({ viewId: 'view-exam-result', title: 'نتيجة الاختبار', subtitle: 'تقرير الأداء الشامل' });
         showViewSection('view-exam-result');
         updateHeader();
-    }
-
-    function parseRawQuestions(rawText) {
-        let qs = [];
-        // حل مشكلة المسافات لو الموبايل نزل السطر بصيغة مختلفة
-        const lines = rawText.split(/\r?\n/);
-        lines.forEach(line => {
-            if(line.trim() === '') return;
-            const p = line.split('#').map(s => s.trim());
-            if(p.length >= 3) {
-                qs.push({ type: p[0], qText: p[1], correct: p[2], opt1: p[3]||'', opt2: p[4]||'', opt3: p[5]||'' });
-            }
-        });
-        return qs;
     }
 
     // ================= تعديلات الأدمن للمحتوى العلمي الشامل =================
@@ -10942,5 +11088,156 @@ function adminDeleteQuote(id) {
             showTopToast('تم الحذف بنجاح 🗑️', 'info');
             loadAdminQuotesList();
         });
+    }
+}
+
+// ================= نظام الرسائل الخاصة والهدايا الفردية =================
+
+// 1. دالة الإرسال (للأدمن)
+async function sendPrivateAlertAdmin() {
+    playClickSound();
+    const target = document.getElementById('admin-private-target').value.trim();
+    const title = document.getElementById('admin-private-title').value.trim();
+    const body = document.getElementById('admin-private-body').value.trim();
+    const xpReward = parseInt(document.getElementById('admin-private-xp').value) || 0;
+    const coinsReward = parseInt(document.getElementById('admin-private-coins').value) || 0;
+
+    if (!target || !title || !body) {
+        showTopToast('يرجى ملء الـ ID والعنوان والنص أولاً!', 'error');
+        return;
+    }
+
+    let targetPhone = target;
+    showTopToast('جاري البحث والإرسال...', 'info');
+
+    if (target.length < 10) {
+        try {
+            const snap = await db.ref('users').orderByChild('student_id').equalTo(Number(target)).once('value');
+            if (snap.exists()) {
+                targetPhone = Object.keys(snap.val())[0];
+            } else {
+                showTopToast('لم يتم العثور على طالب بهذا الـ ID', 'error');
+                return;
+            }
+        } catch(e) {
+            showTopToast('حدث خطأ في البحث', 'error');
+            return;
+        }
+    }
+
+    const alertData = {
+        title: title,
+        body: body,
+        xp: xpReward,
+        coins: coinsReward,
+        active: true,
+        timestamp: Date.now()
+    };
+
+    db.ref(`users/${targetPhone}/personal_alert`).set(alertData).then(() => {
+        showTopToast(xpReward > 0 || coinsReward > 0 ? 'تم إرسال الرسالة والهدية للطالب بنجاح! 🎁' : 'تم إرسال الرسالة للطالب بنجاح! 📨', 'success');
+        document.getElementById('admin-private-target').value = '';
+        document.getElementById('admin-private-title').value = '';
+        document.getElementById('admin-private-body').value = '';
+        document.getElementById('admin-private-xp').value = '';
+        document.getElementById('admin-private-coins').value = '';
+    }).catch(() => showTopToast('حدث خطأ أثناء الإرسال', 'error'));
+}
+
+// 2. دالة مراقبة الرسائل (للطالب)
+function listenToPersonalAlerts() {
+    if (!currentUser || !currentUser.phone) return;
+    
+    db.ref(`users/${currentUser.phone}/personal_alert`).on('value', snap => {
+        if (snap.exists()) {
+            const alertData = snap.val();
+            if (alertData.active) {
+                if (typeof playSuccessSound === 'function') playSuccessSound();
+                
+                document.getElementById('personal-alert-title').innerText = alertData.title;
+                document.getElementById('personal-alert-body').innerText = alertData.body;
+                
+                const hasReward = alertData.xp > 0 || alertData.coins > 0;
+                const rewardsBox = document.getElementById('personal-alert-rewards-box');
+                const xpBadge = document.getElementById('personal-alert-xp-badge');
+                const coinsBadge = document.getElementById('personal-alert-coins-badge');
+                const actionBtn = document.getElementById('btn-personal-alert-action');
+                const emojiIcon = document.getElementById('personal-alert-emoji');
+
+                if (hasReward) {
+                    emojiIcon.innerText = '🎁';
+                    rewardsBox.style.display = 'block';
+                    
+                    if (alertData.xp > 0) {
+                        xpBadge.innerText = `+${alertData.xp} XP ⚡`;
+                        xpBadge.style.display = 'inline-flex';
+                    } else { xpBadge.style.display = 'none'; }
+
+                    if (alertData.coins > 0) {
+                        coinsBadge.innerText = `+${alertData.coins} عملة 💸`;
+                        coinsBadge.style.display = 'inline-flex';
+                    } else { coinsBadge.style.display = 'none'; }
+
+                    actionBtn.innerText = 'استلام الهدية 🎁';
+                    actionBtn.style.background = 'linear-gradient(135deg, var(--accent-gold) 0%, #b38600 100%)';
+                    actionBtn.onclick = () => claimPersonalAlert(alertData.xp, alertData.coins);
+                    if(typeof shootStars === 'function') shootStars();
+                } else {
+                    emojiIcon.innerText = '📩';
+                    rewardsBox.style.display = 'none';
+                    actionBtn.innerText = 'حسناً، فهمت ✔️';
+                    actionBtn.style.background = 'var(--accent-emerald)';
+                    actionBtn.onclick = () => claimPersonalAlert(0, 0);
+                }
+
+                openModal('modal-personal-alert');
+            }
+        }
+    });
+}
+
+// 3. استلام الرسالة/الهدية
+function claimPersonalAlert(xpVal, coinsVal) {
+    playClickSound();
+    closeModal('modal-personal-alert');
+
+    if (currentUser && currentUser.phone) {
+        // لو فيه هدية، نضيفها للرصيد
+        if (xpVal > 0 || coinsVal > 0) {
+            currentUser.xp = (currentUser.xp || currentUser.points || 0) + xpVal;
+            currentUser.points = currentUser.xp;
+            currentUser.coins = (currentUser.coins || 0) + coinsVal;
+            
+            db.ref(`users/${currentUser.phone}`).update({
+                xp: currentUser.xp,
+                points: currentUser.xp,
+                coins: currentUser.coins
+            });
+
+            updateProfileUI();
+            if(typeof triggerConfetti === 'function') triggerConfetti();
+            showTopToast(`مبروك! تم استلام الهدية بنجاح 🎁`, 'success');
+        }
+
+        // إغلاق التنبيه في الداتا بيز عشان ميظهرش تاني
+        db.ref(`users/${currentUser.phone}/personal_alert/active`).set(false);
+    }
+}
+
+// حفظ أخطاء الاختبارات في الهاتف (نحتفظ بآخر 50 خطأ لتوفير المساحة)
+function saveLocalExamMistakes(newMistakes) {
+    let history = JSON.parse(localStorage.getItem('my_exam_mistakes') || '[]');
+    history = [...newMistakes, ...history];
+    if (history.length > 50) history = history.slice(0, 50);
+    localStorage.setItem('my_exam_mistakes', JSON.stringify(history));
+}
+
+// زرار تنظيف بنك الأخطاء
+function clearLocalMistakes() {
+    if (confirm('هل أنت متأكد من مسح جميع الأسئلة المحفوظة في بنك الأخطاء؟')) {
+        playClickSound();
+        localStorage.removeItem('my_exam_mistakes');
+        updateStatsUI();
+        showTopToast('تم تنظيف بنك الأخطاء بنجاح 🗑️', 'info');
     }
 }
