@@ -2594,15 +2594,15 @@
 /* شريط تمرير المحتوى الداخلي باللمس */
 .quote-content-carousel-track {
     display: flex;
-    gap: 0; /* إلغاء الـ gap واستخدام العرض الكامل للشريحة لمنع أخطاء المقاسات على الموبايل */
+    gap: 0;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; /* تفعيل اللمس السلس للهواتف */
+    -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     width: 100%;
     margin: 2px 0;
     padding-bottom: 4px;
-    touch-action: pan-x; /* السماح بالتمرير الأفقي فقط باللمس */
+    touch-action: auto; /* 👈 التعديل هنا: السماح بالتمرير الرأسي للصفحة والأفقي للكارت */
 }
 
 .quote-content-carousel-track::-webkit-scrollbar {
