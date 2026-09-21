@@ -236,7 +236,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.0";
+const CURRENT_APP_VERSION = "2.0.1";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -8560,6 +8560,35 @@ function openQBankMode(itemId) {
 
     renderQBankList('all', filterBar.querySelector('.qbank-filter-btn'));
     navigateTo('view-qbank-reader', currentActiveSubject, bankData.title);
+}
+
+// ================= دالة معالجة النصوص وتحويلها لأسئلة =================
+function parseRawQuestions(rawText) {
+    if (!rawText) return [];
+    const lines = rawText.split('\n');
+    let questions = [];
+    
+    lines.forEach(line => {
+        if (line.trim() === '') return;
+        const parts = line.split('#').map(p => p.trim());
+        
+        // التأكد من أن السطر يحتوي على الأقل على: النوع # السؤال # الإجابة
+        if (parts.length >= 3) {
+            let qObj = {
+                type: parts[0],
+                qText: parts[1],
+                correct: parts[2]
+            };
+            
+            // إضافة الخيارات الخاطئة إن وجدت (لاسئلة اختر وصح وخطأ)
+            if (parts[3]) qObj.opt1 = parts[3];
+            if (parts[4]) qObj.opt2 = parts[4];
+            if (parts[5]) qObj.opt3 = parts[5];
+            
+            questions.push(qObj);
+        }
+    });
+    return questions;
 }
 
 function toggleQBankAllAnswers() {
