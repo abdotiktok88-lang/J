@@ -1254,10 +1254,6 @@ let hasCheckedDailyLoginSession = false;
                         hasCheckedDailyLoginSession = true;
                     }
 
-                    // 👈 فحص الرابط المباشر وفتح الامتحان فوراً إن وجد
-                    if (typeof checkExamDeepLinkOnStartup === 'function') {
-                        checkExamDeepLinkOnStartup();
-                    }
 
                 } else {
                     logoutUserLocally();
@@ -8437,12 +8433,6 @@ function openDynamicContentList(category) {
         return;
     }
 
-    // فحص: هل المستخدم الحالي أدمن أو يمتلك أي صلاحيات إدارية؟
-    const isAuthorizedToShare = currentUser && (
-        currentUser.phone === "01061032507" || 
-        (Array.isArray(currentUser.admin_roles) && currentUser.admin_roles.length > 0)
-    );
-
     if (currentActiveCategory === 'quizzes') {
         let banksHTML = ''; 
         let examsHTML = '';
@@ -8460,26 +8450,15 @@ function openDynamicContentList(category) {
                     <div style="font-size:0.7rem; color:var(--text-sub);">تدريب مفتوح</div>
                 </div>`;
             } else if (item.formatType === 'exam') {
-                const isCompleted = rewardedExams.includes(item.id);
-                const examRewardUI = isCompleted 
-                    ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
-                    : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة \vert{} +${item.examXP} XP</div>`;
-                
-                // زر المشاركة يظهر فقط للمصرح لهم
-                const shareBtnUI = isAuthorizedToShare ? `
-                    <button onclick="event.stopPropagation(); shareExamDeepLink('${currentActiveSubject}', '${currentActiveType}', '${item.id}')" 
-                            class="admin-action-btn" 
-                            style="padding: 3px 8px; font-size: 0.68rem; border-color: var(--accent-gold); color: var(--accent-gold); margin-top: 6px; width: 100%;">
-                        🔗 مشاركة الرابط
-                    </button>
-                ` : '';
+    const isCompleted = rewardedExams.includes(item.id);
+    const examRewardUI = isCompleted 
+        ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
+        : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة | +${item.examXP} XP</div>`;
 
-                // فتح نافذة التأكيد والقواعد بدلاً من فتح الامتحان مباشرة
                 examsHTML += `
                 <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 16px 10px; text-align: center; align-items: center; justify-content: center; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="showExamRulesConfirmation('${item.id}')">
                     <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
-                    <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
-                    ${examRewardUI}${shareBtnUI}
+                    <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>${examRewardUI}
                 </div>`;
             } else {
                 let clickAction = item.formatType === 'content' ? `onclick="openLessonReader('${item.title}', '${item.id}')"` : (item.url ? `onclick="window.open('${item.url}', '_blank');"` : ``);
@@ -11289,67 +11268,7 @@ function clearLocalMistakes() {
     }
 }
 
-function shareExamDeepLink(subject, type, examId) {
-    if (typeof playClickSound === 'function') playClickSound();
 
-    // تشفير اسم المادة لحمايته داخل الرابط
-    const safeSub = encodeURIComponent(subject);
-    const origin = window.location.origin;
-    const pathname = window.location.pathname;
-
-    // الرابط الكامل الذي يحمل مسار الاختبار
-    const shareUrl = `${origin}${pathname}?openExam=${examId}&sub=${safeSub}&typ=${type}`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(shareUrl).then(() => {
-            showTopToast('تم نسخ الرابط المباشر للاختبار بنجاح! 📋', 'success');
-        });
-    } else {
-        prompt('انسخ الرابط لمشاركته مع الطلاب:', shareUrl);
-    }
-}
-
-async function checkExamDeepLinkOnStartup() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetExamId = urlParams.get('openExam');
-    const targetSubject = urlParams.get('sub');
-    const targetType = urlParams.get('typ') || 'practical';
-
-    if (targetExamId && targetSubject) {
-        const decodedSubject = decodeURIComponent(targetSubject);
-        const safeKey = getSafeSubjectKey(decodedSubject);
-
-        showTopToast('جاري تجهيز بيانات الاختبار... ⏳', 'info');
-
-        try {
-            const path = `scientific_content/${safeKey}/${targetType}/quizzes/${targetExamId}`;
-            const snap = await db.ref(path).once('value');
-
-            if (snap.exists()) {
-                const examData = snap.val();
-                examData.id = targetExamId;
-
-                currentActiveSubject = decodedSubject;
-                currentActiveType = targetType;
-                currentActiveCategory = 'quizzes';
-
-                if (!window.tempLessonContentStore) {
-                    window.tempLessonContentStore = {};
-                }
-                window.tempLessonContentStore[targetExamId] = examData;
-
-                // إظهار نافذة القواعد والتأكيد قبل بدء الامتحان
-                setTimeout(() => {
-                    showExamRulesConfirmation(targetExamId);
-                }, 600);
-            } else {
-                showTopToast('عذراً، هذا الاختبار لم يعد متاحاً!', 'error');
-            }
-        } catch (e) {
-            console.error("Deep link error:", e);
-        }
-    }
-}
 
 let pendingExamIdToStart = null;
 
@@ -11357,24 +11276,86 @@ let pendingExamIdToStart = null;
 function showExamRulesConfirmation(examId) {
     if (typeof playClickSound === 'function') playClickSound();
 
-    const examData = window.tempLessonContentStore ? window.tempLessonContentStore[examId] : null;
+    const examData = (window.tempLessonContentStore && window.tempLessonContentStore[examId]) ? window.tempLessonContentStore[examId] : null;
+
     if (!examData) {
-        showTopToast('بيانات الاختبار غير متوفرة', 'error');
+        if (typeof showTopToast === 'function') showTopToast('تعذر العثور على بيانات الاختبار', 'error');
         return;
     }
 
-    pendingExamIdToStart = examId;
+    const duration = examData.examTime || 10;
+    const xp = examData.examXP || 50;
+    const title = examData.title || 'الاختبار التقييمي';
+    const subject = currentActiveSubject || 'المادة الدراسية';
 
-    document.getElementById('rule-exam-title').innerText = examData.title || 'اختبار تقييمي';
-    document.getElementById('rule-exam-emoji').innerText = examData.emoji || '⏱️';
-    document.getElementById('rule-exam-subject').innerText = currentActiveSubject || 'المقرر الدراسي';
-    document.getElementById('rule-exam-time').innerText = `${examData.examTime || 10} دقيقة`;
-    document.getElementById('rule-exam-xp').innerText = `+${examData.examXP || 50} XP`;
+    // فحص ما إذا كان الطالب قد أتم هذا الاختبار مسبقاً
+    const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
+    const isCompleted = rewardedExams.includes(examId);
 
-    const modal = document.getElementById('exam-rules-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
+    // تجهيز كارت الحالة والمكافأة حسب إنجاز الطالب
+    const statusCardHTML = isCompleted ? `
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid var(--accent-emerald); border-radius: 12px; padding: 12px; margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-emerald); margin-bottom: 4px;">
+                ✔️ الاختبار مكتمل سابقاً
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">
+                (هذا الاختبار متاح للتدريب ومراجعة مستواك فقط، ولن تُضاف نقاط XP جديدة لرصيدك)
+            </div>
+        </div>
+    ` : `
+        <div style="display: flex; justify-content: space-around; background: rgba(255,255,255,0.03); border: 1px solid var(--border-card); border-radius: 12px; padding: 10px; margin-bottom: 15px;">
+            <div style="text-align: center;">
+                <span style="font-size: 0.75rem; color: var(--text-sub); display: block;">المدة المقررة</span>
+                <b style="font-size: 0.95rem; color: #ef4444;">⏱️ ${duration} دقيقة</b>
+            </div>
+            <div style="text-align: center;">
+                <span style="font-size: 0.75rem; color: var(--text-sub); display: block;">مكافأة الإنجاز</span>
+                <b style="font-size: 0.95rem; color: var(--accent-gold);">⚡ +${xp} XP</b>
+            </div>
+        </div>
+    `;
+
+    // إزالة أي نافذة سابقة إن وجدت
+    const existingModal = document.getElementById('examRulesModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHTML = `
+    <div id="examRulesModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 15px; animation: fadeIn 0.25s ease;">
+        <div class="auth-card" style="max-width: 420px; width: 100%; border: 1.5px solid ${isCompleted ? 'var(--accent-emerald)' : 'rgba(239, 68, 68, 0.4)'}; box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: right; position: relative;">
+            
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 2.5rem; margin-bottom: 6px;">${isCompleted ? '📝' : '⏱️'}</div>
+                <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0 0 4px 0;">${title}</h3>
+                <span style="font-size: 0.8rem; color: var(--text-sub);">${subject}</span>
+            </div>
+
+            ${statusCardHTML}
+
+            <div style="margin-bottom: 20px;">
+                <h5 style="font-size: 0.85rem; color: var(--accent-gold); margin-bottom: 8px; font-weight: 800;">تعليمات وضوابط:</h5>
+                <ul style="padding-right: 18px; margin: 0; font-size: 0.75rem; color: var(--text-sub); line-height: 1.8;">
+                    <li>يبدأ احتساب وقت الاختبار فور الضغط على زر البدء.</li>
+                    <li>يتم قفل الاختبار وتسليم الإجابات تلقائياً بمجرد انتهاء الوقت.</li>
+                    <li>تجنب الخروج أو تحديث الصفحة أثناء الحل لتفادي فقدان الإجابات.</li>
+                </ul>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="document.getElementById('examRulesModal').remove(); if(typeof playClickSound==='function')playClickSound();" 
+                        class="btn-secondary" 
+                        style="flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 10px;">
+                    إلغاء
+                </button>
+                <button onclick="document.getElementById('examRulesModal').remove(); startExamDirectly('${examId}');" 
+                        style="flex: 2; padding: 10px; background: ${isCompleted ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}; color: #fff; border: none; border-radius: 10px; font-weight: 900; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 15px ${isCompleted ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
+                    ${isCompleted ? 'بدء التدريب الآن 🚀' : 'بدء الاختبار الآن 🚀'}
+                </button>
+            </div>
+
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
 // دالة غلق النافذة إذا تراجع الطالب
