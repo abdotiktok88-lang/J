@@ -236,7 +236,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.1";
+const CURRENT_APP_VERSION = "2.0.2";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -1190,7 +1190,6 @@ let hasCheckedDailyLoginSession = false;
         const cachedUserData = localStorage.getItem('cached_user_data');
 
         if (loggedInPhone) {
-            // ⚡ إظهار الشريط السفلي والواجهة لحظياً في صفر ثانية من الكاش
             const bottomNav = document.getElementById('main-bottom-nav');
             if (bottomNav) bottomNav.style.display = 'flex';
 
@@ -1201,7 +1200,6 @@ let hasCheckedDailyLoginSession = false;
                 } catch (e) {}
             }
 
-            // مزامنة السيرفر في الخلفية بهدوء
             db.ref('users/' + loggedInPhone).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     currentUser = snapshot.val();
@@ -1211,7 +1209,6 @@ let hasCheckedDailyLoginSession = false;
                         delete currentUser.transactions;
                     }
 
-                    // توليد ID فريد للطالب لو مش موجود عنده
                     if (!currentUser.student_id) {
                         currentUser.student_id = Math.floor(10000 + Math.random() * 90000);
                         db.ref('users/' + loggedInPhone + '/student_id').set(currentUser.student_id);
@@ -1246,7 +1243,7 @@ let hasCheckedDailyLoginSession = false;
 
                     updateProfileUI();
                     initUserTicketRepliesListener();
-listenToPersonalAlerts();
+                    listenToPersonalAlerts();
 
                     if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                         goHomeDirectly();
@@ -1256,6 +1253,12 @@ listenToPersonalAlerts();
                         checkDailyLoginCloudSync();
                         hasCheckedDailyLoginSession = true;
                     }
+
+                    // 👈 فحص الرابط المباشر وفتح الامتحان فوراً إن وجد
+                    if (typeof checkExamDeepLinkOnStartup === 'function') {
+                        checkExamDeepLinkOnStartup();
+                    }
+
                 } else {
                     logoutUserLocally();
                     showAuthGateDirectly();
@@ -8427,104 +8430,119 @@ function openDynamicContentList(category) {
 
 // ================= بناء الكروت وتوجيهها للواجهة الصحيحة بذكاء =================
     function renderDynamicContentDOM(items, container) {
-        window.tempLessonContentStore = {}; 
-        
-        if (items.length === 0) {
-            container.innerHTML = '<div class="auth-card" style="text-align:center; padding: 30px 15px;"><span style="font-size:3rem; display:block; margin-bottom:10px;">📭</span><p style="color:var(--text-sub); font-weight:700;">لا يوجد محتوى حالياً.</p></div>';
-            return;
-        }
-
-        if (currentActiveCategory === 'quizzes') {
-            let banksHTML = ''; let examsHTML = '';
-            
-            // سحب قائمة الاختبارات اللي الطالب اخد جايزتها قبل كده
-            const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
-
-            items.forEach(item => {
-                window.tempLessonContentStore[item.id] = item;
-                const customEmoji = item.emoji || (item.formatType === 'exam' ? '⏱️' : '📚');
-
-                if (item.formatType === 'qbank') {
-                    banksHTML += `
-                    <div class="eng-bento-card" style="--theme-color: var(--accent-gold); padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" onclick="openQBankMode('${item.id}')">
-                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
-                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
-                        <div style="font-size:0.7rem; color:var(--text-sub);">تدريب مفتوح</div>
-                    </div>`;
-                } else if (item.formatType === 'exam') {
-                    // فحص ما إذا كان الطالب أكمل الاختبار واستلم الجائزة مسبقاً
-                    const isCompleted = rewardedExams.includes(item.id);
-                    const examRewardUI = isCompleted 
-                        ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
-                        : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة | +${item.examXP} XP</div>`;
-                    
-                    examsHTML += `
-                    <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 16px 10px; text-align: center; align-items: center; justify-content: center; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="openExamMode('${item.id}')">
-                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
-                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
-                        ${examRewardUI}
-                    </div>`;
-                } else {
-                    let clickAction = item.formatType === 'content' ? `onclick="openLessonReader('${item.title}', '${item.id}')"` : (item.url ? `onclick="window.open('${item.url}', '_blank');"` : ``);
-                    banksHTML += `
-                    <div class="eng-bento-card" style="--theme-color: #3b82f6; padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" ${clickAction}>
-                        <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
-                        <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
-                        <div style="font-size:0.7rem; color:var(--text-sub);">محتوى إضافي</div>
-                    </div>`;
-                }
-            });
-            
-            container.innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: var(--text-sub);">بنوك الأسئلة (تدريب)</div>
-                    ${banksHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: var(--border-card);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: #ef4444;">الاختبارات (تقييم)</div>
-                    ${examsHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: rgba(239,68,68,0.3);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
-                </div>
-            </div>`;
-        } else {
-            let html = '';
-            items.forEach(item => {
-                window.tempLessonContentStore[item.id] = item; 
-                let actionBtnUI = ''; let clickAction = '';
-                const customEmoji = item.emoji || '📄';
-                let extraDownloadBtn = '';
-
-                if (item.formatType === 'qbank') {
-                    actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📚 اضغط لفتح بنك الأسئلة</div>`;
-                    clickAction = `onclick="openQBankMode('${item.id}')"`;
-                } else if (item.formatType === 'exam') {
-                    actionBtnUI = `<div class="dynamic-content-download" style="color:#ef4444;">⏱️ اختبار: ${item.examTime} دقيقة</div>`;
-                    clickAction = `onclick="openExamMode('${item.id}')"`;
-                } else if (item.formatType === 'content') {
-                    actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📖 اضغط لفتح الشرح التفاعلي</div>`;
-                    clickAction = `onclick="openLessonReader('${item.title}', '${item.id}')"`;
-                    
-                    if (item.url) {
-                        extraDownloadBtn = `<button onclick="event.stopPropagation(); window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 0.75rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); z-index: 10; display: flex; align-items: center; gap: 4px;">تحميل الملف</button>`;
-                    }
-                } else {
-                    actionBtnUI = item.url ? `<div class="dynamic-content-download">⬇️ اضغط لتحميل الملف</div>` : `<div class="dynamic-content-download" style="color:var(--text-sub);">قيد التجهيز ⏳</div>`;
-                    clickAction = item.url ? `onclick="window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();"` : `onclick="showTopToast('المحتوى قيد التجهيز', 'info')"`;
-                }
-                
-                html += `<div class="dynamic-content-card" ${clickAction}>
-                            ${extraDownloadBtn}
-                            <div class="dynamic-emoji-box">${customEmoji}</div>
-                            <div class="dynamic-content-info" style="${item.formatType === 'content' && item.url ? 'padding-left: 80px;' : ''}">
-                                <h4>${item.title}</h4>
-                                ${actionBtnUI}
-                            </div>
-                            ${item.formatType === 'content' && item.url ? '' : '<div class="dynamic-arrow">←</div>'}
-                        </div>`;
-            });
-            container.innerHTML = html;
-        }
+    window.tempLessonContentStore = {}; 
+    
+    if (items.length === 0) {
+        container.innerHTML = '<div class="auth-card" style="text-align:center; padding: 30px 15px;"><span style="font-size:3rem; display:block; margin-bottom:10px;">📭</span><p style="color:var(--text-sub); font-weight:700;">لا يوجد محتوى حالياً.</p></div>';
+        return;
     }
+
+    // فحص: هل المستخدم الحالي أدمن أو يمتلك أي صلاحيات إدارية؟
+    const isAuthorizedToShare = currentUser && (
+        currentUser.phone === "01061032507" || 
+        (Array.isArray(currentUser.admin_roles) && currentUser.admin_roles.length > 0)
+    );
+
+    if (currentActiveCategory === 'quizzes') {
+        let banksHTML = ''; 
+        let examsHTML = '';
+        const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
+
+        items.forEach(item => {
+            window.tempLessonContentStore[item.id] = item;
+            const customEmoji = item.emoji || (item.formatType === 'exam' ? '⏱️' : '📚');
+
+            if (item.formatType === 'qbank') {
+                banksHTML += `
+                <div class="eng-bento-card" style="--theme-color: var(--accent-gold); padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" onclick="openQBankMode('${item.id}')">
+                    <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                    <div style="font-size:0.7rem; color:var(--text-sub);">تدريب مفتوح</div>
+                </div>`;
+            } else if (item.formatType === 'exam') {
+                const isCompleted = rewardedExams.includes(item.id);
+                const examRewardUI = isCompleted 
+                    ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
+                    : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة \vert{} +${item.examXP} XP</div>`;
+                
+                // زر المشاركة يظهر فقط للمصرح لهم
+                const shareBtnUI = isAuthorizedToShare ? `
+                    <button onclick="event.stopPropagation(); shareExamDeepLink('${currentActiveSubject}', '${currentActiveType}', '${item.id}')" 
+                            class="admin-action-btn" 
+                            style="padding: 3px 8px; font-size: 0.68rem; border-color: var(--accent-gold); color: var(--accent-gold); margin-top: 6px; width: 100%;">
+                        🔗 مشاركة الرابط
+                    </button>
+                ` : '';
+
+                // فتح نافذة التأكيد والقواعد بدلاً من فتح الامتحان مباشرة
+                examsHTML += `
+                <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 16px 10px; text-align: center; align-items: center; justify-content: center; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="showExamRulesConfirmation('${item.id}')">
+                    <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                    ${examRewardUI}${shareBtnUI}
+                </div>`;
+            } else {
+                let clickAction = item.formatType === 'content' ? `onclick="openLessonReader('${item.title}', '${item.id}')"` : (item.url ? `onclick="window.open('${item.url}', '_blank');"` : ``);
+                banksHTML += `
+                <div class="eng-bento-card" style="--theme-color: #3b82f6; padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" ${clickAction}>
+                    <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
+                    <div style="font-size:0.7rem; color:var(--text-sub);">محتوى إضافي</div>
+                </div>`;
+            }
+        });
+        
+        container.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: var(--text-sub);">بنوك الأسئلة (تدريب)</div>
+                ${banksHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: var(--border-card);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="text-align: center; font-size: 0.85rem; font-weight: 900; color: #ef4444;">الاختبارات (تقييم)</div>
+                ${examsHTML || '<div class="eng-bento-card" style="padding:15px; text-align:center; justify-content:center; border-color: rgba(239,68,68,0.3);"><p style="font-size:0.75rem; color:var(--text-sub); margin:0;">لا يوجد</p></div>'}
+            </div>
+        </div>`;
+    } else {
+        let html = '';
+        items.forEach(item => {
+            window.tempLessonContentStore[item.id] = item; 
+            let actionBtnUI = ''; 
+            let clickAction = '';
+            const customEmoji = item.emoji || '📄';
+            let extraDownloadBtn = '';
+
+            if (item.formatType === 'qbank') {
+                actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📚 اضغط لفتح بنك الأسئلة</div>`;
+                clickAction = `onclick="openQBankMode('${item.id}')"`;
+            } else if (item.formatType === 'exam') {
+                actionBtnUI = `<div class="dynamic-content-download" style="color:#ef4444;">⏱️ اختبار: ${item.examTime} دقيقة</div>`;
+                clickAction = `onclick="showExamRulesConfirmation('${item.id}')"`;
+            } else if (item.formatType === 'content') {
+                actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📖 اضغط لفتح الشرح التفاعلي</div>`;
+                clickAction = `onclick="openLessonReader('${item.title}', '${item.id}')"`;
+                
+                if (item.url) {
+                    extraDownloadBtn = `<button onclick="event.stopPropagation(); window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 0.75rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); z-index: 10; display: flex; align-items: center; gap: 4px;">تحميل الملف</button>`;
+                }
+            } else {
+                actionBtnUI = item.url ? `<div class="dynamic-content-download">⬇️ اضغط لتحميل الملف</div>` : `<div class="dynamic-content-download" style="color:var(--text-sub);">قيد التجهيز ⏳</div>`;
+                clickAction = item.url ? `onclick="window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();"` : `onclick="showTopToast('المحتوى قيد التجهيز', 'info')"`;
+            }
+            
+            html += `<div class="dynamic-content-card" ${clickAction}>
+                        ${extraDownloadBtn}
+                        <div class="dynamic-emoji-box">${customEmoji}</div>
+                        <div class="dynamic-content-info" style="${item.formatType === 'content' && item.url ? 'padding-left: 80px;' : ''}">
+                            <h4>${item.title}</h4>
+                            ${actionBtnUI}
+                        </div>
+                        ${item.formatType === 'content' && item.url ? '' : '<div class="dynamic-arrow">←</div>'}
+                    </div>`;
+        });
+        container.innerHTML = html;
+    }
+}
     // ================= محرك بنك الأسئلة (Study Mode) =================
     let currentBankQuestions = [];
     // متغير عام للتحكم في وضع عرض الإجابات
@@ -11268,5 +11286,113 @@ function clearLocalMistakes() {
         localStorage.removeItem('my_exam_mistakes');
         updateStatsUI();
         showTopToast('تم تنظيف بنك الأخطاء بنجاح 🗑️', 'info');
+    }
+}
+
+function shareExamDeepLink(subject, type, examId) {
+    if (typeof playClickSound === 'function') playClickSound();
+
+    // تشفير اسم المادة لحمايته داخل الرابط
+    const safeSub = encodeURIComponent(subject);
+    const origin = window.location.origin;
+    const pathname = window.location.pathname;
+
+    // الرابط الكامل الذي يحمل مسار الاختبار
+    const shareUrl = `${origin}${pathname}?openExam=${examId}&sub=${safeSub}&typ=${type}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showTopToast('تم نسخ الرابط المباشر للاختبار بنجاح! 📋', 'success');
+        });
+    } else {
+        prompt('انسخ الرابط لمشاركته مع الطلاب:', shareUrl);
+    }
+}
+
+async function checkExamDeepLinkOnStartup() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetExamId = urlParams.get('openExam');
+    const targetSubject = urlParams.get('sub');
+    const targetType = urlParams.get('typ') || 'practical';
+
+    if (targetExamId && targetSubject) {
+        const decodedSubject = decodeURIComponent(targetSubject);
+        const safeKey = getSafeSubjectKey(decodedSubject);
+
+        showTopToast('جاري تجهيز بيانات الاختبار... ⏳', 'info');
+
+        try {
+            const path = `scientific_content/${safeKey}/${targetType}/quizzes/${targetExamId}`;
+            const snap = await db.ref(path).once('value');
+
+            if (snap.exists()) {
+                const examData = snap.val();
+                examData.id = targetExamId;
+
+                currentActiveSubject = decodedSubject;
+                currentActiveType = targetType;
+                currentActiveCategory = 'quizzes';
+
+                if (!window.tempLessonContentStore) {
+                    window.tempLessonContentStore = {};
+                }
+                window.tempLessonContentStore[targetExamId] = examData;
+
+                // إظهار نافذة القواعد والتأكيد قبل بدء الامتحان
+                setTimeout(() => {
+                    showExamRulesConfirmation(targetExamId);
+                }, 600);
+            } else {
+                showTopToast('عذراً، هذا الاختبار لم يعد متاحاً!', 'error');
+            }
+        } catch (e) {
+            console.error("Deep link error:", e);
+        }
+    }
+}
+
+let pendingExamIdToStart = null;
+
+// دالة إظهار نافذة القواعد وتجهيز البيانات
+function showExamRulesConfirmation(examId) {
+    if (typeof playClickSound === 'function') playClickSound();
+
+    const examData = window.tempLessonContentStore ? window.tempLessonContentStore[examId] : null;
+    if (!examData) {
+        showTopToast('بيانات الاختبار غير متوفرة', 'error');
+        return;
+    }
+
+    pendingExamIdToStart = examId;
+
+    document.getElementById('rule-exam-title').innerText = examData.title || 'اختبار تقييمي';
+    document.getElementById('rule-exam-emoji').innerText = examData.emoji || '⏱️';
+    document.getElementById('rule-exam-subject').innerText = currentActiveSubject || 'المقرر الدراسي';
+    document.getElementById('rule-exam-time').innerText = `${examData.examTime || 10} دقيقة`;
+    document.getElementById('rule-exam-xp').innerText = `+${examData.examXP || 50} XP`;
+
+    const modal = document.getElementById('exam-rules-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// دالة غلق النافذة إذا تراجع الطالب
+function closeExamRulesModal() {
+    if (typeof playClickSound === 'function') playClickSound();
+    const modal = document.getElementById('exam-rules-modal');
+    if (modal) modal.style.display = 'none';
+    pendingExamIdToStart = null;
+}
+
+// دالة بدء الاختبار الفعلي بعد التأكيد
+function startActualExamAfterConfirmation() {
+    if (typeof playSuccessSound === 'function') playSuccessSound();
+    const modal = document.getElementById('exam-rules-modal');
+    if (modal) modal.style.display = 'none';
+
+    if (pendingExamIdToStart) {
+        openExamMode(pendingExamIdToStart);
+        pendingExamIdToStart = null;
     }
 }

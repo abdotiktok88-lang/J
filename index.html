@@ -5868,6 +5868,43 @@
     </div>
 </div>
 
+<!-- نافذة تأكيد بدء الاختبار وقواعده -->
+<div id="exam-rules-modal" class="auth-gate-wrapper" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="auth-card" style="max-width: 420px; width: 100%; border: 1px solid var(--border-card); text-align: center; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div style="font-size: 3rem; margin-bottom: 10px;" id="rule-exam-emoji">⏱️</div>
+        <h3 id="rule-exam-title" style="font-size: 1.2rem; font-weight: 900; color: var(--text-main); margin-bottom: 6px;">عنوان الاختبار</h3>
+        <p id="rule-exam-subject" style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-bottom: 18px;">المادة</p>
+
+        <!-- بطاقة تفاصيل الاختبار -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--border-card); border-radius: 14px; padding: 14px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: right;">
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-sub); display: block;">⏳ المدة الزمنية:</span>
+                <strong id="rule-exam-time" style="font-size: 0.9rem; color: #ef4444;">-- دقيقة</strong>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-sub); display: block;">🏆 الجائزة:</span>
+                <strong id="rule-exam-xp" style="font-size: 0.9rem; color: var(--accent-emerald);">+-- XP</strong>
+            </div>
+        </div>
+
+        <!-- تعليمات وقواعد الاختبار -->
+        <div style="text-align: right; background: rgba(239, 68, 68, 0.05); border-right: 3px solid #ef4444; border-radius: 8px; padding: 10px 12px; margin-bottom: 20px;">
+            <div style="font-size: 0.8rem; font-weight: 800; color: #ef4444; margin-bottom: 4px;">⚠️ قواعد وتعليمات:</div>
+            <ul style="font-size: 0.75rem; color: var(--text-sub); margin: 0; padding-right: 18px; line-height: 1.6;">
+                <li>يبدأ عدّاد الوقت فور الضغط على زر البدء.</li>
+                <li>يتم تسليم الإجابات تلقائياً عند انتهاء الوقت المحدد.</li>
+                <li>تأكد من استقرار اتصال الإنترنت طوال فترة الاختبار.</li>
+            </ul>
+        </div>
+
+        <!-- أزرار الإجراء -->
+        <div style="display: flex; gap: 10px;">
+            <button onclick="startActualExamAfterConfirmation()" class="btn-primary" style="flex: 2; padding: 12px; font-weight: 900; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 12px;">بدء الاختبار الآن 🚀</button>
+            <button onclick="closeExamRulesModal()" class="admin-action-btn" style="flex: 1; padding: 12px; font-weight: 700; border-radius: 12px;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
 <style>
 @keyframes bounceEmoji {
     from { transform: translateY(0) scale(1); }
