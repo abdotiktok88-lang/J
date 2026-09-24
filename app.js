@@ -236,7 +236,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.2";
+const CURRENT_APP_VERSION = "2.0.3";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -11394,5 +11394,31 @@ function startActualExamAfterConfirmation() {
     if (pendingExamIdToStart) {
         openExamMode(pendingExamIdToStart);
         pendingExamIdToStart = null;
+    }
+}
+
+function shareExamDeepLink(subject, type, examId) {
+    if (typeof playClickSound === 'function') playClickSound();
+
+    // اسم حزمة تطبيقك المعتمد من Median
+    const medianPackageName = "co.median.android.rdopjak"; 
+
+    const domain = window.location.host; 
+    const path = window.location.pathname;
+    const safeSub = encodeURIComponent(subject);
+    const query = `openExam=${examId}&sub=${safeSub}&typ=${type}`;
+
+    // رابط الويب الاحتياطي (إذا فُتح الرابط من كمبيوتر أو جهاز غير مثبت عليه التطبيق)
+    const fallbackWebUrl = `https://${domain}${path}?${query}`;
+
+    // رابط الـ Intent الإجباري لفتح تطبيق الـ APK على هواتف الطلاب
+    const directIntentUrl = `intent://${domain}${path}?${query}#Intent;scheme=https;package=${medianPackageName};S.browser_fallback_url=${encodeURIComponent(fallbackWebUrl)};end`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(directIntentUrl).then(() => {
+            showTopToast('تم نسخ الرابط المباشر لتطبيق الموبايل! 📱', 'success');
+        });
+    } else {
+        prompt('انسخ الرابط لمشاركته مع الدفعة:', directIntentUrl);
     }
 }
