@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 if (typeof listenToAcademicMarkers === 'function') listenToAcademicMarkers();
 listenToAppNotifications();
 initDynamicQuotesFeed();
+listenToHomeAlertsTicker();
     }
 });
 
@@ -236,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.4";
+const CURRENT_APP_VERSION = "2.0.5";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -3946,8 +3947,7 @@ if (currentUser) {
         
         const isMaster = (currentUser.phone === "01061032507");
         const myRoles = currentUser.admin_roles || [];
-        const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles'];
-        
+const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events'];        
         let firstAllowedTab = null;
 
         // إظهار وإخفاء الزراير بناءً على الصلاحية
@@ -3983,11 +3983,11 @@ if (currentUser) {
     let isAdminDataLoaded = false;
 
     function switchAdminTab(tabName) {
-    if(!tabName) return; // حماية
+    if(!tabName) return; 
     playClickSound();
     
-    // ضفنا 'roles' للمصفوفة
-    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles'].forEach(t => {
+    // تمت إضافة 'events' هنا لإخفائه تلقائياً عند فتح أي قسم آخر
+    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events'].forEach(t => {
         const tabBtn = document.getElementById('tab-admin-' + t);
         const tabSec = document.getElementById('admin-section-' + t);
         if (tabBtn) tabBtn.classList.remove('active');
@@ -4009,7 +4009,8 @@ if (currentUser) {
     if (tabName === 'academy' && !loadedAdminTabs.academy) { loadAdminAcademyLessons(); loadedAdminTabs.academy = true; }
     if (tabName === 'notifs') { loadAdminNotificationsHistory(); }
     if (tabName === 'quotes') { if(typeof loadAdminQuotesList === 'function') loadAdminQuotesList(); }
-    if (tabName === 'roles') { loadSubAdminsList(); } // 👈 سحب قائمة المساعدين
+    if (tabName === 'roles') { loadSubAdminsList(); }
+    if (tabName === 'events') { loadAdminEventsList(); } // 👈 تحميل قائمة الفعاليات عند الضغط
 
     if (tabName === 'academic') {
         db.ref('academic_tasks').once('value', (snap) => {
@@ -11402,4 +11403,244 @@ function shareExamDeepLink(subject, type, examId) {
     } else {
         prompt('انسخ الرابط لمشاركته مع الدفعة:', directIntentUrl);
     }
+}
+
+// ================= نظام مزامنة إعلانات المنظم بالصفحة الرئيسية =================
+function listenToHomeAlertsTicker() {
+    db.ref('college_alerts').limitToLast(4).on('value', snap => {
+        const box = document.getElementById('home-alerts-ticker-box');
+        const list = document.getElementById('home-alerts-ticker-list');
+        if (!box || !list) return;
+
+        if (!snap.exists()) {
+            box.style.display = 'none';
+            return;
+        }
+
+        let alerts = [];
+        snap.forEach(c => {
+            alerts.push({ id: c.key, ...c.val() });
+        });
+        alerts.reverse(); // من الأحدث للأقدم
+
+        let html = '';
+        alerts.forEach(a => {
+            html += `
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-card); border-radius: 12px; padding: 10px 12px; text-align: right;">
+                <div style="font-size: 0.88rem; font-weight: 800; color: var(--accent-gold); margin-bottom: 2px;">${a.title}</div>
+                <div style="font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; white-space: pre-line;">${a.body}</div>
+            </div>`;
+        });
+
+        list.innerHTML = html;
+        box.style.display = 'block';
+    });
+}
+
+// استدعاء المزامنة عند بدء تشغيل التطبيق
+// يمكنك وضع السطر التالي داخل الـ else في DOMContentLoaded:
+// listenToHomeAlertsTicker();
+
+
+// ================= نظام الفعاليات والمشغل الذكي (Events Hub) =================
+function openEventsHub() {
+    playClickSound();
+    navigateTo('view-events-hub', 'الفعاليات والأنشطة', 'المسابقات والمهام التفاعلية');
+    loadEventsForStudents();
+}
+
+function loadEventsForStudents() {
+    const container = document.getElementById('events-cards-container');
+    const runner = document.getElementById('event-runner-wrapper');
+    if (runner) runner.style.display = 'none';
+    if (!container) return;
+
+    container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">جاري تحميل الفعاليات... ⏳</p>';
+
+    db.ref('events_hub').once('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = `
+            <div class="acad-glass-card" style="text-align: center; padding: 30px 15px;">
+                <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">🌟</span>
+                <h4 style="color: var(--text-main); margin-bottom: 4px;">لا توجد فعاليات نشطة حالياً</h4>
+                <p style="font-size: 0.8rem; color: var(--text-sub);">ترقبوا إطلاق تحديات ومسابقات مميزة قريباً جداً!</p>
+            </div>`;
+            return;
+        }
+
+        let html = '';
+        snap.forEach(c => {
+            const ev = c.val();
+            const id = c.key;
+            const isActive = ev.status === 'active';
+
+            html += `
+            <div class="acad-glass-card" style="cursor: pointer; border-color: ${isActive ? 'var(--accent-gold)' : 'var(--border-card)'};" onclick="launchEventRunner('${id}')">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span class="pill-badge" style="background: ${isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${isActive ? 'var(--accent-emerald)' : '#ef4444'};">
+                        ${isActive ? '🟢 نشطة الآن' : '⚪ منتهية'}
+                    </span>
+                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--accent-gold);">${ev.badge || ''}</span>
+                </div>
+                <h3 style="font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">${ev.title}</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-sub);">اضغط لبدء التحدي</span>
+                    <span style="color: var(--accent-gold); font-weight: bold;">←</span>
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    });
+}
+
+function launchEventRunner(eventId) {
+    playClickSound();
+    db.ref('events_hub/' + eventId).once('value', snap => {
+        if (!snap.exists()) return;
+        const ev = snap.val();
+
+        document.getElementById('events-cards-container').style.display = 'none';
+        const runner = document.getElementById('event-runner-wrapper');
+        const viewport = document.getElementById('event-runner-viewport');
+        document.getElementById('active-event-header-badge').innerText = ev.badge || ev.title;
+
+        runner.style.display = 'block';
+
+        // تنظيف الواجهة وتطبيق كود الفعالية
+        viewport.innerHTML = ev.customCode || '<p style="text-align:center;">لا يوجد محتوى في هذه الفعالية</p>';
+
+        // تنفيذ أي كود JavaScript مدمج داخل وسوم <script>
+        const scripts = viewport.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            try {
+                eval(scripts[i].innerText);
+            } catch (err) {
+                console.error("خطأ أثناء تشغيل كود الفعالية:", err);
+            }
+        }
+    });
+}
+
+function closeActiveEventRunner() {
+    playClickSound();
+    const runner = document.getElementById('event-runner-wrapper');
+    const container = document.getElementById('events-cards-container');
+    const viewport = document.getElementById('event-runner-viewport');
+
+    if (viewport) viewport.innerHTML = '';
+    if (runner) runner.style.display = 'none';
+    if (container) container.style.display = 'flex';
+}
+
+// دالة مساعدة لتوزيع المكافأة يستدعيها كود الفعالية مباشرة: awardEventReward(50, 10, 'اسم التحدي');
+function awardEventReward(xp = 0, coins = 0, title = 'فعالية خاصة') {
+    if (!currentUser) return;
+    
+    currentUser.xp = (currentUser.xp || 0) + xp;
+    currentUser.points = currentUser.xp;
+    currentUser.coins = (currentUser.coins || 0) + coins;
+
+    db.ref('users/' + currentUser.phone).update({
+        xp: currentUser.xp,
+        points: currentUser.xp,
+        coins: currentUser.coins
+    }).then(() => {
+        playSuccessSound();
+        shootStars();
+        triggerConfetti();
+        showTopToast(`مبروك! أكملت [${title}] وحصلت على +${xp} XP و +${coins} عملة 🎉`, 'success');
+        updateProfileUI();
+    });
+}
+
+// ================= دوال الأدمن لإدارة الفعاليات =================
+function adminSaveEvent() {
+    playClickSound();
+    const idField = document.getElementById('adm-event-id').value.trim();
+    const finalId = idField !== '' ? idField : 'event_' + Date.now();
+
+    const title = document.getElementById('adm-event-title').value.trim();
+    const badge = document.getElementById('adm-event-badge').value.trim();
+    const status = document.getElementById('adm-event-status').value;
+    const customCode = document.getElementById('adm-event-code').value.trim();
+
+    if (!title || !customCode) {
+        showTopToast('يرجى كتابة عنوان الفعالية وإرفاق الكود الخاص بها!', 'error');
+        return;
+    }
+
+    db.ref('events_hub/' + finalId).set({
+        title, badge, status, customCode,
+        updatedAt: Date.now()
+    }).then(() => {
+        showTopToast('تم حفظ ونشر الفعالية بنجاح! 🚀', 'success');
+        resetAdminEventForm();
+        loadAdminEventsList();
+    });
+}
+
+function loadAdminEventsList() {
+    const list = document.getElementById('admin-events-list');
+    if (!list) return;
+
+    db.ref('events_hub').once('value', snap => {
+        if (!snap.exists()) {
+            list.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد فعاليات مضافة حالياً.</p>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(c => {
+            const ev = c.val();
+            const id = c.key;
+            html += `
+            <div class="admin-item-card">
+                <div class="admin-item-info">
+                    <div class="admin-item-name">${ev.title}</div>
+                    <div class="admin-item-sub">${ev.status === 'active' ? '🟢 نشطة' : '⚪ منتهية'} | ${ev.badge || 'بدون شارة'}</div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="admin-action-btn" style="padding: 4px 8px; font-size: 0.72rem;" onclick="editAdminEvent('${id}')">تعديل ✏️</button>
+                    <button class="admin-action-btn danger" style="padding: 4px 8px; font-size: 0.72rem;" onclick="deleteAdminEvent('${id}')">حذف 🗑️</button>
+                </div>
+            </div>`;
+        });
+        list.innerHTML = html;
+    });
+}
+
+function editAdminEvent(id) {
+    playClickSound();
+    db.ref('events_hub/' + id).once('value', snap => {
+        if (!snap.exists()) return;
+        const ev = snap.val();
+
+        document.getElementById('adm-event-id').value = id;
+        document.getElementById('adm-event-title').value = ev.title || '';
+        document.getElementById('adm-event-badge').value = ev.badge || '';
+        document.getElementById('adm-event-status').value = ev.status || 'active';
+        document.getElementById('adm-event-code').value = ev.customCode || '';
+
+        document.getElementById('btn-cancel-event-edit').style.display = 'block';
+        showTopToast('تم جلب بيانات الفعالية للتعديل', 'info');
+    });
+}
+
+function deleteAdminEvent(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الفعالية نهائياً؟')) {
+        db.ref('events_hub/' + id).remove().then(() => {
+            showTopToast('تم حذف الفعالية بنجاح 🗑️', 'info');
+            loadAdminEventsList();
+        });
+    }
+}
+
+function resetAdminEventForm() {
+    document.getElementById('adm-event-id').value = '';
+    document.getElementById('adm-event-title').value = '';
+    document.getElementById('adm-event-badge').value = '';
+    document.getElementById('adm-event-status').value = 'active';
+    document.getElementById('adm-event-code').value = '';
+    document.getElementById('btn-cancel-event-edit').style.display = 'none';
 }

@@ -3273,6 +3273,28 @@
 
     <div class="container">
 
+<!-- واجهة مشغّل الفعاليات المخصصة (Client-side Runner) -->
+<div id="view-events-hub" class="view-section">
+    <div class="lab-sub-header" style="margin-bottom: 16px; justify-content: space-between; display: flex; align-items: center;">
+        <h2 id="events-hub-title" style="color: var(--accent-gold); font-size: 1.15rem; margin: 0;">الفعاليات النشطة</h2>
+        <button class="admin-action-btn" style="padding: 4px 12px;" onclick="navigateBack()">رجوع ↩</button>
+    </div>
+
+    <!-- قائمة كروت الفعاليات المتاحة -->
+    <div id="events-cards-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+    <!-- مشغّل كود الفعالية عند اختيارها -->
+    <div id="event-runner-wrapper" style="display: none; margin-top: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="closeActiveEventRunner()">إغلاق الفعالية ❌</button>
+            <span id="active-event-header-badge" class="pill-badge badge-subject">فعالية مباشرة</span>
+        </div>
+        <div id="event-runner-viewport" style="background: var(--card-gradient); border: 1.5px solid var(--accent-gold); border-radius: 20px; padding: 16px; min-height: 350px; position: relative;">
+            <!-- كود الفعالية يتم حقنه وتشغيله هنا بالكامل -->
+        </div>
+    </div>
+</div>
+
 <!-- واجهة مركز الإشعارات -->
 <div id="view-notifications" class="view-section">
     <div class="auth-card" style="margin-bottom: 16px; padding: 18px; text-align: center; border-color: var(--accent-gold);">
@@ -3365,7 +3387,33 @@
                         <p style="font-size: 0.8rem; margin-top: 4px;">مسابقات، ألعاب، وتحديات أونلاين</p>
                     </div>
                 </div>
+
+<!-- كارت الفعاليات والأنشطة -->
+<div class="eng-bento-card bento-large" style="--theme-color: #f59e0b; border: 1.5px solid var(--border-card); margin-top: 10px;" onclick="openEventsHub()">
+    <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-gold); width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 8px; flex-shrink: 0;">
+        <img src="https://img.icons8.com/fluency/96/sparkling.png" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" alt="Events">
+    </div>
+    <div>
+        <h3 style="color: var(--accent-gold);">الفعاليات والأنشطة 🌟</h3>
+        <p style="font-size: 0.8rem; margin-top: 4px;">مسابقات خاصة، مهام تفاعلية، وتحديات كبرى</p>
+    </div>
+</div>
 </div> <!-- 👈 هذا القفل المفقود لشبكة eng-bento-grid يجب إضافته هنا -->
+
+<!-- كارت شريط إعلانات وتنبيهات المنظم المتزامنة في الصفحة الرئيسية -->
+<div id="home-alerts-ticker-box" class="acad-glass-card" style="margin-bottom: 20px; display: none; padding: 14px 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span class="pill-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.72rem;">
+            📢 تنبيهات المنظم
+        </span>
+        <span style="font-size: 0.72rem; color: var(--accent-gold); font-weight: 800; cursor: pointer;" onclick="openAcademicHub(); switchAcademicTab('alerts');">
+            عرض الكل في المنظم ↗
+        </span>
+    </div>
+    <div id="home-alerts-ticker-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;">
+        <!-- سيتم حقن الإعلانات تلقائياً هنا -->
+    </div>
+</div>
 
               <!-- كارت الاقتباسات (إطار وبادج ثابتان + محتوى منزلق باللمس) -->
 <div class="dynamic-quote-card" id="dynamic-quote-card">
@@ -3394,6 +3442,7 @@
     <!-- نقاط التبديل بالأسفل -->
     <div class="quote-dots-pagination" id="quote-card-dots"></div>
 </div>
+
 
             <div class="inspirational-quote">
                 إِذَا وَضَعَكَ اللَّهُ فِي مَكَانٍ تَسْتَطِيعُ مِنْ خِلَالِهِ <span class="highlight-word">التَّيْسِيرَ</span> عَلَى النَّاسِ، <span class="highlight-word">فَيَسِّرْ</span> عَلَيْهِمْ، فَإِنَّكَ وَاللَّهِ لَا تَدْرِي مَا تَفْعَلُ بِكَ <span class="highlight-word">دَعْوَةٌ صَادِقَةٌ</span> مِنْ أَحَدِهِمْ، فَرُبَّمَا كَانَ مِنْ بَيْنِهِمْ مَنْ لَوْ أَقْسَمَ عَلَى اللَّهِ <span class="highlight-word">لَأَبَرَّهُ</span>!
@@ -4323,6 +4372,7 @@
             <div class="auth-tabs">
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
                 <button class="auth-tab-btn" id="tab-admin-analytics" onclick="switchAdminTab('analytics')">📊 الإحصائيات</button>
+<button class="auth-tab-btn" id="tab-admin-events" onclick="switchAdminTab('events')">الفعاليات 🌟</button>
 <button class="auth-tab-btn" id="tab-admin-notifs" onclick="switchAdminTab('notifs')">الإشعارات 🔔</button>
 <button class="auth-tab-btn" id="tab-admin-quotes" onclick="switchAdminTab('quotes')"> الاقتباسات📜</button>
                 <button class="auth-tab-btn" id="tab-admin-achievements" onclick="switchAdminTab('achievements')">🎖️ الإنجازات</button>
@@ -4341,6 +4391,44 @@
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
 <button class="auth-tab-btn" id="tab-admin-roles" onclick="switchAdminTab('roles')">إدارة الصلاحيات 🛡️</button>
             </div>
+
+<!-- تبويب إدارة الفعاليات وحقن الأكواد للأدمن -->
+<div id="admin-section-events" style="display: none;">
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+        <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 12px;">إضافة / تعديل فعالية جديدة 🌟</h3>
+        <input type="hidden" id="adm-event-id">
+
+        <div class="form-group">
+            <label>عنوان الفعالية</label>
+            <input type="text" id="adm-event-title" class="form-input" placeholder="مثال: لغز الكيمياء الأسبوعي">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>شارة الفعالية / المكافأة</label>
+                <input type="text" id="adm-event-badge" class="form-input" placeholder="مثال: +100 XP ⚡">
+            </div>
+            <div class="form-group">
+                <label>الحالة</label>
+                <select id="adm-event-status" class="form-input" style="background: var(--bg-primary);">
+                    <option value="active">🟢 نشطة ومتاحة</option>
+                    <option value="ended">⚪ منتهية</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label style="color: var(--accent-emerald);">كود الفعالية المخصص (HTML + CSS + JS)</label>
+            <textarea id="adm-event-code" class="form-input" rows="12" style="font-family: monospace; font-size: 0.85rem; direction: ltr;" placeholder="الصق كود الفعالية هنا..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="adminSaveEvent()">حفظ ونشر الفعالية 🚀</button>
+        <button class="admin-action-btn danger" style="width: 100%; margin-top: 8px; padding: 8px; display: none;" id="btn-cancel-event-edit" onclick="resetAdminEventForm()">إلغاء التعديل 🔄</button>
+    </div>
+
+    <div class="section-label">📋 جميع الفعاليات المسجلة</div>
+    <div id="admin-events-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+</div>
 
 <!-- تبويب إدارة الصلاحيات (للمطور فقط) -->
 <div id="admin-section-roles" style="display: none;">
