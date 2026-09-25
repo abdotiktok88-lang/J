@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.5";
+const CURRENT_APP_VERSION = "2.0.6";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -1201,7 +1201,8 @@ let hasCheckedDailyLoginSession = false;
                 } catch (e) {}
             }
 
-            db.ref('users/' + loggedInPhone).once('value').then((snapshot) => {
+            // استماع حي ولحظي لأي تغيير في بيانات ورصيد الطالب
+            db.ref('users/' + loggedInPhone).on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     currentUser = snapshot.val();
 
@@ -1217,32 +1218,12 @@ let hasCheckedDailyLoginSession = false;
 
                     if (currentUser.xp === undefined) currentUser.xp = currentUser.points || 100;
                     if (currentUser.coins === undefined) currentUser.coins = 0;
-                    if (currentUser.quizPlayed === undefined) currentUser.quizPlayed = 0;
-                    if (currentUser.quizCorrect === undefined) currentUser.quizCorrect = 0;
-                    if (currentUser.daily_streak === undefined) currentUser.daily_streak = 0;
-                    if (currentUser.total_login_days === undefined) currentUser.total_login_days = 0;
-                    if (currentUser.derby_wins === undefined) currentUser.derby_wins = 0;
-                    if (currentUser.hintsCount === undefined) currentUser.hintsCount = 0;
-                    if (currentUser.hintTimeCount === undefined) currentUser.hintTimeCount = 0;
-                    if (currentUser.skipCount === undefined) currentUser.skipCount = 0;
-                    if (currentUser.has_streak_freeze === undefined) currentUser.has_streak_freeze = false;
-                    if (currentUser.active_frame === undefined) currentUser.active_frame = 'none';
-                    if (currentUser.owned_frames === undefined) currentUser.owned_frames = [];
-                    if (currentUser.active_hat === undefined) currentUser.active_hat = 'none';
-                    if (currentUser.owned_hats === undefined) currentUser.owned_hats = [];
-                    if (currentUser.owned_vip === undefined) currentUser.owned_vip = false;
-                    if (currentUser.is_vip === undefined) currentUser.is_vip = false;
-                    if (currentUser.owned_top_card === undefined) currentUser.owned_top_card = false;
-                    if (currentUser.has_top_card === undefined) currentUser.has_top_card = false;
-                    if (currentUser.owned_glow_name === undefined) currentUser.owned_glow_name = false;
-                    if (currentUser.has_glow_name === undefined) currentUser.has_glow_name = false;
-                    if (currentUser.owned_bio === undefined) currentUser.owned_bio = false;
-                    if (currentUser.can_edit_bio === undefined) currentUser.can_edit_bio = false;
                     if (currentUser.completed_tasks === undefined) currentUser.completed_tasks = [];
 
                     localStorage.setItem('cached_user_data', JSON.stringify(currentUser));
 
                     updateProfileUI();
+                    updateStatsUI();
                     initUserTicketRepliesListener();
                     listenToPersonalAlerts();
 
@@ -1254,16 +1235,9 @@ let hasCheckedDailyLoginSession = false;
                         checkDailyLoginCloudSync();
                         hasCheckedDailyLoginSession = true;
                     }
-
-
                 } else {
                     logoutUserLocally();
                     showAuthGateDirectly();
-                }
-            }).catch(() => {
-                if (!currentUser && cachedUserData) {
-                    currentUser = JSON.parse(cachedUserData);
-                    updateProfileUI();
                 }
             });
         } else {
@@ -11347,7 +11321,7 @@ function showExamRulesConfirmation(examId) {
                         style="flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 10px;">
                     إلغاء
                 </button>
-                <button onclick="document.getElementById('examRulesModal').remove(); startExamDirectly('${examId}');" 
+                <button onclick="document.getElementById('examRulesModal').remove(); openExamMode('${examId}');" 
                         style="flex: 2; padding: 10px; background: ${isCompleted ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}; color: #fff; border: none; border-radius: 10px; font-weight: 900; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 15px ${isCompleted ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">
                     ${isCompleted ? 'بدء التدريب الآن 🚀' : 'بدء الاختبار الآن 🚀'}
                 </button>
