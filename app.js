@@ -3961,7 +3961,7 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
     playClickSound();
     
     // تمت إضافة 'events' هنا لإخفائه تلقائياً عند فتح أي قسم آخر
-    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events'].forEach(t => {
+    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october'].forEach(t => {
         const tabBtn = document.getElementById('tab-admin-' + t);
         const tabSec = document.getElementById('admin-section-' + t);
         if (tabBtn) tabBtn.classList.remove('active');
@@ -3999,6 +3999,7 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
 
     if (tabName === 'science') { loadAdminScienceContent(); }
     if (tabName === 'guess-game') { loadAdminGuessCategories(); }
+if (tabName === 'october') { loadAdminOctoberConfig(); loadAdminOctoberQuestions(document.getElementById('adm-oct-level-select').value); }
 }
 
 // ================= محرك إضافة وإزالة المساعدين (جديد) =================
@@ -4008,7 +4009,8 @@ const roleNamesAr = {
     'academic': 'المنظم الأكاديمي 🎓', 'tickets': 'الشكاوى 📩', 'users': 'الطلاب 👥', 
     'analytics': 'الإحصائيات 📊', 'store': 'المتجر 🏷️', 'broadcast': 'رسائل البث 📢', 
     'books': 'روابط الكتب 📥', 'codes': 'الأكواد 🎁', 'achievements': 'الإنجازات 🎖️', 
-    'guess-game': 'تخمين الصورة 📱', 'academy': 'أكاديمية الجودة 💼'
+    'guess-game': 'تخمين الصورة 📱', 'academy': 'أكاديمية الجودة 💼',
+    'october': 'إيفنت أكتوبر 🎖️'
 };
 
 async function assignAdminRoles() {
@@ -11617,4 +11619,501 @@ function resetAdminEventForm() {
     document.getElementById('adm-event-status').value = 'active';
     document.getElementById('adm-event-code').value = '';
     document.getElementById('btn-cancel-event-edit').style.display = 'none';
+}
+
+// ============================================================================
+// =================== محرك إيفنت ملحمة العبور (6 أكتوبر) ========================
+// ============================================================================
+
+let octoberCachedImages = [];
+let octoberEventData = null;
+let currentOctLevel = 1;
+let currentOctQIndex = 0;
+let currentOctLevelQuestions = [];
+
+// 1. فتح واجهة الإيفنت بالشكل الصحيح
+function openOctoberEventHub() {
+    playClickSound();
+    if (!currentUser) {
+        showTopToast('يرجى تسجيل الدخول أولاً للمشاركة في الإيفنت!', 'error');
+        return;
+    }
+    
+    // إخفاء كل الشاشات المفتوحة وإظهار واجهة الإيفنت المستقلة
+    navigateTo('view-october-event', 'ملحمة العبور 🎖️', 'تحدي نصر أكتوبر 1973');
+    loadOctoberEventUserView();
+}
+
+// 2. تحميل البيانات والتحميل المسبق للصور (Preloading Cache)
+function loadOctoberEventUserView() {
+    db.ref('october_event').once('value', snap => {
+        octoberEventData = snap.val() || { config: { badgeTitle: "بطل العبور 🎖️" }, levels: {}, levels_rewards: {} };
+        
+        // التحميل المسبق لجميع الصور لضمان عدم حدوث أي تأخير أثناء اللعب
+        preloadOctoberEventImages();
+        
+        // عرض خريطة المستويات الستة
+        renderOctoberLevelsGrid();
+    });
+}
+
+function preloadOctoberEventImages() {
+    octoberCachedImages = [];
+    if (!octoberEventData || !octoberEventData.levels) return;
+    
+    Object.keys(octoberEventData.levels).forEach(lvl => {
+        const questions = octoberEventData.levels[lvl];
+        if (questions) {
+            Object.values(questions).forEach(q => {
+                if (q.type === 'hero_image' && q.imageUrl) {
+                    const img = new Image();
+                    img.src = q.imageUrl;
+                    octoberCachedImages.push(img);
+                }
+            });
+        }
+    });
+}
+
+// 3. عرض خريطة المستويات الـ 6
+function renderOctoberLevelsGrid() {
+    const container = document.getElementById('october-levels-grid');
+    const playBox = document.getElementById('october-question-play-box');
+    if (container) container.style.display = 'grid';
+    if (playBox) playBox.style.display = 'none';
+
+    const completedEvents = currentUser.completed_custom_events || [];
+    const isEventFinishedAll = completedEvents.includes('event_october_73');
+
+    // حساب تقدم المستويات المحفوظ
+    const userOctProgress = (currentUser.october_progress !== undefined) ? currentUser.october_progress : (isEventFinishedAll ? 6 : 1);
+
+    let html = '';
+    for (let i = 1; i <= 6; i++) {
+        let isUnlocked = (i <= userOctProgress);
+        let isDone = (i < userOctProgress || isEventFinishedAll);
+
+        let stateClass = isDone ? 'completed' : (isUnlocked ? 'unlocked' : 'locked');
+        let iconOrNum = isUnlocked ? `<span class="level-number">${i}</span>` : `<span class="level-lock-icon" style="display:block;">🔒</span>`;
+        let textBadge = isDone ? 'عبرت بنجاح 🎖️' : (isUnlocked ? 'متاح للعب ⚔️' : 'مغلق 🔒');
+
+        html += `
+        <div class="level-node ${stateClass}" onclick="startOctoberLevel(${i}, ${isUnlocked})">
+            ${iconOrNum}
+            <div class="level-stars" style="font-size: 0.75rem; font-weight: 800; color: var(--accent-gold); margin-top: 5px;">
+                ${textBadge}
+            </div>
+        </div>`;
+    }
+    if (container) container.innerHTML = html;
+}
+
+// 4. بدء المستوى المختار
+function startOctoberLevel(levelNum, isUnlocked) {
+    if (!isUnlocked) {
+        playErrorSound();
+        showTopToast('يجب عبور المستويات السابقة أولاً يا بطل!', 'error');
+        return;
+    }
+
+    const questionsObj = (octoberEventData.levels && octoberEventData.levels[levelNum]) || {};
+    currentOctLevelQuestions = Object.values(questionsObj);
+
+    if (currentOctLevelQuestions.length === 0) {
+        showTopToast(`لا توجد أسئلة مضافة في المستوى ${levelNum} بعد.`, 'info');
+        return;
+    }
+
+    playClickSound();
+    currentOctLevel = levelNum;
+    currentOctQIndex = 0;
+
+    const grid = document.getElementById('october-levels-grid');
+    const playBox = document.getElementById('october-question-play-box');
+    if (grid) grid.style.display = 'none';
+    if (playBox) playBox.style.display = 'block';
+
+    renderOctoberCurrentQuestion();
+}
+
+// 5. عرض السؤال الحالي بحسب نوعه
+function renderOctoberCurrentQuestion() {
+    const q = currentOctLevelQuestions[currentOctQIndex];
+    const rewardInfo = getOctoberLevelReward(currentOctLevel);
+    
+    document.getElementById('october-q-counter').innerText = `المستوى ${currentOctLevel} - سؤال (${currentOctQIndex + 1} / ${currentOctLevelQuestions.length})`;
+    const ptsBadge = document.getElementById('october-q-points-badge');
+    if (ptsBadge) ptsBadge.innerText = `جائزة المستوى: +${rewardInfo.xp} XP و +${rewardInfo.coins} 💸`;
+
+    document.getElementById('october-q-text').innerText = q.question;
+    const fbText = document.getElementById('october-feedback-text');
+    if (fbText) fbText.style.display = 'none';
+
+    const imgContainer = document.getElementById('october-image-container');
+    const optContainer = document.getElementById('october-options-container');
+    const numContainer = document.getElementById('october-number-container');
+
+    if (q.type === 'hero_image') {
+        imgContainer.style.display = 'flex';
+        document.getElementById('october-hero-img-display').src = q.imageUrl;
+        optContainer.style.display = 'flex';
+        numContainer.style.display = 'none';
+        renderOctoberOptions(q);
+    } else if (q.type === 'mcq') {
+        imgContainer.style.display = 'none';
+        optContainer.style.display = 'flex';
+        numContainer.style.display = 'none';
+        renderOctoberOptions(q);
+    } else if (q.type === 'number') {
+        imgContainer.style.display = 'none';
+        optContainer.style.display = 'none';
+        numContainer.style.display = 'block';
+        const numInput = document.getElementById('october-numeric-input');
+        if (numInput) numInput.value = '';
+    }
+}
+
+function renderOctoberOptions(q) {
+    const optContainer = document.getElementById('october-options-container');
+    optContainer.innerHTML = '';
+
+    const correctText = q.options[q.answer || 0];
+    const shuffled = shuffleArray([...q.options]);
+
+    shuffled.forEach(optText => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerText = optText;
+        btn.onclick = () => handleOctoberMcqAnswer(btn, optText, correctText);
+        optContainer.appendChild(btn);
+    });
+}
+
+function handleOctoberMcqAnswer(btn, selected, correct) {
+    const allBtns = document.querySelectorAll('#october-options-container .quiz-option-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    if (selected === correct) {
+        playSuccessSound();
+        shootStars();
+        btn.classList.add('correct-choice');
+        showTopToast('إجابة صحيحة ومحكمة! 🎖️', 'success');
+        setTimeout(() => advanceOctoberQuestion(), 1100);
+    } else {
+        playErrorSound();
+        btn.classList.add('wrong-choice');
+        allBtns.forEach(b => { if (b.innerText === correct) b.classList.add('correct-choice'); });
+        showTopToast('إجابة غير صحيحة، حاول التركيز أكثر!', 'error');
+        setTimeout(() => renderOctoberCurrentQuestion(), 1600);
+    }
+}
+
+// 6. التحقق من أسئلة الأرقام والتواريخ
+function submitOctoberNumericAnswer() {
+    const inputEl = document.getElementById('october-numeric-input');
+    const userVal = parseFloat(inputEl.value);
+    const q = currentOctLevelQuestions[currentOctQIndex];
+    const target = q.correctNumber;
+
+    if (isNaN(userVal)) {
+        showTopToast('يرجى كتابة رقم أو سنة أولاً!', 'error');
+        return;
+    }
+
+    const diff = Math.abs(userVal - target);
+    const percentError = (diff / target) * 100;
+    const fbText = document.getElementById('october-feedback-text');
+    fbText.style.display = 'block';
+
+    if (userVal === target) {
+        playExactMatchSound();
+        shootStars();
+        fbText.style.color = 'var(--accent-emerald)';
+        fbText.innerHTML = `🎯 إجابة دقيقة 100%! الرقم هو (${target}) بالمللي!`;
+        setTimeout(() => advanceOctoberQuestion(), 1400);
+    } else if (percentError <= 10) {
+        playSuccessSound();
+        fbText.style.color = 'var(--accent-gold)';
+        fbText.innerHTML = `👏 إجابة قريبة جداً ومقبولة! الرقم الصحيح: (${target})`;
+        setTimeout(() => advanceOctoberQuestion(), 1600);
+    } else {
+        playErrorSound();
+        fbText.style.color = '#ef4444';
+        fbText.innerHTML = `❌ للأسف تخمينك بعيد جداً عن الإجابة الصحيحة. حاول مرة أخرى!`;
+    }
+}
+
+function advanceOctoberQuestion() {
+    if (currentOctQIndex + 1 < currentOctLevelQuestions.length) {
+        currentOctQIndex++;
+        renderOctoberCurrentQuestion();
+    } else {
+        completeOctoberLevelSuccess();
+    }
+}
+
+function getOctoberLevelReward(levelNum) {
+    if (octoberEventData && octoberEventData.levels_rewards && octoberEventData.levels_rewards[levelNum]) {
+        return {
+            xp: parseInt(octoberEventData.levels_rewards[levelNum].xp) || 0,
+            coins: parseInt(octoberEventData.levels_rewards[levelNum].coins) || 0
+        };
+    }
+    return { xp: levelNum * 100, coins: levelNum * 20 };
+}
+
+// 7. اجتياز المستوى وصرف المكافأة الخاصة به فقط
+function completeOctoberLevelSuccess() {
+    playSuccessSound();
+    triggerConfetti();
+
+    let claimedRewards = currentUser.october_claimed_levels || [];
+    let rewards = getOctoberLevelReward(currentOctLevel);
+    let isAlreadyClaimed = claimedRewards.includes(currentOctLevel);
+
+    let updates = {};
+
+    if (!isAlreadyClaimed) {
+        claimedRewards.push(currentOctLevel);
+        currentUser.october_claimed_levels = claimedRewards;
+        currentUser.xp = (currentUser.xp || 0) + rewards.xp;
+        currentUser.points = currentUser.xp;
+        currentUser.coins = (currentUser.coins || 0) + rewards.coins;
+
+        updates.xp = currentUser.xp;
+        updates.points = currentUser.xp;
+        updates.coins = currentUser.coins;
+        updates.october_claimed_levels = claimedRewards;
+
+        recordUserTransaction(`مكافأة اجتياز المستوى ${currentOctLevel} (إيفنت أكتوبر)`, rewards.xp, rewards.coins, 'reward');
+    }
+
+    let userProgress = currentUser.october_progress || 1;
+    if (currentOctLevel >= userProgress && currentOctLevel < 6) {
+        userProgress = currentOctLevel + 1;
+        currentUser.october_progress = userProgress;
+        updates.october_progress = userProgress;
+    }
+
+    db.ref('users/' + currentUser.phone).update(updates).then(() => {
+        updateProfileUI();
+
+        let rewardMsg = !isAlreadyClaimed 
+            ? ` وحصلت على +${rewards.xp} XP و +${rewards.coins} عملة! 🎁`
+            : ` (المكافأة استُلمت مسبقاً)`;
+
+        if (currentOctLevel < 6) {
+            showTopToast(`مبروك! عبرت المستوى ${currentOctLevel} بنجاح${rewardMsg}`, 'success');
+            loadOctoberEventUserView();
+        } else {
+            finalizeOctoberGrandVictory(isAlreadyClaimed ? null : rewards);
+        }
+    });
+}
+
+// 8. النصر النهائي والحصول على اللقب
+function finalizeOctoberGrandVictory(finalReward) {
+    const config = (octoberEventData && octoberEventData.config) ? octoberEventData.config : { badgeTitle: "بطل العبور 🎖️" };
+    let completedEvents = currentUser.completed_custom_events || [];
+
+    if (!completedEvents.includes('event_october_73')) {
+        completedEvents.push('event_october_73');
+        currentUser.active_title = config.badgeTitle;
+        currentUser.completed_custom_events = completedEvents;
+
+        db.ref('users/' + currentUser.phone).update({
+            active_title: config.badgeTitle,
+            completed_custom_events: completedEvents,
+            october_progress: 6
+        }).then(() => {
+            playFlawlessVictorySound();
+            shootStars();
+            triggerConfetti();
+            updateProfileUI();
+            showTopToast(`🎉 نصر أكتوبر العظيم! أكملت الـ 6 مستويات وحصلت على لقب [${config.badgeTitle}]!`, 'success');
+            loadOctoberEventUserView();
+        });
+    } else {
+        showTopToast('لقد عبرت جميع المستويات من قبل! أحسنت صنعاً يا بطل 🎖️', 'info');
+        loadOctoberEventUserView();
+    }
+}
+
+// 9. دوال تحكم الأدمن
+function loadAdminOctoberConfig() {
+    loadAdminSingleLevelReward(document.getElementById('adm-oct-reward-level').value || "1");
+    db.ref('october_event/config').once('value', snap => {
+        if (snap.exists()) {
+            const cfg = snap.val();
+            document.getElementById('adm-oct-title').value = cfg.badgeTitle || "بطل العبور 🎖️";
+        }
+    });
+}
+
+function loadAdminSingleLevelReward(levelNum) {
+    db.ref(`october_event/levels_rewards/${levelNum}`).once('value', snap => {
+        if (snap.exists()) {
+            const rew = snap.val();
+            document.getElementById('adm-oct-level-xp').value = rew.xp !== undefined ? rew.xp : 150;
+            document.getElementById('adm-oct-level-coins').value = rew.coins !== undefined ? rew.coins : 25;
+        } else {
+            document.getElementById('adm-oct-level-xp').value = levelNum * 100;
+            document.getElementById('adm-oct-level-coins').value = levelNum * 20;
+        }
+    });
+}
+
+function saveAdminOctoberLevelReward() {
+    playClickSound();
+    const levelNum = document.getElementById('adm-oct-reward-level').value;
+    const xp = parseInt(document.getElementById('adm-oct-level-xp').value) || 0;
+    const coins = parseInt(document.getElementById('adm-oct-level-coins').value) || 0;
+    const badge = document.getElementById('adm-oct-title').value.trim() || "بطل العبور 🎖️";
+
+    const updates = {};
+    updates[`october_event/levels_rewards/${levelNum}`] = { xp: xp, coins: coins };
+    updates[`october_event/config/badgeTitle`] = badge;
+
+    db.ref().update(updates).then(() => {
+        showTopToast(`تم حفظ مكافأة المستوى ${levelNum} واللقب بنجاح! 💾`, 'success');
+    });
+}
+
+function toggleAdminOctoberTypeInputs(type) {
+    document.getElementById('adm-oct-img-box').style.display = (type === 'hero_image') ? 'block' : 'none';
+    document.getElementById('adm-oct-options-box').style.display = (type === 'number') ? 'none' : 'block';
+    document.getElementById('adm-oct-numeric-box').style.display = (type === 'number') ? 'block' : 'none';
+}
+
+function saveAdminOctoberQuestion() {
+    playClickSound();
+    const level = document.getElementById('adm-oct-level-select').value;
+    const type = document.getElementById('adm-oct-type-select').value;
+    const question = document.getElementById('adm-oct-q-text').value.trim();
+    const editId = document.getElementById('adm-oct-q-id').value;
+    const qId = editId ? editId : 'oct_q_' + Date.now();
+
+    if (!question) {
+        showTopToast('يرجى كتابة نص السؤال أولاً!', 'error');
+        return;
+    }
+
+    let payload = { id: qId, type, question };
+
+    if (type === 'number') {
+        const numVal = parseFloat(document.getElementById('adm-oct-correct-number').value);
+        if (isNaN(numVal)) {
+            showTopToast('يرجى تحديد الرقم الصحيح للسؤال!', 'error');
+            return;
+        }
+        payload.correctNumber = numVal;
+    } else {
+        const opt0 = document.getElementById('adm-oct-opt0').value.trim();
+        const opt1 = document.getElementById('adm-oct-opt1').value.trim();
+        const opt2 = document.getElementById('adm-oct-opt2').value.trim();
+        const opt3 = document.getElementById('adm-oct-opt3').value.trim();
+
+        if (!opt0 || !opt1 || !opt2 || !opt3) {
+            showTopToast('يرجى كتابة جميع الاختيارات الأربعة!', 'error');
+            return;
+        }
+        payload.options = [opt0, opt1, opt2, opt3];
+        payload.answer = 0;
+
+        if (type === 'hero_image') {
+            const imgUrl = document.getElementById('adm-oct-img-url').value.trim();
+            if (!imgUrl) {
+                showTopToast('يرجى وضع رابط الصورة المباشر من PostImage!', 'error');
+                return;
+            }
+            payload.imageUrl = imgUrl;
+        }
+    }
+
+    db.ref(`october_event/levels/${level}/${qId}`).set(payload).then(() => {
+        showTopToast('تم حفظ السؤال بنجاح! 🚀', 'success');
+        resetAdminOctoberForm();
+        loadAdminOctoberQuestions(level);
+    });
+}
+
+function loadAdminOctoberQuestions(level) {
+    const container = document.getElementById('admin-october-questions-list');
+    if (!container) return;
+    container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">جاري التحميل...</p>';
+
+    db.ref(`october_event/levels/${level}`).once('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub);">لا توجد أسئلة مضافة في هذا المستوى بعد.</p>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(c => {
+            const q = c.val();
+            const id = c.key;
+            html += `
+            <div class="admin-item-card" style="padding: 10px 12px;">
+                <div class="admin-item-info">
+                    <div class="admin-item-name" style="font-size: 0.88rem;">[${q.type}] ${q.question}</div>
+                    ${q.type === 'hero_image' ? `<div style="margin-top: 4px;"><img src="${q.imageUrl}" style="width: 35px; height: 35px; border-radius: 6px; object-fit: cover;"></div>` : ''}
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="admin-action-btn" style="padding: 3px 8px; font-size: 0.72rem;" onclick='editAdminOctoberQuestion(${JSON.stringify(q)}, "${level}")'>تعديل ✏️</button>
+                    <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="deleteAdminOctoberQuestion('${id}', '${level}')">حذف 🗑️</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    });
+}
+
+function editAdminOctoberQuestion(q, level) {
+    playClickSound();
+    document.getElementById('adm-oct-form-title').innerText = 'تعديل السؤال المختار ✏️';
+    document.getElementById('adm-oct-q-id').value = q.id;
+    document.getElementById('adm-oct-level-select').value = level;
+    document.getElementById('adm-oct-type-select').value = q.type;
+    document.getElementById('adm-oct-q-text').value = q.question;
+
+    toggleAdminOctoberTypeInputs(q.type);
+
+    if (q.type === 'number') {
+        document.getElementById('adm-oct-correct-number').value = q.correctNumber || '';
+    } else {
+        document.getElementById('adm-oct-opt0').value = (q.options && q.options[0]) || '';
+        document.getElementById('adm-oct-opt1').value = (q.options && q.options[1]) || '';
+        document.getElementById('adm-oct-opt2').value = (q.options && q.options[2]) || '';
+        document.getElementById('adm-oct-opt3').value = (q.options && q.options[3]) || '';
+        if (q.type === 'hero_image') {
+            document.getElementById('adm-oct-img-url').value = q.imageUrl || '';
+        }
+    }
+
+    document.getElementById('btn-cancel-oct-edit').style.display = 'block';
+    document.getElementById('btn-save-oct-q').innerText = 'تحديث السؤال 🔄';
+}
+
+function resetAdminOctoberForm() {
+    document.getElementById('adm-oct-form-title').innerText = 'إضافة سؤال جديد للتحدي ⚔️';
+    document.getElementById('adm-oct-q-id').value = '';
+    document.getElementById('adm-oct-q-text').value = '';
+    document.getElementById('adm-oct-img-url').value = '';
+    document.getElementById('adm-oct-opt0').value = '';
+    document.getElementById('adm-oct-opt1').value = '';
+    document.getElementById('adm-oct-opt2').value = '';
+    document.getElementById('adm-oct-opt3').value = '';
+    document.getElementById('adm-oct-correct-number').value = '';
+    document.getElementById('btn-cancel-oct-edit').style.display = 'none';
+    document.getElementById('btn-save-oct-q').innerText = 'حفظ السؤال بالسيرفر 🚀';
+}
+
+function deleteAdminOctoberQuestion(qId, level) {
+    playErrorSound();
+    if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+        db.ref(`october_event/levels/${level}/${qId}`).remove().then(() => {
+            showTopToast('تم حذف السؤال بنجاح.', 'info');
+            loadAdminOctoberQuestions(level);
+        });
+    }
 }

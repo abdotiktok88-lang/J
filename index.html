@@ -2752,6 +2752,85 @@
     background-position: center !important;
 }
 
+/* ================= كارت إيفنت أكتوبر بالخلفية المتدرجة السينمائية ================= */
+.october-event-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 110px;
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin: 12px 0 18px 0;
+    cursor: pointer;
+    background: linear-gradient(135deg, #09130c 0%, #112217 60%, #050b07 100%);
+    border: 1.5px solid rgba(212, 175, 55, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45), 0 0 20px rgba(34, 197, 94, 0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    align-items: center;
+}
+
+.october-event-card:active {
+    transform: scale(0.97);
+}
+
+/* الصورة الخلفية المتدرجة من اليسار لليمين */
+.october-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 65%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    opacity: 0.85;
+    /* التلاشي السحري: ظاهرة وواضحة في أقصى اليسار وتتلاشى تماماً نحو اليمين خلف النصوص */
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to right, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+    pointer-events: none;
+}
+
+/* طبقة النصوص مرفوعة فوق الصورة والشادو */
+.october-card-content-front {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    text-align: right;
+    direction: rtl;
+    padding-right: 4px;
+}
+
+.october-glow-border {
+    position: absolute; inset: 0;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background: linear-gradient(90deg, #d4af37, #22c55e, #eab308, #d4af37) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    animation: glowRotate 4s linear infinite;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.october-shimmer {
+    position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    transform: skewX(-20deg);
+    animation: shimmerMove 3.5s infinite;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.october-badge {
+    position: absolute; top: 12px; left: 14px;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff; font-size: 0.65rem; font-weight: 900;
+    padding: 3px 9px; border-radius: 14px;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.7);
+    animation: pulseBadge 1.8s infinite;
+    z-index: 4;
+}
+
 </style>
 </head>
 <body>
@@ -3343,6 +3422,23 @@
             <span id="home-coins" class="balance-val-text coin-val">0</span>
         </div>
         <img src="https://img.icons8.com/fluency/96/coins.png" class="balance-inner-icon" alt="Coins">
+    </div>
+</div>
+
+<!-- كارت إيفنت ملحمة العبور (بالخلفية المتدرجة) -->
+<div id="card-october-war" class="october-event-card" onclick="openOctoberEventHub()">
+    <!-- الصورة بالخلفية على اليسار وتتدرج لليمين -->
+    <img src="october_event.jpg" class="october-bg-img" alt="6 October" onerror="this.src='https://via.placeholder.com/400x200?text=6+October'">
+    <div class="october-glow-border"></div>
+    <div class="october-shimmer"></div>
+    <div class="october-badge">لفترة محدودة ⏳</div>
+    
+    <div class="october-card-content-front">
+        <h3 style="color: #fef08a; font-size: 1.15rem; font-weight: 900; margin-bottom: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);">ملحمة العبور 🎖️</h3>
+        <p style="color: #e2e8f0; font-size: 0.8rem; font-weight: 700; line-height: 1.4; margin-bottom: 8px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); max-width: 80%;">
+            تحدي الـ 6 مستويات لبطولات أكتوبر.. جوائز لكل مستوى ولقب مميز!
+        </p>
+        <span class="card-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.4);">اضغط لبدء التحدي ⚔️</span>
     </div>
 </div>
 
@@ -4373,6 +4469,7 @@
                 <button class="auth-tab-btn active" id="tab-admin-users" onclick="switchAdminTab('users')">الطلاب</button>
                 <button class="auth-tab-btn" id="tab-admin-analytics" onclick="switchAdminTab('analytics')">📊 الإحصائيات</button>
 <button class="auth-tab-btn" id="tab-admin-events" onclick="switchAdminTab('events')">الفعاليات 🌟</button>
+<button class="auth-tab-btn" id="tab-admin-october" onclick="switchAdminTab('october')">إيفنت أكتوبر 🎖️</button>
 <button class="auth-tab-btn" id="tab-admin-notifs" onclick="switchAdminTab('notifs')">الإشعارات 🔔</button>
 <button class="auth-tab-btn" id="tab-admin-quotes" onclick="switchAdminTab('quotes')"> الاقتباسات📜</button>
                 <button class="auth-tab-btn" id="tab-admin-achievements" onclick="switchAdminTab('achievements')">🎖️ الإنجازات</button>
@@ -4391,6 +4488,105 @@
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
 <button class="auth-tab-btn" id="tab-admin-roles" onclick="switchAdminTab('roles')">إدارة الصلاحيات 🛡️</button>
             </div>
+
+<!-- تبويب إدارة إيفنت 6 أكتوبر للأدمن -->
+<div id="admin-section-october" style="display: none;">
+    <!-- 1. تعديل المكافآت العامة -->
+    <!-- 1. إعدادات جوائز كل مستوى على حدة -->
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-gold);">
+        <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 12px;">تخصيص مكافآت المستويات (1 - 6) 🏆</h3>
+        
+        <div class="form-group">
+            <label>المستوى المراد ضبط جائزته:</label>
+            <select id="adm-oct-reward-level" class="form-input" style="background: var(--bg-primary);" onchange="loadAdminSingleLevelReward(this.value)">
+                <option value="1">المستوى 1</option>
+                <option value="2">المستوى 2</option>
+                <option value="3">المستوى 3</option>
+                <option value="4">المستوى 4</option>
+                <option value="5">المستوى 5</option>
+                <option value="6">المستوى 6</option>
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+                <label style="color: var(--accent-emerald);">نقاط XP للمستوى</label>
+                <input type="number" id="adm-oct-level-xp" class="form-input" placeholder="مثال: 150">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label style="color: var(--accent-gold);">عملات للمستوى 💸</label>
+                <input type="number" id="adm-oct-level-coins" class="form-input" placeholder="مثال: 25">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>لقب الفائز النهائي (يُمنح عند إتمام المستوى 6):</label>
+            <input type="text" id="adm-oct-title" class="form-input" value="بطل العبور 🎖️">
+        </div>
+
+        <button class="btn-submit" onclick="saveAdminOctoberLevelReward()">حفظ جائزة المستوى المحدد 💾</button>
+    </div>
+
+    <!-- 2. إضافة / تعديل سؤال -->
+    <div class="auth-card" style="padding: 18px; margin-bottom: 20px; border-color: var(--accent-emerald);">
+        <h3 style="color: var(--accent-emerald); text-align: center; margin-bottom: 12px;" id="adm-oct-form-title">إضافة سؤال جديد للتحدي ⚔️</h3>
+        <input type="hidden" id="adm-oct-q-id">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>المستوى (1 إلى 6)</label>
+                <select id="adm-oct-level-select" class="form-input" style="background: var(--bg-primary);" onchange="loadAdminOctoberQuestions(this.value)">
+                    <option value="1">المستوى 1</option>
+                    <option value="2">المستوى 2</option>
+                    <option value="3">المستوى 3</option>
+                    <option value="4">المستوى 4</option>
+                    <option value="5">المستوى 5</option>
+                    <option value="6">المستوى 6</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>نوع السؤال</label>
+                <select id="adm-oct-type-select" class="form-input" style="background: var(--bg-primary);" onchange="toggleAdminOctoberTypeInputs(this.value)">
+                    <option value="mcq">سؤال اختر عادي</option>
+                    <option value="number">سؤال أرقام وتواريخ تقريبية</option>
+                    <option value="hero_image">مين البطل اللي في الصورة؟</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>نص السؤال</label>
+            <input type="text" id="adm-oct-q-text" class="form-input" placeholder="اكتب صيغة السؤال هنا...">
+        </div>
+
+        <!-- حقل رابط PostImage -->
+        <div class="form-group" id="adm-oct-img-box" style="display: none;">
+            <label>رابط الصورة المباشر من PostImage (Direct link)</label>
+            <input type="url" id="adm-oct-img-url" class="form-input" placeholder="https://i.postimg.cc/..." dir="ltr">
+        </div>
+
+        <!-- حقول الاختيارات -->
+        <div id="adm-oct-options-box">
+            <div class="form-group"><input type="text" id="adm-oct-opt0" class="form-input" placeholder="الخيار الأول (الصحيح دائماً هنا)" style="border-color: var(--accent-emerald);"></div>
+            <div class="form-group"><input type="text" id="adm-oct-opt1" class="form-input" placeholder="الخيار الخطأ 1"></div>
+            <div class="form-group"><input type="text" id="adm-oct-opt2" class="form-input" placeholder="الخيار الخطأ 2"></div>
+            <div class="form-group"><input type="text" id="adm-oct-opt3" class="form-input" placeholder="الخيار الخطأ 3"></div>
+        </div>
+
+        <!-- حقل الإجابة الرقمية -->
+        <div class="form-group" id="adm-oct-numeric-box" style="display: none;">
+            <label>الرقم أو التاريخ الصحيح بالضبط</label>
+            <input type="number" id="adm-oct-correct-number" class="form-input" placeholder="مثال: 1973">
+        </div>
+
+        <button class="btn-submit" id="btn-save-oct-q" onclick="saveAdminOctoberQuestion()">حفظ السؤال بالسيرفر 🚀</button>
+        <button class="admin-action-btn danger" id="btn-cancel-oct-edit" style="width: 100%; margin-top: 8px; padding: 8px; display: none;" onclick="resetAdminOctoberForm()">إلغاء التعديل 🔄</button>
+    </div>
+
+    <!-- 3. عرض الأسئلة والحذف والتعديل -->
+    <div class="section-label">📋 الأسئلة المضافة في المستوى المحدد</div>
+    <div id="admin-october-questions-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+</div>
 
 <!-- تبويب إدارة الفعاليات وحقن الأكواد للأدمن -->
 <div id="admin-section-events" style="display: none;">
@@ -4454,6 +4650,7 @@
                 <label><input type="checkbox" value="academic"> المنظم 🎓</label>
                 <label><input type="checkbox" value="tickets"> الشكاوى 📩</label>
                 <label><input type="checkbox" value="broadcast"> رسائل البث 📢</label>
+<label><input type="checkbox" value="october"> إيفنت أكتوبر 🎖️</label>
             </div>
         </div>
         <button class="btn-submit" style="background: var(--accent-highlight); color: #fff;" onclick="assignAdminRoles()">حفظ الصلاحيات للمساعد ✅</button>
@@ -5203,6 +5400,50 @@
                 </div>
 
                 <button class="btn-submit" style="margin-top: 20px; width: 100%;" onclick="navigateBack()">عودة للقائمة ↩</button>
+            </div>
+        </div>
+
+<!-- واجهة إيفنت ملحمة العبور (6 مستويات) -->
+        <div id="view-october-event" class="view-section">
+            <div class="levels-header-bar" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="color: var(--accent-gold); margin: 0; font-size: 1.15rem;">ملحمة العبور 🎖️</h3>
+                    <button class="admin-action-btn" style="padding: 4px 12px;" onclick="goHomeDirectly()">الرئيسية 🏠</button>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-sub); margin: 0;">اعبر الـ 6 مستويات الباسلة واكسب أوسمة النصر والجوائز الكبرى!</p>
+            </div>
+
+            <!-- خريطة المستويات الستة -->
+            <div id="october-levels-grid" class="levels-grid-container" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 20px;">
+                <!-- تُحقن المستويات الـ 6 هنا بالجافاسكريبت -->
+            </div>
+
+            <!-- ساحة حل الأسئلة داخل المستوى المختار -->
+            <div id="october-question-play-box" style="display: none;">
+                <div class="quiz-card" style="text-align: right;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span id="october-q-counter" class="pill-badge badge-subject">المستوى 1</span>
+                        <span id="october-q-points-badge" class="pill-badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold);">50 نقطة</span>
+                    </div>
+
+                    <h3 id="october-q-text" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;"></h3>
+
+                    <!-- حاوية الصورة (تظهر فقط في نوع صورة البطل) -->
+                    <div id="october-image-container" class="october-hero-frame" style="display: none;">
+                        <img id="october-hero-img-display" src="" alt="بطل المعركة">
+                    </div>
+
+                    <!-- حاوية الاختيارات (للـ MCQ وصورة البطل) -->
+                    <div id="october-options-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+                    <!-- حاوية سؤال الأرقام والتواريخ التقريبية -->
+                    <div id="october-number-container" style="display: none; text-align: center; margin: 15px 0;">
+                        <input type="number" id="october-numeric-input" class="form-input" placeholder="اكتب الرقم أو السنة هنا..." style="font-size: 1.25rem; font-weight: 900; text-align: center; color: var(--accent-gold);">
+                        <button class="btn-submit" style="margin-top: 10px;" onclick="submitOctoberNumericAnswer()">تأكيد الإجابة 🎯</button>
+                    </div>
+
+                    <div id="october-feedback-text" style="display: none; margin-top: 12px; font-weight: 800; font-size: 0.9rem; text-align: center;"></div>
+                </div>
             </div>
         </div>
                     
