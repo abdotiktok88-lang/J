@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.0";
+const CURRENT_APP_VERSION = "2.1.1";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -1276,46 +1276,61 @@ let hasCheckedDailyLoginSession = false;
     }
 
     // ================= تسجيل الدخول اليومي السحابي السريع =================
-    function checkDailyLoginCloudSync() {
-        if (!currentUser) return;
-        
-        const todayDate = getRealDateString();
+    // دالة فحص واستحقاق مكافأة الدخول اليومي عبر وقت السيرفر الموثوق
+function checkDailyLoginCloudSync() {
+    if (!currentUser) return;
+
+    getServerDate((todayDate, serverTimestamp) => {
         const lastLoginDate = currentUser.last_login_date || '';
         let currentStreak = currentUser.daily_streak || 0;
 
-        if (lastLoginDate !== todayDate) {
-            if (lastLoginDate) {
-                const lastDate = new Date(lastLoginDate);
-                const today = new Date(todayDate);
-                const diffTime = Math.abs(today - lastDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
-                if (diffDays > 1) {
-                    if (currentUser.has_streak_freeze) {
-                        db.ref('users/' + currentUser.phone + '/has_streak_freeze').set(false);
-                        showTopToast('تم استخدام "تجميد السلسلة" وحماية أيامك المتتالية بنجاح! 🛡️', 'info');
-                    } else {
-                        currentStreak = 0;
-                        db.ref('users/' + currentUser.phone + '/daily_streak').set(0);
-                    }
+        // 1. فحص أمني: لو المستخدم سجل في نفس يوم السيرفر، لا نفتح النافذة
+        if (lastLoginDate === todayDate) {
+            return;
+        }
+
+        // 2. حماية من التلاعب: لو تاريخ السيرفر الحقيقي أقل من تاريخ متسجل مسبقاً (قدم التاريخ ورجعه)
+        if (lastLoginDate && todayDate < lastLoginDate) {
+            console.warn("تنبيه أمني: تاريخ مسجل مسبقاً في المستقبل!");
+            return;
+        }
+
+        // 3. فحص انقطاع السلسلة
+        if (lastLoginDate) {
+            const lastDate = new Date(lastLoginDate);
+            const today = new Date(todayDate);
+            const diffTime = Math.abs(today - lastDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            if (diffDays > 1) {
+                if (currentUser.has_streak_freeze) {
+                    currentUser.has_streak_freeze = false;
+                    db.ref('users/' + currentUser.phone + '/has_streak_freeze').set(false);
+                    showTopToast('تم استخدام "تجميد السلسلة" وحماية أيامك المتتالية بنجاح! 🛡️', 'info');
+                } else {
+                    currentStreak = 0;
+                    currentUser.daily_streak = 0;
+                    db.ref('users/' + currentUser.phone + '/daily_streak').set(0);
                 }
             }
-            
-            const streakText = document.getElementById('daily-popup-streak');
-            const claimBtn = document.getElementById('btn-claim-daily-popup');
-            
-            if (streakText) streakText.innerText = `سلسلة الأيام الحالية: ${currentStreak}/7 أيام 🔥`;
-            if (claimBtn) {
-                claimBtn.disabled = false;
-                claimBtn.innerText = currentStreak === 6 ? 'استلم المكافأة الكبرى (+285 XP و +70 عملة) 🏆' : 'استلم +35 XP و +20 عملة الآن ✨';
-            }
-
-            setTimeout(() => {
-                openModal('modal-daily-reward');
-                playSuccessSound();
-            }, 500);
         }
-    }
+
+        // 4. تجهيز واجهة النافذة المنبثقة
+        const streakText = document.getElementById('daily-popup-streak');
+        const claimBtn = document.getElementById('btn-claim-daily-popup');
+
+        if (streakText) streakText.innerText = `سلسلة الأيام الحالية: ${currentStreak}/7 أيام 🔥`;
+        if (claimBtn) {
+            claimBtn.disabled = false;
+            claimBtn.innerText = currentStreak === 6 ? 'استلم المكافأة الكبرى (+285 XP و +70 عملة) 🏆' : 'استلم +35 XP و +20 عملة الآن ✨';
+        }
+
+        setTimeout(() => {
+            openModal('modal-daily-reward');
+            playSuccessSound();
+        }, 500);
+    });
+}
 
     function claimDailyRewardFast() {
         if (!currentUser) return;
@@ -12575,4 +12590,21 @@ function applyExamStatsFilters() {
     });
 
     listContainer.innerHTML = cardsHtml;
+}
+
+// دالة لجلب تاريخ اليوم الحقيقي المعتمد من خادم Firebase
+function getServerDate(callback) {
+    db.ref('.info/serverTimeOffset').once('value', function(offsetSnap) {
+        const offset = offsetSnap.val() || 0;
+        const serverTime = Date.now() + offset;
+        const d = new Date(serverTime);
+        
+        // تحويل التاريخ لصيغة YYYY-MM-DD
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const todayDate = `${year}-${month}-${day}`;
+        
+        callback(todayDate, serverTime);
+    });
 }
