@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.8";
+const CURRENT_APP_VERSION = "2.0.9";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -3921,7 +3921,7 @@ if (currentUser) {
         
         const isMaster = (currentUser.phone === "01061032507");
         const myRoles = currentUser.admin_roles || [];
-const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events'];        
+const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october', 'exam-stats'];        
         let firstAllowedTab = null;
 
         // إظهار وإخفاء الزراير بناءً على الصلاحية
@@ -3959,9 +3959,19 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
     function switchAdminTab(tabName) {
     if(!tabName) return; 
     playClickSound();
+
+    // فحص حماية الصلاحية لقسم إحصائيات الاختبارات
+    if (tabName === 'exam-stats') {
+        const isMaster = (currentUser && currentUser.phone === "01061032507");
+        const hasRole = currentUser && currentUser.admin_roles && currentUser.admin_roles.includes('exam-stats');
+        if (!isMaster && !hasRole) {
+            showTopToast('عفواً، ليس لديك صلاحية للوصول لإحصائيات الاختبارات!', 'error');
+            return;
+        }
+    }
     
-    // تمت إضافة 'events' هنا لإخفائه تلقائياً عند فتح أي قسم آخر
-    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october'].forEach(t => {
+    // إخفاء كل التبويبات تلقائياً عند التبديل
+    ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october', 'exam-stats'].forEach(t => {
         const tabBtn = document.getElementById('tab-admin-' + t);
         const tabSec = document.getElementById('admin-section-' + t);
         if (tabBtn) tabBtn.classList.remove('active');
@@ -3984,7 +3994,10 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
     if (tabName === 'notifs') { loadAdminNotificationsHistory(); }
     if (tabName === 'quotes') { if(typeof loadAdminQuotesList === 'function') loadAdminQuotesList(); }
     if (tabName === 'roles') { loadSubAdminsList(); }
-    if (tabName === 'events') { loadAdminEventsList(); } // 👈 تحميل قائمة الفعاليات عند الضغط
+    if (tabName === 'events') { loadAdminEventsList(); }
+    
+    // تفعيل المزامنة اللحظية لإحصائيات الاختبارات
+    if (tabName === 'exam-stats') { initAdminExamStatsRealtime(); }
 
     if (tabName === 'academic') {
         db.ref('academic_tasks').once('value', (snap) => {
@@ -3999,10 +4012,10 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
 
     if (tabName === 'science') { loadAdminScienceContent(); }
     if (tabName === 'guess-game') { loadAdminGuessCategories(); }
-if (tabName === 'october') { loadAdminOctoberConfig(); loadAdminOctoberQuestions(document.getElementById('adm-oct-level-select').value); }
+    if (tabName === 'october') { loadAdminOctoberConfig(); loadAdminOctoberQuestions(document.getElementById('adm-oct-level-select').value); }
 }
 
-// ================= محرك إضافة وإزالة المساعدين (جديد) =================
+// ================= محرك إدارة وتعديل المساعدين =================
 const roleNamesAr = {
     'notifs': 'الإشعارات 🔔', 'quotes': 'الاقتباسات 📜', 'quiz': 'الكلاسيك 🧠', 'ehbed-quiz': 'اهبد صح 🔢',
     'risk-quiz': 'ريسك ⚡', 'levels-sys': 'المستويات 🗺️', 'science': 'المحتوى العلمي 📚',
@@ -4010,7 +4023,7 @@ const roleNamesAr = {
     'analytics': 'الإحصائيات 📊', 'store': 'المتجر 🏷️', 'broadcast': 'رسائل البث 📢', 
     'books': 'روابط الكتب 📥', 'codes': 'الأكواد 🎁', 'achievements': 'الإنجازات 🎖️', 
     'guess-game': 'تخمين الصورة 📱', 'academy': 'أكاديمية الجودة 💼',
-    'october': 'إيفنت أكتوبر 🎖️'
+    'october': 'إيفنت أكتوبر 🎖️', 'exam-stats': 'إحصائيات الاختبارات 📊'
 };
 
 async function assignAdminRoles() {
@@ -4018,14 +4031,13 @@ async function assignAdminRoles() {
     const idInput = document.getElementById('adm-role-id').value.trim();
     if (!idInput) return showTopToast('يرجى كتابة ID الطالب أولاً!', 'error');
 
-    // تجميع الأقسام اللي انت علمت عليها صح
+    // تجميع الخيارات المحددة
     const checkboxes = document.querySelectorAll('#adm-roles-checkboxes input[type="checkbox"]:checked');
     const selectedRoles = Array.from(checkboxes).map(cb => cb.value);
 
     showTopToast('جاري الفحص والحفظ... ⏳', 'info');
 
     try {
-        // البحث عن المستخدم بالـ ID
         const snapshot = await db.ref('users').orderByChild('student_id').equalTo(Number(idInput)).once('value');
         if (!snapshot.exists()) return showTopToast('لم يتم العثور على طالب بهذا الـ ID!', 'error');
 
@@ -4034,37 +4046,59 @@ async function assignAdminRoles() {
         if (targetPhone === "01061032507") return showTopToast('لا يمكن تعديل صلاحيات المطور الأساسي!', 'error');
 
         if (selectedRoles.length === 0) {
-            // سحب الصلاحيات لو مفيش ولا مربع متعلم
             await db.ref('users/' + targetPhone + '/admin_roles').remove();
             showTopToast('تم سحب جميع الصلاحيات من الطالب ورجوعه لحالة عادية', 'info');
         } else {
-            // حفظ الصلاحيات المحددة
             await db.ref('users/' + targetPhone + '/admin_roles').set(selectedRoles);
-            showTopToast('تم ترقية الطالب لمساعد وحفظ الصلاحيات بنجاح ✅', 'success');
+            showTopToast('تم حفظ وتحديث صلاحيات الطالب بنجاح ✅', 'success');
         }
         
-        // تفريغ الحقول وإعادة التحميل
+        // تفريغ الحقول وإعادة ضبط الواجهة
         document.getElementById('adm-role-id').value = '';
         document.querySelectorAll('#adm-roles-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
-        loadAdminData(true); // تحديث بيانات كل الطلاب
-        setTimeout(loadSubAdminsList, 1000); // تحديث قائمة المساعدين
+        
+        loadAdminData(true);
+        setTimeout(loadSubAdminsList, 1000);
 
     } catch(err) {
         showTopToast('حدث خطأ في الاتصال!', 'error');
     }
 }
 
+function editSubAdminRoles(studentId, rolesJsonEscaped) {
+    playClickSound();
+    let currentRoles = [];
+    try {
+        currentRoles = JSON.parse(decodeURIComponent(rolesJsonEscaped));
+    } catch(e) {
+        currentRoles = [];
+    }
+
+    // تعبئة حقل الـ ID
+    const idInput = document.getElementById('adm-role-id');
+    if (idInput) {
+        idInput.value = studentId;
+        idInput.focus();
+    }
+
+    // تصفير كل المربعات أولاً
+    const checkboxes = document.querySelectorAll('#adm-roles-checkboxes input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = currentRoles.includes(cb.value);
+    });
+
+    showTopToast(`تم جلب الصلاحيات الحالية لـ ID: ${studentId}. يمكنك التعديل والضغط على حفظ ✏️`, 'info');
+}
+
 function loadSubAdminsList() {
     const container = document.getElementById('admin-roles-list');
     if(!container) return;
     
-    // بنسحب من الداتا اللي متحملة أصلاً في لوحة الأدمن
     if(adminAllUsersData.length === 0) {
          container.innerHTML = '<p style="text-align:center;">جاري جلب البيانات... اضغط تحديث من قائمة الطلاب.</p>';
          return;
     }
 
-    // استخراج الطلاب اللي معاهم أي صلاحية أدمن ومخفيين من المطور
     const subAdmins = adminAllUsersData.filter(u => u.admin_roles && u.admin_roles.length > 0 && u.phone !== "01061032507");
     
     if (subAdmins.length === 0) {
@@ -4074,18 +4108,21 @@ function loadSubAdminsList() {
 
     let html = '';
     subAdmins.forEach(admin => {
-        // تحويل أسماء الصلاحيات الإنجليزية لعربي عشان تبقى واضحة
         const rolesAr = admin.admin_roles.map(r => roleNamesAr[r] || r).join('، '); 
-        
+        const rolesJson = encodeURIComponent(JSON.stringify(admin.admin_roles));
+
         html += `
         <div class="admin-item-card" style="flex-direction: column; align-items: flex-start; gap: 8px; border-color: var(--accent-highlight);">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                 <span style="color: var(--accent-highlight); font-weight: 900; font-size: 0.95rem;">🛡️ ${admin.name}</span>
-                <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="removeSubAdmin('${admin.phone}')">سحب الصلاحيات ❌</button>
+                <div style="display: flex; gap: 6px;">
+                    <button class="admin-action-btn" style="padding: 3px 8px; font-size: 0.72rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="editSubAdminRoles('${admin.student_id}', '${rolesJson}')">تعديل ✏️</button>
+                    <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="removeSubAdmin('${admin.phone}')">سحب كلي ❌</button>
+                </div>
             </div>
             <div style="font-size: 0.75rem; color: var(--text-sub);">ID: ${admin.student_id} | هاتف: ${admin.phone}</div>
             <div style="font-size: 0.8rem; color: var(--accent-gold); margin-top: 4px; line-height: 1.6; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 8px; width: 100%;">
-                <b>مسؤول عن:</b> ${rolesAr}
+                <b>الصلاحيات الحالية:</b> ${rolesAr}
             </div>
         </div>`;
     });
@@ -12221,4 +12258,149 @@ function deleteAdminOctoberQuestion(qId, level) {
             loadAdminOctoberQuestions(level);
         });
     }
+}
+
+// ============================================================================
+// ================= نظام إحصائيات الاختبارات المباشر للأدمن =====================
+// ============================================================================
+
+let realtimeExamStatsActive = false;
+let globalRawExamsData = [];
+let currentExamFilterSubject = 'all';
+
+function initAdminExamStatsRealtime() {
+    if (realtimeExamStatsActive) return;
+    realtimeExamStatsActive = true;
+
+    db.ref('scientific_content').on('value', sciSnap => {
+        const sciData = sciSnap.val() || {};
+        
+        db.ref('users').on('value', usersSnap => {
+            const usersData = usersSnap.val() || {};
+            processExamsData(sciData, usersData);
+        });
+    });
+}
+
+function processExamsData(sciData, usersData) {
+    const totalStudents = Object.keys(usersData).length || 0;
+    let allExams = [];
+    let totalCompletions = 0;
+
+    Object.keys(sciData).forEach(subjectKey => {
+        const subject = sciData[subjectKey];
+        ['theory', 'practical'].forEach(partKey => {
+            if (subject[partKey] && subject[partKey].quizzes) {
+                const quizzes = subject[partKey].quizzes;
+                Object.keys(quizzes).forEach(qKey => {
+                    const item = quizzes[qKey];
+                    if (item.formatType === 'exam') {
+                        let completedCount = 0;
+
+                        // حساب عدد التسليمات بالأرقام فقط
+                        Object.values(usersData).forEach(user => {
+                            if (user.rewarded_exams && Array.isArray(user.rewarded_exams)) {
+                                if (user.rewarded_exams.includes(qKey)) {
+                                    completedCount++;
+                                }
+                            }
+                        });
+
+                        totalCompletions += completedCount;
+
+                        allExams.push({
+                            id: qKey,
+                            title: item.title || 'اختبار بدون عنوان',
+                            subjectName: decodeURIComponent(subjectKey),
+                            part: partKey === 'theory' ? 'نظري' : 'عملي',
+                            time: item.examTime || 0,
+                            completedCount: completedCount,
+                            remainingCount: Math.max(0, totalStudents - completedCount)
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    globalRawExamsData = allExams;
+
+    const totalCountEl = document.getElementById('stat-exams-total-count');
+    const totalCompEl = document.getElementById('stat-exams-total-completions');
+
+    if (totalCountEl) totalCountEl.innerText = allExams.length;
+    if (totalCompEl) totalCompEl.innerText = totalCompletions;
+
+    applyExamStatsFilters();
+}
+
+function setExamStatsFilterSubject(subject, btn) {
+    playClickSound();
+    currentExamFilterSubject = subject;
+    
+    const pills = document.querySelectorAll('#exam-stats-subject-pills .qbank-filter-btn');
+    pills.forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    applyExamStatsFilters();
+}
+
+function applyExamStatsFilters() {
+    const listContainer = document.getElementById('admin-exams-metrics-list');
+    if (!listContainer) return;
+
+    if (globalRawExamsData.length === 0) {
+        listContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">لا توجد اختبارات مضافة بنوع (Exam) حتى الآن.</p>';
+        return;
+    }
+
+    const searchTerm = (document.getElementById('exam-stats-search-input')?.value || '').trim().toLowerCase();
+    const sortType = document.getElementById('exam-stats-sort-select')?.value || 'high';
+
+    let filtered = globalRawExamsData.filter(exam => {
+        const matchesSubject = (currentExamFilterSubject === 'all') || (exam.subjectName === currentExamFilterSubject);
+        const matchesSearch = exam.title.toLowerCase().includes(searchTerm) || 
+                              exam.subjectName.toLowerCase().includes(searchTerm) || 
+                              exam.part.toLowerCase().includes(searchTerm);
+        return matchesSubject && matchesSearch;
+    });
+
+    if (sortType === 'high') {
+        filtered.sort((a, b) => b.completedCount - a.completedCount);
+    } else if (sortType === 'low') {
+        filtered.sort((a, b) => a.completedCount - b.completedCount);
+    }
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">لا توجد نتائج مطابقة لشروط البحث والفلترة.</p>';
+        return;
+    }
+
+    let cardsHtml = '';
+    filtered.forEach(exam => {
+        cardsHtml += `
+        <div class="acad-glass-card" style="margin-bottom: 0; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 900; margin-bottom: 2px;">${exam.title}</h4>
+                    <span style="font-size: 0.74rem; color: var(--accent-gold); font-weight: 700;">${exam.subjectName} (${exam.part})</span>
+                </div>
+                <span class="pill-badge badge-subject" style="font-size: 0.7rem;">⏱️ ${exam.time} دقيقة</span>
+            </div>
+
+            <!-- أرقام الإحصائيات المباشرة -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; background: var(--bg-primary); padding: 10px; border-radius: 12px; border: 1px solid var(--border-card);">
+                <div>
+                    <div style="font-size: 1.3rem; font-weight: 900; color: var(--accent-emerald);">${exam.completedCount}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700;">الطلاب المجتازين</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.3rem; font-weight: 900; color: #ef4444;">${exam.remainingCount}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-sub); font-weight: 700;">المتبقي لم يؤدوه</div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    listContainer.innerHTML = cardsHtml;
 }

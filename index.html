@@ -4486,8 +4486,61 @@
                 <button class="auth-tab-btn" id="tab-admin-levels-sys" onclick="switchAdminTab('levels-sys')">تحدي المستويات 🗺️</button>
                 <button class="auth-tab-btn" id="tab-admin-academy" onclick="switchAdminTab('academy')">أكاديمية الجودة 💼</button>
                 <button class="auth-tab-btn" id="tab-admin-science" onclick="switchAdminTab('science')">المحتوى العلمي 📚</button>
+<button class="auth-tab-btn" id="tab-admin-exam-stats" onclick="switchAdminTab('exam-stats')">📝 إحصائيات الاختبارات</button>
 <button class="auth-tab-btn" id="tab-admin-roles" onclick="switchAdminTab('roles')">إدارة الصلاحيات 🛡️</button>
             </div>
+
+<!-- تبويب إحصائيات الاختبارات الموقوتة اللحظية (أرقام مجردة بدون نسب أو إقبال) -->
+<div id="admin-section-exam-stats" style="display: none;">
+    <div class="auth-card" style="padding: 18px; margin-bottom: 16px; border-color: var(--accent-emerald);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="color: var(--accent-emerald); margin: 0; font-size: 1.1rem;">📊 إحصائيات الاختبارات الدراسية (مباشر)</h3>
+            <span class="pill-badge badge-timer-active" style="font-size: 0.72rem;">متزامن لحظياً ⚡</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 15px;">
+            متابعة عدد الطلاب الذين أتموا كل اختبار وعدد المتبقين بالأرقام الصريحة.
+        </p>
+
+        <!-- كروت النظرة العامة الإجمالية -->
+        <div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+            <div class="analytics-card" style="padding: 12px 8px;">
+                <div class="analytics-card-val" id="stat-exams-total-count" style="color: var(--accent-highlight); font-size: 1.35rem;">0</div>
+                <div class="analytics-card-label" style="font-size: 0.75rem;">الاختبارات المتاحة</div>
+            </div>
+            <div class="analytics-card" style="padding: 12px 8px;">
+                <div class="analytics-card-val" id="stat-exams-total-completions" style="color: var(--accent-emerald); font-size: 1.35rem;">0</div>
+                <div class="analytics-card-label" style="font-size: 0.75rem;">إجمالي مرات الاجتياز</div>
+            </div>
+        </div>
+
+        <!-- 1. شريط البحث وترتيب الأعداد -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="exam-stats-search-input" class="form-input" placeholder="🔍 بحث باسم الاختبار أو السكشن..." style="padding: 10px 12px; font-size: 0.85rem;" oninput="applyExamStatsFilters()">
+            <select id="exam-stats-sort-select" class="form-input" style="background: var(--bg-primary); padding: 10px 6px; font-size: 0.82rem;" onchange="applyExamStatsFilters()">
+                <option value="high">الأكثر اجتيازاً ⬆️</option>
+                <option value="low">الأقل اجتيازاً ⬇️</option>
+                <option value="default">الترتيب الافتراضي 📋</option>
+            </select>
+        </div>
+
+        <!-- 2. أزرار الفلترة السريعة بالمواد -->
+        <div class="qbank-filters" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px;" id="exam-stats-subject-pills">
+            <button class="qbank-filter-btn active" onclick="setExamStatsFilterSubject('all', this)">الكل</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('تكنولوجيا الحبوب', this)">🌾 حبوب</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('تكنولوجيا السكر', this)">🍬 سكر</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('كيمياء ألبان', this)">🥛 كيمياء ألبان</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('تكنولوجيا الجبن', this)">🧀 جبن</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('الإدارة الفنية لمصانع الالبان', this)">🏢 إدارة فنية</button>
+            <button class="qbank-filter-btn" onclick="setExamStatsFilterSubject('تكنولوجيا اللحوم والأسماك', this)">🥩 لحوم وأسماك</button>
+        </div>
+    </div>
+
+    <!-- شبكة كروت الإحصائيات الفردية -->
+    <div class="section-label">📋 تفاصيل أعداد كل اختبار</div>
+    <div id="admin-exams-metrics-list" style="display: flex; flex-direction: column; gap: 10px;">
+        <p style="text-align: center; color: var(--text-sub); font-size: 0.85rem;">جاري تحميل البيانات... ⏳</p>
+    </div>
+</div>
 
 <!-- تبويب إدارة إيفنت 6 أكتوبر للأدمن -->
 <div id="admin-section-october" style="display: none;">
@@ -4651,6 +4704,7 @@
                 <label><input type="checkbox" value="tickets"> الشكاوى 📩</label>
                 <label><input type="checkbox" value="broadcast"> رسائل البث 📢</label>
 <label><input type="checkbox" value="october"> إيفنت أكتوبر 🎖️</label>
+<label><input type="checkbox" value="exam-stats"> إحصائيات الاختبارات 📊</label>
             </div>
         </div>
         <button class="btn-submit" style="background: var(--accent-highlight); color: #fff;" onclick="assignAdminRoles()">حفظ الصلاحيات للمساعد ✅</button>
