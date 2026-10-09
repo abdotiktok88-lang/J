@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.1";
+const CURRENT_APP_VERSION = "2.1.2";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -11876,7 +11876,10 @@ function renderOctoberCurrentQuestion() {
 }
 
 function startOctoberQuestionTimer() {
-    octTimeLeft = 15;
+    const q = currentOctLevelQuestions[currentOctQIndex];
+    // أخذ وقت السؤال المخصص من لوحة الأدمن، أو 15 ثانية افتراضياً لو لم يتم تحديده
+    octTimeLeft = (q && q.timer) ? parseInt(q.timer) : 15;
+
     const timerEl = document.getElementById('october-q-timer');
     if (timerEl) {
         timerEl.innerText = `⏱️ ${octTimeLeft}ث`;
@@ -11909,7 +11912,10 @@ function handleOctoberTimeout() {
     const numInput = document.getElementById('october-numeric-input');
     if (numInput) numInput.disabled = true;
 
-    showTopToast('انتهى الوقت (15 ثانية)! الانتقال للسؤال التالي... ⏳', 'error');
+    const q = currentOctLevelQuestions[currentOctQIndex];
+    const totalTime = (q && q.timer) ? q.timer : 15;
+
+    showTopToast(`انتهى الوقت (${totalTime} ثانية)! الانتقال للسؤال التالي... ⏳`, 'error');
     setTimeout(() => advanceOctoberQuestion(), 1200);
 }
 
@@ -12319,6 +12325,7 @@ function saveAdminOctoberQuestion() {
     const level = document.getElementById('adm-oct-level-select').value;
     const type = document.getElementById('adm-oct-type-select').value;
     const question = document.getElementById('adm-oct-q-text').value.trim();
+    const timerVal = parseInt(document.getElementById('adm-oct-timer').value) || 15; // قراءة التايمر المخصص
     const editId = document.getElementById('adm-oct-q-id').value;
     const qId = editId ? editId : 'oct_q_' + Date.now();
 
@@ -12327,7 +12334,12 @@ function saveAdminOctoberQuestion() {
         return;
     }
 
-    let payload = { id: qId, type, question };
+    let payload = { 
+        id: qId, 
+        type: type, 
+        question: question,
+        timer: timerVal // حفظ مدة التايمر مع بيانات السؤال
+    };
 
     if (type === 'number') {
         const numVal = parseFloat(document.getElementById('adm-oct-correct-number').value);
@@ -12360,7 +12372,7 @@ function saveAdminOctoberQuestion() {
     }
 
     db.ref(`october_event/levels/${level}/${qId}`).set(payload).then(() => {
-        showTopToast('تم حفظ السؤال بنجاح! 🚀', 'success');
+        showTopToast('تم حفظ السؤال مع مدة التايمر بنجاح! 🚀', 'success');
         resetAdminOctoberForm();
         loadAdminOctoberQuestions(level);
     });
@@ -12381,13 +12393,15 @@ function loadAdminOctoberQuestions(level) {
         snap.forEach(c => {
             const q = c.val();
             const id = c.key;
+            const qTime = q.timer || 15;
             html += `
             <div class="admin-item-card" style="padding: 10px 12px;">
                 <div class="admin-item-info">
                     <div class="admin-item-name" style="font-size: 0.88rem;">[${q.type}] ${q.question}</div>
+                    <div style="font-size: 0.75rem; color: var(--accent-gold); margin-top: 2px;">⏱️ المدة: ${qTime} ثانية</div>
                     ${q.type === 'hero_image' ? `<div style="margin-top: 4px;"><img src="${q.imageUrl}" style="width: 35px; height: 35px; border-radius: 6px; object-fit: cover;"></div>` : ''}
                 </div>
-                <div style="display: flex; gap: 6px;">
+                <div style="display: flex; gap: 6px; align-items: center;">
                     <button class="admin-action-btn" style="padding: 3px 8px; font-size: 0.72rem;" onclick='editAdminOctoberQuestion(${JSON.stringify(q)}, "${level}")'>تعديل ✏️</button>
                     <button class="admin-action-btn danger" style="padding: 3px 8px; font-size: 0.72rem;" onclick="deleteAdminOctoberQuestion('${id}', '${level}')">حذف 🗑️</button>
                 </div>
@@ -12404,6 +12418,10 @@ function editAdminOctoberQuestion(q, level) {
     document.getElementById('adm-oct-level-select').value = level;
     document.getElementById('adm-oct-type-select').value = q.type;
     document.getElementById('adm-oct-q-text').value = q.question;
+    
+    // وضع وقت السؤال المخصص في الخانة، أو 15 لو لم يكن مسجلاً
+    const timerInput = document.getElementById('adm-oct-timer');
+    if (timerInput) timerInput.value = q.timer || 15;
 
     toggleAdminOctoberTypeInputs(q.type);
 
@@ -12433,6 +12451,10 @@ function resetAdminOctoberForm() {
     document.getElementById('adm-oct-opt2').value = '';
     document.getElementById('adm-oct-opt3').value = '';
     document.getElementById('adm-oct-correct-number').value = '';
+    
+    const timerInput = document.getElementById('adm-oct-timer');
+    if (timerInput) timerInput.value = '15'; // إعادة تعيين القيمة الافتراضية
+
     document.getElementById('btn-cancel-oct-edit').style.display = 'none';
     document.getElementById('btn-save-oct-q').innerText = 'حفظ السؤال بالسيرفر 🚀';
 }
