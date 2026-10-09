@@ -5419,14 +5419,19 @@
             </div>
 
             <!-- ساحة حل الأسئلة داخل المستوى المختار -->
-            <div id="october-question-play-box" style="display: none;">
-                <div class="quiz-card" style="text-align: right;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span id="october-q-counter" class="pill-badge badge-subject">المستوى 1</span>
-                        <span id="october-q-points-badge" class="pill-badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold);">50 نقطة</span>
-                    </div>
+<div id="october-question-play-box" style="display: none;">
+    <div class="quiz-card" style="text-align: right;">
+        
+        <!-- شريط الرأس: السؤال والتايمر يميناً والنقاط يساراً -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span id="october-q-counter" class="pill-badge badge-subject">المستوى 1</span>
+                <span id="october-q-timer" class="pill-badge badge-timer-urgent" style="font-size: 0.8rem; font-weight: 900;">⏱️ 15ث</span>
+            </div>
+            <span id="october-q-points-badge" class="pill-badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold);">50 نقطة</span>
+        </div>
 
-                    <h3 id="october-q-text" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;"></h3>
+        <h3 id="october-q-text" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;"></h3>
 
                     <!-- حاوية الصورة (تظهر فقط في نوع صورة البطل) -->
                     <div id="october-image-container" class="october-hero-frame" style="display: none;">
