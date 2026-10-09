@@ -5487,10 +5487,10 @@
 
         <h3 id="october-q-text" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;"></h3>
 
-                    <!-- حاوية الصورة (تظهر فقط في نوع صورة البطل) -->
-                    <div id="october-image-container" class="october-hero-frame" style="display: none;">
-                        <img id="october-hero-img-display" src="" alt="بطل المعركة">
-                    </div>
+                    <!-- حاوية صورة الشخصية/البطل متجاوبة ومتناسقة -->
+<div id="october-image-container" style="display: none; width: 100%; justify-content: center; align-items: center; margin: 10px 0 16px; background: rgba(0, 0, 0, 0.25); border-radius: 14px; padding: 8px; border: 1px solid var(--border-card); box-sizing: border-box;">
+    <img id="october-hero-img-display" src="" alt="شخصية العبور" style="max-width: 100%; max-height: 230px; width: auto; height: auto; object-fit: contain; border-radius: 10px; display: block; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+</div>
 
                     <!-- حاوية الاختيارات (للـ MCQ وصورة البطل) -->
                     <div id="october-options-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -6289,6 +6289,27 @@
         <div style="display: flex; gap: 10px;">
             <button onclick="startActualExamAfterConfirmation()" class="btn-primary" style="flex: 2; padding: 12px; font-weight: 900; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 12px;">بدء الاختبار الآن 🚀</button>
             <button onclick="closeExamRulesModal()" class="admin-action-btn" style="flex: 1; padding: 12px; font-weight: 700; border-radius: 12px;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة نتيجة مستوى إيفنت أكتوبر -->
+<div id="modal-october-result" class="modal-overlay">
+    <div class="auth-card" style="text-align: center; max-width: 360px; width: 90%; border-color: var(--accent-gold); padding: 25px 20px;">
+        <img id="oct-res-icon" src="https://img.icons8.com/fluency/96/trophy.png" style="width: 75px; height: 75px; margin-bottom: 12px;" alt="Result">
+        <h3 id="oct-res-title" style="font-size: 1.25rem; margin-bottom: 6px; color: var(--text-main);">نتيجة المستوى</h3>
+        <p id="oct-res-desc" style="font-size: 0.88rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px;"></p>
+        
+        <!-- صندوق المكافأة في حال الفوز -->
+        <div id="oct-res-reward-box" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 10px; margin-bottom: 18px;">
+            <div style="font-size: 0.78rem; color: var(--text-sub); font-weight: 700;">المكافأة المستحقة:</div>
+            <div id="oct-res-reward-text" style="font-size: 1.05rem; font-weight: 900; color: var(--accent-emerald); margin-top: 4px;"></div>
+        </div>
+
+        <!-- أزرار التحكم -->
+        <div id="oct-res-actions" style="display: flex; gap: 8px; flex-direction: column;">
+            <button id="btn-oct-res-primary" class="btn-submit" onclick="closeOctoberResultModal()">حسناً، عودة للخريطة 🗺️</button>
+            <button id="btn-oct-retry" class="btn-submit danger" style="display: none; background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="retryOctoberLevelWithFee()">إعادة المحاولة (100 عملة 💸)</button>
         </div>
     </div>
 </div>

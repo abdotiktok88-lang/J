@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.0.9";
+const CURRENT_APP_VERSION = "2.1.0";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -11750,6 +11750,19 @@ function startOctoberLevel(levelNum, isUnlocked) {
         return;
     }
 
+    // 👈 فحص: هل الطالب رسب في هذا المستوى سابقاً ولم يدفع رسوم الإعادة؟
+    const failedLevels = currentUser.october_failed_levels || {};
+    if (failedLevels[levelNum]) {
+        currentOctLevel = levelNum;
+        // إظهار نافذة تطلب منه دفع الـ 100 عملة أولاً
+        handleOctoberLevelFail(
+            (octoberEventData.levels && octoberEventData.levels[levelNum] ? Object.keys(octoberEventData.levels[levelNum]).length : 0),
+            1
+        );
+        showTopToast('لقد رسبت في هذا المستوى سابقاً! يلزم دفع 100 عملة لإعادة المحاولة 🪙', 'error');
+        return;
+    }
+
     const questionsObj = (octoberEventData.levels && octoberEventData.levels[levelNum]) || {};
     currentOctLevelQuestions = Object.values(questionsObj);
 
@@ -11761,7 +11774,7 @@ function startOctoberLevel(levelNum, isUnlocked) {
     playClickSound();
     currentOctLevel = levelNum;
 
-    // استعادة الجلسة المحفوظة إذا خرج الطالب في منتصف المستوى
+    // استعادة الجلسة المحفوظة
     const savedSession = JSON.parse(localStorage.getItem(`oct_session_${currentUser.phone}_lvl_${levelNum}`) || 'null');
     if (savedSession && savedSession.qIndex < currentOctLevelQuestions.length) {
         currentOctQIndex = savedSession.qIndex;
@@ -11817,7 +11830,13 @@ function renderOctoberCurrentQuestion() {
 
     if (q.type === 'hero_image') {
         imgContainer.style.display = 'flex';
-        document.getElementById('october-hero-img-display').src = q.imageUrl;
+        const heroImg = document.getElementById('october-hero-img-display');
+        heroImg.src = q.imageUrl;
+        // تقييد أبعاد الصورة برمجياً لضمان عدم تمددها على أي شاشة
+        heroImg.style.maxWidth = '100%';
+        heroImg.style.maxHeight = '230px';
+        heroImg.style.objectFit = 'contain';
+
         optContainer.style.display = 'flex';
         numContainer.style.display = 'none';
         renderOctoberOptions(q);
@@ -11834,6 +11853,7 @@ function renderOctoberCurrentQuestion() {
         if (numInput) {
             numInput.value = '';
             numInput.disabled = false;
+            numInput.focus();
         }
     }
 
@@ -11959,7 +11979,6 @@ function submitOctoberNumericAnswer() {
         playErrorSound();
         fbText.style.color = '#ef4444';
         fbText.innerHTML = `❌ إجابة خاطئة! الرقم الصحيح كان (${target}).`;
-        // انتقال مباشر للسؤال التالي
         setTimeout(() => advanceOctoberQuestion(), 1400);
     }
 }
@@ -11985,13 +12004,84 @@ function evaluateLevelResult() {
 
     if (octCorrectAnswersInLevel >= passingThreshold) {
         // نجح في المستوى
-        completeOctoberLevelSuccess();
+        completeOctoberLevelSuccess(totalQuestions);
     } else {
-        // رسب في المستوى ويجب إعادته
-        playErrorSound();
-        alert(`للأسف لم تعبر المستوى ${currentOctLevel}!\nأجبت على (${octCorrectAnswersInLevel} من ${totalQuestions}) إجابات صحيحة.\nشرط العبور: إجابة أكثر من نصف الأسئلة (على الأقل ${passingThreshold} صح).\nحاول مجدداً يا بطل! ⚔️`);
-        loadOctoberEventUserView();
+        // رسب في المستوى: إظهار نافذة الرسوب المنبثقة مع زر إعادة المحاولة بـ 100 عملة
+        handleOctoberLevelFail(totalQuestions, passingThreshold);
     }
+}
+
+// معالجة رسوب المستوى وعرض النافذة المنبثقة
+function handleOctoberLevelFail(totalQuestions, passingThreshold) {
+    playErrorSound();
+
+    // 👈 تسجيل أن الطالب رسب في هذا المستوى ويحتاج لدفع رسوم لإعادة فتحه
+    if (!currentUser.october_failed_levels) currentUser.october_failed_levels = {};
+    currentUser.october_failed_levels[currentOctLevel] = true;
+    db.ref('users/' + currentUser.phone + '/october_failed_levels').set(currentUser.october_failed_levels);
+
+    const modal = document.getElementById('modal-october-result');
+    const icon = document.getElementById('oct-res-icon');
+    const title = document.getElementById('oct-res-title');
+    const desc = document.getElementById('oct-res-desc');
+    const rewardBox = document.getElementById('oct-res-reward-box');
+    const retryBtn = document.getElementById('btn-oct-retry');
+    const primaryBtn = document.getElementById('btn-oct-res-primary');
+
+    if (icon) icon.src = "https://img.icons8.com/fluency/96/cancel.png";
+    if (title) {
+        title.innerText = `لم تعبر المستوى ${currentOctLevel}! ❌`;
+        title.style.color = "#ef4444";
+    }
+    if (desc) {
+        desc.innerHTML = `أجبت على <b>(${octCorrectAnswersInLevel} من ${totalQuestions})</b> إجابات صحيحة.<br>شرط العبور هو إجابة أكثر من نصف الأسئلة (على الأقل ${passingThreshold} صح).<br><br><span style="color: var(--accent-gold); font-size: 0.8rem; font-weight: 700;">رسوم إعادة المحاولة: 100 عملة.</span>`;
+    }
+
+    if (rewardBox) rewardBox.style.display = 'none';
+    if (retryBtn) retryBtn.style.display = 'block';
+    if (primaryBtn) {
+        primaryBtn.innerText = 'العودة للخريطة 🗺️';
+        primaryBtn.onclick = function() {
+            closeOctoberResultModal();
+        };
+    }
+
+    if (modal) modal.classList.add('show');
+}
+
+// إعادة محاولة المستوى بخصم 100 عملة
+function retryOctoberLevelWithFee() {
+    playClickSound();
+    const RETRY_COST = 100;
+
+    if (!currentUser || (currentUser.coins || 0) < RETRY_COST) {
+        showTopToast(`عفواً! رصيدك لا يكفي لإعادة المحاولة (تحتاج ${RETRY_COST} عملة) 🪙`, 'error');
+        return;
+    }
+
+    // خصم العملات
+    currentUser.coins = (currentUser.coins || 0) - RETRY_COST;
+    
+    // 👈 مسح علامة الرسوب حتى يتمكن من الدخول الآن
+    if (currentUser.october_failed_levels) {
+        delete currentUser.october_failed_levels[currentOctLevel];
+    }
+
+    db.ref('users/' + currentUser.phone).update({
+        coins: currentUser.coins,
+        october_failed_levels: currentUser.october_failed_levels || null
+    });
+
+    recordUserTransaction(`إعادة محاولة المستوى ${currentOctLevel} (إيفنت أكتوبر)`, 0, -RETRY_COST, 'purchase');
+    
+    updateProfileUI();
+    closeOctoberResultModal();
+
+    showTopToast(`تم خصم ${RETRY_COST} عملة.. بالتوفيق في المحاولة الجديدة! ⚔️`, 'info');
+
+    setTimeout(() => {
+        startOctoberLevel(currentOctLevel, true);
+    }, 400);
 }
 
 function getOctoberLevelReward(levelNum) {
@@ -12004,8 +12094,8 @@ function getOctoberLevelReward(levelNum) {
     return { xp: levelNum * 100, coins: levelNum * 20 };
 }
 
-// 8. صرف الجوائز وتحديث التقدم عند اجتياز المستوى بنجاح
-function completeOctoberLevelSuccess() {
+// 8. صرف الجوائز وتحديث التقدم عند اجتياز المستوى بنجاح وعرض النافذة المنبثقة
+function completeOctoberLevelSuccess(totalQuestions) {
     playSuccessSound();
     triggerConfetti();
 
@@ -12015,6 +12105,13 @@ function completeOctoberLevelSuccess() {
 
     let updates = {};
 
+    // 1. مسح علامة الرسوب لهذا المستوى فور النجاح
+    if (currentUser.october_failed_levels && currentUser.october_failed_levels[currentOctLevel]) {
+        delete currentUser.october_failed_levels[currentOctLevel];
+        updates.october_failed_levels = currentUser.october_failed_levels;
+    }
+
+    // 2. صرف المكافأة إن لم تكن مستلمة مسبقاً
     if (!isAlreadyClaimed) {
         claimedRewards.push(currentOctLevel);
         currentUser.october_claimed_levels = claimedRewards;
@@ -12030,6 +12127,7 @@ function completeOctoberLevelSuccess() {
         recordUserTransaction(`مكافأة اجتياز المستوى ${currentOctLevel} (إيفنت أكتوبر)`, rewards.xp, rewards.coins, 'reward');
     }
 
+    // 3. فتح المستوى التالي
     let userProgress = currentUser.october_progress || 1;
     if (currentOctLevel >= userProgress && currentOctLevel < 6) {
         userProgress = currentOctLevel + 1;
@@ -12040,21 +12138,56 @@ function completeOctoberLevelSuccess() {
     db.ref('users/' + currentUser.phone).update(updates).then(() => {
         updateProfileUI();
 
-        let rewardMsg = !isAlreadyClaimed 
-            ? ` وحصلت على +${rewards.xp} XP و +${rewards.coins} عملة! 🎁`
-            : ` (المكافأة استُلمت مسبقاً)`;
+        const modal = document.getElementById('modal-october-result');
+        const icon = document.getElementById('oct-res-icon');
+        const title = document.getElementById('oct-res-title');
+        const desc = document.getElementById('oct-res-desc');
+        const rewardBox = document.getElementById('oct-res-reward-box');
+        const rewardText = document.getElementById('oct-res-reward-text');
+        const retryBtn = document.getElementById('btn-oct-retry');
+        const primaryBtn = document.getElementById('btn-oct-res-primary');
+
+        if (icon) icon.src = "https://img.icons8.com/fluency/96/trophy.png";
+        if (title) {
+            title.innerText = `عبرت المستوى ${currentOctLevel} بنجاح! 🎖️`;
+            title.style.color = "var(--accent-emerald)";
+        }
+        if (desc) desc.innerHTML = `أداء بطولي! جاوبت <b>(${octCorrectAnswersInLevel} من ${totalQuestions})</b> إجابات صحيحة.`;
+
+        if (retryBtn) retryBtn.style.display = 'none';
+
+        if (!isAlreadyClaimed) {
+            if (rewardBox) rewardBox.style.display = 'block';
+            if (rewardText) rewardText.innerText = `+${rewards.xp} XP ⚡ | +${rewards.coins} عملة 💸`;
+        } else {
+            if (rewardBox) rewardBox.style.display = 'none';
+            if (desc) desc.innerHTML += `<br><span style="color: var(--text-sub); font-size: 0.78rem;">(المكافأة استُلمت مسبقاً)</span>`;
+        }
 
         if (currentOctLevel < 6) {
-            alert(`🎉 نصر مؤزر! عبرت المستوى ${currentOctLevel} بنجاح (${octCorrectAnswersInLevel}/${currentOctLevelQuestions.length})${rewardMsg}\nاستعد للمستوى ${currentOctLevel + 1}!`);
-            loadOctoberEventUserView();
+            if (primaryBtn) {
+                primaryBtn.innerText = `المتابعة للمستوى ${currentOctLevel + 1} ⬅️`;
+                primaryBtn.onclick = function() {
+                    closeOctoberResultModal();
+                    startOctoberLevel(currentOctLevel + 1, true);
+                };
+            }
         } else {
-            finalizeOctoberGrandVictory(isAlreadyClaimed ? null : rewards);
+            if (primaryBtn) {
+                primaryBtn.innerText = 'استلام النصر العظيم 🏆';
+                primaryBtn.onclick = function() {
+                    closeOctoberResultModal();
+                    finalizeOctoberGrandVictory();
+                };
+            }
         }
+
+        if (modal) modal.classList.add('show');
     });
 }
 
 // 9. النصر النهائي باللقب
-function finalizeOctoberGrandVictory(finalReward) {
+function finalizeOctoberGrandVictory() {
     const config = (octoberEventData && octoberEventData.config) ? octoberEventData.config : { badgeTitle: "بطل العبور 🎖️" };
     let completedEvents = currentUser.completed_custom_events || [];
 
@@ -12072,13 +12205,52 @@ function finalizeOctoberGrandVictory(finalReward) {
             shootStars();
             triggerConfetti();
             updateProfileUI();
-            alert(`🏆 مبروك يا بطل! أتممت الـ 6 مستويات وحصلت على اللقب الشرفي [${config.badgeTitle}]!`);
-            loadOctoberEventUserView();
+
+            showVictoryPopup(config.badgeTitle);
         });
     } else {
-        showTopToast('لقد عبرت جميع المستويات مسبقاً! أحسنت صنعاً يا بطل 🎖️', 'info');
-        loadOctoberEventUserView();
+        showVictoryPopup(config.badgeTitle, true);
     }
+}
+
+function showVictoryPopup(badgeTitle, isAlreadyDone = false) {
+    const modal = document.getElementById('modal-october-result');
+    const icon = document.getElementById('oct-res-icon');
+    const title = document.getElementById('oct-res-title');
+    const desc = document.getElementById('oct-res-desc');
+    const rewardBox = document.getElementById('oct-res-reward-box');
+    const retryBtn = document.getElementById('btn-oct-retry');
+    const primaryBtn = document.getElementById('btn-oct-res-primary');
+
+    if (icon) icon.src = "https://img.icons8.com/fluency/96/medal.png";
+    if (title) {
+        title.innerText = "ملحمة العبور اكتملت! 🏆";
+        title.style.color = "var(--accent-gold)";
+    }
+
+    if (desc) {
+        desc.innerHTML = isAlreadyDone 
+            ? `أنت بطل العبور بالفعل وأكملت كافة المستويات بنجاح!` 
+            : `مبروك يا بطل! أتممت الـ 6 مستويات كاملة وحصلت على اللقب الشرفي:<br><br><span class="pill-badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); font-size: 0.95rem; font-weight: 900;">${badgeTitle}</span>`;
+    }
+
+    if (rewardBox) rewardBox.style.display = 'none';
+    if (retryBtn) retryBtn.style.display = 'none';
+    if (primaryBtn) {
+        primaryBtn.innerText = 'إغلاق، عودة للخريطة 🗺️';
+        primaryBtn.onclick = function() {
+            closeOctoberResultModal();
+        };
+    }
+
+    if (modal) modal.classList.add('show');
+}
+
+function closeOctoberResultModal() {
+    playClickSound();
+    const modal = document.getElementById('modal-october-result');
+    if (modal) modal.classList.remove('show');
+    loadOctoberEventUserView();
 }
 
 // 10. دوال تحكم الأدمن
