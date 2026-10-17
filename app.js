@@ -237,7 +237,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.2";
+const CURRENT_APP_VERSION = "2.1.3";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -2794,7 +2794,7 @@ function fallbackDownload() {
         if (rewardedList.includes(bookIdentifier)) return;
 
         rewardedList.push(bookIdentifier);
-        const bonusXP = 15;
+const bonusXP = calculateXpWithBooster(15);
 
         currentUser.rewarded_books = rewardedList;
         currentUser.xp = (currentUser.xp || 0) + bonusXP;
@@ -5298,6 +5298,7 @@ function concludeLevelBoss(isWin) {
 
     if (isWin) {
         let rewards = getLevelRewards(currentLevelPlaying);
+rewards.xp = calculateXpWithBooster(rewards.xp);
         userLevels[currentLevelPlaying] = { stars: updatedStars, boss_defeated: true, cooldown: 0 };
         
         currentUser.xp = (currentUser.xp || 0) + rewards.xp;
@@ -5452,6 +5453,15 @@ function loadAdminAnalyticsAndLogs(forceRefresh = false) {
     }
 // ================= محرك الإنجازات ومنظومة الألقاب المتدرجة =================
     const defaultAchievementsConfig = {
+"october_hero": { 
+            title: "بطل العبور 🎖️", 
+            metric: "october_progress", 
+            target: 6, 
+            xp: 500, 
+            coins: 100, 
+            rarity: "mythic" 
+        },
+
         // 1. إنجازات ديربي 1v1
         "derby_10": { title: "مقاتل الديربي", metric: "derby_wins", target: 10, xp: 100, coins: 20, rarity: "common" },
         "derby_50": { title: "سفاح الديربي", metric: "derby_wins", target: 50, xp: 400, coins: 80, rarity: "rare" },
@@ -5488,131 +5498,140 @@ function loadAdminAnalyticsAndLogs(forceRefresh = false) {
     }
 
     function renderAchievementsTabUI() {
-    if (!currentUser) return;
+        if (!currentUser) return;
 
-    const cabinetContainer = document.getElementById('unlocked-titles-cabinet');
-    const countBadge = document.getElementById('cabinet-titles-count');
-    const trackContainer = document.getElementById('achievements-track-list');
+        const cabinetContainer = document.getElementById('unlocked-titles-cabinet');
+        const countBadge = document.getElementById('cabinet-titles-count');
+        const trackContainer = document.getElementById('achievements-track-list');
 
-    if (!cabinetContainer || !trackContainer) return;
+        if (!cabinetContainer || !trackContainer) return;
 
-    // مصفوفة شاملة لجميع المفاتيح الملغاة بصيغتي المفرد والجمع
-    const obsoleteKeys = [
-        'penalties_20', 'penalties_50', 'penalties_100',
-        'penalty_10', 'penalty_20', 'penalty_50', 'penalty_100',
-        'quiz_50', 'quiz_200', 'quiz_500'
-    ];
+        // مصفوفة شاملة لجميع المفاتيح الملغاة بصيغتي المفرد والجمع
+        const obsoleteKeys = [
+            'penalties_20', 'penalties_50', 'penalties_100',
+            'penalty_10', 'penalty_20', 'penalty_50', 'penalty_100',
+            'quiz_50', 'quiz_200', 'quiz_500'
+        ];
 
-    // حذفها من الكائن النشط والمحلي
-    obsoleteKeys.forEach(k => {
-        delete activeAchievementsConfig[k];
-    });
-
-    // تنظيف أي إنجاز يعتمد على معايير تم إلغاؤها (مثل penalties_scored و quizCorrect القديم)
-    Object.keys(activeAchievementsConfig).forEach(k => {
-        const ach = activeAchievementsConfig[k];
-        if (ach.metric === 'penalties_scored' || (ach.metric === 'quizCorrect' && !k.startsWith('stars_'))) {
+        // حذفها من الكائن النشط والمحلي
+        obsoleteKeys.forEach(k => {
             delete activeAchievementsConfig[k];
-        }
-    });
+        });
 
-    const claimedAchievements = currentUser.claimed_achievements || [];
-    const activeEquippedTitle = currentUser.active_title || 'none';
+        // تنظيف أي إنجاز يعتمد على معايير تم إلغاؤها (مثل penalties_scored و quizCorrect القديم)
+        Object.keys(activeAchievementsConfig).forEach(k => {
+            const ach = activeAchievementsConfig[k];
+            if (ach.metric === 'penalties_scored' || (ach.metric === 'quizCorrect' && !k.startsWith('stars_'))) {
+                delete activeAchievementsConfig[k];
+            }
+        });
 
-    // حساب نجوم المستويات تلقائياً
-    let totalStarsCalculated = 0;
-    if (currentUser.levels_progress) {
-        for (let k in currentUser.levels_progress) {
-            totalStarsCalculated += (currentUser.levels_progress[k].stars || 0);
-        }
-    }
-    currentUser.total_stars = totalStarsCalculated;
+        let claimedAchievements = currentUser.claimed_achievements || [];
 
-    // حساب عدد الاختبارات الدراسية المكتملة تلقائياً
-    currentUser.passed_exams_count = (currentUser.rewarded_exams || []).length;
-
-    let unlockedTitles = [];
-    Object.keys(activeAchievementsConfig).forEach(achId => {
-        if (claimedAchievements.includes(achId) && !obsoleteKeys.includes(achId)) {
-            unlockedTitles.push({ id: achId, ...activeAchievementsConfig[achId] });
-        }
-    });
-
-    if (countBadge) countBadge.innerText = `${unlockedTitles.length} لقب`;
-
-    if (unlockedTitles.length === 0) {
-        cabinetContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لم تفتح أي ألقاب بعد، أنجز المهام بالأسفل للحصول عليها! 🚀</p>';
-    } else {
-        let cabHtml = '';
-        if (activeEquippedTitle !== 'none') {
-            cabHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px dashed #ef4444; margin-bottom: 6px;">
-                <span style="font-size: 0.8rem; color: var(--text-sub);">اللقب الحالي مفعل</span>
-                <button class="admin-action-btn danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="equipUserTitle('none', 'none')">خلع اللقب ❌</button>
-            </div>`;
+        // التأكد من تسجيل لقب إيفنت أكتوبر في الخزانة لكل من أتم المستويات مسبقاً
+        const completedEvents = currentUser.completed_custom_events || [];
+        if ((currentUser.october_progress >= 6 || completedEvents.includes('event_october_73')) && !claimedAchievements.includes('october_hero')) {
+            claimedAchievements.push('october_hero');
+            currentUser.claimed_achievements = claimedAchievements;
+            db.ref('users/' + currentUser.phone + '/claimed_achievements').set(claimedAchievements);
         }
 
-        unlockedTitles.forEach(t => {
-            const isEquipped = (activeEquippedTitle === t.title);
-            cabHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-card);">
-                <div>${getTitleBadgeHtml(t.title, t.rarity)}</div>
-                ${isEquipped ? `
-                    <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 800;">مُرتدى الآن ✅</span>
-                ` : `
-                    <button class="admin-action-btn" style="padding: 4px 12px; font-size: 0.75rem;" onclick="equipUserTitle('${t.title}', '${t.rarity}')">ارتداء 🎖️</button>
-                `}
+        const activeEquippedTitle = currentUser.active_title || 'none';
+
+        // حساب نجوم المستويات تلقائياً
+        let totalStarsCalculated = 0;
+        if (currentUser.levels_progress) {
+            for (let k in currentUser.levels_progress) {
+                totalStarsCalculated += (currentUser.levels_progress[k].stars || 0);
+            }
+        }
+        currentUser.total_stars = totalStarsCalculated;
+
+        // حساب عدد الاختبارات الدراسية المكتملة تلقائياً
+        currentUser.passed_exams_count = (currentUser.rewarded_exams || []).length;
+
+        let unlockedTitles = [];
+        Object.keys(activeAchievementsConfig).forEach(achId => {
+            if (claimedAchievements.includes(achId) && !obsoleteKeys.includes(achId)) {
+                unlockedTitles.push({ id: achId, ...activeAchievementsConfig[achId] });
+            }
+        });
+
+        if (countBadge) countBadge.innerText = `${unlockedTitles.length} لقب`;
+
+        if (unlockedTitles.length === 0) {
+            cabinetContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لم تفتح أي ألقاب بعد، أنجز المهام بالأسفل للحصول عليها! 🚀</p>';
+        } else {
+            let cabHtml = '';
+            if (activeEquippedTitle !== 'none') {
+                cabHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px dashed #ef4444; margin-bottom: 6px;">
+                    <span style="font-size: 0.8rem; color: var(--text-sub);">اللقب الحالي مفعل</span>
+                    <button class="admin-action-btn danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="equipUserTitle('none', 'none')">خلع اللقب ❌</button>
+                </div>`;
+            }
+
+            unlockedTitles.forEach(t => {
+                const isEquipped = (activeEquippedTitle === t.title);
+                cabHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-card);">
+                    <div>${getTitleBadgeHtml(t.title, t.rarity)}</div>
+                    ${isEquipped ? `
+                        <span style="font-size: 0.75rem; color: var(--accent-emerald); font-weight: 800;">مُرتدى الآن ✅</span>
+                    ` : `
+                        <button class="admin-action-btn" style="padding: 4px 12px; font-size: 0.75rem;" onclick="equipUserTitle('${t.title}', '${t.rarity}')">ارتداء 🎖️</button>
+                    `}
+                </div>`;
+            });
+            cabinetContainer.innerHTML = cabHtml;
+        }
+
+        let trackHtml = '';
+        Object.keys(activeAchievementsConfig).forEach(achId => {
+            if (obsoleteKeys.includes(achId)) return;
+
+            const ach = activeAchievementsConfig[achId];
+            const currentVal = currentUser[ach.metric] || 0;
+            const targetVal = ach.target;
+            const isCompleted = currentVal >= targetVal;
+            const isClaimed = claimedAchievements.includes(achId);
+
+            const percent = Math.min(Math.round((currentVal / targetVal) * 100), 100);
+
+            let actionBtn = '';
+            if (isClaimed) {
+                actionBtn = `<span class="card-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);">تم الاستلام ✔️</span>`;
+            } else if (isCompleted) {
+                actionBtn = `<button class="btn-action-glow btn-check-task" style="padding: 6px 14px; font-size: 0.8rem;" onclick="claimAchievementReward('${achId}')">استلم اللقب والجوائز 🎁</button>`;
+            } else {
+                actionBtn = `<span style="font-size: 0.75rem; color: var(--text-sub); font-weight: 800;">${currentVal} / ${targetVal}</span>`;
+            }
+
+            let cardStateClass = isClaimed ? 'claimed' : (isCompleted ? 'completed-unclaimed' : '');
+
+            trackHtml += `
+            <div class="achievement-card ${cardStateClass}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>${getTitleBadgeHtml(ach.title, ach.rarity)}</div>
+                    <div>${actionBtn}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                    <span style="color: var(--text-sub);">الشرط: ${ach.target} (${getMetricArabicName(ach.metric)})</span>
+                    
+                    <!-- عرض الـ XP في سطر والعملات تحته مباشرة -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <span style="color: var(--accent-emerald); font-weight: 800;">+${ach.xp} XP</span>
+                        <span style="color: var(--accent-gold); font-weight: 800;">+${ach.coins} 💸</span>
+                    </div>
+                </div>
+                <div class="ach-progress-bar-bg">
+                    <div class="ach-progress-bar-fill" style="width: ${percent}%;"></div>
+                </div>
             </div>`;
         });
-        cabinetContainer.innerHTML = cabHtml;
+
+        trackContainer.innerHTML = trackHtml;
     }
-
-    let trackHtml = '';
-    Object.keys(activeAchievementsConfig).forEach(achId => {
-        if (obsoleteKeys.includes(achId)) return;
-
-        const ach = activeAchievementsConfig[achId];
-        const currentVal = currentUser[ach.metric] || 0;
-        const targetVal = ach.target;
-        const isCompleted = currentVal >= targetVal;
-        const isClaimed = claimedAchievements.includes(achId);
-
-        const percent = Math.min(Math.round((currentVal / targetVal) * 100), 100);
-
-        let actionBtn = '';
-        if (isClaimed) {
-            actionBtn = `<span class="card-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);">تم الاستلام ✔️</span>`;
-        } else if (isCompleted) {
-            actionBtn = `<button class="btn-action-glow btn-check-task" style="padding: 6px 14px; font-size: 0.8rem;" onclick="claimAchievementReward('${achId}')">استلم اللقب والجوائز 🎁</button>`;
-        } else {
-            actionBtn = `<span style="font-size: 0.75rem; color: var(--text-sub); font-weight: 800;">${currentVal} / ${targetVal}</span>`;
-        }
-
-        let cardStateClass = isClaimed ? 'claimed' : (isCompleted ? 'completed-unclaimed' : '');
-
-        trackHtml += `
-        <div class="achievement-card ${cardStateClass}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>${getTitleBadgeHtml(ach.title, ach.rarity)}</div>
-                <div>${actionBtn}</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
-                <span style="color: var(--text-sub);">الشرط: ${ach.target} (${getMetricArabicName(ach.metric)})</span>
-                
-                <!-- عرض الـ XP في سطر والعملات تحته مباشرة -->
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                    <span style="color: var(--accent-emerald); font-weight: 800;">+${ach.xp} XP</span>
-                    <span style="color: var(--accent-gold); font-weight: 800;">+${ach.coins} 💸</span>
-                </div>
-            </div>
-            <div class="ach-progress-bar-bg">
-                <div class="ach-progress-bar-fill" style="width: ${percent}%;"></div>
-            </div>
-        </div>`;
-    });
-
-    trackContainer.innerHTML = trackHtml;
-}
 
     function getMetricArabicName(metric) {
         if (metric === 'derby_wins') return 'فوز ديربي 1v1';
@@ -8919,7 +8938,8 @@ function toggleQBankAllAnswers() {
         const rewardedExams = (currentUser && currentUser.rewarded_exams) ? currentUser.rewarded_exams : [];
         const alreadyRewarded = rewardedExams.includes(examDataCache.id);
         
-        const xpReward = Math.round((parseInt(examDataCache.examXP) || 0) * passRate);
+        let xpReward = Math.round((parseInt(examDataCache.examXP) || 0) * passRate);
+xpReward = calculateXpWithBooster(xpReward);
         const coinsReward = Math.round((parseInt(examDataCache.examCoins) || 0) * passRate);
 
         let rewardMsgHtml = '';
@@ -11564,6 +11584,8 @@ function closeActiveEventRunner() {
 // دالة مساعدة لتوزيع المكافأة يستدعيها كود الفعالية مباشرة: awardEventReward(50, 10, 'اسم التحدي');
 function awardEventReward(xp = 0, coins = 0, title = 'فعالية خاصة') {
     if (!currentUser) return;
+
+xp = calculateXpWithBooster(xp);
     
     currentUser.xp = (currentUser.xp || 0) + xp;
     currentUser.points = currentUser.xp;
@@ -12122,6 +12144,7 @@ function completeOctoberLevelSuccess(totalQuestions) {
 
     let claimedRewards = currentUser.october_claimed_levels || [];
     let rewards = getOctoberLevelReward(currentOctLevel);
+rewards.xp = calculateXpWithBooster(rewards.xp);
     let isAlreadyClaimed = claimedRewards.includes(currentOctLevel);
 
     let updates = {};
@@ -12211,27 +12234,35 @@ function completeOctoberLevelSuccess(totalQuestions) {
 function finalizeOctoberGrandVictory() {
     const config = (octoberEventData && octoberEventData.config) ? octoberEventData.config : { badgeTitle: "بطل العبور 🎖️" };
     let completedEvents = currentUser.completed_custom_events || [];
+    let claimedAchievements = currentUser.claimed_achievements || [];
 
     if (!completedEvents.includes('event_october_73')) {
         completedEvents.push('event_october_73');
-        currentUser.active_title = config.badgeTitle;
-        currentUser.completed_custom_events = completedEvents;
-
-        db.ref('users/' + currentUser.phone).update({
-            active_title: config.badgeTitle,
-            completed_custom_events: completedEvents,
-            october_progress: 6
-        }).then(() => {
-            playFlawlessVictorySound();
-            shootStars();
-            triggerConfetti();
-            updateProfileUI();
-
-            showVictoryPopup(config.badgeTitle);
-        });
-    } else {
-        showVictoryPopup(config.badgeTitle, true);
     }
+
+    // إضافة اللقب لقائمة الإنجازات المكتسبة ليظهر دائماً في الخزانة
+    if (!claimedAchievements.includes('october_hero')) {
+        claimedAchievements.push('october_hero');
+    }
+
+    currentUser.active_title = config.badgeTitle;
+    currentUser.active_title_rarity = 'mythic';
+    currentUser.completed_custom_events = completedEvents;
+    currentUser.claimed_achievements = claimedAchievements;
+
+    db.ref('users/' + currentUser.phone).update({
+        active_title: config.badgeTitle,
+        active_title_rarity: 'mythic',
+        completed_custom_events: completedEvents,
+        claimed_achievements: claimedAchievements,
+        october_progress: 6
+    }).then(() => {
+        playFlawlessVictorySound();
+        shootStars();
+        triggerConfetti();
+        updateProfileUI();
+        showVictoryPopup(config.badgeTitle);
+    });
 }
 
 function showVictoryPopup(badgeTitle, isAlreadyDone = false) {
@@ -12629,4 +12660,11 @@ function getServerDate(callback) {
         
         callback(todayDate, serverTime);
     });
+}
+
+// ================= الدالة المركزية لاحتساب ومضاعفة النقاط =================
+function calculateXpWithBooster(baseXp) {
+    if (baseXp <= 0) return baseXp;
+    const isDoubleActive = currentUser && currentUser.double_xp_until && Number(currentUser.double_xp_until) > Date.now();
+    return isDoubleActive ? baseXp * 2 : baseXp;
 }
