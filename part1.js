@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.3";
+const CURRENT_APP_VERSION = "2.1.4";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -1325,10 +1325,15 @@ function checkDailyLoginCloudSync() {
         const streakText = document.getElementById('daily-popup-streak');
         const claimBtn = document.getElementById('btn-claim-daily-popup');
 
-        if (streakText) streakText.innerText = `سلسلة الأيام الحالية: ${currentStreak}/7 أيام 🔥`;
+        // فحص هل اليوم القادم هو مضاعفات الـ 7 (7، 14، 21...)
+        const isMilestone = (currentStreak + 1) % 7 === 0;
+
+        if (streakText) streakText.innerText = `سلسلة الأيام الحالية: ${currentStreak} يوم متتالي 🔥`;
         if (claimBtn) {
             claimBtn.disabled = false;
-            claimBtn.innerText = currentStreak === 6 ? 'استلم المكافأة الكبرى (+285 XP و +70 عملة) 🏆' : 'استلم +35 XP و +20 عملة الآن ✨';
+            claimBtn.innerText = isMilestone 
+                ? 'استلم المكافأة الكبرى (+285 XP و +70 عملة) 🏆' 
+                : 'استلم +35 XP و +20 عملة الآن ✨';
         }
 
         setTimeout(() => {
