@@ -4003,32 +4003,36 @@ function listenToDynamicPlacements() {
             // لو الفعالية نشطة ولها مكان مخصص غير قسم الفعاليات
             if (ev.status === 'active' && ev.placement && ev.placement !== 'hub_only') {
                 const targetSlot = slots[ev.placement];
-                if (targetSlot) {
-                    targetSlot.style.display = 'block';
-                    
-                    // حقن كود الـ HTML
-                    targetSlot.innerHTML = ev.customCode;
+                if (!targetSlot) return;
 
-                    // تشغيل أي سكريبت JS موجود بداخل الكود
-                    const scripts = targetSlot.getElementsByTagName('script');
-                    for (let i = 0; i < scripts.length; i++) {
-                        try {
-                            eval(scripts[i].innerText);
-                        } catch (err) {
-                            console.error("خطأ في تشغيل كود الفعالية:", err);
-                        }
-                    }
+                // فحص خاص بالنافذة المنبثقة: لو شافها قبل كدا، نتخطاها تماماً
+                if (ev.placement === 'popup_modal') {
+                    const seenPopupId = localStorage.getItem('seen_popup_' + id);
+                    if (seenPopupId) return; // شافها خلاص، متعملش أي حاجة
 
-                    // لو كانت نافذة منبثقة، نفتح المودال فوراً للطالب لمرة واحدة
-                    if (ev.placement === 'popup_modal') {
-                        const seenPopupId = sessionStorage.getItem('seen_popup_' + id);
-                        if (!seenPopupId) {
-                            setTimeout(() => {
-                                openModal('modal-dynamic-popup');
-                                sessionStorage.setItem('seen_popup_' + id, 'true');
-                            }, 1000);
-                        }
+                    // تسجيل إنها اتشافت عشان متظهرش تاني أبداً
+                    localStorage.setItem('seen_popup_' + id, 'true');
+                }
+
+                // إظهار المكان وحقن الكود
+                targetSlot.style.display = 'block';
+                targetSlot.innerHTML = ev.customCode;
+
+                // تشغيل أي سكريبت JS موجود بداخل الكود
+                const scripts = targetSlot.getElementsByTagName('script');
+                for (let i = 0; i < scripts.length; i++) {
+                    try {
+                        eval(scripts[i].innerText);
+                    } catch (err) {
+                        console.error("خطأ في تشغيل كود الفعالية:", err);
                     }
+                }
+
+                // فتح المودال بعد ثانية لو كان نوعها نافذة منبثقة
+                if (ev.placement === 'popup_modal') {
+                    setTimeout(() => {
+                        openModal('modal-dynamic-popup');
+                    }, 1000);
                 }
             }
         });
