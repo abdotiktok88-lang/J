@@ -5456,3 +5456,651 @@ function loadPinnedReviewCard() {
         </div>`;
     });
 }
+
+// ============================================================================
+// ============ محرك الشات والزر العائم الذكي والإشعارات اللحظية ===============
+// ============================================================================
+
+let studentDirectListener = null;
+let studentBroadcastListener = null;
+let localChatMessagesMap = new Map();
+let currentAdminChatTargetPhone = null;
+let adminThreadListener = null;
+let adminAllThreadsListener = null;
+
+// متغيرات الرد النشط
+let currentActiveReply = {
+    student: null, // { id, senderName, text }
+    admin: null
+};
+
+// تفعيل وضع الرد
+function setChatReply(targetRole, msgId, senderName, text) {
+    if (typeof playClickSound === 'function') playClickSound();
+    currentActiveReply[targetRole] = { id: msgId, senderName: senderName, text: text };
+
+    const previewBar = document.getElementById(`${targetRole}-reply-preview`);
+    const senderEl = document.getElementById(`${targetRole}-reply-sender`);
+    const textEl = document.getElementById(`${targetRole}-reply-text`);
+    const inputEl = document.getElementById(targetRole === 'student' ? 'student-chat-input' : 'admin-reply-chat-input');
+
+    if (previewBar && senderEl && textEl) {
+        senderEl.innerText = `رد على ${senderName}:`;
+        textEl.innerText = text;
+        previewBar.style.display = 'flex';
+    }
+
+    if (inputEl) inputEl.focus();
+}
+
+// إلغاء الرد
+function cancelChatReply(targetRole) {
+    currentActiveReply[targetRole] = null;
+    const previewBar = document.getElementById(`${targetRole}-reply-preview`);
+    if (previewBar) previewBar.style.display = 'none';
+}
+
+// تهيئة حركة التمرير السريع (Swipe to reply) مثل الواتساب
+function attachSwipeToReply(element, targetRole, msgId, senderName, text) {
+    let startX = 0;
+    let currentTranslate = 0;
+    const threshold = 55; // المسافة المطلوبة لتفعيل الرد
+    const icon = element.parentElement.querySelector('.chat-swipe-reply-icon');
+
+    element.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        element.style.transition = 'none';
+    }, { passive: true });
+
+    element.addEventListener('touchmove', (e) => {
+        const currentX = e.touches[0].clientX;
+        const diffX = currentX - startX;
+
+        // السحب لليسار فقط (في الواجهة العربية)
+        if (diffX < 0 && diffX > -90) {
+            currentTranslate = diffX;
+            element.style.transform = `translateX(${currentTranslate}px)`;
+            if (icon) {
+                icon.style.opacity = Math.min(1, Math.abs(diffX) / threshold);
+                icon.style.left = '10px';
+            }
+        }
+    }, { passive: true });
+
+    element.addEventListener('touchend', () => {
+        element.style.transition = 'transform 0.2s ease-out';
+        element.style.transform = 'translateX(0px)';
+        if (icon) icon.style.opacity = '0';
+
+        if (Math.abs(currentTranslate) >= threshold) {
+            setChatReply(targetRole, msgId, senderName, text);
+            if (navigator.vibrate) navigator.vibrate(30); // اهتزاز خفيف لتأكيد السحب
+        }
+        currentTranslate = 0;
+    });
+}
+
+// هل المستخدم الحالي أدمن؟
+function isCurrentLoggedUserAdmin() {
+    if (!currentUser) return false;
+    return (currentUser.phone === "01061032507" || (currentUser.admin_roles && currentUser.admin_roles.includes('chat')));
+}
+
+// ضغطة الزر العائم: يوجه الطالب لشاته، ويوجه الأدمن للوحة شات الإدارة فوراً
+function handleFloatingChatClick() {
+    if (typeof playClickSound === 'function') playClickSound();
+
+    if (!currentUser || !currentUser.phone) {
+        showTopToast('يرجى تسجيل الدخول أولاً!', 'error');
+        return;
+    }
+
+    const studentScreen = document.getElementById('inbox-student-screen');
+    const adminScreen = document.getElementById('inbox-admin-screen');
+
+    if (isCurrentLoggedUserAdmin()) {
+        // حسابك كأدمن: يفتح لوحة الشات الإدارية مباشرة
+        if (studentScreen) studentScreen.style.display = 'none';
+        if (adminScreen) adminScreen.style.display = 'block';
+        navigateTo('view-inbox', 'إدارة الرسائل والدعم', 'مراسلة جميع الطلاب');
+        initAdminRealtimeChatHub();
+        
+        // تصفير بادج الأدمن عند الفتح
+        updateFloatingChatBadge(0);
+    } else {
+        // حساب الطالب العادي: يفتح شات الدعم المباشر
+        if (adminScreen) adminScreen.style.display = 'none';
+        if (studentScreen) studentScreen.style.display = 'block';
+        openStudentInbox();
+    }
+}
+
+function openStudentInbox() {
+    navigateTo('view-inbox', 'المحادثة والدعم', 'تواصل مباشر مع الإدارة');
+
+    const container = document.getElementById('student-chat-box');
+    if (container) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 0.82rem; margin-top: 140px;">جاري تحميل المحادثة... ⏳</div>';
+    }
+    localChatMessagesMap.clear();
+
+    // تصفير إشعار الرسائل للطالب
+    localStorage.setItem('student_last_read_chat_time', Date.now().toString());
+    updateFloatingChatBadge(0);
+
+    // 👈 تحديث مؤشر القراءة: إخبار السيرفر بأن الطالب فتح الشات وقرأ رسائل الأدمن
+    db.ref(`chats/direct/${currentUser.phone}`).once('value', snap => {
+        if (!snap.exists()) return;
+        const updates = {};
+        snap.forEach(c => {
+            const m = c.val();
+            if (m.sender === 'admin' && !m.seen) {
+                updates[`chats/direct/${currentUser.phone}/${c.key}/seen`] = true;
+            }
+        });
+        if (Object.keys(updates).length > 0) {
+            db.ref().update(updates);
+        }
+    });
+
+    if (studentDirectListener) studentDirectListener.off();
+    if (studentBroadcastListener) studentBroadcastListener.off();
+
+    // استماع لحظي ومباشر للرسائل الثنائية (مع التحديث التلقائي لو تغيرت الحالة)
+    studentDirectListener = db.ref(`chats/direct/${currentUser.phone}`).limitToLast(50);
+    studentDirectListener.on('child_added', snap => {
+        localChatMessagesMap.set(snap.key, { id: snap.key, isBroadcast: false, ...snap.val() });
+        renderUnifiedStudentChat();
+    });
+    studentDirectListener.on('child_changed', snap => {
+        localChatMessagesMap.set(snap.key, { id: snap.key, isBroadcast: false, ...snap.val() });
+        renderUnifiedStudentChat();
+    });
+
+    // استماع لحظي ومباشر للتعميمات العامة
+    studentBroadcastListener = db.ref('chats/broadcast').limitToLast(25);
+    studentBroadcastListener.on('child_added', snap => {
+        localChatMessagesMap.set(snap.key, { id: snap.key, isBroadcast: true, ...snap.val() });
+        renderUnifiedStudentChat();
+    });
+}
+
+function renderUnifiedStudentChat() {
+    const container = document.getElementById('student-chat-box');
+    if (!container) return;
+
+    const messages = Array.from(localChatMessagesMap.values()).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+    if (messages.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-sub); margin-top: 130px; font-size: 0.85rem; line-height: 1.7;">
+                لا توجد رسائل سابقة.<br>
+                اكتب أي استفسار أو مشكلة تواجهك وسيتم الرد عليك هنا مباشرة 💬
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    messages.forEach(msg => {
+        const isMe = (msg.sender === 'student');
+        const isBroadcast = !!msg.isBroadcast;
+
+        const align = isMe ? 'flex-end' : 'flex-start';
+        const bg = isMe 
+            ? 'linear-gradient(135deg, var(--accent-emerald), #059669)' 
+            : (isBroadcast ? 'linear-gradient(135deg, #4c1d95, #2e1065)' : 'var(--bg-secondary)');
+        const border = isBroadcast 
+            ? 'border: 1px solid #a855f7;' 
+            : (isMe ? 'border: 1px solid var(--accent-emerald);' : 'border: 1px solid var(--border-card);');
+        const titleColor = isBroadcast ? '#fde047' : (isMe ? '#fff' : 'var(--accent-gold)');
+        const senderTag = isMe ? 'أنت' : (isBroadcast ? '📢 Broadcast Message' : '🛡️ Admin');
+
+        const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+
+        // جزء الاقتباس لو الرسالة معمولة كرد
+        let quoteHtml = '';
+        if (msg.replyTo) {
+            quoteHtml = `
+                <div class="chat-quoted-box">
+                    <div class="chat-quoted-sender">${msg.replyTo.senderName}</div>
+                    <div class="chat-quoted-text">${msg.replyTo.text}</div>
+                </div>`;
+        }
+
+        const safeText = (msg.text || '').replace(/'/g, "\\'");
+        const safeSender = senderTag.replace(/'/g, "\\'");
+
+        html += `
+            <div class="chat-bubble-wrapper" style="justify-content: ${align};">
+                <span class="chat-swipe-reply-icon">↩️</span>
+                <div class="chat-swipe-msg" id="msg-bubble-${msg.id}" 
+                     style="max-width: 82%; background: ${bg}; color: #fff; padding: 10px 14px; border-radius: 14px; font-size: 0.88rem; word-break: break-word; ${border} box-shadow: 0 3px 10px rgba(0,0,0,0.25);">
+                    ${quoteHtml}
+                    <div style="font-size: 0.72rem; color: ${titleColor}; font-weight: 900; margin-bottom: 4px;">
+                        ${senderTag}
+                    </div>
+                    <div style="line-height: 1.5; font-weight: 600;">${msg.text}</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.65); text-align: left; margin-top: 4px; direction: ltr;">
+                        ${timeStr}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+
+    // ربط إيماءة التمرير بكل الرسائل
+    messages.forEach(msg => {
+        const bubble = document.getElementById(`msg-bubble-${msg.id}`);
+        if (bubble) {
+            const senderTag = (msg.sender === 'student') ? 'أنت' : (msg.isBroadcast ? 'تعميم إداري' : 'الإدارة');
+            attachSwipeToReply(bubble, 'student', msg.id, senderTag, msg.text);
+        }
+    });
+}
+
+// إرسال الطالب للرسالة
+function sendStudentMessage() {
+    const input = document.getElementById('student-chat-input');
+    const text = input ? input.value.trim() : '';
+    if (!text || !currentUser || !currentUser.phone) return;
+
+    const payload = {
+        sender: 'student',
+        senderName: currentUser.name || 'طالب',
+        senderPhone: currentUser.phone,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // لو فيه ريبلاي
+    if (currentActiveReply.student) {
+        payload.replyTo = {
+            id: currentActiveReply.student.id,
+            senderName: currentActiveReply.student.senderName,
+            text: currentActiveReply.student.text
+        };
+    }
+
+    db.ref(`chats/direct/${currentUser.phone}`).push(payload).then(() => {
+        localStorage.setItem('student_last_read_chat_time', Date.now().toString());
+
+        db.ref(`chats/threads_meta/${currentUser.phone}`).set({
+            name: currentUser.name || 'طالب',
+            phone: currentUser.phone,
+            lastMessage: text,
+            lastSender: 'student',
+            lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+            unreadByAdmin: true
+        });
+
+        input.value = '';
+        cancelChatReply('student');
+        if (typeof playClickSound === 'function') playClickSound();
+    });
+}
+
+// ================= نظام المراقبة اللحظية في الخلفية (Background Watcher) =================
+let isChatWatcherInitialized = false;
+
+function initRealtimeChatWatchers() {
+    if (!currentUser || !currentUser.phone || isChatWatcherInitialized) return;
+    isChatWatcherInitialized = true;
+
+    // إظهار الزر العائم فور تسجيل الدخول
+    const floatingBtn = document.getElementById('main-floating-chat-btn');
+    if (floatingBtn) floatingBtn.style.display = 'flex';
+
+    if (isCurrentLoggedUserAdmin()) {
+        // 👈 الأدمن: استماع لحظي لأي محادثة يرسل فيها أي طالب
+        db.ref('chats/threads_meta').on('value', snap => {
+            if (!snap.exists()) {
+                updateFloatingChatBadge(0);
+                return;
+            }
+
+            let unreadCount = 0;
+            let lastStudentName = '';
+            let lastMsgText = '';
+
+            snap.forEach(child => {
+                const thread = child.val();
+                if (thread.unreadByAdmin === true && thread.lastSender === 'student') {
+                    unreadCount++;
+                    lastStudentName = thread.name;
+                    lastMsgText = thread.lastMessage;
+                }
+            });
+
+            updateFloatingChatBadge(unreadCount);
+
+            const currentView = (navHistory && navHistory[navHistory.length - 1]) ? navHistory[navHistory.length - 1].viewId : '';
+            if (unreadCount > 0 && currentView !== 'view-inbox') {
+                if (typeof playSuccessSound === 'function') playSuccessSound();
+                showTopToast(`📩 رسالة جديدة من ${lastStudentName}: "${lastMsgText}"`, 'info');
+            }
+        });
+    } else {
+        // 👈 الطالب: استماع فقط للرسائل القادمة من الأدمن وتجاهل رسائل الطالب نفسه
+        let lastReadDirectTime = parseInt(localStorage.getItem('student_last_read_chat_time') || '0');
+        let lastReadBroadcastTime = parseInt(localStorage.getItem('student_last_read_broadcast_time') || '0');
+        let unreadDirectCount = 0;
+        let unreadBroadcastCount = 0;
+
+        function refreshStudentBadgeTotal() {
+            const currentView = (navHistory && navHistory[navHistory.length - 1]) ? navHistory[navHistory.length - 1].viewId : '';
+            if (currentView === 'view-inbox') {
+                unreadDirectCount = 0;
+                unreadBroadcastCount = 0;
+                localStorage.setItem('student_last_read_chat_time', Date.now().toString());
+                localStorage.setItem('student_last_read_broadcast_time', Date.now().toString());
+            }
+
+            const totalUnread = unreadDirectCount + unreadBroadcastCount;
+            updateFloatingChatBadge(totalUnread);
+        }
+
+        // 1. مراقبة الرسائل المباشرة (فقط القادمة من admin)
+        db.ref(`chats/direct/${currentUser.phone}`).on('value', snap => {
+            if (!snap.exists()) {
+                unreadDirectCount = 0;
+                refreshStudentBadgeTotal();
+                return;
+            }
+
+            unreadDirectCount = 0;
+            let hasNewAdminMsg = false;
+
+            snap.forEach(c => {
+                const msg = c.val();
+                // الشرط الحاسم: فقط لو المرسل هو الأدمن ووقتها بعد آخر قراءة
+                if (msg.sender === 'admin' && (msg.timestamp || 0) > lastReadDirectTime) {
+                    unreadDirectCount++;
+                    hasNewAdminMsg = true;
+                }
+            });
+
+            const currentView = (navHistory && navHistory[navHistory.length - 1]) ? navHistory[navHistory.length - 1].viewId : '';
+            if (hasNewAdminMsg && currentView !== 'view-inbox') {
+                if (typeof playSuccessSound === 'function') playSuccessSound();
+                showTopToast('📩 وصلك رد جديد من إدارة المنصة في الشات!', 'info');
+            }
+
+            refreshStudentBadgeTotal();
+        });
+
+        // 2. مراقبة التعميمات الجماعية
+        db.ref('chats/broadcast').on('value', snap => {
+            if (!snap.exists()) {
+                unreadBroadcastCount = 0;
+                refreshStudentBadgeTotal();
+                return;
+            }
+
+            unreadBroadcastCount = 0;
+            let hasNewBroadcast = false;
+
+            snap.forEach(c => {
+                const msg = c.val();
+                if ((msg.timestamp || 0) > lastReadBroadcastTime) {
+                    unreadBroadcastCount++;
+                    hasNewBroadcast = true;
+                }
+            });
+
+            const currentView = (navHistory && navHistory[navHistory.length - 1]) ? navHistory[navHistory.length - 1].viewId : '';
+            if (hasNewBroadcast && currentView !== 'view-inbox') {
+                if (typeof playSuccessSound === 'function') playSuccessSound();
+                showTopToast('📢 تعميم جديد في الشات!', 'info');
+            }
+
+            refreshStudentBadgeTotal();
+        });
+    }
+}
+
+// تحديث رقم البادج على الدائرة العائمة
+function updateFloatingChatBadge(count) {
+    const badge = document.getElementById('floating-chat-badge');
+    if (!badge) return;
+
+    if (count > 0) {
+        badge.innerText = count > 9 ? '+9' : count;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ================= دوال الأدمن وإدارة الرسائل اللحظية =================
+
+function initAdminRealtimeChatHub() {
+    const container = document.getElementById('admin-chat-threads-list');
+    if (!container) return;
+
+    if (adminAllThreadsListener) adminAllThreadsListener.off();
+
+    // استماع لحظي مستمر لكل المحادثات بدون الحاجة للضغط على زر تحديث
+    adminAllThreadsListener = db.ref('chats/threads_meta').orderByChild('lastTimestamp');
+    adminAllThreadsListener.on('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لا توجد محادثات واردة حتى الآن.</p>';
+            return;
+        }
+
+        let threads = [];
+        snap.forEach(c => {
+            threads.push({ phone: c.key, ...c.val() });
+        });
+        threads.reverse(); // أحدث محادثة في الأعلى
+
+        let html = '';
+        threads.forEach(t => {
+            const hasUnread = (t.unreadByAdmin === true && t.lastSender === 'student');
+            const unreadDot = hasUnread ? '<span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px #ef4444;"></span>' : '';
+            const borderStyle = hasUnread ? 'border: 1.5px solid #ef4444;' : 'border: 1px solid var(--border-card);';
+
+            html += `
+            <div class="admin-item-card" style="cursor: pointer; padding: 10px 12px; margin-bottom: 2px; ${borderStyle}" onclick="openAdminChatWithStudent('${t.phone}', '${t.name}')">
+                <div class="admin-item-info">
+                    <div class="admin-item-name" style="font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                        ${unreadDot} 👤 ${t.name} (${t.phone})
+                    </div>
+                    <div class="admin-item-sub" style="font-size: 0.75rem; color: var(--text-sub); margin-top: 2px;">${t.lastMessage || ''}</div>
+                </div>
+                <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.72rem;">رد 💬</button>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    });
+}
+
+// بدء الأدمن لمحادثة مع أي طالب من الصفر برقم هاتفه
+function adminStartChatWithNewStudent() {
+    const phoneInput = document.getElementById('adm-manual-student-phone');
+    const nameInput = document.getElementById('adm-manual-student-name');
+    const msgInput = document.getElementById('adm-manual-first-msg');
+
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'طالب';
+    const text = msgInput ? msgInput.value.trim() : '';
+
+    if (!phone || phone.length < 10) {
+        showTopToast('يرجى إدخال رقم هاتف صحيح للطالب!', 'error');
+        return;
+    }
+    if (!text) {
+        showTopToast('يرجى كتابة نص الرسالة الافتتاحية!', 'error');
+        return;
+    }
+
+    if (typeof playClickSound === 'function') playClickSound();
+
+    const payload = {
+        sender: 'admin',
+        senderName: 'Admin',
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref(`chats/direct/${phone}`).push(payload).then(() => {
+        db.ref(`chats/threads_meta/${phone}`).set({
+            name: name,
+            phone: phone,
+            lastMessage: `الإدارة: ${text}`,
+            lastSender: 'admin',
+            lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+            unreadByAdmin: false
+        });
+
+        phoneInput.value = '';
+        if (nameInput) nameInput.value = '';
+        msgInput.value = '';
+
+        showTopToast(`تم بدء الشات وإرسال الرسالة للطالب (${phone}) بنجاح! 🚀`, 'success');
+        openAdminChatWithStudent(phone, name);
+    });
+}
+
+// فتح محادثة الطالب المختار للأدمن
+function openAdminChatWithStudent(phone, name) {
+    currentAdminChatTargetPhone = phone;
+    const box = document.getElementById('admin-active-thread-box');
+    const title = document.getElementById('admin-chat-target-title');
+    const msgContainer = document.getElementById('admin-thread-messages');
+
+    if (box) box.style.display = 'block';
+    if (title) title.innerText = `المحادثة مع: ${name} (${phone})`;
+    if (msgContainer) msgContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">جاري تحميل الرسائل... ⏳</p>';
+
+    // مسح إشعار غير مقروء عن هذه المحادثة للأدمن
+    db.ref(`chats/threads_meta/${phone}/unreadByAdmin`).set(false);
+
+    if (adminThreadListener) adminThreadListener.off();
+
+    adminThreadListener = db.ref(`chats/direct/${phone}`).limitToLast(50);
+    adminThreadListener.on('value', snap => {
+        if (!snap.exists()) {
+            msgContainer.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">لا توجد رسائل سابقة.</p>';
+            return;
+        }
+
+        let html = '';
+        snap.forEach(c => {
+            const m = c.val();
+            const msgId = c.key;
+            const isAdmin = (m.sender === 'admin');
+            const align = isAdmin ? 'flex-end' : 'flex-start';
+            const bg = isAdmin ? 'var(--accent-emerald)' : 'var(--bg-secondary)';
+
+            // 👈 مؤشر القراءة للأدمن فقط: صح رمادي لو موصلتش/ماتفتحتش، وصحين زرق لو الطالب فتح الشات
+            let seenStatusHtml = '';
+            if (isAdmin) {
+                if (m.seen === true) {
+                    seenStatusHtml = `<span class="admin-msg-seen-status seen-double-check" title="تمت القراءة من الطالب">✓✓</span>`;
+                } else {
+                    seenStatusHtml = `<span class="admin-msg-seen-status unseen-single-check" title="تم الإرسال (لم يفتح الشات بعد)">✓</span>`;
+                }
+            }
+
+            // عرض الاقتباس لو الرسالة رد
+            let quoteHtml = '';
+            if (m.replyTo) {
+                quoteHtml = `
+                    <div class="chat-quoted-box">
+                        <div class="chat-quoted-sender">${m.replyTo.senderName}</div>
+                        <div class="chat-quoted-text">${m.replyTo.text}</div>
+                    </div>`;
+            }
+
+            html += `
+                <div class="chat-bubble-wrapper" style="justify-content: ${align};">
+                    <span class="chat-swipe-reply-icon">↩️</span>
+                    <div class="chat-swipe-msg" id="admin-bubble-${msgId}" 
+                         style="max-width: 82%; background: ${bg}; color: #fff; padding: 7px 12px; border-radius: 12px; font-size: 0.82rem; word-break: break-word;">
+                        ${quoteHtml}
+                        <div style="font-size: 0.68rem; font-weight: bold; opacity: 0.8; margin-bottom: 2px;">${isAdmin ? 'أنت (الإدارة)' : name}</div>
+                        <div style="line-height: 1.4;">${m.text}</div>
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.7); text-align: left; margin-top: 3px; direction: ltr;">
+                            ${seenStatusHtml}
+                            ${m.timestamp ? new Date(m.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        msgContainer.innerHTML = html;
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        // تفعيل التمرير السريع للرد في شات الأدمن أيضاً
+        snap.forEach(c => {
+            const m = c.val();
+            const bubble = document.getElementById(`admin-bubble-${c.key}`);
+            if (bubble) {
+                const sName = (m.sender === 'admin') ? 'أنت' : name;
+                attachSwipeToReply(bubble, 'admin', c.key, sName, m.text);
+            }
+        });
+    });
+
+    box.scrollIntoView({ behavior: 'smooth' });
+}
+
+function adminSendReplyToActiveStudent() {
+    const input = document.getElementById('admin-reply-chat-input');
+    const text = input ? input.value.trim() : '';
+    if (!text || !currentAdminChatTargetPhone) return;
+
+    const payload = {
+        sender: 'admin',
+        senderName: 'Admin',
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        seen: false // تبدأ كـ false حتى يفتحها الطالب
+    };
+
+    // لو الأدمن عامل ريبلاي
+    if (currentActiveReply.admin) {
+        payload.replyTo = {
+            id: currentActiveReply.admin.id,
+            senderName: currentActiveReply.admin.senderName,
+            text: currentActiveReply.admin.text
+        };
+    }
+
+    db.ref(`chats/direct/${currentAdminChatTargetPhone}`).push(payload).then(() => {
+        db.ref(`chats/threads_meta/${currentAdminChatTargetPhone}`).update({
+            lastMessage: `الإدارة: ${text}`,
+            lastSender: 'admin',
+            lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+            unreadByAdmin: false
+        });
+        input.value = '';
+        cancelChatReply('admin');
+        if (typeof playClickSound === 'function') playClickSound();
+    });
+}
+
+// إرسال تعميم الأدمن للجميع
+function adminSendBroadcastChat() {
+    const input = document.getElementById('adm-broadcast-chat-input');
+    const text = input ? input.value.trim() : '';
+    if (!text) {
+        showTopToast('اكتب نص التعميم أولاً!', 'error');
+        return;
+    }
+
+    if (typeof playClickSound === 'function') playClickSound();
+    db.ref('chats/broadcast').push({
+        sender: 'admin',
+        senderName: 'Admin',
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        input.value = '';
+        showTopToast('تم إرسال التعميم للجميع في الشات بنجاح 📢✨', 'success');
+    });
+}

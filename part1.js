@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.6";
+const CURRENT_APP_VERSION = "2.1.7";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -1364,6 +1364,9 @@ let hasCheckedDailyLoginSession = false;
                     updateStatsUI();
                     initUserTicketRepliesListener();
                     listenToPersonalAlerts();
+                    
+                    // 👈 تفعيل مراقبة الشات والزر العائم والبادج لحظياً
+                    if (typeof initRealtimeChatWatchers === 'function') initRealtimeChatWatchers();
 
                     if (navHistory[navHistory.length - 1].viewId === 'view-auth') {
                         goHomeDirectly();
@@ -1768,6 +1771,10 @@ function checkDailyLoginCloudSync() {
         document.getElementById('login-password').value = '';
         const bottomNav = document.getElementById('main-bottom-nav');
         if(bottomNav) bottomNav.style.display = 'flex';
+        
+        // 👈 تشغيل مراقبة الرسائل والزر العائم فور تسجيل الدخول بنجاح
+        if (typeof initRealtimeChatWatchers === 'function') initRealtimeChatWatchers();
+
         showTopToast('تم تسجيل الدخول بنجاح ✨', 'success');
         goHomeDirectly();
     }
@@ -4079,8 +4086,9 @@ if (currentUser) {
         
         const isMaster = (currentUser.phone === "01061032507");
         const myRoles = currentUser.admin_roles || [];
-const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october', 'exam-stats'];        
+const allTabs = ['users','analytics','academic','store','tickets','broadcast','books','quiz','codes','achievements','ehbed-quiz', 'levels-sys', 'academy', 'science', 'risk-quiz', 'guess-game', 'notifs', 'quotes', 'roles', 'events', 'october', 'exam-stats', 'chat'];        
         let firstAllowedTab = null;
+if (tabName === 'chat') { loadAdminChatThreadsList(); }
 
         // إظهار وإخفاء الزراير بناءً على الصلاحية
         allTabs.forEach(t => {

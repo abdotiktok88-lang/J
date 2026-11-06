@@ -309,6 +309,9 @@
 <div class="sidebar-link" onclick="openTransferModal(); closeSidebar();">
                 <img src="https://img.icons8.com/fluency/96/money-transfer.png" alt="Transfer"> ادعم صاحبك
             </div>
+<div class="sidebar-link" onclick="openStudentInbox(); closeSidebar();">
+    <img src="https://img.icons8.com/fluency/96/chat.png" alt="Chat"> صندوق الرسائل والدعم
+</div>
             <div class="sidebar-link" onclick="navigateTo('view-settings', 'الإعدادات', 'خيارات التطبيق والحساب'); closeSidebar();" style="position: relative;">
     <img src="https://img.icons8.com/fluency/96/settings.png" alt="Settings"> الإعدادات
     <span id="badge-settings-dot" style="display: none; width: 9px; height: 9px; background-color: #ef4444; border-radius: 50%; margin-right: auto; box-shadow: 0 0 8px #ef4444;"></span>
@@ -1519,6 +1522,103 @@
             </div>
         </div>
 
+<!-- واجهة صندوق الرسائل والدعم الموحد (يدعم شات الطالب + لوحة الأدمن) -->
+<div id="view-inbox" class="view-section">
+    
+    <!-- 1. شاشة الطالب العادي -->
+    <div id="inbox-student-screen">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 14px; border: 1.5px solid var(--border-card);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(212, 175, 55, 0.15); border: 1.5px solid var(--accent-gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                    🛡️
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 900; color: var(--text-main); font-size: 0.95rem;">إدارة المنصة والدعم الفني</div>
+                    <div style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">متصل الآن للمساعدة 🟢</div>
+                </div>
+            </div>
+            <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="navigateBack()">رجوع ↩</button>
+        </div>
+
+        <div id="student-chat-box" style="height: 400px; overflow-y: auto; background: var(--bg-primary); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 10px; border: 1.5px solid var(--border-card); box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);">
+            <div style="text-align: center; color: var(--text-sub); font-size: 0.82rem; margin-top: 140px;">جاري تحميل المحادثة... ⏳</div>
+        </div>
+
+<!-- شريط معاينة الرد قبل الإرسال (شات الطالب) -->
+<div id="student-reply-preview" class="chat-reply-preview-bar">
+    <div class="chat-reply-preview-content">
+        <span id="student-reply-sender" class="chat-reply-preview-sender">الرد على:</span>
+        <span id="student-reply-text" class="chat-reply-preview-text"></span>
+    </div>
+    <button class="chat-reply-cancel-btn" onclick="cancelChatReply('student')">✕</button>
+</div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <input type="text" id="student-chat-input" placeholder="اكتب استفسارك أو مشكلتك هنا..." style="flex: 1; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border-card); background: var(--bg-secondary); color: var(--text-main); font-size: 0.9rem; outline: none;" onkeydown="if(event.key === 'Enter') sendStudentMessage()">
+            <button class="btn-submit" style="width: auto; padding: 10px 18px; margin: 0; border-radius: 12px;" onclick="sendStudentMessage()">إرسال 🚀</button>
+        </div>
+    </div>
+
+    <!-- 2. شاشة الأدمن المركزية (تفتح للأدمن تلقائياً عند الضغط على الزر العائم) -->
+    <div id="inbox-admin-screen" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="color: var(--accent-gold); margin: 0; font-size: 1.15rem;">لوحة إدارة الشات والرسائل 🛡️</h3>
+            <button class="admin-action-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="navigateBack()">رجوع ↩</button>
+        </div>
+
+        <!-- كارت إرسال رسالة فردية جديدة لأي طالب (حتى لو لم يسبق له المراسلة) -->
+        <div class="auth-card" style="padding: 14px; margin-bottom: 14px; border-color: var(--accent-emerald);">
+            <h4 style="color: var(--accent-emerald); font-size: 0.9rem; margin-bottom: 8px;">➕ بدء محادثة جديدة مع طالب</h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" id="adm-manual-student-phone" class="form-input" placeholder="رقم هاتف الطالب (010...)" style="flex: 1; font-size: 0.85rem;" dir="ltr">
+                <input type="text" id="adm-manual-student-name" class="form-input" placeholder="اسم الطالب (اختياري)" style="flex: 1; font-size: 0.85rem;">
+            </div>
+
+<!-- شريط معاينة الرد قبل الإرسال (شات الأدمن) -->
+<div id="admin-reply-preview" class="chat-reply-preview-bar">
+    <div class="chat-reply-preview-content">
+        <span id="admin-reply-sender" class="chat-reply-preview-sender">الرد على:</span>
+        <span id="admin-reply-text" class="chat-reply-preview-text"></span>
+    </div>
+    <button class="chat-reply-cancel-btn" onclick="cancelChatReply('admin')">✕</button>
+</div>
+
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="adm-manual-first-msg" class="form-input" placeholder="نص الرسالة الافتتاحية..." style="flex: 2; font-size: 0.85rem;">
+                <button class="btn-submit" style="flex: 1; margin: 0; padding: 8px 12px; font-size: 0.85rem; background: var(--accent-emerald); color: #000;" onclick="adminStartChatWithNewStudent()">إرسال وبدء 🚀</button>
+            </div>
+        </div>
+
+        <!-- كارت التعميم الجماعي الفوري -->
+        <div class="auth-card" style="padding: 14px; margin-bottom: 14px; border-color: #a855f7;">
+            <h4 style="color: #c084fc; font-size: 0.9rem; margin-bottom: 8px;">📢 إرسال تعميم يظهر في شات جميع الطلاب</h4>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="adm-broadcast-chat-input" class="form-input" placeholder="اكتب نص التعميم الإداري العام..." style="flex: 1; font-size: 0.85rem;">
+                <button class="btn-submit" style="width: auto; margin: 0; padding: 8px 16px; font-size: 0.85rem; background: #a855f7; color: #fff;" onclick="adminSendBroadcastChat()">نشر 📢</button>
+            </div>
+        </div>
+
+        <!-- قائمة المحادثات النشطة (تتحدث لحظياً وتلقائياً) -->
+        <div class="section-label">📩 رسائل الطلاب الواردة (تحديث مباشر)</div>
+        <div id="admin-chat-threads-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; margin-bottom: 15px;">
+            <p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">جاري مزامنة المحادثات... ⏳</p>
+        </div>
+
+        <!-- شباك الشات النشط مع الطالب المختار -->
+        <div id="admin-active-thread-box" class="auth-card" style="padding: 14px; display: none; border-color: var(--accent-gold);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 id="admin-chat-target-title" style="color: var(--accent-gold); margin: 0; font-size: 0.9rem;">المحادثة</h4>
+                <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="document.getElementById('admin-active-thread-box').style.display='none'">إغلاق الشات ✕</button>
+            </div>
+            <div id="admin-thread-messages" style="height: 220px; overflow-y: auto; background: var(--bg-primary); border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-card);"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="admin-reply-chat-input" class="form-input" placeholder="اكتب ردك للطالب هنا..." style="flex: 1; font-size: 0.85rem;" onkeydown="if(event.key === 'Enter') adminSendReplyToActiveStudent()">
+                <button class="btn-submit" style="width: auto; padding: 8px 16px; margin: 0; font-size: 0.85rem;" onclick="adminSendReplyToActiveStudent()">إرسال 💬</button>
+            </div>
+        </div>
+    </div>
+</div>
+
         <!-- واجهة الأسئلة الشائعة المحدثة والشاملة -->
         <div id="view-faq" class="view-section">
             <div class="section-label">أهم الأسئلة المتكررة ودليل التطبيق</div>
@@ -1660,6 +1760,7 @@
                 <button class="auth-tab-btn" id="tab-admin-academic" onclick="switchAdminTab('academic')">المنظم الأكاديمي 🎓</button>
                 <button class="auth-tab-btn" id="tab-admin-store" onclick="switchAdminTab('store')">إدارة المتجر 🏷️</button>
                 <button class="auth-tab-btn" id="tab-admin-tickets" onclick="switchAdminTab('tickets')">الشكاوى</button>
+<button class="auth-tab-btn" id="tab-admin-chat" onclick="switchAdminTab('chat')">صندوق الشات 💬</button>
                 <button class="auth-tab-btn" id="tab-admin-broadcast" onclick="switchAdminTab('broadcast')">رسائل البث</button>
                 <button class="auth-tab-btn" id="tab-admin-books" onclick="switchAdminTab('books')">روابط الكتب</button>
                 <button class="auth-tab-btn" id="tab-admin-quiz" onclick="switchAdminTab('quiz')">إضافة أسئلة</button>
@@ -1673,6 +1774,39 @@
 <button class="auth-tab-btn" id="tab-admin-exam-stats" onclick="switchAdminTab('exam-stats')">📝 إحصائيات الاختبارات</button>
 <button class="auth-tab-btn" id="tab-admin-roles" onclick="switchAdminTab('roles')">إدارة الصلاحيات 🛡️</button>
             </div>
+
+<!-- تبويب إدارة الشات والرد على تذاكر الطلاب -->
+<div id="admin-section-chat" style="display: none;">
+    <!-- كارت إرسال تعميم للجميع -->
+    <div class="auth-card" style="padding: 16px; margin-bottom: 16px; border-color: var(--accent-gold);">
+        <h4 style="color: var(--accent-gold); margin-bottom: 8px; text-align: center;">📢 إرسال تعميم يظهر لجميع الطلاب في الشات</h4>
+        <div class="form-group">
+            <input type="text" id="adm-broadcast-chat-input" class="form-input" placeholder="اكتب نص التعميم الإداري العام...">
+        </div>
+        <button class="btn-submit" onclick="adminSendBroadcastChat()">إرسال للجميع الآن 📢</button>
+    </div>
+
+    <!-- قائمة محادثات الطلاب والرد الفردي -->
+    <div class="auth-card" style="padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="color: var(--text-main); margin: 0;">📩 محادثات الطلاب الواردة</h4>
+            <button class="admin-action-btn" onclick="loadAdminChatThreadsList()">تحديث القائمة 🔄</button>
+        </div>
+        <div id="admin-chat-threads-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+            <p style="text-align: center; color: var(--text-sub); font-size: 0.8rem;">اضغط تحديث لجلب الرسائل...</p>
+        </div>
+    </div>
+
+    <!-- منطقة المحادثة مع الطالب المحدد -->
+    <div id="admin-active-thread-box" class="auth-card" style="margin-top: 15px; padding: 16px; display: none; border-color: var(--accent-emerald);">
+        <h4 id="admin-chat-target-title" style="color: var(--accent-emerald); margin-bottom: 10px;">المحادثة مع الطالب</h4>
+        <div id="admin-thread-messages" style="height: 250px; overflow-y: auto; background: var(--bg-primary); border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-card);"></div>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="admin-reply-chat-input" class="form-input" placeholder="اكتب ردك للطالب هنا..." style="flex: 1;" onkeydown="if(event.key === 'Enter') adminSendReplyToActiveStudent()">
+            <button class="btn-submit" style="width: auto; padding: 8px 16px; margin: 0;" onclick="adminSendReplyToActiveStudent()">إرسال الرد 💬</button>
+        </div>
+    </div>
+</div>
 
 <!-- تبويب إحصائيات الاختبارات الموقوتة اللحظية (أرقام مجردة بدون نسب أو إقبال) -->
 <div id="admin-section-exam-stats" style="display: none;">
@@ -1956,12 +2090,23 @@
                 </div>
                 <!-- التكليفات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-gold); text-align: center;">إضافة تاسك 📝</h3>
+                    <h3 id="adm-task-form-title" style="color: var(--accent-gold); text-align: center;">إضافة تاسك 📝</h3>
+                    <input type="hidden" id="adm-task-id">
                     <div class="form-group"><input type="text" id="adm-task-subject" class="form-input" placeholder="اسم المادة"></div>
                     <div class="form-group"><input type="text" id="adm-task-title" class="form-input" placeholder="عنوان التاسك"></div>
                     <div class="form-group"><input type="datetime-local" id="adm-task-deadline" class="form-input" style="color-scheme: dark;"></div>
-                    <div class="form-group"><input type="url" id="adm-task-url" class="form-input" placeholder="رابط الملف" dir="ltr"></div>
-                    <button class="btn-submit" onclick="adminPublishTask()">نشر تاسك 🚀</button>
+                    <div class="form-group"><input type="url" id="adm-task-url" class="form-input" placeholder="رابط الملف (اختياري)" dir="ltr"></div>
+                    <button id="btn-adm-save-task" class="btn-submit" onclick="adminPublishTask()">نشر تاسك 🚀</button>
+                    <button id="btn-adm-cancel-task" class="admin-action-btn danger" style="width: 100%; margin-top: 8px; padding: 8px; display: none;" onclick="cancelEditTask()">إلغاء التعديل 🔄</button>
+                    
+                    <!-- قائمة التاسكات الحالية للإدارة والتعديل -->
+                    <div style="border-top: 1px dashed var(--border-card); margin-top: 15px; padding-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-main);">📋 التكليفات المنشورة حالياً:</span>
+                            <button class="admin-action-btn" style="padding: 2px 8px; font-size: 0.7rem;" onclick="loadAdminTasksList()">تحديث 🔄</button>
+                        </div>
+                        <div id="adm-tasks-current-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;"></div>
+                    </div>
                 </div>
                 <!-- الإعلانات -->
                 <div class="auth-card" style="padding: 18px; margin-bottom: 20px;">
@@ -3155,6 +3300,12 @@
     </div>
 </div>
 </div> <!-- نهاية container الرئيسي -->
+
+<!-- الزر العائم للشات والدعم (أسفل يسار الشاشة) -->
+<div id="main-floating-chat-btn" class="floating-chat-btn" onclick="handleFloatingChatClick()" title="الرسائل والدعم" style="display: none;">
+    💬
+    <span id="floating-chat-badge" class="chat-unread-badge" style="display: none;">0</span>
+</div>
 
 <!-- شريط التنقل السفلي الثابت (خارج الـ container) -->
 <nav class="bottom-nav" id="main-bottom-nav" style="display: none;">
