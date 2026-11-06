@@ -1,3 +1,30 @@
+// ================= زعيم القنبلة الموقوتة (المستوى 2) =================
+let bombTimer = null;
+let bombTimeLeft = 30;
+let wiresCut = 0;
+
+function startBombBoss() {
+    showTopToast(`زعيم المستوى ${currentLevelPlaying}: تفكيك القنبلة 💣`, 'error');
+    wiresCut = 0;
+    bombTimeLeft = 30;
+    currentBossQIndex = 0;
+    updateBombUI();
+    navigateTo('view-boss-bomb', `زعيم المستوى ${currentLevelPlaying}`, 'فكك القنبلة قبل الانفجار');
+    renderBombQuestion();
+    resumeBombTimer();
+}
+
+function updateBombUI() {
+    const timerDisplay = document.getElementById('bomb-timer-display');
+    const wiresDisplay = document.getElementById('bomb-wires-cut');
+    if (timerDisplay) {
+        timerDisplay.innerText = `00:${String(Math.max(0, bombTimeLeft)).padStart(2, '0')}`;
+    }
+    if (wiresDisplay) {
+        wiresDisplay.innerText = `الأسلاك المقطوعة: ${wiresCut} / 3 ✂️`;
+    }
+}
+
 function renderBombQuestion() {
     if (currentBossQIndex >= bossQuestionsDeck.length) { concludeLevelBoss(false); return; }
     const qData = bossQuestionsDeck[currentBossQIndex];

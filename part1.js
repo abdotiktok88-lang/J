@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.5";
+const CURRENT_APP_VERSION = "2.1.6";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -297,21 +297,67 @@ function switchAcademicTab(tab) {
 }
 
     function loadAcademicTasks() {
-    const list = document.getElementById('acad-tasks-list');
-    const localTasks = localStorage.getItem('local_acad_tasks');
-    
-    // عرض المحفوظ في الموبايل فوراً
-    if (localTasks) {
-        renderTasksToDOM(JSON.parse(localTasks), list);
-    }
+    const container = document.getElementById('academic-tasks-list');
+    if (!container) return;
 
-    // جلب التحديث في الخلفية مرة واحدة فقط وحفظه
-    db.ref('academic_tasks').once('value', (snap) => {
-        let tasksObj = {};
-        if (snap.exists()) tasksObj = snap.val();
-        localStorage.setItem('local_acad_tasks', JSON.stringify(tasksObj));
-        renderTasksToDOM(tasksObj, list);
+    db.ref('academic_markers/tasks').once('value', markerSnap => {
+        const lastMarker = markerSnap.val() || 0;
+        const cachedMarker = parseInt(localStorage.getItem('cached_academic_tasks_marker') || '0');
+        const cachedTasks = localStorage.getItem('cached_academic_tasks_data');
+
+        if (cachedTasks && cachedMarker === lastMarker) {
+            renderTasksHTML(JSON.parse(cachedTasks));
+            return;
+        }
+
+        db.ref('academic_tasks').once('value', snap => {
+            const tasks = [];
+            if (snap.exists()) {
+                snap.forEach(c => {
+                    tasks.push({ id: c.key, ...c.val() });
+                });
+            }
+            localStorage.setItem('cached_academic_tasks_marker', lastMarker.toString());
+            localStorage.setItem('cached_academic_tasks_data', JSON.stringify(tasks));
+            renderTasksHTML(tasks);
+        });
     });
+
+    function renderTasksHTML(tasks) {
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-sub); font-size:0.85rem; padding: 20px;">لا توجد تكليفات دراسية مطلوبة حالياً 🎉</p>';
+            return;
+        }
+
+        // عكس الترتيب لعرض أحدث تاسك مضاف في الأعلى
+        const reversedTasks = [...tasks].reverse();
+        const completedTasks = currentUser.completed_tasks || [];
+        let html = '';
+
+        reversedTasks.forEach(t => {
+            const isDone = completedTasks.includes(t.id);
+            const statusClass = isDone ? 'completed' : '';
+            const statusText = isDone ? 'مكتمل ✅' : 'قيد الانتظار ⏳';
+            const actionText = isDone ? 'إلغاء الإكمال ↩️' : 'تحديد كمكتمل ✔️';
+            const fileBtn = t.url ? `<a href="${t.url}" target="_blank" class="btn-task-file">عرض الملف 📂</a>` : '';
+
+            html += `
+            <div class="academic-task-card ${statusClass}" id="task-card-${t.id}">
+                <div class="task-header">
+                    <span class="task-subject">${t.subject}</span>
+                    <span class="task-status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <h4 class="task-title">${t.title}</h4>
+                <div class="task-deadline">⏳ آخر موعد: <b>${(t.deadline || '').replace('T', ' ')}</b></div>
+                <div class="task-actions">
+                    <button class="btn-toggle-task ${statusClass}" onclick="toggleTaskCompletion('${t.id}')">${actionText}</button>
+                    ${fileBtn}
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    }
 }
 
 function renderTasksToDOM(tasksObj, list) {
@@ -532,29 +578,115 @@ function saveImageForOfflineUse(url, secKey, secTitle, container) {
     }
 
     function adminPublishTask() {
-    playClickSound();
-    const subject = document.getElementById('adm-task-subject').value.trim();
-    const title = document.getElementById('adm-task-title').value.trim();
-    const deadline = document.getElementById('adm-task-deadline').value;
-    const url = document.getElementById('adm-task-url').value.trim();
+        playClickSound();
+        const editId = document.getElementById('adm-task-id').value.trim();
+        const subject = document.getElementById('adm-task-subject').value.trim();
+        const title = document.getElementById('adm-task-title').value.trim();
+        const deadline = document.getElementById('adm-task-deadline').value;
+        const url = document.getElementById('adm-task-url').value.trim();
 
-    if (!subject || !title || !deadline) {
-        showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
-        return;
+        if (!subject || !title || !deadline) {
+            showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
+            return;
+        }
+
+        const taskData = { subject, title, deadline, url };
+
+        if (editId) {
+            // حالة التعديل على تكليف موجود
+            db.ref('academic_tasks/' + editId).update(taskData).then(() => {
+                db.ref('academic_markers/tasks').set(Date.now());
+                showTopToast('تم تعديل التكليف بنجاح! ✏️✨', 'success');
+                cancelEditTask();
+                loadAdminTasksList();
+                loadAcademicTasks();
+            });
+        } else {
+            // حالة نشر تكليف جديد
+            taskData.createdAt = Date.now();
+            db.ref('academic_tasks').push(taskData).then(() => {
+                db.ref('academic_markers/tasks').set(Date.now());
+                showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
+                cancelEditTask();
+                loadAdminTasksList();
+                loadAcademicTasks();
+            });
+        }
     }
-    db.ref('academic_tasks').push({ subject, title, deadline, url, createdAt: Date.now() }).then(() => {
-        db.ref('academic_markers/tasks').set(Date.now());
-        showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
+
+    function editAdminTask(id, subject, title, deadline, url) {
+        playClickSound();
+        document.getElementById('adm-task-id').value = id;
+        document.getElementById('adm-task-subject').value = decodeURIComponent(subject);
+        document.getElementById('adm-task-title').value = decodeURIComponent(title);
+        document.getElementById('adm-task-deadline').value = deadline;
+        document.getElementById('adm-task-url').value = decodeURIComponent(url);
+
+        document.getElementById('adm-task-form-title').innerText = 'تعديل التكليف ✏️';
+        document.getElementById('btn-adm-save-task').innerText = 'حفظ التعديلات ✅';
+        document.getElementById('btn-adm-cancel-task').style.display = 'block';
+
+        const formTitle = document.getElementById('adm-task-form-title');
+        if (formTitle) formTitle.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEditTask() {
+        document.getElementById('adm-task-id').value = '';
         document.getElementById('adm-task-subject').value = '';
         document.getElementById('adm-task-title').value = '';
         document.getElementById('adm-task-deadline').value = '';
         document.getElementById('adm-task-url').value = '';
-    });
-}
+
+        document.getElementById('adm-task-form-title').innerText = 'إضافة تاسك 📝';
+        document.getElementById('btn-adm-save-task').innerText = 'نشر تاسك 🚀';
+        document.getElementById('btn-adm-cancel-task').style.display = 'none';
+    }
+
+    function loadAdminTasksList() {
+        const container = document.getElementById('adm-tasks-current-list');
+        if (!container) return;
+
+        container.innerHTML = '<p style="text-align:center; font-size:0.75rem; color:var(--text-sub);">جاري التحميل...</p>';
+
+        db.ref('academic_tasks').once('value', snap => {
+            if (!snap.exists()) {
+                container.innerHTML = '<p style="text-align:center; font-size:0.75rem; color:var(--text-sub);">لا توجد تكليفات منشورة.</p>';
+                return;
+            }
+
+            let html = '';
+            snap.forEach(c => {
+                const t = c.val();
+                const id = c.key;
+                const safeSub = encodeURIComponent(t.subject || '');
+                const safeTitle = encodeURIComponent(t.title || '');
+                const safeUrl = encodeURIComponent(t.url || '');
+                const deadline = t.deadline || '';
+
+                html += `
+                <div class="admin-item-card" style="padding: 8px 10px; margin-bottom: 4px;">
+                    <div class="admin-item-info">
+                        <div class="admin-item-name" style="font-size: 0.82rem;">${t.subject} - ${t.title}</div>
+                        <div class="admin-item-sub" style="font-size: 0.7rem; direction: rtl; text-align: right;">⏳ التسليم: ${deadline.replace('T', ' ')}</div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="admin-action-btn" style="padding: 2px 8px; font-size: 0.7rem;" onclick="editAdminTask('${id}', '${safeSub}', '${safeTitle}', '${deadline}', '${safeUrl}')">تعديل ✏️</button>
+                        <button class="admin-action-btn danger" style="padding: 2px 8px; font-size: 0.7rem;" onclick="adminDeleteTask('${id}')">حذف 🗑️</button>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        });
+    }
 
     function adminDeleteTask(id) {
+        playErrorSound();
         if (confirm('هل تريد حذف هذا التكليف نهائياً؟')) {
-            db.ref('academic_tasks/' + id).remove().then(() => showTopToast('تم حذف التكليف بنجاح.'));
+            db.ref('academic_tasks/' + id).remove().then(() => {
+                showTopToast('تم حذف التكليف بنجاح 🗑️', 'info');
+                loadAdminTasksList();
+                loadAcademicTasks();
+            });
         }
     }
 
@@ -4026,6 +4158,7 @@ const allTabs = ['users','analytics','academic','store','tickets','broadcast','b
     if (tabName === 'exam-stats') { initAdminExamStatsRealtime(); }
 
     if (tabName === 'academic') {
+        loadAdminTasksList(); // تحميل قائمة التكليفات مع زر التعديل فور فتح القسم
         db.ref('academic_tasks').once('value', (snap) => {
             const select = document.getElementById('adm-cd-task-link');
             if (!select) return;
@@ -5239,9 +5372,10 @@ function renderHomeCountdowns() {
 
     if (qCard) qCard.classList.add('hidden-for-kick');
 
-    const isGoalScored = (penaltyCorrectAnswersCount >= 4);
+    // الفوز إذا تم حل 3 أسئلة صحيحة على الأقل
+    const isGoalScored = (penaltyCorrectAnswersCount >= 3);
 
-    if (isGoalScored) {
+    if (isGoalScored && typeof playCustomGoalAudio === 'function' && selectedPenaltyStriker) {
         playCustomGoalAudio(selectedPenaltyStriker.id);
     }
 
@@ -5250,7 +5384,7 @@ function renderHomeCountdowns() {
     }, 400);
 
     setTimeout(() => {
-        playStadiumSFX('kick');
+        if (typeof playStadiumSFX === 'function') playStadiumSFX('kick');
         if (stadium) {
             stadium.classList.add('camera-shake-screen');
             setTimeout(() => stadium.classList.remove('camera-shake-screen'), 350);
@@ -5258,63 +5392,80 @@ function renderHomeCountdowns() {
 
         if (isGoalScored) {
             const isRight = Math.random() > 0.5;
-            ball.classList.add(isRight ? 'kick-top-right' : 'kick-top-left');
-            keeper.classList.add('dive-wrong');
+            if (ball) ball.classList.add(isRight ? 'kick-top-right' : 'kick-top-left');
+            if (keeper) keeper.classList.add('dive-wrong');
 
             setTimeout(() => {
                 if (net) net.classList.add('net-shake');
                 if (striker) striker.classList.add('celebrate');
-                shootStars();
-                triggerConfetti();
+                if (typeof shootStars === 'function') shootStars();
+                if (typeof triggerConfetti === 'function') triggerConfetti();
             }, 750);
         } else {
-            ball.classList.add('kick-saved');
-            keeper.classList.add('save-left');
+            if (ball) ball.classList.add('kick-saved');
+            if (keeper) keeper.classList.add('save-left');
 
             setTimeout(() => {
-                playStadiumSFX('post_hit');
-                keeper.innerText = '🛡️';
-                playErrorSound();
+                if (typeof playStadiumSFX === 'function') playStadiumSFX('post_hit');
+                if (keeper) keeper.innerText = '🛡️';
+                if (typeof playErrorSound === 'function') playErrorSound();
             }, 750);
         }
     }, 850);
 
-    const resultDelay = isGoalScored ? 5500 : 2500;
+    // وقت انتهاء الأنميشن
+    const resultDelay = isGoalScored ? 3500 : 2000;
 
-    // توجيه دقيق بدون تكرار
     setTimeout(() => {
-        stopStadiumCrowdAudio();
-        if (isLevelBossActive) {
-            concludeLevelBoss(isGoalScored);
-        } else {
-            concludePenaltyGame(isGoalScored);
-        }
+        if (typeof stopStadiumCrowdAudio === 'function') stopStadiumCrowdAudio();
+
+        // إغلاق أي نافذة منبثقة
+        const cinemaModal = document.getElementById('penalty-cinema-modal');
+        if (cinemaModal) cinemaModal.classList.remove('show');
+
+        // توجيه إجباري لإنهاء الزعيم
+        concludeLevelBoss(isGoalScored);
     }, resultDelay);
 }
 
 function concludeLevelBoss(isWin) {
     isLevelBossActive = false;
     isPenaltyGameActive = false;
-    clearInterval(bombTimer);
-    stopStadiumCrowdAudio();
-    
-    // إخفاء أي واجهات منبثقة تخص ركلات الجزاء فوراً حتى لا تعلق الشاشة
-    const cinemaModal = document.getElementById('penalty-cinema-modal');
-    if (cinemaModal) cinemaModal.classList.remove('show');
-    
+    if (typeof bombTimer !== 'undefined') clearInterval(bombTimer);
+    if (typeof stopStadiumCrowdAudio === 'function') stopStadiumCrowdAudio();
+
+    // 1. إخفاء شاشة الملعب فوراً وإلغاء أي كروت معلقة
+    const arenaView = document.getElementById('view-penalty-arena');
+    if (arenaView) {
+        arenaView.style.display = 'none';
+        arenaView.classList.remove('active');
+    }
+
     let userLevels = currentUser.levels_progress || {};
     let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
-    
-    let updatedStars = Math.max(oldData.stars, currentLevelStarsEarned);
+    let updatedStars = Math.max(oldData.stars || 0, currentLevelStarsEarned || 0);
 
     if (isWin) {
         let rewards = getLevelRewards(currentLevelPlaying);
-rewards.xp = calculateXpWithBooster(rewards.xp);
-        userLevels[currentLevelPlaying] = { stars: updatedStars, boss_defeated: true, cooldown: 0 };
-        
+        rewards.xp = calculateXpWithBooster(rewards.xp);
+
+        // تسجيل هزيمة الزعيم الحالي
+        userLevels[currentLevelPlaying] = {
+            stars: updatedStars,
+            boss_defeated: true,
+            cooldown: 0
+        };
+
+        // تجهيز وفتح المستوى التالي
+        const nextLvl = currentLevelPlaying + 1;
+        if (!userLevels[nextLvl]) {
+            userLevels[nextLvl] = { stars: 0, boss_defeated: false, cooldown: 0 };
+        }
+
         currentUser.xp = (currentUser.xp || 0) + rewards.xp;
         currentUser.points = currentUser.xp;
         currentUser.coins = (currentUser.coins || 0) + rewards.coins;
+        currentUser.levels_progress = userLevels;
 
         db.ref('users/' + currentUser.phone).update({
             levels_progress: userLevels,
@@ -5323,20 +5474,31 @@ rewards.xp = calculateXpWithBooster(rewards.xp);
             coins: currentUser.coins
         }).then(() => {
             updateProfileUI();
-            goHomeDirectly(true);
-            showTopToast(`أسطورة! تم تدمير الزعيم بنجاح 🏆 (+${rewards.xp} XP و +${rewards.coins} عملة)`, 'success');
-            setTimeout(() => { openLevelsMap(); triggerConfetti(); }, 500);
+            
+            // 2. الانتقال المباشر لخريطة المستويات فوراً بدون goHomeDirectly
+            navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+            navigateTo('view-levels-map', 'تحدي المعلومات', 'خريطة المستويات');
+            renderLevelsGridUI();
+            
+            showTopToast(`أسطورة! هزمت الزعيم وفُتح المستوى ${nextLvl} بنجاح 🏆 (+${rewards.xp} XP و +${rewards.coins} عملة)`, 'success');
+            if (typeof triggerConfetti === 'function') triggerConfetti();
         });
 
     } else {
-        // الخسارة والعقوبة الفورية
+        // حالة الهزيمة
         let cooldownTime = Date.now() + ((globalBossConfig.cooldownHours || 12) * 60 * 60 * 1000);
-        userLevels[currentLevelPlaying] = { stars: updatedStars, boss_defeated: oldData.boss_defeated, cooldown: cooldownTime };
-        
+        userLevels[currentLevelPlaying] = {
+            stars: updatedStars,
+            boss_defeated: oldData.boss_defeated || false,
+            cooldown: cooldownTime
+        };
+
+        currentUser.levels_progress = userLevels;
         db.ref('users/' + currentUser.phone + '/levels_progress').set(userLevels).then(() => {
-            goHomeDirectly(true); // الخروج فوراً للشاشة الرئيسية وإغلاق اللعب
-            showTopToast(`تم هزيمتك أمام الزعيم! تم قفل المستوى للراحة ❌`, 'error');
-            setTimeout(() => { openLevelsMap(); }, 500); // فتح الخريطة لتظهر علامة القفل
+            navHistory = [{ viewId: 'view-home', title: 'برنامج علوم الأغذية', subtitle: 'الفرقة الرابعة - دفعة 28' }];
+            navigateTo('view-levels-map', 'تحدي المعلومات', 'خريطة المستويات');
+            renderLevelsGridUI();
+            showTopToast(`تمت هزيمتك أمام الزعيم! دخل المستوى في فترة راحة ❌`, 'error');
         });
     }
 }
@@ -7327,22 +7489,34 @@ function uploadAdminLevelQuestions() {
 
 function renderLevelsGridUI() {
     const container = document.getElementById('levels-grid-container');
+    if (!container) return;
+
     let html = '';
     const userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
     let totalGlobalStars = 0;
     
-    for (let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
+    // حساب مجموع النجوم التراكمي بدقة
+    for (let k in userLevels) {
+        if (userLevels[k] && typeof userLevels[k].stars === 'number') {
+            totalGlobalStars += userLevels[k].stars;
+        }
+    }
     
-    let all50Defeated = true; // متغير لفحص هل كل الـ 50 زعيم اتهزموا
+    let all50Defeated = true; // فحص هل كل الـ 50 زعيم اتهزموا
 
     for (let i = 1; i <= 50; i++) {
         let lvlData = userLevels[i] || { stars: 0, boss_defeated: false, cooldown: 0 };
         let isUnlocked = false;
         
         let requiredStars = getLevelReqStars(i);
-        let prevBossDefeated = (i === 1) ? true : (userLevels[i-1] && userLevels[i-1].boss_defeated);
         
-        if (i === 1 || (totalGlobalStars >= requiredStars && prevBossDefeated)) {
+        // التحقق من هزيمة زعيم المستوى السابق
+        let prevLvlData = userLevels[i - 1];
+        let prevBossDefeated = (i === 1) ? true : (prevLvlData && prevLvlData.boss_defeated === true);
+        
+        // المستوى 1 مفتوح دائماً
+        // المستويات التالية تفتح بمجرد هزيمة زعيم المستوى السابق (أو استيفاء النجوم)
+        if (i === 1 || prevBossDefeated) {
             isUnlocked = true;
         }
         
@@ -7359,7 +7533,7 @@ function renderLevelsGridUI() {
                 starsDisplay = '⏱️ راحة للزعيم';
             } else {
                 stateClass = lvlData.boss_defeated ? 'completed' : 'unlocked';
-                starsDisplay = `${lvlData.stars} / 30 ⭐`;
+                starsDisplay = `${lvlData.stars || 0} / 30 ⭐`;
             }
         }
         
@@ -7372,8 +7546,12 @@ function renderLevelsGridUI() {
             </div>
         </div>`;
     }
+
     container.innerHTML = html;
-    document.getElementById('total-stars-display').innerText = totalGlobalStars;
+
+    const starsTotalEl = document.getElementById('total-stars-display');
+    if (starsTotalEl) starsTotalEl.innerText = totalGlobalStars;
+
     if (currentUser) {
         const mapXp = document.getElementById('map-xp-display');
         const mapCoins = document.getElementById('map-coins-display');
@@ -7382,7 +7560,9 @@ function renderLevelsGridUI() {
     }
 
     // بناء كارت بوابة المستويات المظلمة في الأسفل
-    renderExtraLevelsGate(all50Defeated);
+    if (typeof renderExtraLevelsGate === 'function') {
+        renderExtraLevelsGate(all50Defeated);
+    }
 }
 
 // دالة رسم بوابة المستويات المظلمة أسفل المستوى 50
@@ -7674,13 +7854,13 @@ function checkBossEligibility() {
     isClassicQuizActive = false;
     clearInterval(timerInterval);
 
-    // مسح الجلسة المؤقتة لأن المستوى انتهى بالفعل (عشان يرجع الزرار لوضعه الطبيعي)
+    // مسح الجلسة المؤقتة
     clearActiveQuizSession();
 
     let userLevels = (currentUser && currentUser.levels_progress) ? currentUser.levels_progress : {};
     let oldData = userLevels[currentLevelPlaying] || { stars: 0, boss_defeated: false, cooldown: 0 };
     
-    // حفظ النجوم بشكل قاطع وفوري بمجرد إنهاء الـ 10 أسئلة
+    // حفظ النجوم بشكل فوري
     let updatedStars = Math.max(oldData.stars || 0, currentLevelStarsEarned);
     userLevels[currentLevelPlaying] = { ...oldData, stars: updatedStars };
     
@@ -7690,11 +7870,14 @@ function checkBossEligibility() {
     }
 
     let totalGlobalStars = 0;
-    for(let k in userLevels) { totalGlobalStars += (userLevels[k].stars || 0); }
+    for (let k in userLevels) { 
+        if (userLevels[k] && userLevels[k].stars) totalGlobalStars += userLevels[k].stars; 
+    }
+    
     const starsDisplay = document.getElementById('total-stars-display');
     if (starsDisplay) starsDisplay.innerText = totalGlobalStars;
 
-    // لو الزعيم مهزوم أصلاً، نقفل ونرجع الخريطة فوراً
+    // لو الزعيم مهزوم مسبقاً:
     if (oldData.boss_defeated) {
         goHomeDirectly(true);
         if (currentLevelStarsEarned > (oldData.stars || 0)) {
@@ -7707,13 +7890,17 @@ function checkBossEligibility() {
         return;
     }
 
-    // لو لسه مخلصش الزعيم يكمل العادي:
+    // شرط العبور للزعيم: إما النجوم التراكمية أو جمع 10 نجوم على الأقل في المستوى الحالي
     let reqStarsForNext = getLevelReqStars(currentLevelPlaying + 1);
 
-    if (totalGlobalStars >= reqStarsForNext) {
+    if (totalGlobalStars >= reqStarsForNext || currentLevelStarsEarned >= 10) {
         openModal('modal-pre-boss');
     } else {
-        document.getElementById('shortage-desc').innerText = `جمعت ${totalGlobalStars} نجمة تراكمية، لكنك تحتاج ${reqStarsForNext} نجمة لمواجهة وحش هذا المستوى. عد وحسن نجومك القديمة!`;
+        const shortageModal = document.getElementById('modal-boss-shortage');
+        const shortageDesc = document.getElementById('shortage-desc');
+        if (shortageDesc) {
+            shortageDesc.innerText = `جمعت ${currentLevelStarsEarned} نجمة في هذا المستوى (الإجمالي: ${totalGlobalStars}⭐). تحتاج على الأقل 10 نجوم في هذا المستوى لمواجهة الزعيم!`;
+        }
         openModal('modal-boss-shortage');
     }
 }
