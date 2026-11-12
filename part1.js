@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.7";
+const CURRENT_APP_VERSION = "2.1.8";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -297,8 +297,8 @@ function switchAcademicTab(tab) {
 }
 
     function loadAcademicTasks() {
-    const container = document.getElementById('academic-tasks-list');
-    if (!container) return;
+    const list = document.getElementById('acad-tasks-list');
+    if (!list) return;
 
     db.ref('academic_markers/tasks').once('value', markerSnap => {
         const lastMarker = markerSnap.val() || 0;
@@ -306,20 +306,15 @@ function switchAcademicTab(tab) {
         const cachedTasks = localStorage.getItem('cached_academic_tasks_data');
 
         if (cachedTasks && cachedMarker === lastMarker) {
-            renderTasksHTML(JSON.parse(cachedTasks));
+            renderTasksToDOM(JSON.parse(cachedTasks), list);
             return;
         }
 
         db.ref('academic_tasks').once('value', snap => {
-            const tasks = [];
-            if (snap.exists()) {
-                snap.forEach(c => {
-                    tasks.push({ id: c.key, ...c.val() });
-                });
-            }
+            const tasksObj = snap.exists() ? snap.val() : {};
             localStorage.setItem('cached_academic_tasks_marker', lastMarker.toString());
-            localStorage.setItem('cached_academic_tasks_data', JSON.stringify(tasks));
-            renderTasksHTML(tasks);
+            localStorage.setItem('cached_academic_tasks_data', JSON.stringify(tasksObj));
+            renderTasksToDOM(tasksObj, list);
         });
     });
 
@@ -578,41 +573,41 @@ function saveImageForOfflineUse(url, secKey, secTitle, container) {
     }
 
     function adminPublishTask() {
-        playClickSound();
-        const editId = document.getElementById('adm-task-id').value.trim();
-        const subject = document.getElementById('adm-task-subject').value.trim();
-        const title = document.getElementById('adm-task-title').value.trim();
-        const deadline = document.getElementById('adm-task-deadline').value;
-        const url = document.getElementById('adm-task-url').value.trim();
+    playClickSound();
+    const editId = document.getElementById('adm-task-id').value.trim();
+    const subject = document.getElementById('adm-task-subject').value.trim();
+    const title = document.getElementById('adm-task-title').value.trim();
+    const deadline = document.getElementById('adm-task-deadline').value;
+    const url = document.getElementById('adm-task-url').value.trim();
 
-        if (!subject || !title || !deadline) {
-            showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
-            return;
-        }
-
-        const taskData = { subject, title, deadline, url };
-
-        if (editId) {
-            // حالة التعديل على تكليف موجود
-            db.ref('academic_tasks/' + editId).update(taskData).then(() => {
-                db.ref('academic_markers/tasks').set(Date.now());
-                showTopToast('تم تعديل التكليف بنجاح! ✏️✨', 'success');
-                cancelEditTask();
-                loadAdminTasksList();
-                loadAcademicTasks();
-            });
-        } else {
-            // حالة نشر تكليف جديد
-            taskData.createdAt = Date.now();
-            db.ref('academic_tasks').push(taskData).then(() => {
-                db.ref('academic_markers/tasks').set(Date.now());
-                showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
-                cancelEditTask();
-                loadAdminTasksList();
-                loadAcademicTasks();
-            });
-        }
+    if (!subject || !title || !deadline) {
+        showTopToast('يرجى كتابة المادة، العنوان، وموعد التسليم!', 'error');
+        return;
     }
+
+    const taskData = { subject, title, deadline, url };
+
+    if (editId) {
+        db.ref('academic_tasks/' + editId).update(taskData).then(() => {
+            db.ref('academic_markers/tasks').set(Date.now());
+            localStorage.removeItem('cached_academic_tasks_data');
+            showTopToast('تم تعديل التكليف بنجاح! ✏️✨', 'success');
+            cancelEditTask();
+            loadAdminTasksList();
+            loadAcademicTasks();
+        });
+    } else {
+        taskData.createdAt = Date.now();
+        db.ref('academic_tasks').push(taskData).then(() => {
+            db.ref('academic_markers/tasks').set(Date.now());
+            localStorage.removeItem('cached_academic_tasks_data');
+            showTopToast('تم نشر التكليف للدفعة بنجاح! 🚀', 'success');
+            cancelEditTask();
+            loadAdminTasksList();
+            loadAcademicTasks();
+        });
+    }
+}
 
     function editAdminTask(id, subject, title, deadline, url) {
         playClickSound();
@@ -680,15 +675,17 @@ function saveImageForOfflineUse(url, secKey, secTitle, container) {
     }
 
     function adminDeleteTask(id) {
-        playErrorSound();
-        if (confirm('هل تريد حذف هذا التكليف نهائياً؟')) {
-            db.ref('academic_tasks/' + id).remove().then(() => {
-                showTopToast('تم حذف التكليف بنجاح 🗑️', 'info');
-                loadAdminTasksList();
-                loadAcademicTasks();
-            });
-        }
+    playErrorSound();
+    if (confirm('هل تريد حذف هذا التكليف نهائياً؟')) {
+        db.ref('academic_tasks/' + id).remove().then(() => {
+            db.ref('academic_markers/tasks').set(Date.now());
+            localStorage.removeItem('cached_academic_tasks_data');
+            showTopToast('تم حذف التكليف بنجاح 🗑️', 'info');
+            loadAdminTasksList();
+            loadAcademicTasks();
+        });
     }
+}
 
     function adminPublishCollegeAlert() {
     playClickSound();
