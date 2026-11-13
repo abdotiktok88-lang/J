@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.1.8";
+const CURRENT_APP_VERSION = "2.1.9";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -2899,30 +2899,32 @@ function buildLeaderboardDOM(usersArr, container) {
     const safeKey = getSafeSubjectKey(currentActiveSubject);
     const bookIdentifier = `${safeKey}_${currentActiveType}`;
     
-    // احتساب المكافأة فوراً
+    // احتساب المكافأة لأول مرة
     rewardUserForBookSilent(bookIdentifier);
 
-    // 1. فحص وجود الرابط محلياً أولاً
-    const cachedLink = localStorage.getItem('cached_book_url_' + bookIdentifier);
+    const cacheKey = 'cached_book_url_' + bookIdentifier;
+    const cachedLink = localStorage.getItem(cacheKey);
 
-    // 🚀 إذا كان الرابط محفوظاً مسبقاً، نزل فوراً بدون لمس فايربيز نهائياً
-    if (cachedLink) {
-        downloadBookFromDrive(cachedLink, `${currentActiveSubject}_${currentActiveType}.pdf`);
-        return;
-    }
+    showTopToast('جاري التحقق من أحدث نسخة للكتاب... ⏳', 'info');
 
-    // 2. إذا لم يكن محفوظاً (أول مرة فقط)، اطلبه من فايربيز واحفظه للأبد
-    showTopToast('جاري تجهيز رابط التحميل... ⏳', 'info');
+    // فحص السيرفر دائماً لضمان جلب الرابط المحدّث
     db.ref(`subject_files/${safeKey}/${currentActiveType}`).once('value').then((snapshot) => {
         if (snapshot.exists() && snapshot.val()) {
-            const rawUrl = snapshot.val();
-            localStorage.setItem('cached_book_url_' + bookIdentifier, rawUrl); // حفظ الرابط في هاتف الطالب
-            downloadBookFromDrive(rawUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
+            const latestUrl = snapshot.val();
+            localStorage.setItem(cacheKey, latestUrl); // تحديث الكاش بالرابط الجديد
+            downloadBookFromDrive(latestUrl, `${currentActiveSubject}_${currentActiveType}.pdf`);
+        } else if (cachedLink) {
+            downloadBookFromDrive(cachedLink, `${currentActiveSubject}_${currentActiveType}.pdf`);
         } else {
             fallbackDownload();
         }
     }).catch(() => {
-        fallbackDownload();
+        // في حالة عدم وجود إنترنت، يفتح النسخة المحفوظة محلياً
+        if (cachedLink) {
+            downloadBookFromDrive(cachedLink, `${currentActiveSubject}_${currentActiveType}.pdf`);
+        } else {
+            fallbackDownload();
+        }
     });
 }
 
