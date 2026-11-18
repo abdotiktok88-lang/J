@@ -999,16 +999,18 @@ function playExactMatchSound() {
         });
     }
 
-    function closeBroadcastBanner() {
-        playClickSound();
-        const banner = document.getElementById('broadcast-msg-modal');
-        if (banner) banner.classList.remove('show');
-        db.ref('broadcast_message').once('value').then(snap => {
-            if (snap.exists() && snap.val().id) {
-                localStorage.setItem('last_seen_broadcast', snap.val().id);
-            }
-        });
+    let currentActiveBroadcastId = null;
+
+function closeBroadcastBanner() {
+    playClickSound();
+    const banner = document.getElementById('broadcast-msg-modal');
+    if (banner) banner.classList.remove('show');
+    
+    // حفظ المعرّف فوراً بدون انتظار رد السيرفر
+    if (currentActiveBroadcastId) {
+        localStorage.setItem('last_seen_broadcast', currentActiveBroadcastId);
     }
+}
 
     // ================= المظهر =================
     function toggleTheme() {
@@ -1297,23 +1299,24 @@ function getAvatarFrameOverlayHtml(frameKey) {
 
 // ================= فحص رسائل البث العامة =================
     function checkBroadcastAlerts() {
-        db.ref('broadcast_message').on('value', (snap) => {
-            if (snap.exists() && snap.val()) {
-                const data = snap.val();
-                const lastSeenId = localStorage.getItem('last_seen_broadcast');
-                if (data.active && data.id !== lastSeenId) {
-                    document.getElementById('broadcast-msg-title').innerText = data.title || "تنبيه عام 📢";
-                    document.getElementById('broadcast-msg-body').innerText = data.body || "";
-                    
-                    const banner = document.getElementById('broadcast-msg-modal');
-                    if (banner) {
-                        banner.classList.add('show');
-                        if (typeof playSuccessSound === 'function') playSuccessSound();
-                    }
+    db.ref('broadcast_message').on('value', (snap) => {
+        if (snap.exists() && snap.val()) {
+            const data = snap.val();
+            const lastSeenId = localStorage.getItem('last_seen_broadcast');
+            if (data.active && data.id !== lastSeenId) {
+                currentActiveBroadcastId = data.id; // تخزين الـ ID جاهزاً للحفظ الفوري
+                document.getElementById('broadcast-msg-title').innerText = data.title || "تنبيه عام 📢";
+                document.getElementById('broadcast-msg-body').innerText = data.body || "";
+                
+                const banner = document.getElementById('broadcast-msg-modal');
+                if (banner) {
+                    banner.classList.add('show');
+                    if (typeof playSuccessSound === 'function') playSuccessSound();
                 }
             }
-        });
-    }
+        }
+    });
+}
 
     // ================= تهيئة المستخدم =================
     let currentUser = null; 

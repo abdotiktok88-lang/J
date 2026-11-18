@@ -5584,11 +5584,13 @@ function openStudentInbox() {
     }
     localChatMessagesMap.clear();
 
-    // تصفير إشعار الرسائل للطالب
-    localStorage.setItem('student_last_read_chat_time', Date.now().toString());
+    // تصفير إشعار الرسائل المباشرة والتعميمات معاً فور فتح الشات
+    const nowTime = Date.now().toString();
+    localStorage.setItem('student_last_read_chat_time', nowTime);
+    localStorage.setItem('student_last_read_broadcast_time', nowTime);
     updateFloatingChatBadge(0);
 
-    // 👈 تحديث مؤشر القراءة: إخبار السيرفر بأن الطالب فتح الشات وقرأ رسائل الأدمن
+    // تحديث مؤشر القراءة لرسائل الإدارة
     db.ref(`chats/direct/${currentUser.phone}`).once('value', snap => {
         if (!snap.exists()) return;
         const updates = {};
@@ -5606,7 +5608,7 @@ function openStudentInbox() {
     if (studentDirectListener) studentDirectListener.off();
     if (studentBroadcastListener) studentBroadcastListener.off();
 
-    // استماع لحظي ومباشر للرسائل الثنائية (مع التحديث التلقائي لو تغيرت الحالة)
+    // استماع لحظي ومباشر للرسائل الثنائية
     studentDirectListener = db.ref(`chats/direct/${currentUser.phone}`).limitToLast(50);
     studentDirectListener.on('child_added', snap => {
         localChatMessagesMap.set(snap.key, { id: snap.key, isBroadcast: false, ...snap.val() });
@@ -5749,12 +5751,10 @@ function initRealtimeChatWatchers() {
     if (!currentUser || !currentUser.phone || isChatWatcherInitialized) return;
     isChatWatcherInitialized = true;
 
-    // إظهار الزر العائم فور تسجيل الدخول
     const floatingBtn = document.getElementById('main-floating-chat-btn');
     if (floatingBtn) floatingBtn.style.display = 'flex';
 
     if (isCurrentLoggedUserAdmin()) {
-        // 👈 الأدمن: استماع لحظي لأي محادثة يرسل فيها أي طالب
         db.ref('chats/threads_meta').on('value', snap => {
             if (!snap.exists()) {
                 updateFloatingChatBadge(0);
@@ -5783,9 +5783,6 @@ function initRealtimeChatWatchers() {
             }
         });
     } else {
-        // 👈 الطالب: استماع فقط للرسائل القادمة من الأدمن وتجاهل رسائل الطالب نفسه
-        let lastReadDirectTime = parseInt(localStorage.getItem('student_last_read_chat_time') || '0');
-        let lastReadBroadcastTime = parseInt(localStorage.getItem('student_last_read_broadcast_time') || '0');
         let unreadDirectCount = 0;
         let unreadBroadcastCount = 0;
 
@@ -5794,15 +5791,16 @@ function initRealtimeChatWatchers() {
             if (currentView === 'view-inbox') {
                 unreadDirectCount = 0;
                 unreadBroadcastCount = 0;
-                localStorage.setItem('student_last_read_chat_time', Date.now().toString());
-                localStorage.setItem('student_last_read_broadcast_time', Date.now().toString());
+                const nowStr = Date.now().toString();
+                localStorage.setItem('student_last_read_chat_time', nowStr);
+                localStorage.setItem('student_last_read_broadcast_time', nowStr);
             }
 
             const totalUnread = unreadDirectCount + unreadBroadcastCount;
             updateFloatingChatBadge(totalUnread);
         }
 
-        // 1. مراقبة الرسائل المباشرة (فقط القادمة من admin)
+        // 1. مراقبة الرسائل المباشرة
         db.ref(`chats/direct/${currentUser.phone}`).on('value', snap => {
             if (!snap.exists()) {
                 unreadDirectCount = 0;
@@ -5810,12 +5808,12 @@ function initRealtimeChatWatchers() {
                 return;
             }
 
+            const lastReadDirectTime = parseInt(localStorage.getItem('student_last_read_chat_time') || '0');
             unreadDirectCount = 0;
             let hasNewAdminMsg = false;
 
             snap.forEach(c => {
                 const msg = c.val();
-                // الشرط الحاسم: فقط لو المرسل هو الأدمن ووقتها بعد آخر قراءة
                 if (msg.sender === 'admin' && (msg.timestamp || 0) > lastReadDirectTime) {
                     unreadDirectCount++;
                     hasNewAdminMsg = true;
@@ -5831,14 +5829,15 @@ function initRealtimeChatWatchers() {
             refreshStudentBadgeTotal();
         });
 
-        // 2. مراقبة التعميمات الجماعية
-        db.ref('chats/broadcast').on('value', snap => {
+        // 2. مراقبة التعميمات الجماعية (تقرأ أحدث وقت قراءة من الذاكرة كل مرة)
+        db.ref('chats/broadcast').limitToLast(10).on('value', snap => {
             if (!snap.exists()) {
                 unreadBroadcastCount = 0;
                 refreshStudentBadgeTotal();
                 return;
             }
 
+            const lastReadBroadcastTime = parseInt(localStorage.getItem('student_last_read_broadcast_time') || '0');
             unreadBroadcastCount = 0;
             let hasNewBroadcast = false;
 
