@@ -243,7 +243,7 @@ function incrementQuestionsVersion(dbNodeName) {
     }
 // ================= محرك مزامنة وقت السيرفر والتحديث التلقائي =================
 let serverTimeOffset = 0;
-const CURRENT_APP_VERSION = "2.2.0";
+const CURRENT_APP_VERSION = "2.2.1";
 
 // 👈 دي الدالة اللي هتشغلهم وقت ما نحب بس (نادينا عليها في الـ else فوق)
 function initGlobalFirebaseListeners() {
@@ -7915,3 +7915,61 @@ function checkBossEligibility() {
     }
 }
 
+// ================= معالج الروابط المختصرة (Deep Linking) =================
+function handleIncomingShortLink() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('c');
+    if (!code) return;
+
+    // تنظيف الرابط من المتصفح عشان ميعيدش الفتح لو عمل Refresh
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const parts = code.split('_');
+    if (parts.length < 4) return;
+
+    const subRaw = parts[0];
+    const typCode = parts[1];
+    const catCode = parts[2];
+    const itemId = parts.slice(3).join('_');
+
+    const subjectName = !isNaN(subRaw) ? SUBJECTS_SHORT_MAP[parseInt(subRaw)] : decodeURIComponent(subRaw);
+    const type = typCode === 'p' ? 'practical' : 'theory';
+    const category = catCode === 'l' ? 'lectures' : (catCode === 's' ? 'summaries' : 'quizzes');
+
+    if (!subjectName) return;
+
+    currentActiveSubject = subjectName;
+    currentActiveType = type;
+    currentActiveCategory = category;
+
+    const safeKey = getSafeSubjectKey(subjectName);
+    showTopToast('جاري فتح المحتوى المشارك... ⏳', 'info');
+
+    db.ref(`scientific_content/${safeKey}/${type}/${category}/${itemId}`).once('value').then(snap => {
+        if (!snap.exists()) {
+            showTopToast('عذراً، هذا المحتوى غير متوفر أو تم حذفه!', 'error');
+            return;
+        }
+        const item = { id: snap.key, ...snap.val() };
+        window.tempLessonContentStore[item.id] = item;
+
+        if (item.formatType === 'content') {
+            openLessonReader(item.title, item.id);
+        } else if (item.formatType === 'qbank') {
+            openQBankMode(item.id);
+        } else if (item.formatType === 'exam') {
+            showExamRulesConfirmation(item.id);
+        } else if (item.url) {
+            window.open(item.url, '_blank');
+        }
+    });
+}
+
+// تشغيل الفحص تلقائياً بعد تحميل الصفحة وتسجيل الدخول
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (localStorage.getItem('active_user_phone')) {
+            handleIncomingShortLink();
+        }
+    }, 1200);
+});

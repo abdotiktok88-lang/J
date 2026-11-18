@@ -774,13 +774,88 @@ function openDynamicContentList(category) {
             }
         });
 
+        // تشغيل أي سكريبت مدمج داخل محتوى الدرس
+        const scripts = document.getElementById('lesson-reader-body').getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            try { eval(scripts[i].innerText); } catch (e) {}
+        }
+
         navigateTo('view-lesson-reader', currentActiveSubject, title);
     }
 
     // ================= دوال إدارة المحتوى العلمي (الأدمن) =================
 
 // ================= بناء الكروت وتوجيهها للواجهة الصحيحة بذكاء =================
-    function renderDynamicContentDOM(items, container) {
+    // خريطة اختصار أسماء المواد والأقسام لجعل الرابط قصيراً جداً
+const SUBJECTS_SHORT_MAP = [
+    "تكنولوجيا اللحوم والأسماك",
+    "تكنولوجيا الحبوب",
+    "تكنولوجيا السكر",
+    "كيمياء ألبان",
+    "تكنولوجيا الجبن",
+    "الإدارة الفنية لمصانع الالبان"
+];
+
+function getShareMenuHtml(itemId) {
+    return `
+    <div class="card-menu-wrapper" onclick="event.stopPropagation();">
+        <button type="button" class="card-dots-btn" onclick="toggleCardShareMenu(this)">⋮</button>
+        <div class="card-share-dropdown">
+            <button type="button" class="card-share-option" onclick="handleCardShareAction('${itemId}', 'share', this)">📤 مشاركة الرابط</button>
+            <button type="button" class="card-share-option" onclick="handleCardShareAction('${itemId}', 'copy', this)">📋 نسخ الرابط</button>
+        </div>
+    </div>`;
+}
+
+function toggleCardShareMenu(btn) {
+    if (typeof playClickSound === 'function') playClickSound();
+    const dropdown = btn.nextElementSibling;
+    const isAlreadyOpen = dropdown.classList.contains('show');
+    // إغلاق أي قائمة مفتوحة أخرى
+    document.querySelectorAll('.card-share-dropdown.show').forEach(el => el.classList.remove('show'));
+    if (!isAlreadyOpen) dropdown.classList.add('show');
+}
+
+// إغلاق القائمة عند الضغط في أي مكان فارغ
+document.addEventListener('click', () => {
+    document.querySelectorAll('.card-share-dropdown.show').forEach(el => el.classList.remove('show'));
+});
+
+function buildShortCardLink(itemId) {
+    const subIdx = SUBJECTS_SHORT_MAP.indexOf(currentActiveSubject);
+    const subCode = subIdx !== -1 ? subIdx : encodeURIComponent(currentActiveSubject);
+    const typCode = currentActiveType === 'practical' ? 'p' : 't';
+    const catCode = currentActiveCategory === 'lectures' ? 'l' : (currentActiveCategory === 'summaries' ? 's' : 'q');
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?c=${subCode}_${typCode}_${catCode}_${itemId}`;
+}
+
+function handleCardShareAction(itemId, mode, btn) {
+    if (typeof playClickSound === 'function') playClickSound();
+    btn.parentElement.classList.remove('show');
+
+    const item = window.tempLessonContentStore[itemId] || {};
+    const shortUrl = buildShortCardLink(itemId);
+    const shareTitle = `${item.title || 'محتوى علمي'} - ${currentActiveSubject}`;
+
+    if (mode === 'share' && navigator.share) {
+        navigator.share({
+            title: shareTitle,
+            text: `📚 ${shareTitle}\nافتح مباشرة في التطبيق:`,
+            url: shortUrl
+        }).catch(() => {});
+    } else {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                showTopToast('تم نسخ الرابط المختصر بنجاح! 📋', 'success');
+            }).catch(() => fallbackCopyText(shortUrl));
+        } else {
+            fallbackCopyText(shortUrl);
+        }
+    }
+}
+
+function renderDynamicContentDOM(items, container) {
     window.tempLessonContentStore = {}; 
     
     if (items.length === 0) {
@@ -796,29 +871,33 @@ function openDynamicContentList(category) {
         items.forEach(item => {
             window.tempLessonContentStore[item.id] = item;
             const customEmoji = item.emoji || (item.formatType === 'exam' ? '⏱️' : '📚');
+            const menuHtml = getShareMenuHtml(item.id);
 
             if (item.formatType === 'qbank') {
                 banksHTML += `
-                <div class="eng-bento-card" style="--theme-color: var(--accent-gold); padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" onclick="openQBankMode('${item.id}')">
+                <div class="eng-bento-card" style="--theme-color: var(--accent-gold); padding: 24px 10px 16px; text-align: center; align-items: center; justify-content: center; overflow: visible;" onclick="openQBankMode('${item.id}')">
+                    ${menuHtml}
                     <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
                     <div style="font-size:0.7rem; color:var(--text-sub);">تدريب مفتوح</div>
                 </div>`;
             } else if (item.formatType === 'exam') {
-    const isCompleted = rewardedExams.includes(item.id);
-    const examRewardUI = isCompleted 
-        ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
-        : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة | +${item.examXP} XP</div>`;
+                const isCompleted = rewardedExams.includes(item.id);
+                const examRewardUI = isCompleted 
+                    ? `<div style="font-size:0.75rem; color:var(--accent-emerald); font-weight:900;">مكتمل ✔️ (متاح للتدريب)</div>` 
+                    : `<div style="font-size:0.75rem; color:#ef4444; font-weight:800;">${item.examTime} دقيقة | +${item.examXP} XP</div>`;
 
                 examsHTML += `
-                <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 16px 10px; text-align: center; align-items: center; justify-content: center; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="showExamRulesConfirmation('${item.id}')">
+                <div class="eng-bento-card" style="--theme-color: ${isCompleted ? 'var(--accent-emerald)' : '#ef4444'}; padding: 24px 10px 16px; text-align: center; align-items: center; justify-content: center; overflow: visible; border-color: ${isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};" onclick="showExamRulesConfirmation('${item.id}')">
+                    ${menuHtml}
                     <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>${examRewardUI}
                 </div>`;
             } else {
                 let clickAction = item.formatType === 'content' ? `onclick="openLessonReader('${item.title}', '${item.id}')"` : (item.url ? `onclick="window.open('${item.url}', '_blank');"` : ``);
                 banksHTML += `
-                <div class="eng-bento-card" style="--theme-color: #3b82f6; padding: 16px 10px; text-align: center; align-items: center; justify-content: center;" ${clickAction}>
+                <div class="eng-bento-card" style="--theme-color: #3b82f6; padding: 24px 10px 16px; text-align: center; align-items: center; justify-content: center; overflow: visible;" ${clickAction}>
+                    ${menuHtml}
                     <div class="dynamic-emoji-box" style="width: 45px; height: 45px; font-size: 1.6rem; margin: 0 auto 10px;">${customEmoji}</div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">${item.title}</h4>
                     <div style="font-size:0.7rem; color:var(--text-sub);">محتوى إضافي</div>
@@ -845,6 +924,7 @@ function openDynamicContentList(category) {
             let clickAction = '';
             const customEmoji = item.emoji || '📄';
             let extraDownloadBtn = '';
+            const menuHtml = getShareMenuHtml(item.id);
 
             if (item.formatType === 'qbank') {
                 actionBtnUI = `<div class="dynamic-content-download" style="color:var(--accent-gold);">📚 اضغط لفتح بنك الأسئلة</div>`;
@@ -857,21 +937,21 @@ function openDynamicContentList(category) {
                 clickAction = `onclick="openLessonReader('${item.title}', '${item.id}')"`;
                 
                 if (item.url) {
-                    extraDownloadBtn = `<button onclick="event.stopPropagation(); window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-size: 0.75rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); z-index: 10; display: flex; align-items: center; gap: 4px;">تحميل الملف</button>`;
+                    extraDownloadBtn = `<button onclick="event.stopPropagation(); window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();" style="position: absolute; left: 42px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; border-radius: 10px; padding: 7px 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; z-index: 10;">تحميل الملف</button>`;
                 }
             } else {
                 actionBtnUI = item.url ? `<div class="dynamic-content-download">⬇️ اضغط لتحميل الملف</div>` : `<div class="dynamic-content-download" style="color:var(--text-sub);">قيد التجهيز ⏳</div>`;
                 clickAction = item.url ? `onclick="window.open('${item.url}', '_blank'); if(typeof playSuccessSound==='function')playSuccessSound();"` : `onclick="showTopToast('المحتوى قيد التجهيز', 'info')"`;
             }
             
-            html += `<div class="dynamic-content-card" ${clickAction}>
+            html += `<div class="dynamic-content-card" style="overflow: visible; padding-left: 38px;" ${clickAction}>
+                        ${menuHtml}
                         ${extraDownloadBtn}
                         <div class="dynamic-emoji-box">${customEmoji}</div>
-                        <div class="dynamic-content-info" style="${item.formatType === 'content' && item.url ? 'padding-left: 80px;' : ''}">
+                        <div class="dynamic-content-info" style="${item.formatType === 'content' && item.url ? 'padding-left: 85px;' : ''}">
                             <h4>${item.title}</h4>
                             ${actionBtnUI}
                         </div>
-                        ${item.formatType === 'content' && item.url ? '' : '<div class="dynamic-arrow">←</div>'}
                     </div>`;
         });
         container.innerHTML = html;

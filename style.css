@@ -2958,3 +2958,75 @@
 .unseen-single-check {
     color: rgba(255, 255, 255, 0.45);
 }
+
+/* زر الـ 3 نقط وقائمة المشاركة داخل كروت المحتوى العلمي */
+.card-menu-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 20;
+}
+
+.card-dots-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-card);
+    color: var(--text-sub);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.card-dots-btn:active {
+    background: var(--accent-gold);
+    color: #000;
+}
+
+.card-share-dropdown {
+    display: none;
+    position: absolute;
+    top: 32px;
+    left: 0;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--accent-gold);
+    border-radius: 12px;
+    min-width: 135px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    z-index: 99;
+    animation: fadeIn 0.15s ease;
+}
+
+.card-share-dropdown.show {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-share-option {
+    padding: 9px 12px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-main);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-card);
+    text-align: right;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-share-option:last-child {
+    border-bottom: none;
+}
+
+.card-share-option:active {
+    background: rgba(212, 175, 55, 0.2);
+}
